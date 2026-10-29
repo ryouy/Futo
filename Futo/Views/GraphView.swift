@@ -18,6 +18,10 @@ struct GraphView: View {
         DailySeries.make(sessions: sessions, mode: mode, calendar: LogicalCalendar(), now: Date(), days: 7)
     }
 
+    private var breakdown: Breakdown {
+        Breakdown.make(sessions: sessions, mode: mode, calendar: LogicalCalendar(), now: Date())
+    }
+
     private var points: [Point] {
         series.flatMap { stat in
             [Point(day: stat.label, kind: "やめた", count: stat.deferred),
@@ -33,6 +37,13 @@ struct GraphView: View {
                 if series.allSatisfy({ $0.total == 0 }) {
                     Text("まだ記録がありません。").card()
                 } else {
+                    PieCard(title: "選んだ目的", slices: breakdown.purposes,
+                            footnote: "答えなかった分も含めた内訳です。")
+                    PieCard(title: "使ったあとの感想", slices: breakdown.reflections,
+                            emptyText: "まだ回答がありません。",
+                            footnote: breakdown.answeredReflections == 0 ? nil
+                                : "回答 \(breakdown.answeredReflections)件の内訳です。「答えない」は含みません。")
+
                     VStack(alignment: .leading, spacing: 10) {
                         Text("ひと呼吸の結果（回数）").font(.subheadline.weight(.medium))
                         Chart(points) { point in

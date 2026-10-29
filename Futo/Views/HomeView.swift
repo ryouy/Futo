@@ -171,12 +171,13 @@ struct HomeView: View {
         .animation(.easeInOut(duration: 0.3), value: model.targetCount)
     }
 
-    // MARK: 制限するアプリ（横にスライド。右上の＋で追加、タイルの－で外す）
+    // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
 
-    /// 変更できる間（制限オフ・一時解除中）だけ「＋」と「－」を出す。アプリが多くても画面の高さは変わらない。
+    /// 変更できる間（制限オフ・一時解除中）だけ「＋」と「－」を出す。多いときは、この欄の中でスクロールする。
     private var appsSection: some View {
         let editable = !model.isTargetEditLocked
-        return VStack(alignment: .leading, spacing: 4) {
+        let rows = appRows(editable: editable)
+        return VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("制限するアプリ").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
@@ -191,71 +192,56 @@ struct HomeView: View {
             }
             .frame(minHeight: 32)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    if model.mode == .demo {
-                        if let name = model.demo.targetName {
-                            appTile(unlocked: false, editable: editable, onRemove: { pendingRemoval = .demo },
-                                    icon: { Image(systemName: "app.fill").font(.title) },
-                                    title: { Text(name) })
-                        }
-                    } else {
-                        ForEach(sortedTokens, id: \.self) { token in
-                            appTile(unlocked: model.unlockedApps.contains(token), editable: editable,
-                                    onRemove: { pendingRemoval = .device(token) },
-                                    icon: { Label(token).labelStyle(.iconOnly).scaleEffect(1.3) },
-                                    title: { Label(token).labelStyle(.titleOnly) })
-                        }
-                    }
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 2)
+            if model.targetCount > 4 {
+                ScrollView(.vertical, showsIndicators: true) { rows }
+                    .frame(height: 4 * 48)
+            } else {
+                rows
             }
-            .frame(height: 112)
         }
         .animation(.easeInOut(duration: 0.3), value: editable)
+    }
+
+    private func appRows(editable: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if model.mode == .demo {
+                if let name = model.demo.targetName {
+                    appRow(unlocked: false, editable: editable, onRemove: { pendingRemoval = .demo }) { Text(name) }
+                }
+            } else {
+                ForEach(sortedTokens, id: \.self) { token in
+                    appRow(unlocked: model.unlockedApps.contains(token), editable: editable,
+                           onRemove: { pendingRemoval = .device(token) }) { Label(token) }
+                }
+            }
+        }
     }
 
     private var sortedTokens: [ApplicationToken] {
         model.device.selection.applicationTokens.sorted { $0.hashValue < $1.hashValue }
     }
 
-    /// アプリ1つぶんのタイル。解除中のアプリだけ、開いた南京錠が付く。
-    private func appTile<Icon: View, Title: View>(
-        unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
-        @ViewBuilder icon: () -> Icon, @ViewBuilder title: () -> Title
-    ) -> some View {
-        VStack(spacing: 8) {
-            icon().frame(height: 36)
-            title().font(.caption).lineLimit(1).frame(maxWidth: .infinity)
-        }
-        .padding(.horizontal, 8)
-        .frame(width: 92, height: 96)
-        .background(Theme.backgroundTop, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(unlocked ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: unlocked ? 2 : 1)
-        )
-        .overlay(alignment: .topLeading) {
+    /// 1行：アプリ名。解除中のアプリだけ開いた南京錠。変更できる間だけ目立たない－。
+    private func appRow<Content: View>(unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
+                                       @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 10) {
+            content()
+            Spacer()
             if unlocked {
                 Image(systemName: "lock.open.fill")
-                    .font(.caption)
                     .foregroundStyle(Theme.accent)
-                    .padding(8)
                     .accessibilityLabel("一時解除中")
             }
-        }
-        .overlay(alignment: .topTrailing) {
             if editable {
                 Button(action: onRemove) {
-                    Image(systemName: "minus.circle.fill")
+                    Image(systemName: "minus.circle")
                         .foregroundStyle(.tertiary)
                         .frame(width: 44, height: 44)
                 }
-                .offset(x: 10, y: -10)
                 .accessibilityLabel("制限から外す")
             }
         }
+        .frame(minHeight: 48)
     }
 
     private func addApps() {
@@ -350,33 +336,29 @@ struct HomeView: View {
         .card(tint: Theme.softBlue)
     }
 
-    // MARK: 今日の件数（タップで中身を見られる）
+    // MARK: やめた／使いたかった（小さなボタン。押すと今日の中身）
 
     private var countsRow: some View {
         let counts = DailyCounts.today(sessions: sessions, mode: model.mode)
-        return HStack(spacing: 12) {
-            countButton("今日やめた", counts.deferred, .todayDeferred)
-            countButton("今日使いたかった", counts.wantsToUse, .todayWants)
+        return HStack(spacing: 8) {
+            countChip("やめた", counts.deferred, .todayDeferred)
+            countChip("使いたかった", counts.wantsToUse, .todayWants)
+            Spacer()
         }
     }
 
-    private func countButton(_ title: String, _ value: Int, _ target: HomeSheet) -> some View {
+    private func countChip(_ title: String, _ value: Int, _ target: HomeSheet) -> some View {
         Button { sheet = target } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(.footnote).foregroundStyle(.secondary)
-                HStack {
-                    Text("\(value)").font(.title2.monospacedDigit()).foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
-                }
+            HStack(spacing: 6) {
+                Text(title)
+                Text("\(value)").monospacedDigit().foregroundStyle(.primary)
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Theme.accent.opacity(0.10), lineWidth: 1)
-            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+            .background(Capsule().fill(Theme.accent.opacity(0.08)))
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -386,14 +368,14 @@ struct HomeView: View {
     #if DEBUG
     /// 開発用：朝夜の振り返りと通知を、時間を待たずに確かめる（Debugビルドにだけ存在する）。
     private var debugSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("開発用（Debugのみ）").font(.caption).foregroundStyle(.secondary)
-            Button("朝の振り返りをいま見る") { model.showReflectionNow(.morning) }
-                .buttonStyle(FutoButtonStyle(prominent: false))
-            Button("夜の振り返りをいま見る") { model.showReflectionNow(.night) }
-                .buttonStyle(FutoButtonStyle(prominent: false))
-            Button("お出かけ通知を3秒後に送る") { model.sendTestNotification(.outing) }
-                .buttonStyle(FutoButtonStyle(prominent: false))
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 8) {
+                Button("朝の振り返り") { model.showReflectionNow(.morning) }
+                Button("夜の振り返り") { model.showReflectionNow(.night) }
+                Button("お出かけ通知") { model.sendTestNotification(.outing) }
+            }
+            .buttonStyle(FutoCompactButtonStyle())
         }
         .padding(.top, 12)
     }

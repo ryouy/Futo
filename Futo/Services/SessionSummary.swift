@@ -73,3 +73,34 @@ enum DailySeries {
         return stats.reversed()
     }
 }
+
+/// 直近の目的・感想の内訳（円グラフ用）。
+struct Breakdown: Equatable {
+    var purposes: [Slice]
+    var reflections: [Slice]
+    /// 「答えない」を除いた感想の回答数
+    var answeredReflections: Int { reflections.reduce(0) { $0 + $1.count } }
+    var answeredPurposes: Int { purposes.filter { $0.label != Breakdown.noAnswer }.reduce(0) { $0 + $1.count } }
+
+    struct Slice: Equatable, Identifiable {
+        var label: String
+        var count: Int
+        var id: String { label }
+    }
+
+    static let noAnswer = "答えなかった"
+
+    static func make(sessions: [Session], mode: AppMode, calendar: LogicalCalendar, now: Date, days: Int = 7) -> Breakdown {
+        let end = calendar.dayInterval(containing: now).end
+        let start = calendar.calendar.date(byAdding: .day, value: -days, to: end) ?? end
+        let records = sessions.filter {
+            $0.mode == mode && $0.phase != .choosingPurpose && $0.startedAt >= start && $0.startedAt < end
+        }
+        var purposes = Purpose.allCases.map { p in Slice(label: p.label, count: records.filter { $0.purpose == p }.count) }
+        purposes.append(Slice(label: noAnswer, count: records.filter { $0.purpose == nil }.count))
+        let reflections = [Reflection.satisfied, .neutral, .wishedLess].map { r in
+            Slice(label: r.label, count: records.filter { $0.reflection == r }.count)
+        }
+        return Breakdown(purposes: purposes, reflections: reflections)
+    }
+}

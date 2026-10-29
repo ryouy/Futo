@@ -71,27 +71,80 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(cal.dayKey(for: jst("2027-01-13 22:00")), cal.dayKey(for: jst("2027-01-14 02:00")))
     }
 
-    func testBuilderNeutralWhenNoRecords() {
-        let range = ReflectionSchedule.contentRange(kind: .morning, now: jst("2027-01-13 08:00"),
-                                                    calendar: cal, useTodayForMorning: false)
-        let content = ReflectionBuilder.build(kind: .morning, sessions: [], mode: .demo,
-                                              interval: range.interval, dayWord: range.dayWord)
-        XCTAssertEqual(content.lines, ["昨日の記録はまだありません。"])
+    private func build(_ kind: ReflectionKind, _ seed: String = "2027-01-13") -> ReflectionContent {
+        let range = ReflectionSchedule.contentRange(kind: kind, now: jst("2027-01-13 21:30"), calendar: cal,
+                                                    useTodayForMorning: kind == .morning)
+        return ReflectionBuilder.build(kind: kind, sessions: sessions(), mode: .demo, interval: range.interval,
+                                       dayWord: range.dayWord, seed: seed)
     }
 
-    func testBuilderStatesOnlyRecordedFacts() {
+    func testBuilderNeutralWhenNoRecords() {
+        let c = build(.night)
+        XCTAssertEqual(c.lines.first, "今日の記録はまだありません。")
+        XCTAssertEqual(c.lines.count, 2, "記録が無くても、短い締めの一文だけ")
+    }
+
+    func testBuilderIsAbstractAndNeverListsNumbers() {
+        for i in 0..<8 { record("2027-01-13 1\(i % 6):00", purpose: i < 6 ? .contact : .research,
+                                  outcome: i % 3 == 0 ? .wantsToUse : .deferred, reflection: i == 0 ? .satisfied : nil,
+                                  unlocked: i == 0) }
+        for kind in ReflectionKind.allCases {
+            let text = build(kind).lines.joined()
+            let hasDigit = text.unicodeScalars.contains { ("0"..."9").contains($0) || ("０"..."９").contains($0) }
+            XCTAssertFalse(hasDigit, "算用数字を並べない: \(text)")
+        }
+    }
+
+    func testVolumeChangesTheOpening() {
         record("2027-01-13 10:00", purpose: .contact, outcome: .deferred)
-        record("2027-01-13 15:00", purpose: .contact, outcome: .wantsToUse, reflection: .satisfied, unlocked: true)
-        record("2027-01-13 16:00", purpose: nil, outcome: .interrupted)
-        record("2027-01-13 17:00", mode: .device, purpose: .research, outcome: .deferred)   // 別モードは混ぜない
-        let range = ReflectionSchedule.contentRange(kind: .night, now: jst("2027-01-13 21:30"),
-                                                    calendar: cal, useTodayForMorning: false)
-        let text = ReflectionBuilder.build(kind: .night, sessions: sessions(), mode: .demo,
-                                           interval: range.interval, dayWord: range.dayWord).lines.joined(separator: "\n")
-        XCTAssertTrue(text.contains("ひと呼吸を3回"))
-        XCTAssertTrue(text.contains("「連絡」2回"))
-        XCTAssertFalse(text.contains("調べもの"))
-        XCTAssertTrue(text.contains("実際に使ったかどうかは記録していません"))
+        let few = build(.night).lines[0]
+        for i in 0..<7 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
+        let many = build(.night).lines[0]
+        XCTAssertNotEqual(few, many)
+        XCTAssertTrue(many.contains("多め") || many.contains("たくさん"))
+    }
+
+    func testMorningAndNightUseDifferentWording() {
+        for i in 0..<4 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
+        let morning = build(.morning).lines.last!
+        let night = build(.night).lines.last!
+        XCTAssertNotEqual(morning, night)
+        XCTAssertTrue(["新しい一日のはじまりです。", "今日のペースで、ゆっくり。", "ゆっくり始めましょう。"].contains(morning))
+        XCTAssertTrue(["今日はここまでです。", "一日の終わりです。", "ここでひと区切りにしましょう。"].contains(night))
+    }
+
+    func testBuilderBranchesOnDominantOutcomePurposeAndReflection() {
+        for i in 0..<4 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
+        record("2027-01-13 16:00", purpose: .contact, outcome: .wantsToUse, reflection: .wishedLess, unlocked: true)
+        let text = build(.night).lines.joined(separator: "\n")
+        XCTAssertTrue(text.contains("「今はやめる」"), text)
+        XCTAssertTrue(text.contains("「連絡」"), text)
+        XCTAssertTrue(text.contains("「もう少し控えたかった」"), "単独の感想はそのまま述べる: \(text)")
+    }
+
+    func testUnlockLineSpeaksOfUnlockedTimeNotUsedTime() {
+        let s = record("2027-01-13 10:00", purpose: .contact, outcome: .wantsToUse, unlocked: true)
+        s.temporaryUnlockEndedAt = jst("2027-01-13 10:03")
+        let text = build(.night).lines.joined()
+        XCTAssertTrue(text.contains("解除していた時間"), text)
+        XCTAssertFalse(text.contains("使った時間"))
+    }
+
+    func testBuilderIsStableForTheSameSeed() {
+        for i in 0..<4 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
+        XCTAssertEqual(build(.night, "a"), build(.night, "a"))
+    }
+
+    func testBreakdownCountsPurposesAndAnsweredReflectionsOnly() {
+        record("2027-01-13 10:00", purpose: .contact, reflection: .satisfied)
+        record("2027-01-13 11:00", purpose: .contact, reflection: .skipped)
+        record("2027-01-12 11:00", purpose: nil)
+        record("2027-01-13 12:00", mode: .device, purpose: .research)
+        let b = Breakdown.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00"))
+        XCTAssertEqual(b.purposes.first(where: { $0.label == "連絡" })?.count, 2)
+        XCTAssertEqual(b.purposes.first(where: { $0.label == Breakdown.noAnswer })?.count, 1)
+        XCTAssertEqual(b.answeredReflections, 1, "「答えない」は感想の回答に数えない")
+        XCTAssertEqual(b.purposes.first(where: { $0.label == "調べもの" })?.count, 0, "別モードは混ぜない")
     }
 
     func testMorningUsesTodayOnlyWhenDevelopmentFlagIsOn() {

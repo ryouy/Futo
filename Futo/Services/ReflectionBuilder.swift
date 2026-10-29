@@ -6,51 +6,131 @@ struct ReflectionContent: Equatable {
     var lines: [String]
 }
 
-/// 朝夜の振り返りの文章。端末内の集計と定型文だけで作る（LLMは使わない）。
-/// 気持ちの推測・評価・称賛はしない。取得済みの記録だけを事実として並べる。
+/// 朝夜の振り返りの文章。端末内の集計と定型文（プリセット）だけで作る（LLMは使わない）。
+/// 数をそのまま並べず、「少なめ」「多め」「中心」のような抽象的な言い方に置き換える。
+/// 気持ちの推測・評価・称賛はしない。朝は「はじまり」、夜は「ひと区切り」に合う言葉を使う。
 enum ReflectionBuilder {
+    private enum Volume { case few, some, many }
+
     /// - Parameters:
     ///   - interval: 振り返る範囲（朝は昨日、夜は今日。開発中の朝は今日）
     ///   - dayWord: 「昨日」「今日」
+    ///   - seed: 同じ日・同じ記録なら同じ文言になるよう、言い回しの選択に使う（日の識別子など）
     static func build(kind: ReflectionKind, sessions: [Session], mode: AppMode,
-                      interval: DateInterval, dayWord: String) -> ReflectionContent {
+                      interval: DateInterval, dayWord: String, seed: String = "") -> ReflectionContent {
         let records = sessions.filter {
             $0.mode == mode && interval.contains($0.startedAt) && $0.phase != .choosingPurpose
         }
+        let seed = seed + kind.rawValue
+        let closing = pick(closings(kind), seed, 9)
+
         guard !records.isEmpty else {
-            return ReflectionContent(title: kind.title, lines: ["\(dayWord)の記録はまだありません。"])
+            return ReflectionContent(title: kind.title, lines: ["\(dayWord)の記録はまだありません。", closing])
         }
 
-        var lines = ["\(dayWord)は、ひと呼吸を\(records.count)回おこないました。"]
+        let volume: Volume = records.count <= 2 ? .few : (records.count <= 5 ? .some : .many)
+        var lines = [pick(openings(kind, volume, dayWord), seed, 1)]
+        if let line = outcomeLine(records, seed) { lines.append(line) }
+        if let line = purposeLine(records, seed) { lines.append(line) }
+        // 詳細は多くても1行。感想があれば感想を、なければ解除の様子を言う。
+        if let line = reflectionLine(records, seed) ?? unlockLine(records, seed) { lines.append(line) }
+        lines.append(closing)
+        return ReflectionContent(title: kind.title, lines: lines)
+    }
 
+    // MARK: プリセット
+
+    private static func openings(_ kind: ReflectionKind, _ volume: Volume, _ day: String) -> [String] {
+        switch (kind, volume) {
+        case (.morning, .few):
+            return ["\(day)は、立ち止まった場面が少しだけありました。", "\(day)のひと呼吸は、少なめでした。"]
+        case (.morning, .some):
+            return ["\(day)は、何度か立ち止まる時間がありました。", "\(day)は、ひと呼吸が何回かありました。"]
+        case (.morning, .many):
+            return ["\(day)は、立ち止まる場面が多めの一日でした。", "\(day)は、ひと呼吸をたくさんおこないました。"]
+        case (.night, .few):
+            return ["\(day)は、立ち止まった場面が少しだけでした。", "\(day)のひと呼吸は、少なめでした。"]
+        case (.night, .some):
+            return ["\(day)は、何度か立ち止まりました。", "\(day)は、ひと呼吸が何回かありました。"]
+        case (.night, .many):
+            return ["\(day)は、立ち止まる場面が多めの一日でした。", "\(day)は、ひと呼吸をたくさんおこないました。"]
+        }
+    }
+
+    private static func closings(_ kind: ReflectionKind) -> [String] {
+        switch kind {
+        case .morning: return ["新しい一日のはじまりです。", "今日のペースで、ゆっくり。", "ゆっくり始めましょう。"]
+        case .night: return ["今日はここまでです。", "一日の終わりです。", "ここでひと区切りにしましょう。"]
+        }
+    }
+
+    private static func outcomeLine(_ records: [Session], _ seed: String) -> String? {
         let deferred = records.filter { $0.outcome == .deferred }.count
         let wants = records.filter { $0.outcome == .wantsToUse }.count
-        let interrupted = records.filter { $0.outcome == .interrupted }.count
-        let outcomes = [("今はやめる", deferred), ("使いたい", wants), ("途中でやめた", interrupted)]
-            .filter { $0.1 > 0 }
-            .map { "\($0.0) \($0.1)回" }
-        if !outcomes.isEmpty { lines.append(outcomes.joined(separator: "、") + "。") }
-
-        let purposes = Purpose.allCases
-            .map { purpose in (purpose, records.filter { $0.purpose == purpose }.count) }
-            .filter { $0.1 > 0 }
-            .sorted { $0.1 > $1.1 }
-        if !purposes.isEmpty {
-            lines.append("選んだ目的は、" + purposes.map { "「\($0.0.label)」\($0.1)回" }.joined(separator: "、") + "。")
+        let interrupted = records.count - deferred - wants
+        if records.count == 1 {
+            if deferred == 1 { return "「今はやめる」を選びました。" }
+            if wants == 1 { return "「使いたい」を選びました。" }
+            return "途中でやめました。"
         }
-
-        let answers = Reflection.allCases.filter { $0 != .skipped }
-            .map { r in (r, records.filter { $0.reflection == r }.count) }
-            .filter { $0.1 > 0 }
-        if !answers.isEmpty {
-            lines.append("使ったあとの感想は、" + answers.map { "「\($0.0.label)」\($0.1)件" }.joined(separator: "、") + "。")
+        if interrupted * 2 >= records.count {
+            return pick(["途中でやめる場面が多めでした。", "最後まで進まずにやめることが多めでした。"], seed, 2)
         }
+        let decided = deferred + wants
+        guard decided > 0 else { return nil }
+        let share = Double(deferred) / Double(decided)
+        if share >= 0.7 { return pick(["「今はやめる」を選ぶ場面が多めでした。", "多くは「今はやめる」を選びました。"], seed, 3) }
+        if share <= 0.3 { return pick(["「使いたい」を選ぶ場面が多めでした。", "多くは「使いたい」を選びました。"], seed, 3) }
+        return pick(["「今はやめる」と「使いたい」は、同じくらいでした。", "「今はやめる」と「使いたい」が、半々くらいでした。"], seed, 3)
+    }
 
-        let unlocked = records.filter { $0.temporaryUnlockStartedAt != nil }.count
-        if unlocked > 0 {
-            lines.append("一時解除を始めたのは\(unlocked)回です。実際に使ったかどうかは記録していません。")
+    private static func purposeLine(_ records: [Session], _ seed: String) -> String? {
+        let counts = Purpose.allCases.map { p in (p, records.filter { $0.purpose == p }.count) }.filter { $0.1 > 0 }
+        let answered = counts.reduce(0) { $0 + $1.1 }
+        if answered == 0 {
+            return records.count == 1 ? "目的は答えませんでした。" : "目的は、答えない場面が多めでした。"
         }
-        return ReflectionContent(title: kind.title, lines: lines)
+        let top = counts.max { $0.1 < $1.1 }!
+        if answered == 1 { return "目的は「\(top.0.label)」でした。" }
+        if Double(top.1) / Double(answered) >= 0.6 {
+            return pick(["目的は「\(top.0.label)」が中心でした。", "目的は、おもに「\(top.0.label)」でした。"], seed, 4)
+        }
+        return pick(["目的は、いろいろでした。", "目的は、ばらけていました。"], seed, 4)
+    }
+
+    private static func reflectionLine(_ records: [Session], _ seed: String) -> String? {
+        let kinds: [Reflection] = [.satisfied, .neutral, .wishedLess]
+        let counts: [(Reflection, Int)] = kinds.map { r in (r, records.filter { $0.reflection == r }.count) }
+        let answered = counts.reduce(0) { $0 + $1.1 }
+        guard answered > 0 else { return nil }
+        let top = counts.max { $0.1 < $1.1 }!
+        if answered == 1 { return "使ったあとの感想は「\(top.0.label)」でした。" }
+        guard Double(top.1) / Double(answered) >= 0.6 else { return "使ったあとの感想は、分かれていました。" }
+        switch top.0 {
+        case .satisfied: return "使ったあとは「満足した」という感想が多めでした。"
+        case .neutral: return "使ったあとの感想は「どちらでもない」が多めでした。"
+        case .wishedLess: return "使ったあとは「もう少し控えたかった」という感想が多めでした。"
+        case .skipped: return nil
+        }
+    }
+
+    /// 解除していた時間（使った時間ではない）。抽象的な長さだけを言う。
+    private static func unlockLine(_ records: [Session], _ seed: String) -> String? {
+        let unlocked = records.filter { $0.temporaryUnlockStartedAt != nil }
+        guard !unlocked.isEmpty else { return nil }
+        let known = unlocked.compactMap(\.unlockDuration)
+        guard !known.isEmpty else { return "一時的に解除した場面がありました。" }
+        let minutes = known.reduce(0, +) / 60
+        if minutes < 5 { return "解除していた時間は、短めでした。" }
+        if minutes < 20 { return "解除していた時間は、ほどほどでした。" }
+        return "解除していた時間は、長めでした。"
+    }
+
+    // MARK: 言い回しの選択（同じ入力なら同じ結果）
+
+    private static func pick(_ options: [String], _ seed: String, _ salt: Int) -> String {
+        let hash = seed.unicodeScalars.reduce(salt) { ($0 &* 31 &+ Int($1.value)) % 1_000_003 }
+        return options[hash % options.count]
     }
 }
 

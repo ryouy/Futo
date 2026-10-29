@@ -87,6 +87,11 @@ enum Theme {
     /// ほんのり暖かい色。お知らせ用。赤い警告色は使わない。
     static var softPeach: Color { dynamic((0xF8EADF, 0x3A3029)) }
 
+    /// 円グラフの色。テーマ色を軸に、見分けやすい控えめな色を並べる。
+    static var chartColors: [Color] {
+        [accent, accent.opacity(0.5), dynamic((0xE2B48C, 0xB98B62)), dynamic((0xB9B6AE, 0x5F5D58)), dynamic((0xA9C4D4, 0x4C6573))]
+    }
+
     static var background: LinearGradient {
         LinearGradient(colors: [backgroundTop, backgroundBottom], startPoint: .top, endPoint: .bottom)
     }
@@ -180,6 +185,19 @@ struct ChoiceRow<Content: View>: View {
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.2), value: isOn)
         .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
+/// 開発用など、小さく控えめなボタン。
+struct FutoCompactButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 34)
+            .background(Capsule().fill(Theme.accent.opacity(0.12)))
+            .opacity(configuration.isPressed ? 0.6 : 1)
     }
 }
 

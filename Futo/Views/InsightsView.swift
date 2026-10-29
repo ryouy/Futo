@@ -69,31 +69,20 @@ struct InsightsView: View {
     }
 
     private func purposeCard(_ w: WeeklyInsights) -> some View {
-        let items = Purpose.allCases.map { ($0.label, w.purposeCounts[$0] ?? 0) }
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("選んだ目的").font(.subheadline.weight(.medium))
-            bars(items)
-            Text(w.answeredPurposes == 0
-                 ? "目的を答えた記録はまだありません。"
-                 : "目的を答えた\(w.answeredPurposes)件の内訳です。答えなかった\(w.purposeSkipped)件は含みません。")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-        .card()
+        var slices = Purpose.allCases.map { Breakdown.Slice(label: $0.label, count: w.purposeCounts[$0] ?? 0) }
+        slices.append(Breakdown.Slice(label: Breakdown.noAnswer, count: w.purposeSkipped))
+        return PieCard(title: "選んだ目的", slices: slices,
+                       footnote: "答えなかった分も含めた内訳です。")
     }
 
     private func reflectionCard(_ w: WeeklyInsights) -> some View {
-        let items = [Reflection.satisfied, .neutral, .wishedLess].map { ($0.label, w.reflectionCounts[$0] ?? 0) }
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("使ったあとの感想").font(.subheadline.weight(.medium))
-            if w.answeredReflections == 0 {
-                Text("今週は、まだ回答がありません。").foregroundStyle(.secondary)
-            } else {
-                bars(items)
-                Text("回答 \(w.answeredReflections)件の内訳です。「答えない」は含みません。")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+        let slices = [Reflection.satisfied, .neutral, .wishedLess].map {
+            Breakdown.Slice(label: $0.label, count: w.reflectionCounts[$0] ?? 0)
         }
-        .card()
+        return PieCard(title: "使ったあとの感想", slices: slices,
+                       emptyText: "今週は、まだ回答がありません。",
+                       footnote: w.answeredReflections == 0 ? nil
+                           : "回答 \(w.answeredReflections)件の内訳です。「答えない」は含みません。")
     }
 
     private func bandCard(_ w: WeeklyInsights) -> some View {

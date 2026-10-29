@@ -64,7 +64,8 @@ extension AppModel {
         return cards.ensureCard(
             mode: mode, kind: kind, dayKey: calendar.dayKey(for: now),
             content: ReflectionBuilder.build(kind: kind, sessions: sessions.all(), mode: mode,
-                                             interval: range.interval, dayWord: range.dayWord),
+                                             interval: range.interval, dayWord: range.dayWord,
+                                             seed: calendar.dayKey(for: now)),
             regenerate: regenerate)
     }
 
