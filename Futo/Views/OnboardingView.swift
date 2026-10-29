@@ -25,6 +25,8 @@ struct OnboardingView: View {
     ]
 
     @State private var page = 0
+    /// スプラッシュが消えるのに合わせて、ゆっくり現れる（見直しのときは、すぐ）。
+    @State private var appeared = false
     private var isLast: Bool { page == pages.count }   // 最後は「はじめる」の画面
 
     var body: some View {
@@ -44,9 +46,16 @@ struct OnboardingView: View {
                     .frame(height: 150, alignment: .top)
                     .padding(.horizontal, 28)
             }
+            // 背景はスプラッシュと同じ緑のまま、中身だけがゆっくり現れる。
+            .opacity(appeared ? 1 : 0)
+            .animation(.easeInOut(duration: 0.9), value: appeared)
         }
         .preferredColorScheme(.dark)
         .animation(.easeInOut(duration: 0.4), value: page)
+        .task {
+            if !model.isOnboardingReplay { try? await Task.sleep(for: .milliseconds(900)) }
+            appeared = true
+        }
     }
 
     // MARK: ページ

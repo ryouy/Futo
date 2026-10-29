@@ -5,6 +5,8 @@ enum TutorialTarget: Hashable {
     case status
     case plus
     case main
+    /// 右上の記録・設定のボタン
+    case header
 }
 
 struct TutorialAnchorKey: PreferenceKey {
@@ -21,35 +23,36 @@ extension View {
 }
 
 /// ホームの最初の案内。光らせた場所と、押すとどうなるかを、順番に説明する。
+/// 「スキップ」「つぎへ」は、光る場所とは別に、画面の下に固定する。
 struct TutorialOverlay: View {
     let model: AppModel
     let anchors: [TutorialTarget: Anchor<CGRect>]
 
     private struct Step {
         var target: TutorialTarget?   // nil は光らせない
-        var spotlightToolbar = false  // 右上の記録・設定
-        var text: String
+        /// 1行ずつ。句の切れ目で改行し、行の途中で折り返さない長さにする。
+        var lines: [String]
     }
 
     /// 今の状態で見えているものだけを案内する。
     private var steps: [Step] {
-        var result = [Step(target: .status, text: "ここに、いまの状態が出ます。ふだんは「制限中」です。")]
+        var result = [Step(target: .status, lines: ["ここに、いまの状態が出ます。", "ふだんは「制限中」です。"])]
         if anchors[.plus] != nil {
-            result.append(Step(target: .plus, text: "＋で、制限するものを足せます。制限をかけている間は、変えられません。"))
+            result.append(Step(target: .plus, lines: ["＋で、制限するものを足せます。", "制限中は、変えられません。"]))
         }
-        result.append(Step(target: .main, text: mainText))
-        result.append(Step(target: nil, spotlightToolbar: true, text: "右上の時計は記録、歯車は設定です。"))
-        result.append(Step(target: nil, text: "準備はできました。"))
+        result.append(Step(target: .main, lines: mainLines))
+        result.append(Step(target: .header, lines: ["右の時計は記録、", "歯車は設定です。"]))
+        result.append(Step(target: nil, lines: ["準備はできました。"]))
         return result
     }
 
-    private var mainText: String {
-        if model.mode == .device, model.permission != .approved { return "まず、ここで許可をします。" }
-        if model.targetCount == 0 { return "まず、ここで制限するアプリやサイトを選びます。" }
+    private var mainLines: [String] {
+        if model.mode == .device, model.permission != .approved { return ["まず、ここで", "許可をします。"] }
+        if model.targetCount == 0 { return ["まず、ここで", "制限するものを選びます。"] }
         switch model.restriction {
-        case .configured: return "使いたいときは、ここ。ひと呼吸おいてから、使うかを選べます。"
-        case .temporarilyUnlocked: return "使い終わったら、ここで制限に戻します。"
-        case .off, .unverifiable: return "ここで制限をかけます。ふだんは、かけておくのがおすすめです。"
+        case .configured: return ["使いたいときは、ここ。", "ひと呼吸おいてから、", "使うかを選べます。"]
+        case .temporarilyUnlocked: return ["使い終わったら、", "ここで制限に戻します。"]
+        case .off, .unverifiable: return ["ここで制限をかけます。", "かけておくのが", "おすすめです。"]
         }
     }
 
@@ -62,8 +65,13 @@ struct TutorialOverlay: View {
             let rect = spotlight(for: step, in: proxy)
 
             ZStack {
-                dim(rect: rect, size: proxy.size)
-                bubbleLayer(step: step, index: index, count: all.count, isLast: isLast, rect: rect, size: proxy.size)
+                dim(rect: rect)
+                if isLast {
+                    endView
+                } else {
+                    bubbleLayer(step: step, rect: rect, size: proxy.size)
+                    bottomBar(index: index, bottomInset: proxy.safeAreaInsets.bottom)
+                }
             }
             .animation(.easeInOut(duration: 0.4), value: index)
         }
@@ -73,15 +81,11 @@ struct TutorialOverlay: View {
     // MARK: 光らせる場所
 
     private func spotlight(for step: Step, in proxy: GeometryProxy) -> CGRect? {
-        if step.spotlightToolbar {
-            // 右上の記録・設定のボタンのあたり。
-            return CGRect(x: proxy.size.width - 118, y: proxy.safeAreaInsets.top, width: 104, height: 44)
-        }
         guard let target = step.target, let anchor = anchors[target] else { return nil }
         return proxy[anchor]
     }
 
-    private func dim(rect: CGRect?, size: CGSize) -> some View {
+    private func dim(rect: CGRect?) -> some View {
         Rectangle()
             .fill(Color.black.opacity(0.6))
             .mask {
@@ -100,23 +104,35 @@ struct TutorialOverlay: View {
             .onTapGesture {}
     }
 
-    // MARK: 吹き出し
+    // MARK: 吹き出し（文だけ。ボタンは入れない）
+
+    private func messageCard(_ lines: [String]) -> some View {
+        Text(lines.joined(separator: "\n"))
+            .font(.body)
+            .multilineTextAlignment(.center)
+            .lineSpacing(5)
+            .fixedSize(horizontal: false, vertical: true)   // 行の途中で折り返さない
+            .padding(.vertical, 20)
+            .padding(.horizontal, 28)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .id(lines)
+            .transition(.opacity)
+    }
 
     @ViewBuilder
-    private func bubbleLayer(step: Step, index: Int, count: Int, isLast: Bool, rect: CGRect?, size: CGSize) -> some View {
-        let card = bubble(step: step, index: index, count: count, isLast: isLast)
-            .padding(.horizontal, 24)
+    private func bubbleLayer(step: Step, rect: CGRect?, size: CGSize) -> some View {
+        let card = messageCard(step.lines)
         if let rect {
             if rect.midY > size.height * 0.5 {
                 // 光らせた場所の上に出す。
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
                     card
-                    Color.clear.frame(height: size.height - rect.minY + 20)
+                    Color.clear.frame(height: size.height - rect.minY + 24)
                 }
             } else {
                 VStack(spacing: 0) {
-                    Color.clear.frame(height: rect.maxY + 20)
+                    Color.clear.frame(height: rect.maxY + 24)
                     card
                     Spacer(minLength: 0)
                 }
@@ -126,38 +142,42 @@ struct TutorialOverlay: View {
         }
     }
 
-    private func bubble(step: Step, index: Int, count: Int, isLast: Bool) -> some View {
-        VStack(spacing: 14) {
-            Text(step.text)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .frame(maxWidth: .infinity)
-            HStack(spacing: 6) {
-                ForEach(0..<count, id: \.self) { i in
-                    Capsule()
-                        .fill(Theme.accent.opacity(i == index ? 1 : 0.25))
-                        .frame(width: i == index ? 18 : 6, height: 6)
-                }
-            }
-            .accessibilityHidden(true)
+    // MARK: 画面下部に固定する操作
+
+    private func bottomBar(index: Int, bottomInset: CGFloat) -> some View {
+        VStack {
+            Spacer()
             HStack {
-                if !isLast {
-                    Button("スキップ") { model.finishTutorial() }
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .frame(minHeight: 44)
-                }
+                Button("スキップ") { model.finishTutorial() }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .frame(minHeight: 48)
                 Spacer()
-                Button(isLast ? "はじめる" : "つぎへ") {
-                    if isLast { model.finishTutorial() } else { model.tutorialStep = index + 1 }
-                }
-                .buttonStyle(FutoCompactButtonStyle())
+                pill("つぎへ") { model.tutorialStep = index + 1 }
             }
+            .padding(.horizontal, 28)
+            .padding(.bottom, max(bottomInset, 16) + 8)
         }
-        .padding(20)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .id(index)
-        .transition(.opacity)
+    }
+
+    /// 最後は、一言のあとに「はじめる」を置く。
+    private var endView: some View {
+        VStack(spacing: 22) {
+            messageCard(["準備はできました。"])
+            pill("はじめる") { model.finishTutorial() }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private func pill(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.headline.weight(.medium))
+                .foregroundStyle(Color.black.opacity(0.85))
+                .padding(.horizontal, 32)
+                .frame(minHeight: 50)
+                .background(Capsule().fill(Color.white))
+        }
+        .buttonStyle(.plain)
     }
 }

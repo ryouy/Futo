@@ -53,7 +53,7 @@ struct RootView: View {
         }
         .task {
             try? await Task.sleep(for: .milliseconds(1000))
-            withAnimation(.easeInOut(duration: 0.4)) { showSplash = false }
+            withAnimation(.easeInOut(duration: 0.8)) { showSplash = false }
         }
         .tint(Theme.accent)
         .animation(.easeInOut(duration: 0.3), value: ThemeStore.shared.color)

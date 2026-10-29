@@ -147,28 +147,18 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("朝の振り返り", isOn: Binding(
-                    get: { model.prefs.morningEnabled },
-                    set: { on in model.updatePreferences { $0.morningEnabled = on } }))
-                    .frame(minHeight: 44)
-                if model.prefs.morningEnabled {
-                    DatePicker("時刻", selection: minuteBinding(
-                        get: { model.prefs.morningMinute },
-                        set: { value in model.updatePreferences { $0.morningMinute = value } }),
-                        displayedComponents: .hourAndMinute)
-                        .frame(minHeight: 44)
-                }
-                Toggle("夜の振り返り", isOn: Binding(
-                    get: { model.prefs.nightEnabled },
-                    set: { on in model.updatePreferences { $0.nightEnabled = on } }))
-                    .frame(minHeight: 44)
-                if model.prefs.nightEnabled {
-                    DatePicker("時刻", selection: minuteBinding(
-                        get: { model.prefs.nightMinute },
-                        set: { value in model.updatePreferences { $0.nightMinute = value } }),
-                        displayedComponents: .hourAndMinute)
-                        .frame(minHeight: 44)
-                }
+                TimeToggleRow(
+                    title: "朝の振り返り",
+                    isOn: Binding(get: { model.prefs.morningEnabled },
+                                  set: { on in model.updatePreferences { $0.morningEnabled = on } }),
+                    minute: Binding(get: { model.prefs.morningMinute },
+                                    set: { value in model.updatePreferences { $0.morningMinute = value } }))
+                TimeToggleRow(
+                    title: "夜の振り返り",
+                    isOn: Binding(get: { model.prefs.nightEnabled },
+                                  set: { on in model.updatePreferences { $0.nightEnabled = on } }),
+                    minute: Binding(get: { model.prefs.nightMinute },
+                                    set: { value in model.updatePreferences { $0.nightMinute = value } }))
             } header: {
                 Text("朝・夜の振り返り")
             } footer: {

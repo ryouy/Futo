@@ -38,15 +38,7 @@ struct HomeView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { sheet = .history } label: { Label("履歴", systemImage: "clock") }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { sheet = .settings } label: { Label("設定", systemImage: "gearshape") }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .task(id: model.restriction) {
             // 一時解除中だけ、拡張による再制限を表示に反映するため定期的に再確認する（再制限そのものは拡張が行う）。
             guard case .temporarilyUnlocked = model.restriction else { return }
@@ -93,6 +85,19 @@ struct HomeView: View {
             HStack(spacing: 8) {
                 LeafMark(size: 24)
                 Text("ふと").font(.title.weight(.medium)).foregroundStyle(Theme.accent)
+                Spacer()
+                HStack(spacing: 0) {
+                    Button { sheet = .history } label: {
+                        Image(systemName: "clock").font(.title3).frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("記録")
+                    Button { sheet = .settings } label: {
+                        Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("設定")
+                }
+                .foregroundStyle(Theme.accent)
+                .tutorialTarget(.header)
             }
 
             ForEach(model.visibleCards, id: \.key) { card in
@@ -153,9 +158,9 @@ struct HomeView: View {
         if model.targetCount == 0 { return "アプリやサイトを選びます。" }
         switch model.restriction {
         case .configured: return "選んだものは、ふだん使えません。"
-        case .temporarilyUnlocked: return "使い終わったら、制限に戻します。"
+        case .temporarilyUnlocked: return "終わったら、制限に戻します。"
         case .unverifiable: return "もう一度、かけ直してください。"
-        case .off: return "ふだんは、かけておくのがおすすめです。"
+        case .off: return "かけておくのがおすすめです。"
         }
     }
 

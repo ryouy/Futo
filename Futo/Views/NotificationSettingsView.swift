@@ -12,6 +12,29 @@ func minuteBinding(get: @escaping () -> Int, set: @escaping (Int) -> Void) -> Bi
         })
 }
 
+/// 「名前 …… [時刻] [トグル]」の1行。時刻はトグルの左。オフのときは時刻を薄くして押せなくする。
+struct TimeToggleRow: View {
+    let title: String
+    let isOn: Binding<Bool>
+    var minute: Binding<Int>?
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(title).oneLine(0.8)
+            Spacer(minLength: 8)
+            if let minute {
+                DatePicker("", selection: minuteBinding(get: { minute.wrappedValue }, set: { minute.wrappedValue = $0 }),
+                           displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                    .disabled(!isOn.wrappedValue)
+                    .opacity(isOn.wrappedValue ? 1 : 0.4)
+            }
+            Toggle(title, isOn: isOn).labelsHidden()
+        }
+        .frame(minHeight: 48)
+    }
+}
+
 @MainActor
 struct NotificationSettingsView: View {
     @Bindable var model: AppModel
@@ -25,19 +48,15 @@ struct NotificationSettingsView: View {
         }
     }
 
-    private func toggle(_ kind: NotificationKind) -> some View {
-        Toggle(title(kind), isOn: Binding(
-            get: { model.prefs.isNotificationOn(kind) },
-            set: { on in
-                if on { model.requestEnableNotification(kind) } else { model.disableNotification(kind) }
-            }))
-            .frame(minHeight: 44)
-    }
-
-    private func timePicker(_ label: String, minute: Binding<Int>) -> some View {
-        DatePicker(label, selection: minuteBinding(get: { minute.wrappedValue }, set: { minute.wrappedValue = $0 }),
-                   displayedComponents: .hourAndMinute)
-            .frame(minHeight: 44)
+    private func row(_ kind: NotificationKind, minute: Binding<Int>? = nil) -> some View {
+        TimeToggleRow(
+            title: title(kind),
+            isOn: Binding(
+                get: { model.prefs.isNotificationOn(kind) },
+                set: { on in
+                    if on { model.requestEnableNotification(kind) } else { model.disableNotification(kind) }
+                }),
+            minute: minute)
     }
 
     @State private var diagnostics: (status: String, pending: [String])?
@@ -45,13 +64,10 @@ struct NotificationSettingsView: View {
     var body: some View {
         Form {
             Section {
-                toggle(.night)
-                if model.prefs.notifyNight { timePicker("時刻", minute: bind(\.nightMinute)) }
-                toggle(.morning)
-                if model.prefs.notifyMorning { timePicker("時刻", minute: bind(\.morningMinute)) }
-                toggle(.postUse)
-                toggle(.outing)
-                if model.prefs.notifyOuting { timePicker("時刻", minute: bind(\.outingMinute)) }
+                row(.night, minute: bind(\.nightMinute))
+                row(.morning, minute: bind(\.morningMinute))
+                row(.postUse)
+                row(.outing, minute: bind(\.outingMinute))
             } header: {
                 Text("通知（はじめは夜だけがおすすめ）")
             } footer: {
