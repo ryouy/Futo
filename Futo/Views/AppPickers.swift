@@ -30,14 +30,14 @@ struct DeviceAppPickerView: View {
     var body: some View {
         NavigationStack {
             FamilyActivityPicker(selection: $draft)
-                .navigationTitle("制限するもの")
+                .navigationTitle(tr("制限するもの"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("キャンセル") { dismiss() }
+                        Button(tr("キャンセル")) { dismiss() }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("保存") {
+                        Button(tr("保存")) {
                             // 制限中は、追加だけ。外したものは元に戻る。
                             model.device.saveSelection(draft, additiveOnly: model.isTargetEditLocked)
                             model.didChangeDeviceSelection()
@@ -65,23 +65,23 @@ struct DemoAppPickerView: View {
                             dismiss()
                         } label: {
                             HStack {
-                                Text(name).foregroundStyle(.primary)
+                                Text(tr(name)).foregroundStyle(.primary)
                                 Spacer()
                                 if model.demo.targetName == name {
-                                    Image(systemName: "checkmark").accessibilityLabel("選択中")
+                                    Image(systemName: "checkmark").accessibilityLabel(tr("選択中"))
                                 }
                             }
                             .frame(minHeight: 44)
                         }
                     }
                 } footer: {
-                    Text("デモ用の架空のアプリです。実際のアプリは制限されません。")
+                    Text(tr("デモ用の架空のアプリです。実際のアプリは制限されません。"))
                 }
             }
-            .navigationTitle("制限するもの")
+            .navigationTitle(tr("制限するもの"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(tr("閉じる")) { dismiss() } }
             }
         }
     }
@@ -108,7 +108,7 @@ struct UnlockChooserView: View {
         VStack(spacing: 0) {
             CenteredScroll {
                 VStack(spacing: 14) {
-                    Text("どれを使いますか？")
+                    Text(tr("どれを使いますか？"))
                         .font(.title2.weight(.medium))
                         .oneLine()
                         .padding(.bottom, 6)
@@ -116,7 +116,7 @@ struct UnlockChooserView: View {
                     if all.count > 1 {
                         HStack {
                             Spacer()
-                            Button(chosen.count == all.count ? "選択を外す" : "すべて選ぶ") {
+                            Button(chosen.count == all.count ? tr("選択を外す") : tr("すべて選ぶ")) {
                                 chosen = chosen.count == all.count ? [] : Set(all)
                             }
                             .font(.subheadline.weight(.medium))
@@ -135,10 +135,10 @@ struct UnlockChooserView: View {
 
             VStack(spacing: 4) {
                 // 使う側は薄く、やめる側は濃く。
-                Button("選んだものを使う") { model.unlockItems(RestrictedItems(items: Array(chosen))) }
+                Button(tr("選んだものを使う")) { model.unlockItems(RestrictedItems(items: Array(chosen))) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
                     .disabled(chosen.isEmpty)
-                Button("やめておく") { model.declineUnlock() }
+                Button(tr("やめておく")) { model.declineUnlock() }
                     .buttonStyle(FutoButtonStyle())
             }
             .padding(.horizontal, 24)

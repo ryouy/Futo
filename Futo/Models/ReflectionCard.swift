@@ -5,7 +5,7 @@ enum ReflectionKind: String, Codable, CaseIterable {
     case morning
     case night
 
-    var title: String { self == .morning ? "朝の振り返り" : "夜の振り返り" }
+    var title: String { self == .morning ? tr("朝の振り返り") : tr("夜の振り返り") }
 }
 
 /// 朝・夜に表示した振り返りカード。保存して、起動のたびに作り直さない。

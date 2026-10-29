@@ -27,9 +27,9 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     static func body(for kind: NotificationKind, seed: String = "") -> String {
         switch kind {
-        case .morning: return "今日のはじまりに、記録を少し見てみませんか。"
-        case .night: return "一日の終わりに、少しだけ振り返りませんか。"
-        case .postUse: return "使ったあとの気持ちを、よければ残せます。"
+        case .morning: return tr("今日のはじまりに、記録を少し見てみませんか。")
+        case .night: return tr("一日の終わりに、少しだけ振り返りませんか。")
+        case .postUse: return tr("使ったあとの気持ちを、よければ残せます。")
         case .outing: return OutingMessages.pick(seed: seed)
         }
     }
@@ -41,7 +41,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         center.removePendingNotificationRequests(withIdentifiers: ours)
         for candidate in candidates {
             let content = UNMutableNotificationContent()
-            content.title = "ふと"
+            content.title = tr("ふと")
             content.body = Self.body(for: candidate.kind, seed: candidate.id)
             content.interruptionLevel = .active   // 音・バッジは付けないが、バナーは出す（passive だと画面に出ない）
             content.userInfo = ["kind": candidate.kind.rawValue]
@@ -54,7 +54,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     /// 開発用：上限・間隔の対象外で、数秒後に1件だけ送る。
     func sendTest(kind: NotificationKind) async {
         let content = UNMutableNotificationContent()
-        content.title = "ふと"
+        content.title = tr("ふと")
         content.body = Self.body(for: kind, seed: UUID().uuidString)   // 開発用：押すたびに変わる
         content.interruptionLevel = .active
         content.userInfo = ["kind": kind.rawValue]
@@ -67,12 +67,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let settings = await center.notificationSettings()
         let status: String
         switch settings.authorizationStatus {
-        case .notDetermined: status = "未確認"
-        case .denied: status = "許可されていません"
-        case .authorized: status = "許可済み"
-        case .provisional: status = "仮の許可"
-        case .ephemeral: status = "一時的な許可"
-        @unknown default: status = "不明"
+        case .notDetermined: status = tr("未確認")
+        case .denied: status = tr("許可されていません")
+        case .authorized: status = tr("許可済み")
+        case .provisional: status = tr("仮の許可")
+        case .ephemeral: status = tr("一時的な許可")
+        @unknown default: status = tr("不明")
         }
         let requests = await center.pendingNotificationRequests()
         let lines: [String] = requests.compactMap { request in

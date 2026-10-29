@@ -14,10 +14,10 @@ struct SettingsView: View {
 
         var title: String {
             switch self {
-            case .restriction: return "制限"
-            case .breath: return "ひと呼吸"
-            case .notification: return "通知"
-            case .other: return "その他"
+            case .restriction: return tr("制限")
+            case .breath: return tr("ひと呼吸")
+            case .notification: return tr("通知")
+            case .other: return tr("その他")
             }
         }
     }
@@ -28,7 +28,7 @@ struct SettingsView: View {
     /// 記録の画面と同じく、上にタブを出して切り替える。
     var body: some View {
         VStack(spacing: 0) {
-            Picker("設定", selection: $tab) {
+            Picker(tr("設定"), selection: $tab) {
                 ForEach(SettingsTab.allCases, id: \.self) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
@@ -44,28 +44,28 @@ struct SettingsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .animation(.easeInOut(duration: 0.25), value: tab)
-        .navigationTitle("設定")
+        .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
-            "すべての記録を削除しますか？ 制限の設定は変わりません。",
+            tr("すべての記録を削除しますか？ 制限の設定は変わりません。"),
             isPresented: $confirmDelete, titleVisibility: .visible
         ) {
-            Button("削除", role: .destructive) { model.deleteAllRecords() }
-            Button("キャンセル", role: .cancel) {}
+            Button(tr("削除"), role: .destructive) { model.deleteAllRecords() }
+            Button(tr("キャンセル"), role: .cancel) {}
         }
         .confirmationDialog(
-            "制限をはずしますか？ 自動ではかけ直されません。",
+            tr("制限をはずしますか？ 自動ではかけ直されません。"),
             isPresented: $confirmOff, titleVisibility: .visible
         ) {
-            Button("はずす", role: .destructive) { model.stopRestriction() }
-            Button("キャンセル", role: .cancel) {}
+            Button(tr("はずす"), role: .destructive) { model.stopRestriction() }
+            Button(tr("キャンセル"), role: .cancel) {}
         }
         .confirmationDialog(
-            "実際の制限をはずして、デモに切り替えますか？",
+            tr("実際の制限をはずして、デモに切り替えますか？"),
             isPresented: $confirmLeaveDevice, titleVisibility: .visible
         ) {
-            Button("はずして切り替える", role: .destructive) { model.switchMode(to: .demo) }
-            Button("キャンセル", role: .cancel) {}
+            Button(tr("はずして切り替える"), role: .destructive) { model.switchMode(to: .demo) }
+            Button(tr("キャンセル"), role: .cancel) {}
         }
     }
 
@@ -74,7 +74,7 @@ struct SettingsView: View {
     private var restrictionTab: some View {
         Form {
             CardSection {
-                Toggle("いつも制限する", isOn: Binding(
+                Toggle(tr("いつも制限する"), isOn: Binding(
                     get: { model.intendsRestriction },
                     set: { on in
                         if on { model.startRestriction() } else { confirmOff = true }
@@ -83,7 +83,7 @@ struct SettingsView: View {
             }
 
             CardSection {
-                Toggle("デモモード", isOn: Binding(
+                Toggle(tr("デモモード"), isOn: Binding(
                     get: { isDemo },
                     set: { wantsDemo in
                         if wantsDemo, model.mode == .device, model.device.intendsRestriction {
@@ -97,8 +97,8 @@ struct SettingsView: View {
 
             if !isDemo {
                 CardSection {
-                    LabeledContent("許可", value: permissionText)
-                    Button(model.permission == .approved ? "再確認" : "許可する") {
+                    LabeledContent(tr("許可"), value: permissionText)
+                    Button(model.permission == .approved ? tr("再確認") : tr("許可する")) {
                         if model.permission == .approved {
                             model.refresh()
                         } else {
@@ -118,7 +118,7 @@ struct SettingsView: View {
     private var breathTab: some View {
         Form {
             CardSection {
-                Picker("待機時間", selection: Binding(
+                Picker(tr("待機時間"), selection: Binding(
                     get: { model.prefs.effectiveWaitSeconds },
                     set: { value in model.updatePreferences { $0.waitSeconds = value } }
                 )) {
@@ -128,24 +128,24 @@ struct SettingsView: View {
             }
 
             CardSection {
-                Picker("解除する時間", selection: Binding(
+                Picker(tr("解除する時間"), selection: Binding(
                     get: { model.prefs.effectiveUnlockMinutes },
                     set: { value in model.updatePreferences { $0.unlockMinutes = value } }
                 )) {
-                    ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text("\($0)分").tag($0) }
+                    ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text(tr("{0}分", "\($0)")).tag($0) }
                 }
                 .frame(minHeight: 44)
             }
 
             CardSection {
                 TimeToggleRow(
-                    title: "朝の振り返り",
+                    title: tr("朝の振り返り"),
                     isOn: Binding(get: { model.prefs.morningEnabled },
                                   set: { on in model.updatePreferences { $0.morningEnabled = on } }),
                     minute: Binding(get: { model.prefs.morningMinute },
                                     set: { value in model.updatePreferences { $0.morningMinute = value } }))
                 TimeToggleRow(
-                    title: "夜の振り返り",
+                    title: tr("夜の振り返り"),
                     isOn: Binding(get: { model.prefs.nightEnabled },
                                   set: { on in model.updatePreferences { $0.nightEnabled = on } }),
                     minute: Binding(get: { model.prefs.nightMinute },
@@ -169,13 +169,24 @@ struct SettingsView: View {
             }
 
             CardSection {
-                Button("すべての記録を削除", role: .destructive) { confirmDelete = true }
+                // 選択肢は、どちらの言語で表示していても、その言語自身の名前で出す。
+                Picker("言語 / Language", selection: Binding(
+                    get: { LanguageStore.shared.language },
+                    set: { model.changeLanguage($0) }
+                )) {
+                    ForEach(AppLanguage.allCases) { Text($0.displayName).tag($0) }
+                }
+                .frame(minHeight: 44)
+            }
+
+            CardSection {
+                Button(tr("すべての記録を削除"), role: .destructive) { confirmDelete = true }
                     .frame(minHeight: 44)
             }
 
             #if DEBUG
             CardSection {
-                Button("初回説明をもう一度表示") {
+                Button(tr("初回説明をもう一度表示")) {
                     // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
                     dismiss()
                     Task { @MainActor in
@@ -187,9 +198,9 @@ struct SettingsView: View {
             }
             if !isDemo {
                 CardSection {
-                    Text(SharedState.lastEvent ?? "拡張の記録はまだありません")
+                    Text(SharedState.lastEvent ?? tr("拡張の記録はまだありません"))
                         .font(.subheadline)
-                    Text(SharedState.isAvailable ? "App Group：利用できます" : "App Group：利用できません")
+                    Text(SharedState.isAvailable ? tr("App Group：利用できます") : tr("App Group：利用できません"))
                         .font(.subheadline)
                 }
             }
@@ -226,9 +237,9 @@ struct SettingsView: View {
 
     private var permissionText: String {
         switch model.permission {
-        case .notDetermined: return "未確認"
-        case .approved: return "許可済み"
-        case .denied: return "許可されていません"
+        case .notDetermined: return tr("未確認")
+        case .approved: return tr("許可済み")
+        case .denied: return tr("許可されていません")
         }
     }
 }

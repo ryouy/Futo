@@ -36,23 +36,23 @@ struct TutorialOverlay: View {
 
     /// 今の状態で見えているものだけを案内する。
     private var steps: [Step] {
-        var result = [Step(target: .status, lines: ["ここに、いまの状態が出ます。", "ふだんは「制限中」です。"])]
+        var result = [Step(target: .status, lines: [tr("ここに、いまの状態が出ます。"), tr("ふだんは「制限中」です。")])]
         if anchors[.plus] != nil {
-            result.append(Step(target: .plus, lines: ["＋で、制限するものを足せます。", "外せるのは、制限をはずした間だけ。"]))
+            result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます。"), tr("外せるのは、制限をはずした間だけ。")]))
         }
         result.append(Step(target: .main, lines: mainLines))
-        result.append(Step(target: .header, lines: ["右の時計は記録、", "歯車は設定です。"]))
-        result.append(Step(target: nil, lines: ["準備はできました。"]))
+        result.append(Step(target: .header, lines: [tr("右の時計は記録、"), tr("歯車は設定です。")]))
+        result.append(Step(target: nil, lines: [tr("準備はできました。")]))
         return result
     }
 
     private var mainLines: [String] {
-        if model.mode == .device, model.permission != .approved { return ["まず、ここで", "許可をします。"] }
-        if model.targetCount == 0 { return ["まず、ここで", "制限するものを選びます。"] }
+        if model.mode == .device, model.permission != .approved { return [tr("まず、ここで"), tr("許可をします。")] }
+        if model.targetCount == 0 { return [tr("まず、ここで"), tr("制限するものを選びます。")] }
         switch model.restriction {
-        case .configured: return ["使いたいときは、ここ。", "ひと呼吸おいてから、", "使うかを選べます。"]
-        case .temporarilyUnlocked: return ["使い終わったら、", "ここで制限に戻します。"]
-        case .off, .unverifiable: return ["ここで制限をかけます。", "かけておくのが", "おすすめです。"]
+        case .configured: return [tr("使いたいときは、ここ。"), tr("ひと呼吸おいてから、"), tr("使うかを選べます。")]
+        case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻します。")]
+        case .off, .unverifiable: return [tr("ここで制限をかけます。"), tr("かけておくのが"), tr("おすすめです。")]
         }
     }
 
@@ -148,12 +148,12 @@ struct TutorialOverlay: View {
         VStack {
             Spacer()
             HStack {
-                Button("スキップ") { model.finishTutorial() }
+                Button(tr("スキップ")) { model.finishTutorial() }
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white.opacity(0.85))
                     .frame(minHeight: 48)
                 Spacer()
-                pill("つぎへ") { model.tutorialStep = index + 1 }
+                pill(tr("つぎへ")) { model.tutorialStep = index + 1 }
             }
             .padding(.horizontal, 28)
             .padding(.bottom, max(bottomInset, 16) + 8)
@@ -163,7 +163,7 @@ struct TutorialOverlay: View {
     /// 最後は、一言のあとに「はじめる」を置く。
     private var endView: some View {
         VStack(spacing: 22) {
-            messageCard(["準備はできました。"])
+            messageCard([tr("準備はできました。")])
             startButton
         }
         .frame(maxHeight: .infinity)
@@ -173,7 +173,7 @@ struct TutorialOverlay: View {
     private var startButton: some View {
         Button { model.finishTutorial() } label: {
             HStack(spacing: 8) {
-                Text("はじめる")
+                Text(tr("はじめる"))
                 Image(systemName: "arrow.right")
             }
             .font(.headline.weight(.semibold))

@@ -7,6 +7,7 @@ struct FutoApp: App {
     @State private var model: AppModel
 
     init() {
+        LanguageStore.shared.applySystemDefaultIfUnset()
         let container: ModelContainer
         do {
             container = try ModelContainer(for: Session.self, ReflectionCard.self)

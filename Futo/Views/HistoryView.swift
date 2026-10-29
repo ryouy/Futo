@@ -15,7 +15,7 @@ struct SessionRow: View {
                 Spacer()
                 Text(timeText).font(.footnote).foregroundStyle(.secondary)
             }
-            Text([session.purposeText, session.unlockDurationText].compactMap { $0 }.joined(separator: "　・　"))
+            Text([session.purposeText, session.unlockDurationText].compactMap { $0 }.joined(separator: tr("　・　")))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             if !unlockedItems.isEmpty {
@@ -26,7 +26,7 @@ struct SessionRow: View {
                 }
             }
             if let reflection = session.reflection, reflection != .skipped {
-                Text("感想：\(reflection.label)").font(.footnote).foregroundStyle(.secondary)
+                Text(tr("感想：{0}", "\(reflection.label)")).font(.footnote).foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 6)
@@ -35,9 +35,10 @@ struct SessionRow: View {
     }
 
     private var timeText: String {
-        showsDate
-            ? session.startedAt.formatted(.dateTime.month().day().hour().minute())
-            : session.startedAt.formatted(.dateTime.hour().minute())
+        let locale = LanguageStore.shared.language.locale
+        return showsDate
+            ? session.startedAt.formatted(Date.FormatStyle().month().day().hour().minute().locale(locale))
+            : session.startedAt.formatted(Date.FormatStyle().hour().minute().locale(locale))
     }
 
     /// 解除したもの（アプリ・カテゴリ・ウェブサイト）。以前の版の保存形式（アプリのみ）も読める。

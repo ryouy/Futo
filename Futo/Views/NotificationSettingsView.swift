@@ -41,10 +41,10 @@ struct NotificationSettingsView: View {
 
     private func title(_ kind: NotificationKind) -> String {
         switch kind {
-        case .morning: return "朝の振り返り"
-        case .night: return "夜の振り返り"
-        case .postUse: return "使ったあとの確認"
-        case .outing: return "お出かけのおすすめ"
+        case .morning: return tr("朝の振り返り")
+        case .night: return tr("夜の振り返り")
+        case .postUse: return tr("使ったあとの確認")
+        case .outing: return tr("お出かけのおすすめ")
         }
     }
 
@@ -72,15 +72,15 @@ struct NotificationSettingsView: View {
 
             CardSection {
                 HStack {
-                    Text("静かな時間")
+                    Text(tr("静かな時間"))
                     Spacer()
-                    DatePicker("はじまり", selection: minuteBinding(
+                    DatePicker(tr("はじまり"), selection: minuteBinding(
                         get: { model.prefs.quietStartMinute },
                         set: { value in model.updatePreferences { $0.quietStartMinute = value } }),
                         displayedComponents: .hourAndMinute)
                         .labelsHidden()
-                    Text("〜").foregroundStyle(.secondary)
-                    DatePicker("おわり", selection: minuteBinding(
+                    Text(tr("〜")).foregroundStyle(.secondary)
+                    DatePicker(tr("おわり"), selection: minuteBinding(
                         get: { model.prefs.quietEndMinute },
                         set: { value in model.updatePreferences { $0.quietEndMinute = value } }),
                         displayedComponents: .hourAndMinute)
@@ -98,32 +98,32 @@ struct NotificationSettingsView: View {
 
             #if DEBUG
             CardSection {
-                LabeledContent("許可", value: diagnostics?.status ?? "…")
+                LabeledContent(tr("許可"), value: diagnostics?.status ?? tr("…"))
                 if let pending = diagnostics?.pending {
-                    Text(pending.isEmpty ? "予約中の通知はありません" : pending.joined(separator: "\n"))
+                    Text(pending.isEmpty ? tr("予約中の通知はありません") : pending.joined(separator: "\n"))
                         .font(.subheadline)
                 }
-                Button("更新") { Task { diagnostics = await model.notifications.diagnostics() } }
+                Button(tr("更新")) { Task { diagnostics = await model.notifications.diagnostics() } }
                     .frame(minHeight: 44)
             }
             .task { diagnostics = await model.notifications.diagnostics() }
             #endif
         }
         .compactForm()
-        .alert("通知を許可しますか？", isPresented: Binding(
+        .alert(tr("通知を許可しますか？"), isPresented: Binding(
             get: { model.pendingNotificationEnable != nil },
             set: { if !$0 { model.pendingNotificationEnable = nil } }
         )) {
-            Button("許可を求める") { model.confirmEnableNotification() }
-            Button("今はしない", role: .cancel) { model.pendingNotificationEnable = nil }
+            Button(tr("許可を求める")) { model.confirmEnableNotification() }
+            Button(tr("今はしない"), role: .cancel) { model.pendingNotificationEnable = nil }
         } message: {
-            Text("振り返りの時間をお知らせするために使います。許可しなくても、ほかの機能は使えます。")
+            Text(tr("振り返りの時間をお知らせするために使います。許可しなくても、ほかの機能は使えます。"))
         }
-        .alert("通知", isPresented: Binding(
+        .alert(tr("通知"), isPresented: Binding(
             get: { model.notificationMessage != nil },
             set: { if !$0 { model.notificationMessage = nil } }
         )) {
-            Button("閉じる", role: .cancel) {}
+            Button(tr("閉じる"), role: .cancel) {}
         } message: {
             Text(model.notificationMessage ?? "")
         }

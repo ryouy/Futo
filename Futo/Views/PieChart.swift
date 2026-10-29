@@ -5,7 +5,7 @@ import SwiftUI
 struct PieCard: View {
     let title: String
     let slices: [Breakdown.Slice]
-    var emptyText = "まだ記録がありません。"
+    var emptyText = tr("まだ記録がありません。")
 
     private var shown: [Breakdown.Slice] { slices.filter { $0.count > 0 } }
 
@@ -23,13 +23,13 @@ struct PieCard: View {
             } else {
                 HStack(alignment: .center, spacing: 20) {
                     Chart(shown) { slice in
-                        SectorMark(angle: .value("件数", slice.count), innerRadius: .ratio(0.55), angularInset: 2)
+                        SectorMark(angle: .value(tr("件数"), slice.count), innerRadius: .ratio(0.55), angularInset: 2)
                             .foregroundStyle(color(for: slice))
                     }
                     .chartLegend(.hidden)
                     .frame(width: 120, height: 120)
                     .accessibilityLabel(title)
-                    .accessibilityValue(shown.map { "\($0.label) \($0.count)件" }.joined(separator: "、"))
+                    .accessibilityValue(shown.map { tr("{0} {1}件", "\($0.label)", "\($0.count)") }.joined(separator: tr("、")))
 
                     // 凡例は小さく、グラフの横に縦に並べる。
                     VStack(alignment: .leading, spacing: 6) {

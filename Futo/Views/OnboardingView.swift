@@ -13,16 +13,18 @@ struct OnboardingView: View {
         var text: String
     }
 
-    private let pages: [Page] = [
-        Page(symbol: nil, title: "使う前に、ひと呼吸。",
-             text: "スマホを、ふと開く前に。\n少し立ち止まる時間を作るアプリです。"),
-        Page(symbol: "lock.fill", title: "ふだんは、制限をかけておく",
-             text: "選んだアプリやサイトは、\nふだんは使えなくします。"),
-        Page(symbol: "hourglass", title: "使いたいときは、ひと呼吸",
-             text: "使う理由を選んで、少し待ちます。\nそのあと、自分で決めます。"),
-        Page(symbol: "moon.stars", title: "そっと、振り返る",
-             text: "朝や夜に、短く振り返れます。\n記録は、この端末の中だけにあります。"),
-    ]
+    private var pages: [Page] {
+        [
+        Page(symbol: nil, title: tr("使う前に、ひと呼吸。"),
+             text: tr("スマホを、ふと開く前に。\n少し立ち止まる時間を作るアプリです。")),
+        Page(symbol: "lock.fill", title: tr("ふだんは、制限をかけておく"),
+             text: tr("選んだアプリやサイトは、\nふだんは使えなくします。")),
+        Page(symbol: "hourglass", title: tr("使いたいときは、ひと呼吸"),
+             text: tr("使う理由を選んで、少し待ちます。\nそのあと、自分で決めます。")),
+        Page(symbol: "moon.stars", title: tr("そっと、振り返る"),
+             text: tr("朝や夜に、短く振り返れます。\n記録は、この端末の中だけにあります。")),
+        ]
+    }
 
     @State private var page = 0
     /// 指で動かしている間のずれ
@@ -91,10 +93,10 @@ struct OnboardingView: View {
         VStack(spacing: 22) {
             Spacer(minLength: 0)
             Image("Logo").resizable().scaledToFit().frame(width: 96).accessibilityHidden(true)
-            Text("はじめましょう")
+            Text(tr("はじめましょう"))
                 .font(.title2.weight(.medium))
                 .foregroundStyle(Self.cream)
-            Text(model.isOnboardingReplay ? "説明は以上です。" : "どちらで始めますか？")
+            Text(model.isOnboardingReplay ? tr("説明は以上です。") : tr("どちらで始めますか？"))
                 .foregroundStyle(Self.cream.opacity(0.85))
             Spacer(minLength: 0)
         }
@@ -159,7 +161,7 @@ struct OnboardingView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(page + 1)ページ目、全\(pages.count + 1)ページ")
+        .accessibilityLabel(tr("{0}ページ目、全{1}ページ", "\(page + 1)", "\(pages.count + 1)"))
     }
 
     @ViewBuilder
@@ -168,11 +170,11 @@ struct OnboardingView: View {
             VStack(spacing: 12) {
                 if model.isOnboardingReplay {
                     // 開発用の見直し：モードも制限も変えず、閉じるだけ。
-                    pill("閉じる", filled: true) { model.finishOnboardingReplay() }
+                    pill(tr("閉じる"), filled: true) { model.finishOnboardingReplay() }
                 } else {
-                    pill("実機で設定する", filled: true) { model.completeOnboarding(mode: .device) }
-                    pill("デモで試す", filled: false) { model.completeOnboarding(mode: .demo) }
-                    Text("デモでは、実際のアプリは制限されません。")
+                    pill(tr("実機で設定する"), filled: true) { model.completeOnboarding(mode: .device) }
+                    pill(tr("デモで試す"), filled: false) { model.completeOnboarding(mode: .demo) }
+                    Text(tr("デモでは、実際のアプリは制限されません。"))
                         .font(.footnote)
                         .foregroundStyle(Self.cream.opacity(0.7))
                 }
@@ -180,8 +182,8 @@ struct OnboardingView: View {
             .transition(.opacity)
         } else {
             VStack(spacing: 4) {
-                pill("つぎへ", filled: true) { withAnimation(slide) { page += 1 } }
-                Button("スキップ") { withAnimation(slide) { page = pages.count } }
+                pill(tr("つぎへ"), filled: true) { withAnimation(slide) { page += 1 } }
+                Button(tr("スキップ")) { withAnimation(slide) { page = pages.count } }
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Self.cream.opacity(0.75))
                     .frame(minHeight: 44)

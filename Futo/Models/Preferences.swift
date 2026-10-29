@@ -102,8 +102,8 @@ struct Preferences: Codable, Equatable {
 func durationText(seconds: Double) -> String {
     let total = Int(seconds.rounded())
     let minutes = total / 60, rest = total % 60
-    if minutes == 0 { return "\(rest)秒" }
-    return rest == 0 ? "\(minutes)分" : "\(minutes)分\(rest)秒"
+    if minutes == 0 { return tr("{0}秒", "\(rest)") }
+    return rest == 0 ? tr("{0}分", "\(minutes)") : tr("{0}分{1}秒", "\(minutes)", "\(rest)")
 }
 
 /// 0時からの分を「8:00」の形にする。

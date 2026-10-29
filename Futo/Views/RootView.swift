@@ -88,6 +88,7 @@ struct RootView: View {
             withAnimation(.easeInOut(duration: 0.8)) { showSplash = false }
         }
         .tint(Theme.accent)
+        .environment(\.locale, LanguageStore.shared.language.locale)
         .foregroundStyle(Theme.text)
         .animation(.easeInOut(duration: 0.3), value: ThemeStore.shared.color)
         .fontDesign(.rounded)
@@ -95,11 +96,11 @@ struct RootView: View {
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。
             if phase == .active { model.didBecomeActive() }
         }
-        .alert("お知らせ", isPresented: Binding(
+        .alert(tr("お知らせ"), isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
         )) {
-            Button("閉じる", role: .cancel) {}
+            Button(tr("閉じる"), role: .cancel) {}
         } message: {
             Text(model.errorMessage ?? "")
         }

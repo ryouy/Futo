@@ -14,6 +14,13 @@ extension AppModel {
 
     // MARK: 設定
 
+    /// 表示言語を切り替える。通知の文言も、新しい言語で予約し直す。
+    func changeLanguage(_ language: AppLanguage) {
+        LanguageStore.shared.select(language)
+        refresh()
+        rescheduleNotifications()
+    }
+
     func updatePreferences(_ change: (inout Preferences) -> Void) {
         var updated = prefs
         change(&updated)
@@ -131,7 +138,7 @@ extension AppModel {
             case .notDetermined:
                 pendingNotificationEnable = kind
             default:
-                notificationMessage = "通知が許可されていません。iPhoneの設定アプリで変えられます。"
+                notificationMessage = tr("通知が許可されていません。iPhoneの設定アプリで変えられます。")
             }
         }
     }
@@ -143,7 +150,7 @@ extension AppModel {
             if await notifications.requestAuthorization() {
                 updatePreferences { $0.setNotification(kind, true) }
             } else {
-                notificationMessage = "通知は許可されませんでした。通知なしでも、すべての機能が使えます。"
+                notificationMessage = tr("通知は許可されませんでした。通知なしでも、すべての機能が使えます。")
             }
         }
     }

@@ -25,14 +25,14 @@ struct ReflectionOverlay: View {
                     .font(.system(size: 34, weight: .light))
                     .foregroundStyle(Theme.accent)
                     .accessibilityHidden(true)
-                Text(card.title).font(.title3.weight(.medium))
+                Text(card.kind.title).font(.title3.weight(.medium))
                 VStack(spacing: 10) {
                     ForEach(Array(card.lines.enumerated()), id: \.offset) { _, line in
                         Text(line).oneLine(0.75)
                     }
                 }
                 .multilineTextAlignment(.center)
-                Button("わかった", action: onClose)
+                Button(tr("わかった"), action: onClose)
                     .buttonStyle(FutoButtonStyle())
                     .padding(.top, 8)
             }
@@ -56,7 +56,7 @@ struct ReflectionQuestionOverlay: View {
                     .font(.system(size: 30, weight: .light))
                     .foregroundStyle(Theme.accent)
                     .accessibilityHidden(true)
-                Text("さっきの時間は、どうでしたか？")
+                Text(tr("さっきの時間は、どうでしたか？"))
                     .font(.title3.weight(.medium))
                     .oneLine(0.8)
                     .padding(.bottom, 6)
@@ -64,7 +64,7 @@ struct ReflectionQuestionOverlay: View {
                     Button(reflection.label) { onAnswer(reflection) }
                         .buttonStyle(FutoButtonStyle(prominent: false))
                 }
-                Button("答えない") { onAnswer(.skipped) }
+                Button(tr("答えない")) { onAnswer(.skipped) }
                     .buttonStyle(FutoTextButtonStyle())
             }
             .padding(28)
@@ -89,20 +89,20 @@ struct SuggestionCardView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .lineSpacing(3)
-            Button("変更する") { confirming = true }
+            Button(tr("変更する")) { confirming = true }
                 .buttonStyle(FutoButtonStyle())
-            Button("今のまま") { model.resolveSuggestion(.kept) }
+            Button(tr("今のまま")) { model.resolveSuggestion(.kept) }
                 .buttonStyle(FutoButtonStyle(prominent: false))
-            Button("今回は見送る") { model.resolveSuggestion(.skipped) }
+            Button(tr("今回は見送る")) { model.resolveSuggestion(.skipped) }
                 .buttonStyle(FutoTextButtonStyle())
         }
         .card(tint: Theme.softBlue)
         .confirmationDialog(
-            "\(suggestion.currentText) から \(suggestion.proposedText) に変更しますか？",
+            tr("{0} から {1} に変更しますか？", "\(suggestion.currentText)", "\(suggestion.proposedText)"),
             isPresented: $confirming, titleVisibility: .visible
         ) {
-            Button("変更する") { model.applySuggestion() }
-            Button("キャンセル", role: .cancel) {}
+            Button(tr("変更する")) { model.applySuggestion() }
+            Button(tr("キャンセル"), role: .cancel) {}
         }
     }
 }

@@ -124,7 +124,7 @@ final class AppModel {
             sessions.interrupt(session)
             activeSession = nil
             showFlow = false
-            notice = "許可を確認できなかったため、ひと呼吸を中断しました。"
+            notice = tr("許可を確認できなかったため、ひと呼吸を中断しました。")
         }
     }
 
@@ -181,7 +181,7 @@ final class AppModel {
         guard newMode != mode else { return true }
         if mode == .device, device.intendsRestriction {
             guard device.stop() else {
-                errorMessage = "実際の制限を終了できたか確認できないため、切り替えを保留しました。設定の「いつも制限する」をはずしてお試しください。"
+                errorMessage = tr("実際の制限を終了できたか確認できないため、切り替えを保留しました。設定の「いつも制限する」をはずしてお試しください。")
                 refresh()
                 return false
             }
@@ -228,23 +228,23 @@ final class AppModel {
 
     func startRestriction() {
         guard permission == .approved else {
-            notice = "許可が必要です"
+            notice = tr("許可が必要です")
             return
         }
         guard targetCount > 0 else {
-            notice = "制限するものを選んでください"
+            notice = tr("制限するものを選んでください")
             return
         }
         service.start()
         refresh()
         if restriction != .configured {
-            errorMessage = "設定を確認できませんでした。もう一度お試しください"
+            errorMessage = tr("設定を確認できませんでした。もう一度お試しください")
         }
     }
 
     func stopRestriction() {
         if !service.stop() {
-            errorMessage = "制限を外せたか確認できませんでした。もう一度お試しください"
+            errorMessage = tr("制限を外せたか確認できませんでした。もう一度お試しください")
         }
         refresh()
     }

@@ -18,10 +18,10 @@ enum Purpose: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .contact: return "連絡"
-        case .research: return "調べもの"
-        case .change: return "気分転換"
-        case .noReason: return "なんとなく"
+        case .contact: return tr("連絡")
+        case .research: return tr("調べもの")
+        case .change: return tr("気分転換")
+        case .noReason: return tr("なんとなく")
         }
     }
 }
@@ -48,9 +48,9 @@ enum SessionOutcome: String, Codable {
 
     var label: String {
         switch self {
-        case .deferred: return "やめておく"
-        case .wantsToUse: return "使いたい"
-        case .interrupted: return "中断"
+        case .deferred: return tr("やめておく")
+        case .wantsToUse: return tr("使いたい")
+        case .interrupted: return tr("中断")
         }
     }
 }
@@ -65,10 +65,10 @@ enum Reflection: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .satisfied: return "満足した"
-        case .neutral: return "どちらでもない"
-        case .wishedLess: return "使いすぎかも"
-        case .skipped: return "答えない"
+        case .satisfied: return tr("満足した")
+        case .neutral: return tr("どちらでもない")
+        case .wishedLess: return tr("使いすぎかも")
+        case .skipped: return tr("答えない")
         }
     }
 }

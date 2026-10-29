@@ -82,8 +82,8 @@ struct PurposeView: View {
     var body: some View {
         CenteredScroll {
             VStack(spacing: 14) {
-                FlowTitle(text: "今、どんなことに使いたいですか？")
-                Text("このあと、\(model.waitDurationText)だけ立ち止まります。")
+                FlowTitle(text: tr("今、どんなことに使いたいですか？"))
+                Text(tr("このあと、{0}だけ立ち止まります。", "\(model.waitDurationText)"))
                     .oneLine(0.8)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -93,18 +93,18 @@ struct PurposeView: View {
                         Text(item.label).oneLine()
                     }
                 }
-                Button("ひと呼吸おく") { model.choosePurpose(selected) }
+                Button(tr("ひと呼吸おく")) { model.choosePurpose(selected) }
                     .buttonStyle(FutoButtonStyle())
                     .disabled(selected == nil)
                     .padding(.top, 10)
-                Button("答えずに進む") { model.choosePurpose(nil) }
+                Button(tr("答えずに進む")) { model.choosePurpose(nil) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { model.leavePurposeStep() } label: {
-                    Label("戻る", systemImage: "chevron.backward")
+                    Label(tr("戻る"), systemImage: "chevron.backward")
                 }
             }
         }
@@ -135,8 +135,8 @@ struct WaitView: View {
     var body: some View {
         CenteredScroll {
             VStack(spacing: 24) {
-                FlowTitle(text: "少し、立ち止まってみましょう。")
-                Text("\(model.waitDurationText)、ゆっくり息をしてみましょう。")
+                FlowTitle(text: tr("少し、立ち止まってみましょう。"))
+                Text(tr("{0}、ゆっくり息をしてみましょう。", "\(model.waitDurationText)"))
                     .oneLine(0.8)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -145,7 +145,7 @@ struct WaitView: View {
                     .opacity(showTimer ? 1 : 0)
                     .padding(.vertical, 12)
 
-                Button("やめてホームへ") { model.endBreath() }
+                Button(tr("やめてホームへ")) { model.endBreath() }
                     .buttonStyle(FutoTextButtonStyle())
                     .opacity(showTimer ? 1 : 0)
             }
@@ -192,7 +192,7 @@ struct WaitView: View {
                     .rotationEffect(.degrees(-90))
                 Text(timeText(remaining))
                     .font(.system(size: 44, weight: .light, design: .rounded).monospacedDigit())
-                    .accessibilityLabel("残り \(Int(remaining.rounded(.up))) 秒")
+                    .accessibilityLabel(tr("残り {0} 秒", "\(Int(remaining.rounded(.up)))"))
             }
         }
         .frame(width: 200, height: 200)
@@ -205,12 +205,12 @@ struct FinalChoiceView: View {
     var body: some View {
         CenteredScroll {
             VStack(spacing: 16) {
-                FlowTitle(text: "今も使いたいですか？")
+                FlowTitle(text: tr("今も使いたいですか？"))
                     .padding(.bottom, 12)
                 // 色で区別する。使う側は薄く、やめる側は濃く。どちらも同じ大きさで、押しやすさは変えない。
-                Button("使いたい") { model.finish(.wantsToUse) }
+                Button(tr("使いたい")) { model.finish(.wantsToUse) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
-                Button("やめておく") { model.finish(.deferred) }
+                Button(tr("やめておく")) { model.finish(.deferred) }
                     .buttonStyle(FutoButtonStyle())
             }
         }
@@ -224,18 +224,18 @@ struct ResultView: View {
 
     /// 見出しと本文。解除できたときは「解除しました」と、ひとこと添える。
     private var content: (title: String, lines: [String]) {
-        if outcome == .deferred { return ("記録しました。", []) }
-        if model.isUnlocking { return ("解除しています…", []) }
+        if outcome == .deferred { return (tr("記録しました。"), []) }
+        if model.isUnlocking { return (tr("解除しています…"), []) }
         switch model.unlockResult {
         case .started:
             let minutes = model.prefs.effectiveUnlockMinutes
-            return ("解除しました", ["\(minutes)分ほど、ゆっくりどうぞ。", "戻ってきたら、感想を教えてください。"])
+            return (tr("解除しました"), [tr("{0}分ほど、ゆっくりどうぞ。", "\(minutes)"), tr("戻ってきたら、感想を教えてください。")])
         case .failed:
-            return ("解除できませんでした", ["制限は続いています。"])
+            return (tr("解除できませんでした"), [tr("制限は続いています。")])
         case .unsupported:
-            return ("記録しました。", ["この設定では、解除は使えません。"])
+            return (tr("記録しました。"), [tr("この設定では、解除は使えません。")])
         case nil:
-            return ("記録しました。", [model.mode == .demo ? "デモでは、実際の制限は変わりません。" : "制限は続いています。"])
+            return (tr("記録しました。"), [model.mode == .demo ? tr("デモでは、実際の制限は変わりません。") : tr("制限は続いています。")])
         }
     }
 
@@ -252,7 +252,7 @@ struct ResultView: View {
                     ForEach(content.lines, id: \.self) { line in
                         Text(line).oneLine(0.8).foregroundStyle(.secondary)
                     }
-                    Button("ホームへ") { model.closeFlow() }
+                    Button(tr("ホームへ")) { model.closeFlow() }
                         .buttonStyle(FutoButtonStyle())
                         .disabled(model.isUnlocking)
                         .padding(.top, 14)

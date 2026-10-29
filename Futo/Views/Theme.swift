@@ -12,10 +12,10 @@ enum ThemeColor: String, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .wakaba: return "深緑"
-        case .sora: return "空"
-        case .sakura: return "桜"
-        case .fuji: return "藤"
+        case .wakaba: return tr("深緑")
+        case .sora: return tr("空")
+        case .sakura: return tr("桜")
+        case .fuji: return tr("藤")
         }
     }
 
@@ -252,7 +252,7 @@ struct FutoTextButtonStyle: ButtonStyle {
 /// デモ中は全画面の上部に常時表示する。
 struct DemoBanner: View {
     var body: some View {
-        Label("デモモード：実際のアプリは制限しません", systemImage: "info.circle")
+        Label(tr("デモモード：実際のアプリは制限しません"), systemImage: "info.circle")
             .font(.footnote.weight(.medium))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)

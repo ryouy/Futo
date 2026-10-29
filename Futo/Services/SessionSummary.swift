@@ -5,9 +5,9 @@ extension Session {
     /// 結果の見出し。「使いたい」「中断」のような曖昧な言葉を避け、何が起きたかで言う。
     var resultTitle: String {
         switch outcome {
-        case .deferred: return "やめた"
-        case .wantsToUse: return temporaryUnlockStartedAt != nil ? "解除した" : "使いたいと答えた"
-        case .interrupted, nil: return "途中でやめた"
+        case .deferred: return tr("やめた")
+        case .wantsToUse: return temporaryUnlockStartedAt != nil ? tr("解除した") : tr("使いたいと答えた")
+        case .interrupted, nil: return tr("途中でやめた")
         }
     }
 
@@ -25,14 +25,14 @@ extension Session {
     /// 「解除 約3分」「解除 1分未満」「解除中」。解除していなければ nil。
     var unlockDurationText: String? {
         guard temporaryUnlockStartedAt != nil else { return nil }
-        guard let duration = unlockDuration else { return "解除中" }
-        if duration < 60 { return "解除 1分未満" }
-        return "解除 約\(Int((duration / 60).rounded()))分"
+        guard let duration = unlockDuration else { return tr("解除中") }
+        if duration < 60 { return tr("解除 1分未満") }
+        return tr("解除 約{0}分", "\(Int((duration / 60).rounded()))")
     }
 
     var purposeText: String {
-        guard let purpose else { return "目的：答えなかった" }
-        return "目的：\(purpose.label)"
+        guard let purpose else { return tr("目的：答えなかった") }
+        return tr("目的：{0}", "\(purpose.label)")
     }
 }
 
@@ -50,7 +50,7 @@ struct Breakdown: Equatable {
         var id: String { label }
     }
 
-    static let noAnswer = "答えなかった"
+    static var noAnswer: String { tr("答えなかった") }
 
     static func make(sessions: [Session], mode: AppMode, interval: DateInterval?) -> Breakdown {
         let records = PeriodInsights.records(sessions: sessions, mode: mode, interval: interval)

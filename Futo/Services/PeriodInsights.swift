@@ -8,10 +8,10 @@ enum TimeBand: String, CaseIterable, Identifiable {
     /// 何時かは見せず、時間帯の名前だけ。
     var label: String {
         switch self {
-        case .morning: return "朝"
-        case .daytime: return "昼"
-        case .evening: return "夕方"
-        case .night: return "夜"
+        case .morning: return tr("朝")
+        case .daytime: return tr("昼")
+        case .evening: return tr("夕方")
+        case .night: return tr("夜")
         }
     }
 
@@ -33,9 +33,9 @@ enum InsightPeriod: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .week: return "今週"
-        case .month: return "今月"
-        case .all: return "すべて"
+        case .week: return tr("今週")
+        case .month: return tr("今月")
+        case .all: return tr("すべて")
         }
     }
 

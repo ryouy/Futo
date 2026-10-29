@@ -16,7 +16,7 @@ struct RecordsView: View {
         let breakdown = Breakdown.make(sessions: sessions, mode: mode, interval: interval)
 
         VStack(spacing: 0) {
-            Picker("期間", selection: $period) {
+            Picker(tr("期間"), selection: $period) {
                 ForEach(InsightPeriod.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
@@ -24,7 +24,7 @@ struct RecordsView: View {
             .padding(.bottom, 8)
 
             let today = DailyCounts.today(sessions: sessions, mode: mode)
-            Text("今日　やめた \(today.deferred)　使いたかった \(today.wantsToUse)")
+            Text(tr("今日　やめた {0}　使いたかった {1}", "\(today.deferred)", "\(today.wantsToUse)"))
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -34,12 +34,12 @@ struct RecordsView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
                     if insights.total == 0 {
-                        Text("この期間の記録はまだありません。").foregroundStyle(.secondary).card()
+                        Text(tr("この期間の記録はまだありません。")).foregroundStyle(.secondary).card()
                     } else {
                         countsCard(insights)
-                        PieCard(title: "目的", slices: breakdown.purposes)
+                        PieCard(title: tr("目的"), slices: breakdown.purposes)
                         if insights.answeredReflections > 0 {
-                            PieCard(title: "感想", slices: breakdown.reflections)
+                            PieCard(title: tr("感想"), slices: breakdown.reflections)
                         }
                         bandCard(insights)
                         recordsCard(finished)
@@ -50,7 +50,7 @@ struct RecordsView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
-        .navigationTitle("記録")
+        .navigationTitle(tr("記録"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -58,12 +58,12 @@ struct RecordsView: View {
 
     private func countsCard(_ w: PeriodInsights) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            row("ひと呼吸", "\(w.total)")
-            row("やめておく", "\(w.deferred)")
-            row("使いたい", "\(w.wantsToUse)")
-            if w.answeredReflections > 0 { row("感想に答えた", "\(w.answeredReflections)") }
+            row(tr("ひと呼吸"), "\(w.total)")
+            row(tr("やめておく"), "\(w.deferred)")
+            row(tr("使いたい"), "\(w.wantsToUse)")
+            if w.answeredReflections > 0 { row(tr("感想に答えた"), "\(w.answeredReflections)") }
             if w.unlockStarted > 0 {
-                row("解除した", w.unlockSeconds >= 60 ? "\(w.unlockStarted)回・約\(Int((w.unlockSeconds / 60).rounded()))分" : "\(w.unlockStarted)回")
+                row(tr("解除した"), w.unlockSeconds >= 60 ? tr("{0}回・約{1}分", "\(w.unlockStarted)", "\(Int((w.unlockSeconds / 60).rounded()))") : tr("{0}回", "\(w.unlockStarted)"))
             }
         }
         .card()
@@ -82,7 +82,7 @@ struct RecordsView: View {
         let items = TimeBand.allCases.map { ($0.label, w.bandCounts[$0] ?? 0) }
         let maxValue = max(items.map(\.1).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
-            Text("時間帯").font(.subheadline.weight(.medium))
+            Text(tr("時間帯")).font(.subheadline.weight(.medium))
             ForEach(items, id: \.0) { item in
                 HStack(spacing: 10) {
                     Text(item.0).font(.footnote).frame(width: 44, alignment: .leading)
@@ -102,7 +102,7 @@ struct RecordsView: View {
 
     private func recordsCard(_ records: [Session]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("記録").font(.subheadline.weight(.medium)).padding(.bottom, 6)
+            Text(tr("記録")).font(.subheadline.weight(.medium)).padding(.bottom, 6)
             ForEach(records) { session in
                 SessionRow(session: session)
                 if session.id != records.last?.id { Divider() }

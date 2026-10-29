@@ -37,10 +37,10 @@ final class DeviceRestrictionService: RestrictionService {
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
             refreshPermission()
-            return permission == .approved ? nil : "許可が完了しませんでした。もう一度お試しください。"
+            return permission == .approved ? nil : tr("許可が完了しませんでした。もう一度お試しください。")
         } catch {
             refreshPermission()
-            return "許可が完了しませんでした。もう一度お試しください。"
+            return tr("許可が完了しませんでした。もう一度お試しください。")
         }
     }
 
@@ -157,7 +157,7 @@ final class DeviceRestrictionService: RestrictionService {
 
     func relock() {
         stopUnlockMonitoring()
-        SharedState.relock(reason: "アプリから制限に戻しました")
+        SharedState.relock(reason: tr("アプリから制限に戻しました"))
     }
 
     private func stopUnlockMonitoring() {
@@ -177,7 +177,7 @@ final class DeviceRestrictionService: RestrictionService {
             }
             // 拡張が再制限していない場合の安全側の補正。解除したままにしない。
             stopUnlockMonitoring()
-            SharedState.relock(reason: "アプリで未再制限を検出し、再制限しました")
+            SharedState.relock(reason: tr("アプリで未再制限を検出し、再制限しました"))
         }
         return SharedState.shieldMatches(items: items) ? .configured : .unverifiable
     }

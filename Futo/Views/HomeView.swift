@@ -38,6 +38,7 @@ struct HomeView: View {
         .sheet(item: $sheet) { item in
             sheetContent(item)
                 .foregroundStyle(Theme.text)
+                .environment(\.locale, LanguageStore.shared.language.locale)
                 .presentationCornerRadius(32)
                 .presentationBackground(Theme.background)
                 .presentationDragIndicator(.visible)
@@ -57,17 +58,17 @@ struct HomeView: View {
     private func mainContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Text("ふと").font(.title3.weight(.medium)).foregroundStyle(Theme.accent)
+                Text(tr("ふと")).font(.title3.weight(.medium)).foregroundStyle(Theme.accent)
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
                         Image(systemName: "clock").font(.title3).frame(width: 44, height: 44)
                     }
-                    .accessibilityLabel("記録")
+                    .accessibilityLabel(tr("記録"))
                     Button { sheet = .settings } label: {
                         Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
                     }
-                    .accessibilityLabel("設定")
+                    .accessibilityLabel(tr("設定"))
                 }
                 .foregroundStyle(Theme.accent)
                 .tutorialTarget(.header)
@@ -102,28 +103,28 @@ struct HomeView: View {
 
     /// 画面中央に大きく出す、いまの状態。「ふだんは制限中」が基本の姿。
     private var headline: String {
-        if needsPermission { return "許可が必要です" }
-        if model.targetCount == 0 { return "制限するものを選びましょう" }
+        if needsPermission { return tr("許可が必要です") }
+        if model.targetCount == 0 { return tr("制限するものを選びましょう") }
         switch model.restriction {
-        case .configured: return "制限中"
-        case .temporarilyUnlocked: return "一時的に使えます"
-        case .unverifiable: return "状態を確認できません"
-        case .off: return "制限していません"
+        case .configured: return tr("制限中")
+        case .temporarilyUnlocked: return tr("一時的に使えます")
+        case .unverifiable: return tr("状態を確認できません")
+        case .off: return tr("制限していません")
         }
     }
 
     private var subline: String {
         if needsPermission {
             return model.permission == .denied
-                ? "設定アプリで許可をオンにしてください。"
-                : "Screen Timeの許可が必要です。"
+                ? tr("設定アプリで許可をオンにしてください。")
+                : tr("Screen Timeの許可が必要です。")
         }
-        if model.targetCount == 0 { return "アプリやサイトを選びます。" }
+        if model.targetCount == 0 { return tr("アプリやサイトを選びます。") }
         switch model.restriction {
-        case .configured: return "選んだものは、ふだん使えません。"
-        case .temporarilyUnlocked: return "終わったら、制限に戻します。"
-        case .unverifiable: return "もう一度、かけ直してください。"
-        case .off: return "かけておくのがおすすめです。"
+        case .configured: return tr("選んだものは、ふだん使えません。")
+        case .temporarilyUnlocked: return tr("終わったら、制限に戻します。")
+        case .unverifiable: return tr("もう一度、かけ直してください。")
+        case .off: return tr("かけておくのがおすすめです。")
         }
     }
 
@@ -162,7 +163,7 @@ struct HomeView: View {
                             .frame(width: 40, height: 40)
                             .background(Circle().fill(Theme.accent.opacity(0.14)))
                     }
-                    .accessibilityLabel("追加")
+                    .accessibilityLabel(tr("追加"))
                     .tutorialTarget(.plus)
                     .transition(.opacity)
                 }
@@ -206,7 +207,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             if model.mode == .demo {
                 if let name = model.demo.targetName {
-                    appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget() }) { Text(name) }
+                    appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget() }) { Text(tr(name)) }
                 }
             } else {
                 ForEach(model.device.items.sortedItems) { item in
@@ -232,7 +233,7 @@ struct HomeView: View {
                     Image(systemName: "lock.open.fill")
                         .foregroundStyle(Theme.accent)
                         .frame(width: 24)
-                        .accessibilityLabel("一時解除中")
+                        .accessibilityLabel(tr("一時解除中"))
                 }
                 if editable {
                     Button(action: onRemove) {
@@ -240,7 +241,7 @@ struct HomeView: View {
                             .foregroundStyle(.tertiary)
                             .frame(width: 44, height: 44)
                     }
-                    .accessibilityLabel("制限から外す")
+                    .accessibilityLabel(tr("制限から外す"))
                 }
             }
         }
@@ -268,22 +269,22 @@ struct HomeView: View {
     @ViewBuilder
     private var primaryButton: some View {
         if isUnlocked {
-            Button("使い終わる") { model.relockNow() }
+            Button(tr("使い終わる")) { model.relockNow() }
                 .buttonStyle(FutoButtonStyle())
         } else if needsPermission {
-            Button("許可する") { Task { await model.requestPermission() } }
+            Button(tr("許可する")) { Task { await model.requestPermission() } }
                 .buttonStyle(FutoButtonStyle())
         } else if model.targetCount == 0 {
-            Button("制限するものを選ぶ") { sheet = .picker }
+            Button(tr("制限するものを選ぶ")) { sheet = .picker }
                 .buttonStyle(FutoButtonStyle())
         } else if model.restriction == .configured {
-            Button("ひと呼吸おいて、使う") { model.beginBreath() }
+            Button(tr("ひと呼吸おいて、使う")) { model.beginBreath() }
                 .buttonStyle(FutoButtonStyle(prominent: false))
         } else if model.restriction == .unverifiable {
-            Button("制限をかけ直す") { model.startRestriction() }
+            Button(tr("制限をかけ直す")) { model.startRestriction() }
                 .buttonStyle(FutoButtonStyle())
         } else {
-            Button("制限をかける") { model.startRestriction() }
+            Button(tr("制限をかける")) { model.startRestriction() }
                 .buttonStyle(FutoButtonStyle())
         }
     }
@@ -296,13 +297,13 @@ struct HomeView: View {
         case .history:
             NavigationStack {
                 RecordsView(mode: model.mode)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { sheet = nil } } }
             }
             .demoBanner(model.mode)
         case .settings:
             NavigationStack {
                 SettingsView(model: model)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { sheet = nil } } }
             }
             .demoBanner(model.mode)
         }
@@ -312,11 +313,11 @@ struct HomeView: View {
     /// 開発用：朝夜の振り返りと通知を、時間を待たずに確かめる（Debugビルドにだけ存在する）。
     private var debugSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("開発用（Debugのみ）").font(.caption).foregroundStyle(.secondary)
+            Text(tr("開発用（Debugのみ）")).font(.caption).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 8) {
-                Button("朝の振り返り") { model.showReflectionNow(.morning) }
-                Button("夜の振り返り") { model.showReflectionNow(.night) }
-                Button("お出かけ通知") { model.sendTestNotification(.outing) }
+                Button(tr("朝の振り返り")) { model.showReflectionNow(.morning) }
+                Button(tr("夜の振り返り")) { model.showReflectionNow(.night) }
+                Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
             }
             .buttonStyle(FutoCompactButtonStyle())
         }
