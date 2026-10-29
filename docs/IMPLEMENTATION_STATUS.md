@@ -10,7 +10,7 @@
 - 中断・再開（同じSession）、「この振り返りを終了」（中断として記録）
 - SwiftData（Session）、日別件数（現地カレンダー、デモ／実機分離）、全削除（進行中は中断で閉じてから削除）
 - デモ専用の架空アプリ選択、全画面上部の常時デモ表示
-- Debug限定の5秒待機
+- Debug限定の10秒待機
 
 ### Phase 1（実機。署名・Capability設定後に利用可能）
 - 個人向け認証（`AuthorizationCenter.requestAuthorization(for: .individual)`）

@@ -80,7 +80,7 @@ struct SettingsView: View {
 
             #if DEBUG
             Section("Debug") {
-                Toggle("待機を5秒にする", isOn: Binding(
+                Toggle("待機を10秒にする", isOn: Binding(
                     get: { model.settings.debugShortWait },
                     set: { model.settings.debugShortWait = $0 }
                 ))

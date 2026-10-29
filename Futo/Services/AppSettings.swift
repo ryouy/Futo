@@ -9,7 +9,7 @@ final class AppSettings {
     }
 
     static let standardWaitSeconds: Double = 180
-    static let debugWaitSeconds: Double = 5
+    static let debugWaitSeconds: Double = 10
 
     private let defaults: UserDefaults
 
