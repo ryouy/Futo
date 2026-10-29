@@ -74,7 +74,12 @@ final class AppModel {
 
     var intendsRestriction: Bool { service.intendsRestriction }
 
-    /// 対象を変えられるのは、制限がかかっていない間だけ（制限オフ、または一時解除中）。
+    /// 追加はいつでもできる（実機）。デモは対象が1つだけなので、未選択か、制限していない間だけ。
+    var canAddItems: Bool {
+        mode == .device || targetCount == 0 || !isTargetEditLocked
+    }
+
+    /// 外せるのは、制限がかかっていない間だけ（制限オフ、または一時解除中）。
     var isTargetEditLocked: Bool {
         if case .temporarilyUnlocked = restriction { return false }
         return service.intendsRestriction

@@ -38,7 +38,8 @@ struct DeviceAppPickerView: View {
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("保存") {
-                            model.device.saveSelection(draft)
+                            // 制限中は、追加だけ。外したものは元に戻る。
+                            model.device.saveSelection(draft, additiveOnly: model.isTargetEditLocked)
                             model.didChangeDeviceSelection()
                             dismiss()
                         }

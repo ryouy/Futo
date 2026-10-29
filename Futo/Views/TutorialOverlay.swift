@@ -38,7 +38,7 @@ struct TutorialOverlay: View {
     private var steps: [Step] {
         var result = [Step(target: .status, lines: ["ここに、いまの状態が出ます。", "ふだんは「制限中」です。"])]
         if anchors[.plus] != nil {
-            result.append(Step(target: .plus, lines: ["＋で、制限するものを足せます。", "制限中は、変えられません。"]))
+            result.append(Step(target: .plus, lines: ["＋で、制限するものを足せます。", "外せるのは、制限をはずした間だけ。"]))
         }
         result.append(Step(target: .main, lines: mainLines))
         result.append(Step(target: .header, lines: ["右の時計は記録、", "歯車は設定です。"]))
@@ -114,7 +114,7 @@ struct TutorialOverlay: View {
             .fixedSize(horizontal: false, vertical: true)   // 行の途中で折り返さない
             .padding(.vertical, 20)
             .padding(.horizontal, 28)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 26, style: .continuous))   // テーマ色の薄い面。白より目立たない
             .id(lines)
             .transition(.opacity)
     }

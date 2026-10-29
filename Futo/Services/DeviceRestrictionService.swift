@@ -45,9 +45,17 @@ final class DeviceRestrictionService: RestrictionService {
     }
 
     /// 選んだものを保存する。制限中・一時解除中なら、ストアへもすぐ反映する。
-    func saveSelection(_ newSelection: FamilyActivitySelection) {
-        selection = newSelection
-        SharedState.saveSelection(newSelection)
+    /// `additiveOnly` のときは、いま制限しているものに、追加分だけを足す（選択画面で外したものは、元に戻す）。
+    func saveSelection(_ newSelection: FamilyActivitySelection, additiveOnly: Bool = false) {
+        var result = RestrictedItems(selection: newSelection)
+        if additiveOnly {
+            let current = items
+            result.apps.formUnion(current.apps)
+            result.categories.formUnion(current.categories)
+            result.webDomains.formUnion(current.webDomains)
+        }
+        selection = result.selection
+        SharedState.saveSelection(selection)
         syncShield()
     }
 

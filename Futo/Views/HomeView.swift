@@ -77,7 +77,7 @@ struct HomeView: View {
         #if DEBUG
         reserved += 80
         #endif
-        if !model.visibleCards.isEmpty || model.suggestion != nil || pendingReflection != nil { return 3 }
+        if model.suggestion != nil || pendingReflection != nil { return 3 }
         return max(3, min(8, Int((height - reserved) / 48)))
     }
 
@@ -100,10 +100,6 @@ struct HomeView: View {
                 .tutorialTarget(.header)
             }
 
-            ForEach(model.visibleCards, id: \.key) { card in
-                ReflectionCardView(card: card) { model.dismissCard(card) }
-                    .transition(.opacity)
-            }
             if let suggestion = model.suggestion {
                 SuggestionCardView(model: model, suggestion: suggestion)
                     .transition(.opacity)
@@ -122,7 +118,6 @@ struct HomeView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
         .animation(.easeInOut(duration: 0.3), value: pendingReflection != nil)
-        .animation(.easeInOut(duration: 0.3), value: model.visibleCards.map(\.key))
         .animation(.easeInOut(duration: 0.3), value: model.suggestion)
     }
 
@@ -191,7 +186,7 @@ struct HomeView: View {
                     Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
                 }
                 Spacer(minLength: 0)
-                if model.targetCount > 0, !model.isTargetEditLocked {
+                if model.targetCount > 0, model.canAddItems {
                     Button(action: addApps) {
                         Image(systemName: "plus")
                             .font(.body.weight(.medium))
@@ -278,7 +273,7 @@ struct HomeView: View {
     }
 
     private func addApps() {
-        guard !model.isTargetEditLocked else { return }
+        guard model.canAddItems else { return }
         model.notice = nil
         sheet = .picker
     }

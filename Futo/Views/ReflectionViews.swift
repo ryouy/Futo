@@ -1,31 +1,41 @@
 import SwiftUI
 
-/// 朝・夜の振り返りカード。閉じられ、未回答の催促はしない。
-struct ReflectionCardView: View {
+/// 朝・夜の振り返り。アプリを開いたとき、画面全体をやわらかく覆うカードで出し、「わかった」で閉じる。
+struct ReflectionOverlay: View {
     let card: ReflectionCard
     let onClose: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        ZStack {
+            // 全体をやわらかく覆う。後ろの画面は、うっすら透ける。
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(Theme.background.opacity(0.88))
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {}
+
+            VStack(spacing: 20) {
                 Image(systemName: card.kind == .morning ? "sunrise" : "moon.stars")
+                    .font(.system(size: 34, weight: .light))
                     .foregroundStyle(Theme.accent)
                     .accessibilityHidden(true)
-                Text(card.title).font(.headline.weight(.medium))
-                Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 44, height: 44)
+                Text(card.title).font(.title3.weight(.medium))
+                VStack(spacing: 10) {
+                    ForEach(Array(card.lines.enumerated()), id: \.offset) { _, line in
+                        Text(line).oneLine(0.75)
+                    }
                 }
-                .accessibilityLabel("閉じる")
+                .multilineTextAlignment(.center)
+                Button("わかった", action: onClose)
+                    .buttonStyle(FutoButtonStyle())
+                    .padding(.top, 8)
             }
-            ForEach(Array(card.lines.enumerated()), id: \.offset) { _, line in
-                Text(line).lineSpacing(4)
-            }
+            .padding(28)
+            .frame(maxWidth: .infinity)
+            .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
+            .padding(.horizontal, 24)
         }
-        .card(tint: Theme.softBlue)
     }
 }
 

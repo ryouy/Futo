@@ -9,6 +9,13 @@ struct RootView: View {
     /// スプラッシュ・初回説明と同じ緑。
     private let introGreen = Color(red: 25 / 255, green: 100 / 255, blue: 89 / 255)
 
+    /// 開いたときに出す振り返り。スプラッシュ・説明・チュートリアル・ひと呼吸の最中は出さない。
+    private var reflectionToShow: ReflectionCard? {
+        guard model.onboardingDone, model.tutorialCompleted, model.tutorialStep == nil,
+              !showSplash, !model.showFlow else { return nil }
+        return model.visibleCards.first
+    }
+
     var body: some View {
         ZStack {
             (model.onboardingDone ? Theme.background : LinearGradient(colors: [introGreen, introGreen], startPoint: .top, endPoint: .bottom))
@@ -44,6 +51,13 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: model.tutorialStep != nil)
+        .overlay {
+            if let card = reflectionToShow {
+                ReflectionOverlay(card: card) { model.dismissCard(card) }
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.5), value: reflectionToShow?.key)
         .task(id: model.onboardingDone) {
             // ホームが現れてから、初回（または説明の見直しのあと）だけチュートリアルを始める。
             guard model.onboardingDone, !model.tutorialCompleted else { return }
