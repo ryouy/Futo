@@ -117,7 +117,7 @@ struct SettingsView: View {
                            blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
         })
         return Button {
-            withAnimation(.easeInOut(duration: 0.5)) { ThemeStore.shared.select(option) }
+            withAnimation(.easeInOut(duration: 0.3)) { ThemeStore.shared.select(option) }
         } label: {
             VStack(spacing: 6) {
                 Circle()

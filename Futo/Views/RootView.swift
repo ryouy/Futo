@@ -14,17 +14,17 @@ struct RootView: View {
                         // 下からせり上がらず、ふわっと現れて、ふわっと消える。
                         FlowView(model: model)
                             .background(Theme.background.ignoresSafeArea())
-                            .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                            .transition(.opacity)
                             .zIndex(1)
                     }
                 }
-                .animation(.easeInOut(duration: 0.6), value: model.showFlow)
+                .animation(.easeInOut(duration: 0.35), value: model.showFlow)
             } else {
                 OnboardingView(model: model)
             }
         }
         .tint(Theme.accent)
-        .animation(.easeInOut(duration: 0.5), value: ThemeStore.shared.color)
+        .animation(.easeInOut(duration: 0.3), value: ThemeStore.shared.color)
         .fontDesign(.rounded)
         .onChange(of: scenePhase) { _, phase in
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。

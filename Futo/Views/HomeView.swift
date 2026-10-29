@@ -37,14 +37,14 @@ struct HomeView: View {
 
                 if let session = pendingReflection {
                     reflectionCard(session)
-                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                        .transition(.opacity)
                 }
                 statusCard
                 actions
                 countsLine
             }
             .padding(20)
-            .animation(.easeInOut(duration: 0.5), value: pendingReflection != nil)
+            .animation(.easeInOut(duration: 0.3), value: pendingReflection != nil)
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
@@ -155,8 +155,8 @@ struct HomeView: View {
             }
         }
         .card()
-        .animation(.easeInOut(duration: 0.5), value: model.restriction)
-        .animation(.easeInOut(duration: 0.5), value: model.targetCount)
+        .animation(.easeInOut(duration: 0.3), value: model.restriction)
+        .animation(.easeInOut(duration: 0.3), value: model.targetCount)
     }
 
     // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
@@ -193,7 +193,7 @@ struct HomeView: View {
                 ForEach(sortedTokens, id: \.self) { token in
                     appRow(unlocked: model.unlockedApps.contains(token), editable: editable,
                            onRemove: { pendingRemoval = .device(token) }) { Label(token) }
-                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                        .transition(.opacity)
                 }
             }
         }
@@ -203,8 +203,8 @@ struct HomeView: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(editable ? Theme.accent.opacity(0.10) : Color.clear)
         )
-        .animation(.easeInOut(duration: 0.5), value: editable)
-        .animation(.easeInOut(duration: 0.5), value: sortedTokens.count)
+        .animation(.easeInOut(duration: 0.3), value: editable)
+        .animation(.easeInOut(duration: 0.3), value: sortedTokens.count)
     }
 
     private var sortedTokens: [ApplicationToken] {

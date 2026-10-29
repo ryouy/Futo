@@ -233,6 +233,14 @@ final class AppModel {
         finishedSession = nil
     }
 
+    /// 「3分」「10秒」のような、待機時間の言い表し。
+    var waitDurationText: String {
+        let total = Int((activeSession?.requiredWaitSeconds ?? AppSettings.waitSeconds).rounded())
+        let minutes = total / 60, seconds = total % 60
+        if minutes == 0 { return "\(seconds)秒" }
+        return seconds == 0 ? "\(minutes)分" : "\(minutes)分\(seconds)秒"
+    }
+
     var canTemporarilyUnlock: Bool { mode == .device && service.supportsTemporaryUnlock }
 
     func relockNow() {

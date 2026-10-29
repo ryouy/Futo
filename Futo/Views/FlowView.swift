@@ -15,9 +15,9 @@ struct FlowView: View {
             ZStack {
                 content
                     .id(stage)
-                    .transition(.opacity.combined(with: .offset(y: 14)))
+                    .transition(.opacity)
             }
-            .animation(.easeInOut(duration: 0.7), value: stage)
+            .animation(.easeInOut(duration: 0.4), value: stage)
             .background(Theme.background.ignoresSafeArea())
         }
         .demoBanner(model.mode)
@@ -62,6 +62,9 @@ struct PurposeView: View {
         CenteredScroll {
             VStack(spacing: 14) {
                 FlowTitle(text: "今、どんなことに使いたいですか？")
+                Text("このあと、\(model.waitDurationText)だけ立ち止まります。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                     .padding(.bottom, 10)
                 ForEach(Purpose.allCases) { item in
                     ChoiceRow(isOn: selected == item) { selected = item } content: {
@@ -94,14 +97,16 @@ struct WaitView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathing = false
+    /// 最初に言葉だけを見せ、少し置いてからタイマーを現す。
+    @State private var showTimer = false
 
     init(model: AppModel, session: Session) {
         self.model = model
         _controller = State(initialValue: WaitController(session: session, store: model.sessions))
     }
 
-    private var timeText: String {
-        let total = Int(controller.remaining.rounded(.up))
+    private func timeText(_ remaining: TimeInterval) -> String {
+        let total = Int(remaining.rounded(.up))
         return String(format: "%d:%02d", total / 60, total % 60)
     }
 
@@ -109,25 +114,13 @@ struct WaitView: View {
         CenteredScroll {
             VStack(spacing: 24) {
                 FlowTitle(text: "少し、立ち止まってみましょう。")
-                Text("画面を閉じると、止まります。")
+                Text("\(model.waitDurationText)、ゆっくり息をしてみましょう。")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
-                ZStack {
-                    Circle()
-                        .fill(Theme.accent.opacity(breathing ? 0.16 : 0.08))
-                        .padding(18)
-                    Circle().stroke(Theme.softBlue, lineWidth: 12)
-                    Circle()
-                        .trim(from: 0, to: controller.progress)
-                        .stroke(Theme.accent, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    Text(timeText)
-                        .font(.system(size: 44, weight: .light, design: .rounded).monospacedDigit())
-                        .accessibilityLabel("残り \(Int(controller.remaining.rounded(.up))) 秒")
-                }
-                .frame(width: 200, height: 200)
-                .padding(.vertical, 12)
+                timer
+                    .opacity(showTimer ? 1 : 0)
+                    .padding(.vertical, 12)
 
                 VStack(spacing: 2) {
                     Button("ひと呼吸をやめる") { model.endBreath() }
@@ -137,6 +130,7 @@ struct WaitView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
+                .opacity(showTimer ? 1 : 0)
             }
         }
         .toolbar {
@@ -160,12 +154,38 @@ struct WaitView: View {
             }
             controller.deactivate()
         }
+        .task {
+            // 言葉を読む間を置いてから、タイマーを静かに現す。
+            try? await Task.sleep(for: .milliseconds(900))
+            withAnimation(.easeInOut(duration: 0.5)) { showTimer = true }
+        }
         .onAppear {
             // ゆっくりした呼吸のような、ごく控えめな動き。視差・動きを減らす設定のときは動かさない。
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) { breathing = true }
         }
         .onDisappear { controller.deactivate() }
+    }
+
+    /// 進捗と残り時間は、毎フレーム時計から求める（250msごとの更新ではカクつくため）。
+    private var timer: some View {
+        TimelineView(.animation(paused: scenePhase != .active)) { _ in
+            let remaining = controller.liveRemaining()
+            ZStack {
+                Circle()
+                    .fill(Theme.accent.opacity(breathing ? 0.16 : 0.08))
+                    .padding(18)
+                Circle().stroke(Theme.softBlue, lineWidth: 12)
+                Circle()
+                    .trim(from: 0, to: controller.liveProgress())
+                    .stroke(Theme.accent, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Text(timeText(remaining))
+                    .font(.system(size: 44, weight: .light, design: .rounded).monospacedDigit())
+                    .accessibilityLabel("残り \(Int(remaining.rounded(.up))) 秒")
+            }
+        }
+        .frame(width: 200, height: 200)
     }
 }
 

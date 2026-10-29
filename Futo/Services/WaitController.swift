@@ -29,6 +29,18 @@ final class WaitController {
         return min(1, max(0, 1 - remaining / total))
     }
 
+    /// 描画用の現在の残り時間。時計から直接求めるので、ティックの間も滑らかに減る。
+    func liveRemaining() -> TimeInterval {
+        guard !isFinished else { return 0 }
+        return countdown.remaining(at: clock.now())
+    }
+
+    func liveProgress() -> Double {
+        let total = session.requiredWaitSeconds
+        guard total > 0 else { return 1 }
+        return min(1, max(0, 1 - liveRemaining() / total))
+    }
+
     func activate() {
         guard session.phase == .waiting else { return }
         countdown.resume(at: clock.now())

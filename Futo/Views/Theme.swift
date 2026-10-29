@@ -169,7 +169,7 @@ struct ChoiceRow<Content: View>: View {
             )
         }
         .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.35), value: isOn)
+        .animation(.easeInOut(duration: 0.2), value: isOn)
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }

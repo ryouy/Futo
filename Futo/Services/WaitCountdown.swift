@@ -22,6 +22,12 @@ struct WaitCountdown {
     var isRunning: Bool { lastTick != nil }
     var isFinished: Bool { remaining <= 0 }
 
+    /// 状態を変えずに、指定時刻での残り時間を返す。描画用（毎フレーム呼んでも副作用がない）。
+    func remaining(at now: TimeInterval) -> TimeInterval {
+        guard let last = lastTick else { return remaining }
+        return max(0, remaining - max(0, now - last))
+    }
+
     mutating func resume(at now: TimeInterval) {
         guard lastTick == nil else { return }
         lastTick = now

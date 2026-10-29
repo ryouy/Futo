@@ -45,6 +45,15 @@ final class SessionFlowTests: XCTestCase {
         XCTAssertEqual(countdown.remaining, 50)
     }
 
+    func testLiveRemainingIsReadOnlyAndFollowsClock() {
+        var countdown = WaitCountdown(remaining: 10)
+        XCTAssertEqual(countdown.remaining(at: 500), 10)    // 開始前は減らない
+        countdown.resume(at: 100)
+        XCTAssertEqual(countdown.remaining(at: 103.5), 6.5) // 描画用の問い合わせ
+        XCTAssertEqual(countdown.remaining, 10)             // 状態は変わらない
+        XCTAssertEqual(countdown.remaining(at: 999), 0)
+    }
+
     func testCountdownNeverGoesNegativeAndIgnoresBackwardsClock() {
         var countdown = WaitCountdown(remaining: 5)
         countdown.resume(at: 100)
