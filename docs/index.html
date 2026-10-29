@@ -68,8 +68,8 @@
     .lead { max-width: 34em; margin: 0 auto 28px; color: rgba(252, 248, 240, .86); }
     .button {
       display: inline-block; padding: 12px 28px; border-radius: 999px; text-decoration: none;
-      background: var(--lemon); color: var(--green); font-weight: 700;
-      box-shadow: 0 6px 24px rgba(255, 227, 138, .28);
+      background: var(--cream); color: var(--green); font-weight: 700;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .18);
     }
     .button:hover { filter: brightness(1.04); }
 
@@ -379,15 +379,15 @@
       </details>
       <details>
         <summary><span class="ja">どの端末で使えますか？</span><span class="en">What do I need to run it?</span></summary>
-        <p><span class="ja">iPhone（iOS 17 以降）です。制限を実際にかけるには、実機と署名の設定が必要です。シミュレーターでは、デモモードを試せます。</span><span class="en">An iPhone with iOS 17 or later. Actually locking apps needs a real device and signing setup; the simulator can run demo mode.</span></p>
+        <p><span class="ja">iPhone（iOS 17 以降）です。制限を実際にかけるには、実機と署名の設定が必要です。設定しなくても、デモモードで流れを試せます。</span><span class="en">An iPhone with iOS 17 or later. Actually locking apps needs a real device and signing setup; demo mode lets you try the flow without them.</span></p>
       </details>
       <details>
         <summary><span class="ja">もう公開されていますか？</span><span class="en">Is it available yet?</span></summary>
-        <p><span class="ja">まだです。開発者本人向けの試作で、App Store では公開していません。ソースコードは GitHub にあります。</span><span class="en">Not yet. It's a personal prototype and isn't on the App Store. The source is on GitHub.</span></p>
+        <p><span class="ja">まだ App Store では公開していません。ソースコードは GitHub にあります。</span><span class="en">Not on the App Store yet. The source is on GitHub.</span></p>
       </details>
       <details>
         <summary><span class="ja">記録は、どこに保存されますか？</span><span class="en">Where is my data kept?</span></summary>
-        <p><span class="ja">この端末の中だけです。外へ送ることはありません。設定から、すべての記録を削除できます。</span><span class="en">Only on this device — nothing is sent anywhere. You can delete all records in Settings.</span></p>
+        <p><span class="ja">この端末の中だけです。共有を選んだときだけ、選んだ統計を送ります。設定から、すべての記録を削除できます。</span><span class="en">Only on this device — unless you choose to share, and then only the stats you pick. You can delete all records in Settings.</span></p>
       </details>
     </div>
   </div>
@@ -399,7 +399,7 @@
     <div class="start">
       <div class="card">
         <h3><span class="ja">まず、デモで試す</span><span class="en">Try the demo first</span></h3>
-        <p><span class="ja">Xcode でプロジェクトを開いて、シミュレーターで実行します。署名は不要です。初回の画面で「デモで試す」を選んでください。</span><span class="en">Open the project in Xcode and run it in the simulator — no signing needed. Choose “Try the demo” on the first screen.</span></p>
+        <p><span class="ja">Xcode でプロジェクトを開いて実行します。デモなら署名は不要です。初回の画面で「デモで試す」を選んでください。</span><span class="en">Open the project in Xcode and run it — the demo needs no signing. Choose “Try the demo” on the first screen.</span></p>
       </div>
       <div class="card">
         <h3><span class="ja">実機で制限をかける</span><span class="en">Lock apps on a real iPhone</span></h3>
