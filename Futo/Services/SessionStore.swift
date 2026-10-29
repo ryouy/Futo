@@ -68,6 +68,13 @@ final class SessionStore {
         return true
     }
 
+    func recordTemporaryUnlock(_ session: Session) {
+        guard session.phase == .completed, session.outcome == .wantsToUse,
+              session.temporaryUnlockStartedAt == nil else { return }
+        session.temporaryUnlockStartedAt = now()
+        save()
+    }
+
     @discardableResult
     func interrupt(_ session: Session) -> Bool {
         guard session.phase.isOpen else { return false }

@@ -193,4 +193,21 @@ final class SessionFlowTests: XCTestCase {
         XCTAssertNil(store.openSession(mode: .demo))
         _ = open
     }
+
+    func testTemporaryUnlockIsRecordedOnlyForWantsToUse() {
+        let deferred = waitingSession()
+        store.markWaitFinished(deferred)
+        store.finish(deferred, outcome: .deferred)
+        store.recordTemporaryUnlock(deferred)
+        XCTAssertNil(deferred.temporaryUnlockStartedAt)
+
+        let wants = store.begin(mode: .device, requiredWaitSeconds: 1)
+        store.startWaiting(wants, purpose: nil)
+        store.recordTemporaryUnlock(wants)               // 完了前は記録しない
+        XCTAssertNil(wants.temporaryUnlockStartedAt)
+        store.markWaitFinished(wants)
+        store.finish(wants, outcome: .wantsToUse)
+        store.recordTemporaryUnlock(wants)
+        XCTAssertNotNil(wants.temporaryUnlockStartedAt)
+    }
 }

@@ -68,6 +68,8 @@ final class Session {
     /// nil は未確定
     var outcome: SessionOutcome?
     var completedAt: Date?
+    /// 実機で一時解除を開始できた場合だけ記録する。手動の制限終了は含めない。
+    var temporaryUnlockStartedAt: Date?
 
     init(mode: AppMode, startedAt: Date, requiredWaitSeconds: Double) {
         self.id = UUID()
@@ -79,5 +81,6 @@ final class Session {
         self.phase = .choosingPurpose
         self.outcome = nil
         self.completedAt = nil
+        self.temporaryUnlockStartedAt = nil
     }
 }

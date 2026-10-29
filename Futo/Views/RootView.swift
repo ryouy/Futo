@@ -16,6 +16,7 @@ struct RootView: View {
             }
         }
         .tint(Theme.accent)
+        .fontDesign(.rounded)
         .onChange(of: scenePhase) { _, phase in
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。
             if phase == .active { model.refresh() }

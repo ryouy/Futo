@@ -36,8 +36,8 @@ struct PurposeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("今、どんなことに使いたいですか？").font(.title2.bold())
+            VStack(alignment: .leading, spacing: 18) {
+                Text("今、どんなことに使いたいですか？").font(.title2.weight(.medium))
                 ForEach(Purpose.allCases) { purpose in
                     Button {
                         selected = purpose
@@ -48,12 +48,12 @@ struct PurposeView: View {
                             Image(systemName: selected == purpose ? "checkmark.circle.fill" : "circle")
                                 .foregroundStyle(Theme.accent)
                         }
-                        .frame(minHeight: 50)
-                        .padding(.horizontal, 16)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 12))
+                        .frame(minHeight: 58)
+                        .padding(.horizontal, 20)
+                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(selected == purpose ? Theme.accent : .clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .stroke(selected == purpose ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: selected == purpose ? 2 : 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -83,6 +83,8 @@ struct WaitView: View {
     let model: AppModel
     @State private var controller: WaitController
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var breathing = false
 
     init(model: AppModel, session: Session) {
         self.model = model
@@ -98,20 +100,23 @@ struct WaitView: View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("少しだけ、立ち止まってみましょう。")
-                    .font(.title2.bold())
+                    .font(.title2.weight(.medium))
                     .multilineTextAlignment(.center)
                 Text("画面を閉じると、待機は一時停止します。")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
                 ZStack {
-                    Circle().stroke(Theme.softBlue, lineWidth: 10)
+                    Circle()
+                        .fill(Theme.accent.opacity(breathing ? 0.16 : 0.08))
+                        .padding(18)
+                    Circle().stroke(Theme.softBlue, lineWidth: 12)
                     Circle()
                         .trim(from: 0, to: controller.progress)
-                        .stroke(Theme.accent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                        .stroke(Theme.accent, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     Text(timeText)
-                        .font(.system(size: 44, weight: .light).monospacedDigit())
+                        .font(.system(size: 44, weight: .light, design: .rounded).monospacedDigit())
                         .accessibilityLabel("残り \(Int(controller.remaining.rounded(.up))) 秒")
                 }
                 .frame(width: 200, height: 200)
@@ -143,6 +148,11 @@ struct WaitView: View {
             }
             controller.deactivate()
         }
+        .onAppear {
+            // ゆっくりした呼吸のような、ごく控えめな動き。視差・動きを減らす設定のときは動かさない。
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) { breathing = true }
+        }
         .onDisappear { controller.deactivate() }
     }
 }
@@ -150,15 +160,25 @@ struct WaitView: View {
 struct FinalChoiceView: View {
     let model: AppModel
 
+    private var footnote: String {
+        if model.canTemporarilyUnlock {
+            return "「使いたい」を選ぶと、選んだアプリを一時的に使えるようにします（試験機能）。「今はやめる」では制限は続きます。"
+        }
+        if model.mode == .demo {
+            return "デモでは、どちらを選んでも実際のアプリの制限は変わりません。"
+        }
+        return "この試作の設定では、どちらを選んでもアプリの制限は解除されません。"
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("今も使いたいですか？").font(.title2.bold())
+                Text("今も使いたいですか？").font(.title2.weight(.medium))
                 Button("今はやめる") { model.finish(.deferred) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
                 Button("使いたい") { model.finish(.wantsToUse) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
-                Text("この試作では、どちらを選んでもアプリの制限は解除されません。")
+                Text(footnote)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -172,12 +192,25 @@ struct ResultView: View {
     let model: AppModel
     let outcome: SessionOutcome
 
+    private var wantsToUseMessage: String {
+        switch model.unlockResult {
+        case .started(let until):
+            return "対象のアプリを一時的に使えるようにしました。利用が約\(SharedState.unlockUsageMinutes)分に達するか、遅くとも\(until.formatted(date: .omitted, time: .shortened))までに、自動で制限に戻ります。ホームの「制限に戻す」でいつでも戻せます。"
+        case .failed:
+            return "利用したい気持ちを記録しました。一時解除を始められなかったため、制限は続いています。使う場合は、ホームの「制限を終了」から終了できます。"
+        case .unsupported:
+            return "利用したい気持ちを記録しました。この設定では一時解除は使えません。使う場合は、ホームの「制限を終了」から終了できます。"
+        case nil:
+            return "利用したい気持ちを記録しました。デモでは、実際のアプリの制限は変わりません。"
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("記録しました。").font(.title2.bold())
+                Text("記録しました。").font(.title2.weight(.medium))
                 if outcome == .wantsToUse {
-                    Text("利用したい気持ちを記録しました。この試作では、一時解除はまだできません。使う場合は、ホームの「制限を終了」から終了できます。")
+                    Text(wantsToUseMessage).lineSpacing(5)
                 }
                 Button("ホームへ") { model.closeFlow() }
                     .buttonStyle(FutoButtonStyle())

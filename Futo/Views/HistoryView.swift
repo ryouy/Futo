@@ -24,6 +24,9 @@ struct HistoryView: View {
                             Spacer()
                             Text(session.outcome?.label ?? "中断")
                         }
+                        if session.temporaryUnlockStartedAt != nil {
+                            Text("一時解除を開始").font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
                     .frame(minHeight: 44)
                     .accessibilityElement(children: .combine)

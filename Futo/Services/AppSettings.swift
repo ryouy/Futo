@@ -5,11 +5,14 @@ final class AppSettings {
     private enum Key {
         static let onboardingDone = "settings.onboardingDone"
         static let mode = "settings.mode"
-        static let debugShortWait = "settings.debugShortWait"
     }
 
-    static let standardWaitSeconds: Double = 180
-    static let debugWaitSeconds: Double = 10
+    /// 待機時間。Debugビルドは開発用に10秒、Releaseは180秒。切り替え用のUIや設定はない。
+    #if DEBUG
+    static let waitSeconds: Double = 10
+    #else
+    static let waitSeconds: Double = 180
+    #endif
 
     private let defaults: UserDefaults
 
@@ -25,21 +28,5 @@ final class AppSettings {
     var mode: AppMode {
         get { AppMode(rawValue: defaults.string(forKey: Key.mode) ?? "") ?? .demo }
         set { defaults.set(newValue.rawValue, forKey: Key.mode) }
-    }
-
-    /// Debugビルドでのみ有効。Releaseでは常に false。
-    var debugShortWait: Bool {
-        get {
-            #if DEBUG
-            return defaults.bool(forKey: Key.debugShortWait)
-            #else
-            return false
-            #endif
-        }
-        set { defaults.set(newValue, forKey: Key.debugShortWait) }
-    }
-
-    var waitSeconds: Double {
-        debugShortWait ? Self.debugWaitSeconds : Self.standardWaitSeconds
     }
 }

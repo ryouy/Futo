@@ -42,6 +42,10 @@ final class DemoRestrictionService: RestrictionService {
         return true
     }
 
+    var supportsTemporaryUnlock: Bool { false }
+    func temporaryUnlock() -> UnlockStartResult { .unsupported }
+    func relock() {}
+
     func verify() -> RestrictionState {
         intendsRestriction && targetCount > 0 ? .configured : .off
     }

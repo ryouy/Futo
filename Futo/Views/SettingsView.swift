@@ -71,7 +71,7 @@ struct SettingsView: View {
 
             Section("この試作について") {
                 Text("""
-                一時解除と自動再制限はまだできません。「使いたい」を選んでも制限は解除されません。\
+                一時解除と自動再制限は、実機のみの試験機能です。デモでは行いません。\
                 制限はホームの「制限を終了」から、いつでも本人が終了できます。\
                 Screen Timeの許可は、設定アプリからいつでも取り消せます。
                 """)
@@ -79,13 +79,17 @@ struct SettingsView: View {
             }
 
             #if DEBUG
-            Section("Debug") {
-                Toggle("待機を10秒にする", isOn: Binding(
-                    get: { model.settings.debugShortWait },
-                    set: { model.settings.debugShortWait = $0 }
-                ))
-                Text("Debugビルドのみ。進行中の振り返りには影響しません。")
-                    .font(.footnote).foregroundStyle(.secondary)
+            if !isDemo {
+                Section {
+                    Text(SharedState.lastEvent ?? "まだ記録はありません")
+                        .font(.footnote)
+                    Text(SharedState.isAvailable ? "App Group：利用できます" : "App Group：利用できません（未設定）")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } header: {
+                    Text("検証用：拡張の最後の動作")
+                } footer: {
+                    Text("Debugビルドのみ表示。待機は10秒、一時解除の利用しきい値は\(SharedState.unlockUsageMinutes)分です。")
+                }
             }
             #endif
         }

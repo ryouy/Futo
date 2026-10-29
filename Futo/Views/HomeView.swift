@@ -10,8 +10,11 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("ふと").font(.largeTitle.bold()).foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 8) {
+                    LeafMark(size: 26)
+                    Text("ふと").font(.largeTitle.weight(.medium)).foregroundStyle(Theme.accent)
+                }
 
                 statusCard
                 targetCard
@@ -33,6 +36,14 @@ struct HomeView: View {
                 NavigationLink { SettingsView(model: model).demoBanner(model.mode) } label: {
                     Label("設定", systemImage: "gearshape")
                 }
+            }
+        }
+        .task(id: model.restriction) {
+            // 一時解除中だけ、拡張による再制限を表示に反映するため定期的に再確認する（再制限そのものは拡張が行う）。
+            guard case .temporarilyUnlocked = model.restriction else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5))
+                model.refresh()
             }
         }
         .sheet(isPresented: $showPicker) { picker }
@@ -58,6 +69,8 @@ struct HomeView: View {
         if model.targetCount == 0 { return "制限したいアプリを選んでください" }
         switch model.restriction {
         case .configured: return "選択したアプリへの制限を設定しています"
+        case .temporarilyUnlocked(let until):
+            return "一時的に使えるようにしています。選んだアプリの利用が約\(SharedState.unlockUsageMinutes)分に達するか、遅くとも\(until.formatted(date: .omitted, time: .shortened))までに、自動で制限に戻ります。"
         case .unverifiable: return "設定を確認できませんでした。もう一度お試しください"
         case .off: return "制限はオフです"
         }
@@ -67,13 +80,19 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label(model.mode == .demo ? "デモモード" : "実機モード",
                   systemImage: model.mode == .demo ? "play.rectangle" : "iphone")
-                .font(.subheadline.weight(.semibold))
-            Text(statusText)
+                .font(.subheadline.weight(.medium))
+            Text(statusText).lineSpacing(4)
             if let error = model.permissionError {
                 Text(error).font(.footnote)
             }
             if let notice = model.notice {
-                Text(notice).font(.footnote).foregroundStyle(.secondary)
+                Text(notice).font(.footnote).padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.softPeach, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            if case .temporarilyUnlocked = model.restriction {
+                Text("一時解除は実機で検証中の試験機能です。")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             if model.mode == .device {
                 Text("権限と設定の照合結果です。OS上でシールドが実際に表示されているかは、対象アプリを開いて確かめてください。")
@@ -86,7 +105,7 @@ struct HomeView: View {
 
     private var targetCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("制限するアプリ").font(.subheadline.weight(.semibold))
+            Text("制限するアプリ").font(.subheadline.weight(.medium))
             if model.mode == .demo {
                 Text(model.demo.targetName ?? "未選択")
             } else if model.targetCount == 0 {
@@ -103,7 +122,10 @@ struct HomeView: View {
     @ViewBuilder
     private var actions: some View {
         VStack(spacing: 12) {
-            if model.activeSession != nil {
+            if case .temporarilyUnlocked = model.restriction {
+                Button("制限に戻す") { model.relockNow() }
+                    .buttonStyle(FutoButtonStyle())
+            } else if model.activeSession != nil {
                 Button("ひと呼吸を再開") { model.resumeBreath() }
                     .buttonStyle(FutoButtonStyle())
                 Button("この振り返りを終了") { model.endBreath() }
@@ -147,7 +169,7 @@ struct HomeView: View {
     private var countsCard: some View {
         let counts = DailyCounts.today(sessions: sessions, mode: model.mode)
         return VStack(alignment: .leading, spacing: 8) {
-            Text("今日の記録").font(.subheadline.weight(.semibold))
+            Text("今日の記録").font(.subheadline.weight(.medium))
             HStack {
                 Text("今日の見送り")
                 Spacer()

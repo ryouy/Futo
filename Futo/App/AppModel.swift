@@ -20,6 +20,8 @@ final class AppModel {
 
     /// 最終選択の直後に表示する結果
     private(set) var lastResult: SessionOutcome?
+    /// 最終選択で「使いたい」を選んだ直後の、一時解除の結果
+    private(set) var unlockResult: UnlockStartResult?
     var showFlow = false
     var permissionError: String?
     var notice: String?
@@ -30,7 +32,7 @@ final class AppModel {
         self.settings = settings
         self.sessions = SessionStore(context: context)
         self.demo = DemoRestrictionService(defaults: defaults)
-        self.device = DeviceRestrictionService(defaults: defaults)
+        self.device = DeviceRestrictionService()
         self.mode = settings.mode
         self.onboardingDone = settings.onboardingDone
         refresh()
@@ -94,6 +96,7 @@ final class AppModel {
         settings.mode = newMode
         showFlow = false
         lastResult = nil
+        unlockResult = nil
         refresh()
         return true
     }
@@ -143,7 +146,7 @@ final class AppModel {
     func beginBreath() {
         guard activeSession != nil || restriction == .configured else { return }
         lastResult = nil
-        activeSession = sessions.begin(mode: mode, requiredWaitSeconds: settings.waitSeconds)
+        activeSession = sessions.begin(mode: mode, requiredWaitSeconds: AppSettings.waitSeconds)
         showFlow = true
     }
 
@@ -166,10 +169,24 @@ final class AppModel {
         showFlow = false
     }
 
+    /// 「使いたい」は記録し、実機で対応していれば一時解除を試みる。失敗時は制限を維持する。
     func finish(_ outcome: SessionOutcome) {
         guard let session = activeSession, sessions.finish(session, outcome: outcome) else { return }
         lastResult = outcome
         activeSession = nil
+        unlockResult = nil
+        guard outcome == .wantsToUse, mode == .device else { return }
+        let result = service.temporaryUnlock()
+        unlockResult = result
+        if case .started = result { sessions.recordTemporaryUnlock(session) }
+        refresh()
+    }
+
+    var canTemporarilyUnlock: Bool { mode == .device && service.supportsTemporaryUnlock }
+
+    func relockNow() {
+        service.relock()
+        refresh()
     }
 
     func endBreath() {
@@ -182,6 +199,7 @@ final class AppModel {
 
     func closeFlow() {
         lastResult = nil
+        unlockResult = nil
         showFlow = false
     }
 

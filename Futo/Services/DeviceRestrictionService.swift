@@ -1,16 +1,13 @@
+import DeviceActivity
 import FamilyControls
 import Foundation
 import ManagedSettings
 
 /// 実機用。個人向けScreen Time認証と、本アプリ専用のManagedSettingsStoreによる制限。
 /// 対象はアプリ単位のみ。カテゴリ・Webサイトは保存しない。
+/// 一時解除は、Device Activityの監視を登録できた場合だけ行い、再制限は拡張（FutoMonitor）が担う。
 @MainActor
 final class DeviceRestrictionService: RestrictionService {
-    private enum Key {
-        static let selection = "device.selection"
-        static let intent = "device.intent"
-    }
-
     enum SelectionResult: Equatable {
         case saved
         /// カテゴリやWebサイトが含まれていた。何も保存していない。
@@ -19,24 +16,21 @@ final class DeviceRestrictionService: RestrictionService {
 
     private let defaults: UserDefaults
     /// 本アプリ専用のストア。他のScreen Time設定やアプリの設定には触れない。
-    private let managedStore = ManagedSettingsStore(named: .init("jp.futo.restriction"))
+    private let managedStore = ManagedSettingsStore(named: SharedState.storeName)
+    private let center = DeviceActivityCenter()
 
     private(set) var selection: FamilyActivitySelection
     private(set) var permission: PermissionState = .notDetermined
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
-        if let data = defaults.data(forKey: Key.selection),
-           let saved = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
-            self.selection = saved
-        } else {
-            self.selection = FamilyActivitySelection()
-        }
+    init() {
+        SharedState.migrateFromStandardIfNeeded()
+        self.defaults = SharedState.defaults
+        self.selection = SharedState.loadSelection() ?? FamilyActivitySelection()
         refreshPermission()
     }
 
     var targetCount: Int { selection.applicationTokens.count }
-    var intendsRestriction: Bool { defaults.bool(forKey: Key.intent) }
+    var intendsRestriction: Bool { SharedState.intendsRestriction }
 
     func refreshPermission() {
         switch AuthorizationCenter.shared.authorizationStatus {
@@ -64,11 +58,9 @@ final class DeviceRestrictionService: RestrictionService {
             return .unsupportedItems
         }
         selection = newSelection
-        if let data = try? JSONEncoder().encode(newSelection) {
-            defaults.set(data, forKey: Key.selection)
-        }
+        SharedState.saveSelection(newSelection)
         if newSelection.applicationTokens.isEmpty {
-            defaults.set(false, forKey: Key.intent)
+            SharedState.intendsRestriction = false
         }
         return .saved
     }
@@ -76,24 +68,83 @@ final class DeviceRestrictionService: RestrictionService {
     func start() {
         guard permission == .approved, !selection.applicationTokens.isEmpty else { return }
         managedStore.shield.applications = selection.applicationTokens
-        defaults.set(true, forKey: Key.intent)
+        SharedState.intendsRestriction = true
     }
 
     @discardableResult
     func stop() -> Bool {
+        stopUnlockMonitoring()
+        SharedState.unlock = nil
         managedStore.shield.applications = nil
-        defaults.set(false, forKey: Key.intent)
+        SharedState.intendsRestriction = false
         return managedStore.shield.applications == nil
     }
 
-    /// 権限と本アプリのストアを照合する。OS上でシールドが実際に出ているかまでは確認できない。
+    // MARK: 一時解除（試験機能）
+
+    var supportsTemporaryUnlock: Bool { SharedState.isAvailable }
+
+    func temporaryUnlock() -> UnlockStartResult {
+        guard SharedState.isAvailable else { return .unsupported }
+        guard permission == .approved, intendsRestriction, !selection.applicationTokens.isEmpty else {
+            return .failed
+        }
+        stopUnlockMonitoring()
+
+        let start = Date()
+        let end = start.addingTimeInterval(SharedState.unlockWindow)
+        let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
+        let calendar = Calendar.current
+        let schedule = DeviceActivitySchedule(
+            intervalStart: calendar.dateComponents(components, from: start),
+            intervalEnd: calendar.dateComponents(components, from: end),
+            repeats: false
+        )
+        let name = DeviceActivityName(SharedState.unlockActivityPrefix + UUID().uuidString)
+        let usageEvent = DeviceActivityEvent(
+            applications: selection.applicationTokens,
+            threshold: DateComponents(minute: SharedState.unlockUsageMinutes)
+        )
+
+        // 拡張が受け取るイベントを識別できるよう、記録を先に保存する。登録に失敗したら消して制限を維持する。
+        SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end)
+        do {
+            try center.startMonitoring(name, during: schedule,
+                                       events: [DeviceActivityEvent.Name(SharedState.usageEventName): usageEvent])
+        } catch {
+            SharedState.unlock = nil
+            SharedState.log("監視を登録できませんでした: \(error.localizedDescription)")
+            return .failed
+        }
+        managedStore.shield.applications = nil
+        SharedState.log("一時解除を開始しました")
+        return .started(until: end)
+    }
+
+    func relock() {
+        stopUnlockMonitoring()
+        SharedState.relock(reason: "アプリから制限に戻しました")
+    }
+
+    private func stopUnlockMonitoring() {
+        let names = center.activities.filter { $0.rawValue.hasPrefix(SharedState.unlockActivityPrefix) }
+        if !names.isEmpty { center.stopMonitoring(names) }
+    }
+
+    /// 権限・一時解除の監視・本アプリのストアを照合する。OS上でシールドが実際に出ているかまでは確認できない。
     func verify() -> RestrictionState {
         guard intendsRestriction else { return .off }
-        guard permission == .approved,
-              !selection.applicationTokens.isEmpty,
-              managedStore.shield.applications == selection.applicationTokens else {
-            return .unverifiable
+        guard permission == .approved, !selection.applicationTokens.isEmpty else { return .unverifiable }
+
+        if let record = SharedState.unlock {
+            let monitoring = center.activities.contains { $0.rawValue == record.activityName }
+            if Date() < record.endsAt, monitoring {
+                return .temporarilyUnlocked(until: record.endsAt)
+            }
+            // 拡張が再制限していない場合の安全側の補正。解除したままにしない。
+            stopUnlockMonitoring()
+            SharedState.relock(reason: "アプリで未再制限を検出し、再制限しました")
         }
-        return .configured
+        return managedStore.shield.applications == selection.applicationTokens ? .configured : .unverifiable
     }
 }

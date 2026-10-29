@@ -13,6 +13,16 @@ enum RestrictionState: Equatable {
     case configured
     /// 有効にしたはずだが、権限やストアの内容から確認できない
     case unverifiable
+    /// 一時解除中（実機のみ）。しきい値到達または監視区間の終了で再制限される
+    case temporarilyUnlocked(until: Date)
+}
+
+enum UnlockStartResult: Equatable {
+    case started(until: Date)
+    /// この環境（デモ、またはApp Group未設定）では一時解除を提供しない
+    case unsupported
+    /// 監視を登録できなかった。解除せず、制限は続いている
+    case failed
 }
 
 /// 実機（Screen Time）とデモを差し替えるための小さな境界。
@@ -30,4 +40,10 @@ protocol RestrictionService: AnyObject {
     /// 本アプリの制限を外せたか。
     @discardableResult func stop() -> Bool
     func verify() -> RestrictionState
+
+    var supportsTemporaryUnlock: Bool { get }
+    /// 監視の登録に成功した場合だけ解除する。失敗時は制限を維持する。
+    func temporaryUnlock() -> UnlockStartResult
+    /// 一時解除を取り消し、対象を再び制限する。
+    func relock()
 }
