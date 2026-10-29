@@ -1,0 +1,83 @@
+import Foundation
+import SwiftData
+
+/// 動作モード。デモと実機の記録・設定は混ぜない。
+enum AppMode: String, Codable, CaseIterable {
+    case demo
+    case device
+}
+
+/// 目的。表示文言は `label` に分離し、保存は列挙値のみ。
+enum Purpose: String, Codable, CaseIterable, Identifiable {
+    case contact
+    case research
+    case change = "break"
+    case noReason
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .contact: return "連絡"
+        case .research: return "調べもの"
+        case .change: return "気分転換"
+        case .noReason: return "なんとなく"
+        }
+    }
+}
+
+enum SessionPhase: String, Codable {
+    case choosingPurpose
+    case waiting
+    case awaitingChoice
+    case completed
+    case interrupted
+
+    var isOpen: Bool {
+        switch self {
+        case .choosingPurpose, .waiting, .awaitingChoice: return true
+        case .completed, .interrupted: return false
+        }
+    }
+}
+
+enum SessionOutcome: String, Codable {
+    case deferred
+    case wantsToUse
+    case interrupted
+
+    var label: String {
+        switch self {
+        case .deferred: return "今はやめる"
+        case .wantsToUse: return "使いたい"
+        case .interrupted: return "中断"
+        }
+    }
+}
+
+@Model
+final class Session {
+    @Attribute(.unique) var id: UUID
+    var mode: AppMode
+    var startedAt: Date
+    /// nil は未回答（スキップ）
+    var purpose: Purpose?
+    var requiredWaitSeconds: Double
+    var remainingWaitSeconds: Double
+    var phase: SessionPhase
+    /// nil は未確定
+    var outcome: SessionOutcome?
+    var completedAt: Date?
+
+    init(mode: AppMode, startedAt: Date, requiredWaitSeconds: Double) {
+        self.id = UUID()
+        self.mode = mode
+        self.startedAt = startedAt
+        self.purpose = nil
+        self.requiredWaitSeconds = requiredWaitSeconds
+        self.remainingWaitSeconds = requiredWaitSeconds
+        self.phase = .choosingPurpose
+        self.outcome = nil
+        self.completedAt = nil
+    }
+}
