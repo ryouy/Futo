@@ -108,8 +108,8 @@ struct HomeView: View {
                     .transition(.opacity)
             }
             statusCard(rows: rows)
-            Spacer(minLength: 0)
             actions
+            Spacer(minLength: 0)
             #if DEBUG
             debugSection
             #endif
@@ -140,7 +140,7 @@ struct HomeView: View {
         case .configured: return "制限中"
         case .temporarilyUnlocked: return "一時的に使えます"
         case .unverifiable: return "状態を確認できません"
-        case .off: return "制限はオフです"
+        case .off: return "制限していません"
         }
     }
 
@@ -152,10 +152,10 @@ struct HomeView: View {
         }
         if model.targetCount == 0 { return "アプリやサイトを選びます。" }
         switch model.restriction {
-        case .configured: return "使いたいときは、ひと呼吸おいてから。"
+        case .configured: return "選んだものは、ふだん使えません。"
         case .temporarilyUnlocked: return "使い終わったら、制限に戻します。"
-        case .unverifiable: return "もう一度オンにしてください。"
-        case .off: return "ふだんはオンがおすすめです。"
+        case .unverifiable: return "もう一度、かけ直してください。"
+        case .off: return "ふだんは、かけておくのがおすすめです。"
         }
     }
 
@@ -282,31 +282,35 @@ struct HomeView: View {
 
     // MARK: 操作（主操作は常に1つ）
 
+    /// 主操作は常に1つで、状態のカードの真下に置く。
+    /// 制限を強める操作（かける・使い終わる）は濃い色、緩める入口（ひと呼吸おいて使う）は薄い色にして、
+    /// 「ふだんは制限中」を基本にしたこのアプリで、解除を前面に出しすぎない。
     private var actions: some View {
         VStack(spacing: 6) {
-            if isUnlocked {
-                Button("使い終わる") { model.relockNow() }
-                    .buttonStyle(FutoButtonStyle())
-            } else {
-                primaryButton
-            }
+            primaryButton
         }
         .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
     private var primaryButton: some View {
-        if needsPermission {
+        if isUnlocked {
+            Button("使い終わる") { model.relockNow() }
+                .buttonStyle(FutoButtonStyle())
+        } else if needsPermission {
             Button("許可する") { Task { await model.requestPermission() } }
                 .buttonStyle(FutoButtonStyle())
         } else if model.targetCount == 0 {
             Button("制限するものを選ぶ") { sheet = .picker }
                 .buttonStyle(FutoButtonStyle())
         } else if model.restriction == .configured {
-            Button("使う前に、ひと呼吸") { model.beginBreath() }
+            Button("ひと呼吸おいて、使う") { model.beginBreath() }
+                .buttonStyle(FutoButtonStyle(prominent: false))
+        } else if model.restriction == .unverifiable {
+            Button("制限をかけ直す") { model.startRestriction() }
                 .buttonStyle(FutoButtonStyle())
         } else {
-            Button("制限をオンにする") { model.startRestriction() }
+            Button("制限をかける") { model.startRestriction() }
                 .buttonStyle(FutoButtonStyle())
         }
     }

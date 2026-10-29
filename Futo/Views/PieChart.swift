@@ -9,22 +9,39 @@ struct PieCard: View {
 
     private var shown: [Breakdown.Slice] { slices.filter { $0.count > 0 } }
 
+    private func color(for slice: Breakdown.Slice) -> Color {
+        let colors = Theme.chartColors
+        let index = slices.firstIndex(where: { $0.label == slice.label }) ?? 0
+        return colors[index % colors.count]
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.subheadline.weight(.medium))
             if shown.isEmpty {
-                Text(emptyText).foregroundStyle(.secondary)
+                Text(emptyText).font(.footnote).foregroundStyle(.secondary)
             } else {
-                Chart(shown) { slice in
-                    SectorMark(angle: .value("件数", slice.count), innerRadius: .ratio(0.55), angularInset: 2)
-                        .foregroundStyle(by: .value("項目", slice.label))
+                HStack(alignment: .center, spacing: 20) {
+                    Chart(shown) { slice in
+                        SectorMark(angle: .value("件数", slice.count), innerRadius: .ratio(0.55), angularInset: 2)
+                            .foregroundStyle(color(for: slice))
+                    }
+                    .chartLegend(.hidden)
+                    .frame(width: 120, height: 120)
+                    .accessibilityLabel(title)
+                    .accessibilityValue(shown.map { "\($0.label) \($0.count)件" }.joined(separator: "、"))
+
+                    // 凡例は小さく、グラフの横に縦に並べる。
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(shown) { slice in
+                            HStack(spacing: 6) {
+                                Circle().fill(color(for: slice)).frame(width: 8, height: 8)
+                                Text(slice.label).font(.caption).oneLine(0.8)
+                            }
+                        }
+                    }
+                    Spacer(minLength: 0)
                 }
-                .chartForegroundStyleScale(domain: slices.map(\.label),
-                                           range: Array(Theme.chartColors.prefix(max(slices.count, 1))))
-                .chartLegend(position: .bottom, alignment: .center, spacing: 12)
-                .frame(height: 210)
-                .accessibilityLabel(title)
-                .accessibilityValue(shown.map { "\($0.label) \($0.count)件" }.joined(separator: "、"))
             }
         }
         .card()

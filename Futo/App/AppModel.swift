@@ -126,7 +126,7 @@ final class AppModel {
         guard newMode != mode else { return true }
         if mode == .device, device.intendsRestriction {
             guard device.stop() else {
-                errorMessage = "実際の制限を終了できたか確認できないため、切り替えを保留しました。設定の「いつも制限する」をオフにしてお試しください。"
+                errorMessage = "実際の制限を終了できたか確認できないため、切り替えを保留しました。設定の「いつも制限する」をはずしてお試しください。"
                 refresh()
                 return false
             }

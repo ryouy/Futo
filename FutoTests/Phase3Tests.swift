@@ -119,7 +119,7 @@ final class Phase3Tests: XCTestCase {
         let text = build(.night).lines.joined(separator: "\n")
         XCTAssertTrue(text.contains("「やめておく」"), text)
         XCTAssertTrue(text.contains("「連絡」"), text)
-        XCTAssertTrue(text.contains("「もう少し控えたかった」"), "単独の感想はそのまま述べる: \(text)")
+        XCTAssertTrue(text.contains("「使いすぎかも」"), "単独の感想はそのまま述べる: \(text)")
     }
 
     func testUnlockLineSpeaksOfUnlockedTimeNotUsedTime() {

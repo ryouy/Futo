@@ -39,17 +39,17 @@ struct SettingsView: View {
             Button("キャンセル", role: .cancel) {}
         }
         .confirmationDialog(
-            "制限をオフにしますか？ 自動ではオンに戻りません。",
+            "制限をはずしますか？ 自動ではかけ直されません。",
             isPresented: $confirmOff, titleVisibility: .visible
         ) {
-            Button("オフにする", role: .destructive) { model.stopRestriction() }
+            Button("はずす", role: .destructive) { model.stopRestriction() }
             Button("キャンセル", role: .cancel) {}
         }
         .confirmationDialog(
-            "実際の制限をオフにして、デモに切り替えますか？",
+            "実際の制限をはずして、デモに切り替えますか？",
             isPresented: $confirmLeaveDevice, titleVisibility: .visible
         ) {
-            Button("オフにして切り替える", role: .destructive) { model.switchMode(to: .demo) }
+            Button("はずして切り替える", role: .destructive) { model.switchMode(to: .demo) }
             Button("キャンセル", role: .cancel) {}
         }
     }
@@ -66,7 +66,7 @@ struct SettingsView: View {
                     }))
                     .frame(minHeight: 44)
             } footer: {
-                Text("オフにすると、自動ではオンに戻りません。")
+                Text("はずすと、自動ではかけ直されません。")
             }
 
             Section {

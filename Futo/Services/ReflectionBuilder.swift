@@ -111,7 +111,7 @@ enum ReflectionBuilder {
         switch top.0 {
         case .satisfied: return "感想は「満足した」が多めでした。"
         case .neutral: return "感想は「どちらでもない」が多めでした。"
-        case .wishedLess: return "感想は「もう少し控えたかった」が多めでした。"
+        case .wishedLess: return "感想は「使いすぎかも」が多めでした。"
         case .skipped: return nil
         }
     }

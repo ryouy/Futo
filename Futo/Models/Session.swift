@@ -67,7 +67,7 @@ enum Reflection: String, Codable, CaseIterable {
         switch self {
         case .satisfied: return "満足した"
         case .neutral: return "どちらでもない"
-        case .wishedLess: return "もう少し控えたかった"
+        case .wishedLess: return "使いすぎかも"
         case .skipped: return "答えない"
         }
     }
