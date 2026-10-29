@@ -67,6 +67,17 @@ struct FutoButtonStyle: ButtonStyle {
     }
 }
 
+/// 目立たせたくない操作用の、文字だけのボタン。
+struct FutoTextButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(Theme.accent)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .opacity(configuration.isPressed ? 0.6 : 1)
+    }
+}
+
 /// デモ中は全画面の上部に常時表示する。
 struct DemoBanner: View {
     var body: some View {

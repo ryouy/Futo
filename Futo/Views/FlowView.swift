@@ -63,7 +63,7 @@ struct PurposeView: View {
                     .buttonStyle(FutoButtonStyle())
                     .disabled(selected == nil)
                 Button("答えずに進む") { model.choosePurpose(nil) }
-                    .buttonStyle(FutoButtonStyle(prominent: false))
+                    .buttonStyle(FutoTextButtonStyle())
             }
             .padding(20)
         }
@@ -123,7 +123,7 @@ struct WaitView: View {
                 .padding(.vertical, 12)
 
                 Button("この振り返りを終了") { model.endBreath() }
-                    .buttonStyle(FutoButtonStyle(prominent: false))
+                    .buttonStyle(FutoTextButtonStyle())
             }
             .padding(20)
         }

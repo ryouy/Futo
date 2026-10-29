@@ -55,6 +55,24 @@ enum SessionOutcome: String, Codable {
     }
 }
 
+/// 一時解除で使ったあとの感想。評価ではなく、本人の感覚を残すためのもの。
+enum Reflection: String, Codable, CaseIterable {
+    case satisfied
+    case neutral
+    case wishedLess
+    /// 答えなかった。再び尋ねないための印
+    case skipped
+
+    var label: String {
+        switch self {
+        case .satisfied: return "満足した"
+        case .neutral: return "どちらでもない"
+        case .wishedLess: return "もう少し控えたかった"
+        case .skipped: return "答えない"
+        }
+    }
+}
+
 @Model
 final class Session {
     @Attribute(.unique) var id: UUID
@@ -70,6 +88,8 @@ final class Session {
     var completedAt: Date?
     /// 実機で一時解除を開始できた場合だけ記録する。手動の制限終了は含めない。
     var temporaryUnlockStartedAt: Date?
+    /// 一時解除のあとに答えた感想。nil は未回答（まだ尋ねていない）
+    var reflection: Reflection?
 
     init(mode: AppMode, startedAt: Date, requiredWaitSeconds: Double) {
         self.id = UUID()
@@ -82,5 +102,6 @@ final class Session {
         self.outcome = nil
         self.completedAt = nil
         self.temporaryUnlockStartedAt = nil
+        self.reflection = nil
     }
 }

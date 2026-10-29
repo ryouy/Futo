@@ -147,14 +147,14 @@ struct UnlockChooserView: View {
                     Button(chosen.count == all.count ? "すべての選択を外す" : "すべて選ぶ") {
                         chosen = chosen.count == all.count ? [] : Set(all)
                     }
-                    .buttonStyle(FutoButtonStyle(prominent: false))
+                    .buttonStyle(FutoTextButtonStyle())
                 }
 
                 Button("選んだアプリを一時的に使う") { model.unlockApps(chosen) }
                     .buttonStyle(FutoButtonStyle())
                     .disabled(chosen.isEmpty)
                 Button("使わない") { model.declineUnlock() }
-                    .buttonStyle(FutoButtonStyle(prominent: false))
+                    .buttonStyle(FutoTextButtonStyle())
             }
             .padding(20)
         }

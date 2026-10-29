@@ -75,6 +75,15 @@ final class SessionStore {
         save()
     }
 
+    /// 一時解除を始めたSessionにだけ、1回だけ記録する。
+    @discardableResult
+    func recordReflection(_ session: Session, _ reflection: Reflection) -> Bool {
+        guard session.temporaryUnlockStartedAt != nil, session.reflection == nil else { return false }
+        session.reflection = reflection
+        save()
+        return true
+    }
+
     @discardableResult
     func interrupt(_ session: Session) -> Bool {
         guard session.phase.isOpen else { return false }

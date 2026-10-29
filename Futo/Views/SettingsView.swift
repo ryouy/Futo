@@ -32,6 +32,7 @@ struct SettingsView: View {
             if !isDemo {
                 Section("アクセスの許可") {
                     LabeledContent("状態", value: permissionText)
+                        .accessibilityElement(children: .combine)
                     Button(model.permission == .approved ? "再確認" : "許可する") {
                         if model.permission == .approved {
                             model.refresh()
@@ -53,7 +54,9 @@ struct SettingsView: View {
             } header: {
                 Text("制限するアプリ")
             } footer: {
-                if model.isTargetLocked {
+                if !isDemo, !model.isTargetLocked {
+                    Text("ホームの状態は、権限と設定の照合結果です。シールドが実際に出ているかは、対象アプリを開いて確かめてください。")
+                } else if model.isTargetLocked {
                     Text("制限を終了してから変更してください。")
                 } else if !isDemo, model.permission != .approved {
                     Text("先にアクセスを許可してください。")

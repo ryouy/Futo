@@ -25,7 +25,10 @@ struct HistoryView: View {
                             Text(session.outcome?.label ?? "中断")
                         }
                         if session.temporaryUnlockStartedAt != nil {
-                            Text("一時解除を開始").font(.footnote).foregroundStyle(.secondary)
+                            let note = [session.reflection.flatMap { $0 == .skipped ? nil : "感想：\($0.label)" }]
+                                .compactMap { $0 }.first
+                            Text(["一時解除を開始", note].compactMap { $0 }.joined(separator: "・"))
+                                .font(.footnote).foregroundStyle(.secondary)
                         }
                     }
                     .frame(minHeight: 44)

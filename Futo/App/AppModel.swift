@@ -199,6 +199,10 @@ final class AppModel {
         refresh()
     }
 
+    func answerReflection(_ session: Session, _ reflection: Reflection) {
+        sessions.recordReflection(session, reflection)
+    }
+
     /// 解除せずに閉じる。制限は続く。
     func declineUnlock() {
         awaitingUnlockSelection = false

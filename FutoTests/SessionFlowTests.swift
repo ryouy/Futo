@@ -210,4 +210,16 @@ final class SessionFlowTests: XCTestCase {
         store.recordTemporaryUnlock(wants)
         XCTAssertNotNil(wants.temporaryUnlockStartedAt)
     }
+
+    func testReflectionOnlyAfterUnlockAndOnlyOnce() {
+        let plain = waitingSession()
+        store.markWaitFinished(plain)
+        store.finish(plain, outcome: .wantsToUse)
+        XCTAssertFalse(store.recordReflection(plain, .satisfied))   // 一時解除していない
+
+        store.recordTemporaryUnlock(plain)
+        XCTAssertTrue(store.recordReflection(plain, .neutral))
+        XCTAssertFalse(store.recordReflection(plain, .wishedLess))  // 2回目は無視
+        XCTAssertEqual(plain.reflection, .neutral)
+    }
 }

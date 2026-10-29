@@ -32,10 +32,10 @@ struct OnboardingView: View {
                         .buttonStyle(FutoButtonStyle(prominent: false))
                 }
 
-                Text("「デモで試す」では、実際のアプリは制限されません。「実機で設定する」では、Screen Timeの許可と、制限するアプリの選択を行います。")
+                Text("デモでは、実際のアプリは制限されません。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .lineSpacing(4)
+                    .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
