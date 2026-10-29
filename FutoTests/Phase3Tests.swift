@@ -395,4 +395,18 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(p.effectiveUnlockMinutes, 1)
         XCTAssertEqual(Preferences().effectiveUnlockMinutes, Preferences.defaultUnlockMinutes)
     }
+
+    func testOutingMessagesAreGentleAndVaried() {
+        XCTAssertGreaterThanOrEqual(OutingMessages.all.count, 11)
+        XCTAssertEqual(Set(OutingMessages.all).count, OutingMessages.all.count, "重複しない")
+        for text in OutingMessages.all {
+            for banned in ["使いすぎ", "連続", "途切れ", "ダメ", "だめ", "急い", "早く"] {
+                XCTAssertFalse(text.contains(banned), text)
+            }
+            XCTAssertFalse(text.unicodeScalars.contains { ("0"..."9").contains($0) }, "数字を入れない: \(text)")
+        }
+        XCTAssertEqual(OutingMessages.pick(seed: "futo.outing.2027-01-13"), OutingMessages.pick(seed: "futo.outing.2027-01-13"))
+        let week = (10...20).map { OutingMessages.pick(seed: "futo.outing.2027-01-\($0)") }
+        XCTAssertGreaterThan(Set(week).count, 3, "日が変わると、いろいろな文言が出る")
+    }
 }

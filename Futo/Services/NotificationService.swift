@@ -25,12 +25,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         (try? await center.requestAuthorization(options: [.alert])) ?? false
     }
 
-    static func body(for kind: NotificationKind) -> String {
+    static func body(for kind: NotificationKind, seed: String = "") -> String {
         switch kind {
         case .morning: return "今日のはじまりに、記録を少し見てみませんか。"
         case .night: return "一日の終わりに、少しだけ振り返りませんか。"
         case .postUse: return "使ったあとの気持ちを、よければ残せます。"
-        case .outing: return "外に出て、少し歩いてみませんか。"
+        case .outing: return OutingMessages.pick(seed: seed)
         }
     }
 
@@ -42,7 +42,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         for candidate in candidates {
             let content = UNMutableNotificationContent()
             content.title = "ふと"
-            content.body = Self.body(for: candidate.kind)
+            content.body = Self.body(for: candidate.kind, seed: candidate.id)
             content.interruptionLevel = .active   // 音・バッジは付けないが、バナーは出す（passive だと画面に出ない）
             content.userInfo = ["kind": candidate.kind.rawValue]
             let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: candidate.fireDate)
@@ -55,7 +55,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     func sendTest(kind: NotificationKind) async {
         let content = UNMutableNotificationContent()
         content.title = "ふと"
-        content.body = Self.body(for: kind)
+        content.body = Self.body(for: kind, seed: UUID().uuidString)   // 開発用：押すたびに変わる
         content.interruptionLevel = .active
         content.userInfo = ["kind": kind.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
