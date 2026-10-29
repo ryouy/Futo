@@ -76,6 +76,12 @@ final class SessionStore {
         save()
     }
 
+    func recordTemporaryUnlockEnd(_ session: Session, at date: Date) {
+        guard let started = session.temporaryUnlockStartedAt, session.temporaryUnlockEndedAt == nil else { return }
+        session.temporaryUnlockEndedAt = max(date, started)
+        save()
+    }
+
     /// 一時解除を始めたSessionにだけ、1回だけ記録する。
     @discardableResult
     func recordReflection(_ session: Session, _ reflection: Reflection) -> Bool {

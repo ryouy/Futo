@@ -87,8 +87,15 @@ final class AppModel {
             unlockedApps = []
         }
         activeSession = sessions.openSession(mode: mode)
+        applyUnlockEnds()
         updateCards()
         updateSuggestion()
+
+        // 「続ける」機能は無い。画面の外に残った進行中のひと呼吸（起動し直したときなど）は中断として閉じる。
+        if let open = activeSession, !showFlow {
+            sessions.interrupt(open)
+            activeSession = nil
+        }
 
         // 権限を失った実機では、進行中の振り返りを中断して案内する。
         if mode == .device, permission != .approved, let session = activeSession {
@@ -194,12 +201,6 @@ final class AppModel {
         showFlow = true
     }
 
-    func resumeBreath() {
-        guard activeSession != nil else { return }
-        lastResult = nil
-        showFlow = true
-    }
-
     func choosePurpose(_ purpose: Purpose?) {
         guard let session = activeSession else { return }
         sessions.startWaiting(session, purpose: purpose)
@@ -231,7 +232,7 @@ final class AppModel {
     /// 選んだアプリだけを一時解除する。
     func unlockApps(_ apps: Set<ApplicationToken>) {
         awaitingUnlockSelection = false
-        let result = device.temporaryUnlock(apps: apps)
+        let result = device.temporaryUnlock(apps: apps, sessionID: finishedSession?.id)
         unlockResult = result
         if case .started(let until) = result, let session = finishedSession {
             sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(apps))
@@ -272,12 +273,17 @@ final class AppModel {
         showFlow = false
     }
 
+    /// ひと呼吸の画面を閉じる。画面が消えきるまで中身を保ち、消えてから片づける（途中で文字が変わって見えないように）。
     func closeFlow() {
-        lastResult = nil
-        unlockResult = nil
-        awaitingUnlockSelection = false
-        finishedSession = nil
         showFlow = false
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !showFlow else { return }
+            lastResult = nil
+            unlockResult = nil
+            awaitingUnlockSelection = false
+            finishedSession = nil
+        }
     }
 
     func deleteAllRecords() {

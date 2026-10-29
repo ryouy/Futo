@@ -88,6 +88,8 @@ final class Session {
     var completedAt: Date?
     /// 実機で一時解除を開始できた場合だけ記録する。手動の制限終了は含めない。
     var temporaryUnlockStartedAt: Date?
+    /// 一時解除が終わった（再制限された）時刻。解除していた時間の算出に使う。nil は解除中、または不明
+    var temporaryUnlockEndedAt: Date?
     /// 一時解除したアプリ。OSの不透明なトークンをそのまま保存し、名前やbundle IDは保存しない（履歴で表示用に復元する）。
     var temporaryUnlockedApps: Data?
     /// 一時解除のあとに答えた感想。nil は未回答（まだ尋ねていない）
@@ -104,6 +106,7 @@ final class Session {
         self.outcome = nil
         self.completedAt = nil
         self.temporaryUnlockStartedAt = nil
+        self.temporaryUnlockEndedAt = nil
         self.reflection = nil
         self.temporaryUnlockedApps = nil
     }

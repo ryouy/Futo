@@ -12,7 +12,7 @@ struct HomeView: View {
     @State private var pendingRemoval: Removal?
 
     private enum HomeSheet: Identifiable {
-        case history, settings, picker
+        case history, settings, picker, todayDeferred, todayWants
         var id: Self { self }
     }
 
@@ -49,7 +49,7 @@ struct HomeView: View {
                 }
                 statusCard
                 actions
-                countsLine
+                countsRow
                 #if DEBUG
                 debugSection
                 #endif
@@ -126,8 +126,7 @@ struct HomeView: View {
         if model.targetCount == 0 { return "制限するアプリを選んでください" }
         switch model.restriction {
         case .configured: return "制限中です"
-        case .temporarilyUnlocked:
-            return "一時的に使えます"
+        case .temporarilyUnlocked: return "一時的に使えます"
         case .unverifiable: return "状態を確認できませんでした。もう一度お試しください"
         case .off: return "制限はオフです"
         }
@@ -172,12 +171,12 @@ struct HomeView: View {
         .animation(.easeInOut(duration: 0.3), value: model.targetCount)
     }
 
-    // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
+    // MARK: 制限するアプリ（横にスライド。右上の＋で追加、タイルの－で外す）
 
-    /// 変更できる間（制限オフ・一時解除中）は淡い面で包んで＋と－を出し、制限中は南京錠だけにする。
+    /// 変更できる間（制限オフ・一時解除中）だけ「＋」と「－」を出す。アプリが多くても画面の高さは変わらない。
     private var appsSection: some View {
         let editable = !model.isTargetEditLocked
-        return VStack(alignment: .leading, spacing: 0) {
+        return VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("制限するアプリ").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
@@ -188,71 +187,81 @@ struct HomeView: View {
                             .frame(width: 44, height: 44)
                     }
                     .accessibilityLabel("アプリを追加")
-                } else {
-                    Button(action: explainLock) {
-                        Image(systemName: "lock.fill")
-                            .font(.body)
-                            .foregroundStyle(.tertiary)
-                            .frame(width: 44, height: 44)
+                }
+            }
+            .frame(minHeight: 32)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    if model.mode == .demo {
+                        if let name = model.demo.targetName {
+                            appTile(unlocked: false, editable: editable, onRemove: { pendingRemoval = .demo },
+                                    icon: { Image(systemName: "app.fill").font(.title) },
+                                    title: { Text(name) })
+                        }
+                    } else {
+                        ForEach(sortedTokens, id: \.self) { token in
+                            appTile(unlocked: model.unlockedApps.contains(token), editable: editable,
+                                    onRemove: { pendingRemoval = .device(token) },
+                                    icon: { Label(token).labelStyle(.iconOnly).scaleEffect(1.3) },
+                                    title: { Label(token).labelStyle(.titleOnly) })
+                        }
                     }
-                    .accessibilityLabel("制限中は変更できません")
                 }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 2)
             }
-            if model.mode == .demo {
-                if let name = model.demo.targetName {
-                    appRow(unlocked: false, editable: editable, onRemove: { pendingRemoval = .demo }) { Text(name) }
-                }
-            } else {
-                ForEach(sortedTokens, id: \.self) { token in
-                    appRow(unlocked: model.unlockedApps.contains(token), editable: editable,
-                           onRemove: { pendingRemoval = .device(token) }) { Label(token) }
-                        .transition(.opacity)
-                }
-            }
+            .frame(height: 112)
         }
-        .padding(.horizontal, editable ? 12 : 0)
-        .padding(.bottom, editable ? 4 : 0)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(editable ? Theme.accent.opacity(0.10) : Color.clear)
-        )
         .animation(.easeInOut(duration: 0.3), value: editable)
-        .animation(.easeInOut(duration: 0.3), value: sortedTokens.count)
     }
 
     private var sortedTokens: [ApplicationToken] {
         model.device.selection.applicationTokens.sorted { $0.hashValue < $1.hashValue }
     }
 
-    /// 1行：アプリ名、南京錠（施錠／解除中）、変更できる間だけ目立たない－。
-    private func appRow<Content: View>(unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
-                                       @ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 10) {
-            content()
-            Spacer()
-            Image(systemName: unlocked ? "lock.open.fill" : "lock.fill")
-                .foregroundStyle(unlocked ? Theme.accent : Color.secondary)
-                .accessibilityLabel(unlocked ? "一時解除中" : "制限中")
+    /// アプリ1つぶんのタイル。解除中のアプリだけ、開いた南京錠が付く。
+    private func appTile<Icon: View, Title: View>(
+        unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
+        @ViewBuilder icon: () -> Icon, @ViewBuilder title: () -> Title
+    ) -> some View {
+        VStack(spacing: 8) {
+            icon().frame(height: 36)
+            title().font(.caption).lineLimit(1).frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 8)
+        .frame(width: 92, height: 96)
+        .background(Theme.backgroundTop, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(unlocked ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: unlocked ? 2 : 1)
+        )
+        .overlay(alignment: .topLeading) {
+            if unlocked {
+                Image(systemName: "lock.open.fill")
+                    .font(.caption)
+                    .foregroundStyle(Theme.accent)
+                    .padding(8)
+                    .accessibilityLabel("一時解除中")
+            }
+        }
+        .overlay(alignment: .topTrailing) {
             if editable {
                 Button(action: onRemove) {
-                    Image(systemName: "minus.circle")
+                    Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 44, height: 44)
                 }
+                .offset(x: 10, y: -10)
                 .accessibilityLabel("制限から外す")
             }
         }
-        .frame(minHeight: 44)
     }
 
     private func addApps() {
-        guard !model.isTargetEditLocked else { return explainLock() }
+        guard !model.isTargetEditLocked else { return }
         model.notice = nil
         sheet = .picker
-    }
-
-    private func explainLock() {
-        model.notice = "制限を解除している間だけ、変更できます。"
     }
 
     // MARK: 操作（主操作は常に1つ）
@@ -262,11 +271,6 @@ struct HomeView: View {
             if isUnlocked {
                 Button("制限に戻す") { model.relockNow() }
                     .buttonStyle(FutoButtonStyle())
-            } else if model.activeSession != nil {
-                Button("ひと呼吸を続ける") { model.resumeBreath() }
-                    .buttonStyle(FutoButtonStyle())
-                Button("ひと呼吸をやめる") { model.endBreath() }
-                    .buttonStyle(FutoTextButtonStyle())
             } else {
                 primaryButton
             }
@@ -311,6 +315,12 @@ struct HomeView: View {
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
             }
             .demoBanner(model.mode)
+        case .todayDeferred, .todayWants:
+            NavigationStack {
+                TodayDetailView(mode: model.mode, kind: item == .todayDeferred ? .deferred : .wantsToUse)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
+            }
+            .demoBanner(model.mode)
         }
     }
 
@@ -340,19 +350,37 @@ struct HomeView: View {
         .card(tint: Theme.softBlue)
     }
 
-    // MARK: 今日の記録（控えめに1行）
+    // MARK: 今日の件数（タップで中身を見られる）
 
-    private var countsLine: some View {
+    private var countsRow: some View {
         let counts = DailyCounts.today(sessions: sessions, mode: model.mode)
-        return HStack {
-            Text("今日やめた \(counts.deferred)")
-            Spacer()
-            Text("今日使いたかった \(counts.wantsToUse)")
+        return HStack(spacing: 12) {
+            countButton("今日やめた", counts.deferred, .todayDeferred)
+            countButton("今日使いたかった", counts.wantsToUse, .todayWants)
         }
-        .font(.footnote.monospacedDigit())
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 4)
+    }
+
+    private func countButton(_ title: String, _ value: Int, _ target: HomeSheet) -> some View {
+        Button { sheet = target } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title).font(.footnote).foregroundStyle(.secondary)
+                HStack {
+                    Text("\(value)").font(.title2.monospacedDigit()).foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Theme.accent.opacity(0.10), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
+        .accessibilityHint("今日の記録を開きます")
     }
 
     #if DEBUG

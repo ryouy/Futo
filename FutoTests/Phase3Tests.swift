@@ -281,4 +281,51 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(p.quietStartMinute, 22 * 60)
         XCTAssertEqual(p.quietEndMinute, 8 * 60)
     }
+
+    // MARK: 履歴の言い方・解除時間・日別集計
+
+    func testResultTitlesAreSelfExplanatory() {
+        XCTAssertEqual(record("2027-01-13 10:00", outcome: .deferred).resultTitle, "やめた")
+        XCTAssertEqual(record("2027-01-13 10:00", outcome: .interrupted).resultTitle, "途中でやめた")
+        XCTAssertEqual(record("2027-01-13 10:00", outcome: .wantsToUse).resultTitle, "使いたいと答えた")
+        XCTAssertEqual(record("2027-01-13 10:00", outcome: .wantsToUse, unlocked: true).resultTitle, "解除した")
+    }
+
+    func testUnlockDurationIsTimeUnlockedNotTimeUsed() {
+        let s = record("2027-01-13 10:00", outcome: .wantsToUse, unlocked: true)
+        XCTAssertEqual(s.unlockDurationText, "解除中")
+        XCTAssertTrue(s.isUnlockInProgress)
+        s.temporaryUnlockEndedAt = jst("2027-01-13 10:00").addingTimeInterval(40)
+        XCTAssertEqual(s.unlockDurationText, "解除 1分未満")
+        s.temporaryUnlockEndedAt = jst("2027-01-13 10:03")
+        XCTAssertEqual(s.unlockDurationText, "解除 約3分")
+        XCTAssertNil(record("2027-01-13 10:00", outcome: .deferred).unlockDurationText)
+    }
+
+    func testUnlockEndIsRecordedOnceAndNotBeforeStart() {
+        let store = SessionStore(context: context, now: { self.jst("2027-01-13 10:00") })
+        let s = record("2027-01-13 10:00", outcome: .wantsToUse, unlocked: true)
+        store.recordTemporaryUnlockEnd(s, at: jst("2027-01-13 09:00"))   // 開始より前なら開始に揃える
+        XCTAssertEqual(s.temporaryUnlockEndedAt, jst("2027-01-13 10:00"))
+        store.recordTemporaryUnlockEnd(s, at: jst("2027-01-13 10:20"))
+        XCTAssertEqual(s.temporaryUnlockEndedAt, jst("2027-01-13 10:00"), "2回目は上書きしない")
+    }
+
+    func testDailySeriesFillsEmptyDaysAndSeparatesModes() {
+        let a = record("2027-01-13 10:00", outcome: .wantsToUse, unlocked: true)
+        a.temporaryUnlockEndedAt = jst("2027-01-13 10:04")
+        record("2027-01-13 12:00", outcome: .deferred)
+        record("2027-01-14 02:00", outcome: .interrupted)               // 深夜は前日（13日）
+        record("2027-01-11 09:00", outcome: .deferred)
+        record("2027-01-13 12:00", mode: .device, outcome: .deferred)
+        let series = DailySeries.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00"), days: 7)
+        XCTAssertEqual(series.count, 7)
+        XCTAssertEqual(series.last?.label, "1/13")
+        XCTAssertEqual(series.last?.deferred, 1)
+        XCTAssertEqual(series.last?.wantsToUse, 1)
+        XCTAssertEqual(series.last?.interrupted, 1)
+        XCTAssertEqual(series.last?.unlockSeconds, 240)
+        XCTAssertEqual(series.first(where: { $0.label == "1/12" })?.total, 0, "記録の無い日は0件")
+        XCTAssertEqual(series.first(where: { $0.label == "1/11" })?.deferred, 1)
+    }
 }

@@ -24,6 +24,19 @@ extension AppModel {
         rescheduleNotifications()
     }
 
+    /// 拡張や本体が記録した「解除が終わった時刻」を、履歴のひと呼吸に反映する。
+    func applyUnlockEnds() {
+        let ends = SharedState.unlockEnds
+        guard !ends.isEmpty else { return }
+        let all = sessions.all()
+        for end in ends {
+            if let session = all.first(where: { $0.id == end.sessionID }) {
+                sessions.recordTemporaryUnlockEnd(session, at: end.endedAt)
+            }
+        }
+        SharedState.unlockEnds = []
+    }
+
     // MARK: 朝夜の振り返りカード
 
     /// 設定した時刻の枠にいれば、今日の朝・夜のカードを（無ければ1度だけ）作る。表示するのは未クローズのものだけ。

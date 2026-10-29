@@ -131,6 +131,15 @@ struct FutoButtonStyle: ButtonStyle {
     }
 }
 
+extension AnyTransition {
+    /// 古い画面が先に消え、そのあとに新しい画面が現れる。2つが重なって文字が二重に見えるのを避ける。
+    static var sequentialFade: AnyTransition {
+        .asymmetric(
+            insertion: .opacity.animation(.easeOut(duration: 0.3).delay(0.2)),
+            removal: .opacity.animation(.easeIn(duration: 0.2)))
+    }
+}
+
 /// 内容を画面の縦方向の中央に置く。長くなる（文字拡大など）ときはスクロールできる。
 struct CenteredScroll<Content: View>: View {
     @ViewBuilder var content: Content

@@ -36,11 +36,13 @@
 		74AC9BDCB27B299B0F39EF34 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CFFD65F9C0DFA650DD6BB2 /* HistoryView.swift */; };
 		750995CC03D0153E0D2AEE8B /* ReflectionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */; };
 		7559CC8D141A93DBF5685EEB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
+		7627CADBB6098699D9FA93EC /* GraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52A962F4E7B56240BBB1218 /* GraphView.swift */; };
 		77153F8420388F83F5070A45 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF139CD24EA57AEEABC31B77 /* SettingsView.swift */; };
 		8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57186D513F893809C415EC62 /* AppModel+Phase3.swift */; };
 		89A4BD8B8EBBA8935A01C635 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD20AE72812E367E3277411 /* Preferences.swift */; };
 		8A92752BBED311CF09D4AECA /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		8C03781D30A6220B1604A7DE /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE4BA309E788D84B95854AD /* AppSettings.swift */; };
+		B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0604FAD36D34A141ED936C80 /* SessionSummary.swift */; };
 		D677E926B9023393C7A6EE2F /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26B0FC1E1229764718CF683 /* NotificationService.swift */; };
 		D9DCD71B7EBE925EB79D8A86 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6C85F6C90FCE546C929F5F /* Session.swift */; };
 		EA7E5B92B9D41E40AC4C8F54 /* FutoMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -80,6 +82,7 @@
 
 /* Begin PBXFileReference section */
 		03CFFD65F9C0DFA650DD6BB2 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		0604FAD36D34A141ED936C80 /* SessionSummary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
 		0B2DB6C1570F469DB3B9453F /* FutoMonitor.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = FutoMonitor.entitlements; sourceTree = "<group>"; };
 		0C9513AADAE02448E4B8ACAA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1DD20AE72812E367E3277411 /* Preferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
@@ -114,6 +117,7 @@
 		D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestrictionService.swift; sourceTree = "<group>"; };
 		E040EA0EF6230253E2A2146C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		E2FD0CD07E4D79EC27C92915 /* FlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowView.swift; sourceTree = "<group>"; };
+		E52A962F4E7B56240BBB1218 /* GraphView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GraphView.swift; sourceTree = "<group>"; };
 		F3ABA836A347ACB128D09C74 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		F7D183B067D9C20E8E848405 /* InsightsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		FDB1C846DC4122660C2FFF45 /* SharedState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedState.swift; sourceTree = "<group>"; };
@@ -203,6 +207,7 @@
 				CFC033647C6060CD293D5535 /* ReflectionViews.swift */,
 				F7D183B067D9C20E8E848405 /* InsightsView.swift */,
 				ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */,
+				E52A962F4E7B56240BBB1218 /* GraphView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -273,6 +278,7 @@
 				2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */,
 				5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */,
 				C26B0FC1E1229764718CF683 /* NotificationService.swift */,
+				0604FAD36D34A141ED936C80 /* SessionSummary.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -462,6 +468,8 @@
 				5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */,
 				4DA8EE1818439D1E2FF3F6AF /* NotificationSettingsView.swift in Sources */,
 				8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */,
+				B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */,
+				7627CADBB6098699D9FA93EC /* GraphView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

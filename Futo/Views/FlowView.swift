@@ -4,42 +4,62 @@ import SwiftUI
 struct FlowView: View {
     let model: AppModel
 
-    /// 画面が切り替わる単位。値が変わると、ゆっくり重なるように入れ替わる。
-    private var stage: String {
-        if let result = model.lastResult { return "result-\(result.rawValue)-\(model.awaitingUnlockSelection)" }
-        return "phase-\(model.activeSession?.phase.rawValue ?? "none")"
+    /// 表示中の段階。画面を閉じている最中に中身が変わって見えないよう、閉じる間は最後の段階を保つ。
+    private struct Stage {
+        var id: String
+        var session: Session?
+        var outcome: SessionOutcome?
+    }
+
+    @State private var shown: Stage?
+
+    init(model: AppModel) {
+        self.model = model
+        _shown = State(initialValue: Self.currentStage(of: model))
+    }
+
+    private static func currentStage(of model: AppModel) -> Stage? {
+        if let result = model.lastResult {
+            return Stage(id: "result-\(model.awaitingUnlockSelection)", session: nil, outcome: result)
+        }
+        guard let session = model.activeSession else { return nil }
+        switch session.phase {
+        case .choosingPurpose: return Stage(id: "purpose", session: session)
+        case .waiting: return Stage(id: "wait", session: session)
+        case .awaitingChoice: return Stage(id: "choice", session: session)
+        case .completed, .interrupted: return nil
+        }
     }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                content
-                    .id(stage)
-                    .transition(.opacity)
+                if let shown {
+                    content(shown)
+                        .id(shown.id)
+                        .transition(.sequentialFade)
+                }
             }
-            .animation(.easeInOut(duration: 0.4), value: stage)
+            .animation(.easeInOut(duration: 0.3), value: shown?.id)
             .background(Theme.background.ignoresSafeArea())
         }
         .demoBanner(model.mode)
+        .onChange(of: Self.currentStage(of: model)?.id) { _, _ in
+            // 閉じている間（showFlow が false）は更新しない。
+            if model.showFlow, let next = Self.currentStage(of: model) { shown = next }
+        }
+        .onAppear { if shown == nil { model.closeFlow() } }
     }
 
     @ViewBuilder
-    private var content: some View {
-        if let result = model.lastResult {
-            ResultView(model: model, outcome: result)
-        } else if let session = model.activeSession {
-            switch session.phase {
-            case .choosingPurpose:
-                PurposeView(model: model)
-            case .waiting:
-                WaitView(model: model, session: session)
-            case .awaitingChoice:
-                FinalChoiceView(model: model)
-            case .completed, .interrupted:
-                Color.clear.onAppear { model.closeFlow() }
-            }
-        } else {
-            Color.clear.onAppear { model.closeFlow() }
+    private func content(_ stage: Stage) -> some View {
+        switch stage.id {
+        case "purpose": PurposeView(model: model)
+        case "wait":
+            if let session = stage.session { WaitView(model: model, session: session) }
+        case "choice": FinalChoiceView(model: model)
+        default:
+            if let outcome = stage.outcome { ResultView(model: model, outcome: outcome) }
         }
     }
 }
@@ -122,22 +142,9 @@ struct WaitView: View {
                     .opacity(showTimer ? 1 : 0)
                     .padding(.vertical, 12)
 
-                VStack(spacing: 2) {
-                    Button("ひと呼吸をやめる") { model.endBreath() }
-                        .buttonStyle(FutoTextButtonStyle())
-                    Text("左上の「ホーム」で戻ると、あとで続きから再開できます。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .opacity(showTimer ? 1 : 0)
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button { model.closeFlow() } label: {
-                    Label("ホーム", systemImage: "chevron.backward")
-                }
+                Button("ひと呼吸をやめる") { model.endBreath() }
+                    .buttonStyle(FutoTextButtonStyle())
+                    .opacity(showTimer ? 1 : 0)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -253,7 +260,7 @@ struct ResultView: View {
                             .multilineTextAlignment(.center)
                             .lineSpacing(5)
                     }
-                    Button("閉じる") { model.closeFlow() }
+                    Button("ホームへ") { model.closeFlow() }
                         .buttonStyle(FutoButtonStyle())
                         .padding(.top, 12)
                 }

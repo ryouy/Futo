@@ -80,7 +80,7 @@ final class DeviceRestrictionService: RestrictionService {
         guard intendsRestriction, permission == .approved else { return }
         if selection.applicationTokens.isEmpty {
             stopUnlockMonitoring()
-            SharedState.unlock = nil
+            SharedState.clearUnlock()
             managedStore.shield.applications = nil
             SharedState.intendsRestriction = false
         } else if var record = SharedState.unlock {
@@ -109,7 +109,7 @@ final class DeviceRestrictionService: RestrictionService {
     @discardableResult
     func stop() -> Bool {
         stopUnlockMonitoring()
-        SharedState.unlock = nil
+        SharedState.clearUnlock()
         managedStore.shield.applications = nil
         SharedState.intendsRestriction = false
         return managedStore.shield.applications == nil
@@ -121,7 +121,7 @@ final class DeviceRestrictionService: RestrictionService {
 
     /// 選んだアプリだけを一時的に使えるようにする。監視を登録できた場合だけ解除し、失敗時は制限を維持する。
     /// 選ばれなかったアプリは制限されたまま。
-    func temporaryUnlock(apps: Set<ApplicationToken>) -> UnlockStartResult {
+    func temporaryUnlock(apps: Set<ApplicationToken>, sessionID: UUID? = nil) -> UnlockStartResult {
         guard SharedState.isAvailable else { return .unsupported }
         guard permission == .approved, intendsRestriction,
               !apps.isEmpty, apps.isSubset(of: selection.applicationTokens) else {
@@ -145,7 +145,7 @@ final class DeviceRestrictionService: RestrictionService {
         )
 
         // 拡張が受け取るイベントを識別できるよう、記録を先に保存する。登録に失敗したら消して制限を維持する。
-        SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end, unlockedApps: apps)
+        SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end, unlockedApps: apps, sessionID: sessionID)
         do {
             try center.startMonitoring(name, during: schedule,
                                        events: [DeviceActivityEvent.Name(SharedState.usageEventName): usageEvent])

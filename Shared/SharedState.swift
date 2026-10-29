@@ -9,6 +9,14 @@ struct UnlockRecord: Codable, Equatable {
     var endsAt: Date
     /// 一時解除したアプリ。ホームでの表示と履歴に使う（古い記録には無いので任意）
     var unlockedApps: Set<ApplicationToken>?
+    /// この解除を始めたひと呼吸（履歴に解除時間を書き戻すため）
+    var sessionID: UUID?
+}
+
+/// 一時解除が終わった（再制限された）記録。拡張が書き、本体が履歴へ反映する。
+struct UnlockEnd: Codable, Equatable {
+    var sessionID: UUID
+    var endedAt: Date
 }
 
 /// 本体とDevice Activity拡張が共有する状態と、再制限の処理。
@@ -32,6 +40,7 @@ enum SharedState {
         static let intent = "device.intent"
         static let unlock = "device.unlock"
         static let lastEvent = "device.lastEvent"
+        static let unlockEnds = "device.unlockEnds"
     }
 
     /// 本体は "group.<bundle id>"、拡張は ".monitor" を除いた同じ値。entitlementsの値と一致させる。
@@ -80,6 +89,26 @@ enum SharedState {
         }
     }
 
+    /// 解除が終わった記録（本体が読み取って履歴に反映したら消す）
+    static var unlockEnds: [UnlockEnd] {
+        get {
+            guard let data = defaults.data(forKey: Key.unlockEnds) else { return [] }
+            return (try? JSONDecoder().decode([UnlockEnd].self, from: data)) ?? []
+        }
+        set {
+            if newValue.isEmpty { defaults.removeObject(forKey: Key.unlockEnds); return }
+            if let data = try? JSONEncoder().encode(Array(newValue.suffix(30))) { defaults.set(data, forKey: Key.unlockEnds) }
+        }
+    }
+
+    /// 一時解除の記録を終わらせる。終了時刻を残してから消す（本体・拡張のどちらから呼んでもよい）。
+    static func clearUnlock(at date: Date = Date()) {
+        if let record = unlock, let sessionID = record.sessionID {
+            unlockEnds = unlockEnds + [UnlockEnd(sessionID: sessionID, endedAt: date)]
+        }
+        unlock = nil
+    }
+
     /// 以前の版が標準のUserDefaultsに保存した選択を、共有側へ一度だけ移す。
     static func migrateFromStandardIfNeeded() {
         guard isAvailable, loadSelection() == nil,
@@ -108,12 +137,12 @@ enum SharedState {
     static func relock(reason: String) -> Bool {
         guard intendsRestriction,
               let selection = loadSelection(), !selection.applicationTokens.isEmpty else {
-            unlock = nil
+            clearUnlock()
             log("再制限できませんでした（対象または意図がありません）: \(reason)")
             return false
         }
         ManagedSettingsStore(named: storeName).shield.applications = selection.applicationTokens
-        unlock = nil
+        clearUnlock()
         log("再制限しました: \(reason)")
         return true
     }

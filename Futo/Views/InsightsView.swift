@@ -149,5 +149,10 @@ struct RecordsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("記録")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink { GraphView(mode: mode) } label: { Label("グラフ", systemImage: "chart.bar") }
+            }
+        }
     }
 }

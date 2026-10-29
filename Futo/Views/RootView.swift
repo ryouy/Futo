@@ -8,17 +8,20 @@ struct RootView: View {
         Group {
             if model.onboardingDone {
                 ZStack {
+                    Theme.background.ignoresSafeArea()
+                    // ひと呼吸の画面が出る間はホームを先に消し、戻るときは画面が消えてからホームを出す。
                     NavigationStack { HomeView(model: model) }
+                        .opacity(model.showFlow ? 0 : 1)
+                        .animation(.easeInOut(duration: 0.2).delay(model.showFlow ? 0 : 0.2), value: model.showFlow)
                         .accessibilityHidden(model.showFlow)
                     if model.showFlow {
-                        // 下からせり上がらず、ふわっと現れて、ふわっと消える。
                         FlowView(model: model)
                             .background(Theme.background.ignoresSafeArea())
-                            .transition(.opacity)
+                            .transition(.sequentialFade)
                             .zIndex(1)
                     }
                 }
-                .animation(.easeInOut(duration: 0.35), value: model.showFlow)
+                .animation(.easeInOut(duration: 0.3), value: model.showFlow)
             } else {
                 OnboardingView(model: model)
             }
