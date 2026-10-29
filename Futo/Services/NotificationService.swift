@@ -43,7 +43,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             let content = UNMutableNotificationContent()
             content.title = "ふと"
             content.body = Self.body(for: candidate.kind)
-            content.interruptionLevel = .passive
+            content.interruptionLevel = .active   // 音・バッジは付けないが、バナーは出す（passive だと画面に出ない）
             content.userInfo = ["kind": candidate.kind.rawValue]
             let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: candidate.fireDate)
             let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
@@ -56,17 +56,39 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let content = UNMutableNotificationContent()
         content.title = "ふと"
         content.body = Self.body(for: kind)
-        content.interruptionLevel = .passive
+        content.interruptionLevel = .active
         content.userInfo = ["kind": kind.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
-        try? await center.add(UNNotificationRequest(identifier: "futo.test.\(UUID().uuidString)", content: content, trigger: trigger))
+        try? await center.add(UNNotificationRequest(identifier: "debug.test.\(UUID().uuidString)", content: content, trigger: trigger))
+    }
+
+    /// 診断用：許可状態と、予約中の通知。
+    func diagnostics() async -> (status: String, pending: [String]) {
+        let settings = await center.notificationSettings()
+        let status: String
+        switch settings.authorizationStatus {
+        case .notDetermined: status = "未確認"
+        case .denied: status = "許可されていません"
+        case .authorized: status = "許可済み"
+        case .provisional: status = "仮の許可"
+        case .ephemeral: status = "一時的な許可"
+        @unknown default: status = "不明"
+        }
+        let requests = await center.pendingNotificationRequests()
+        let lines: [String] = requests.compactMap { request in
+            guard let trigger = request.trigger as? UNCalendarNotificationTrigger,
+                  let date = trigger.nextTriggerDate() else { return nil }
+            let kind = request.content.userInfo["kind"] as? String ?? "?"
+            return "\(date.formatted(date: .abbreviated, time: .shortened))  \(kind)"
+        }
+        return (status, lines.sorted())
     }
 
     // MARK: UNUserNotificationCenterDelegate
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async
         -> UNNotificationPresentationOptions {
-        [.banner]
+        [.banner, .list]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {

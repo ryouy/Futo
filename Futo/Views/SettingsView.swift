@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// 設定。タブに分けて、それぞれ1画面に収める。
 @MainActor
 struct SettingsView: View {
     @Bindable var model: AppModel
@@ -7,9 +8,55 @@ struct SettingsView: View {
     @State private var confirmOff = false
     @State private var confirmLeaveDevice = false
 
+    private enum SettingsTab: Hashable { case restriction, breath, notification, other }
+    @State private var tab: SettingsTab = .restriction
+
     private var isDemo: Bool { model.mode == .demo }
 
     var body: some View {
+        TabView(selection: $tab) {
+            restrictionTab
+                .tabItem { Label("制限", systemImage: "lock") }
+                .tag(SettingsTab.restriction)
+            breathTab
+                .tabItem { Label("ひと呼吸", systemImage: "hourglass") }
+                .tag(SettingsTab.breath)
+            NotificationSettingsView(model: model)
+                .tabItem { Label("通知", systemImage: "bell") }
+                .tag(SettingsTab.notification)
+            otherTab
+                .tabItem { Label("その他", systemImage: "ellipsis.circle") }
+                .tag(SettingsTab.other)
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .navigationTitle("設定")
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "すべての記録を削除しますか？ 制限の設定は変わりません。",
+            isPresented: $confirmDelete, titleVisibility: .visible
+        ) {
+            Button("削除", role: .destructive) { model.deleteAllRecords() }
+            Button("キャンセル", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "制限をオフにしますか？ 自動ではオンに戻りません。",
+            isPresented: $confirmOff, titleVisibility: .visible
+        ) {
+            Button("オフにする", role: .destructive) { model.stopRestriction() }
+            Button("キャンセル", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "実際の制限をオフにして、デモに切り替えますか？",
+            isPresented: $confirmLeaveDevice, titleVisibility: .visible
+        ) {
+            Button("オフにして切り替える", role: .destructive) { model.switchMode(to: .demo) }
+            Button("キャンセル", role: .cancel) {}
+        }
+    }
+
+    // MARK: 制限
+
+    private var restrictionTab: some View {
         Form {
             Section {
                 Toggle("いつも制限する", isOn: Binding(
@@ -18,13 +65,11 @@ struct SettingsView: View {
                         if on { model.startRestriction() } else { confirmOff = true }
                     }))
                     .frame(minHeight: 44)
-            } header: {
-                Text("制限")
             } footer: {
-                Text("ふだんは制限をかけておき、使いたいときだけ、ひと呼吸おいて解除します。オフにすると、自動ではオンに戻りません。")
+                Text("オフにすると、自動ではオンに戻りません。")
             }
 
-            Section("動作モード") {
+            Section {
                 Toggle("デモモード", isOn: Binding(
                     get: { isDemo },
                     set: { wantsDemo in
@@ -33,19 +78,15 @@ struct SettingsView: View {
                         } else {
                             model.switchMode(to: wantsDemo ? .demo : .device)
                         }
-                    }
-                ))
-                .frame(minHeight: 44)
-                Text(isDemo
-                     ? "実際のアプリは制限しません。記録もデモ専用です。"
-                     : "選んだものを実際に制限します。")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    }))
+                    .frame(minHeight: 44)
+            } footer: {
+                Text(isDemo ? "実際のアプリは制限しません。" : "選んだものを実際に制限します。")
             }
 
             if !isDemo {
-                Section("アクセスの許可") {
+                Section {
                     LabeledContent("許可", value: permissionText)
-                        .accessibilityElement(children: .combine)
                     Button(model.permission == .approved ? "再確認" : "許可する") {
                         if model.permission == .approved {
                             model.refresh()
@@ -54,12 +95,19 @@ struct SettingsView: View {
                         }
                     }
                     .frame(minHeight: 44)
-                    if let error = model.permissionError {
-                        Text(error).font(.footnote)
-                    }
+                    if let error = model.permissionError { Text(error).font(.footnote) }
+                } header: {
+                    Text("Screen Time")
                 }
             }
+        }
+        .compactForm()
+    }
 
+    // MARK: ひと呼吸
+
+    private var breathTab: some View {
+        Form {
             Section {
                 Picker("待機時間", selection: Binding(
                     get: { model.prefs.effectiveWaitSeconds },
@@ -68,10 +116,8 @@ struct SettingsView: View {
                     ForEach(Preferences.waitOptions, id: \.self) { Text(durationText(seconds: $0)).tag($0) }
                 }
                 .frame(minHeight: 44)
-            } header: {
-                Text("ひと呼吸")
             } footer: {
-                Text("使いたい気持ちを確かめるまでの待ち時間です。次のひと呼吸から変わります。")
+                Text("次のひと呼吸から変わります。")
             }
 
             Section {
@@ -97,14 +143,19 @@ struct SettingsView: View {
                         displayedComponents: .hourAndMinute)
                         .frame(minHeight: 44)
                 }
-                NavigationLink("通知") { NotificationSettingsView(model: model) }
-                    .frame(minHeight: 44)
             } header: {
                 Text("朝・夜の振り返り")
             } footer: {
-                Text("設定した時刻から約6時間、ホームにカードを出します。日の区切りは午前4時で、深夜の記録は前日として数えます。カードは閉じられ、答えを求めることはありません。")
+                Text("時刻から約6時間、ホームに出ます。日の区切りは午前4時です。")
             }
+        }
+        .compactForm()
+    }
 
+    // MARK: その他
+
+    private var otherTab: some View {
+        Form {
             Section("テーマカラー") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 14) {
                     ForEach(ThemeColor.allCases) { option in
@@ -117,62 +168,24 @@ struct SettingsView: View {
             Section {
                 Button("すべての記録を削除", role: .destructive) { confirmDelete = true }
                     .frame(minHeight: 44)
-            } header: {
-                Text("記録")
             } footer: {
                 Text("記録だけが消えます。制限の設定は変わりません。")
-            }
-
-            Section("この試作について") {
-                Text("""
-                一時解除と自動再制限は、実機のみの試験機能です。\
-                制限は、「いつも制限する」をオフにすれば、いつでも外せます。\
-                許可は、iPhoneの設定アプリから取り消せます。\
-                ホームの状態は、許可と設定の照合結果です。シールドが出ているかは、対象アプリを開いて確かめてください。
-                """)
-                .font(.footnote)
             }
 
             #if DEBUG
             if !isDemo {
                 Section {
-                    Text(SharedState.lastEvent ?? "まだ記録はありません")
+                    Text(SharedState.lastEvent ?? "拡張の記録はまだありません")
                         .font(.footnote)
-                    Text(SharedState.isAvailable ? "App Group：利用できます" : "App Group：利用できません（未設定）")
+                    Text(SharedState.isAvailable ? "App Group：利用できます" : "App Group：利用できません")
                         .font(.footnote).foregroundStyle(.secondary)
                 } header: {
-                    Text("検証用：拡張の最後の動作")
-                } footer: {
-                    Text("Debugビルドのみ表示。待機の既定は10秒、一時解除の利用しきい値は\(SharedState.unlockUsageMinutes)分です。")
+                    Text("検証用（Debugのみ）")
                 }
             }
             #endif
         }
-        .scrollContentBackground(.hidden)
-        .background(Theme.background.ignoresSafeArea())
-        .navigationTitle("設定")
-        .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog(
-            "すべての記録を削除しますか？ 制限の設定は変わりません。進行中のひと呼吸は中断として閉じてから削除します。",
-            isPresented: $confirmDelete, titleVisibility: .visible
-        ) {
-            Button("削除", role: .destructive) { model.deleteAllRecords() }
-            Button("キャンセル", role: .cancel) {}
-        }
-        .confirmationDialog(
-            "制限をオフにしますか？ 自動ではオンに戻りません。",
-            isPresented: $confirmOff, titleVisibility: .visible
-        ) {
-            Button("オフにする", role: .destructive) { model.stopRestriction() }
-            Button("キャンセル", role: .cancel) {}
-        }
-        .confirmationDialog(
-            "実際の制限をオフにして、デモに切り替えますか？",
-            isPresented: $confirmLeaveDevice, titleVisibility: .visible
-        ) {
-            Button("オフにして切り替える", role: .destructive) { model.switchMode(to: .demo) }
-            Button("キャンセル", role: .cancel) {}
-        }
+        .compactForm()
     }
 
     private func themeSwatch(_ option: ThemeColor) -> some View {
@@ -192,7 +205,7 @@ struct SettingsView: View {
                     .overlay(Circle().stroke(.primary.opacity(selected ? 0.7 : 0), lineWidth: 2).padding(-4))
                     .overlay(Image(systemName: "checkmark").font(.footnote.bold())
                         .foregroundStyle(.white).opacity(selected ? 1 : 0))
-                Text(option.name).font(.caption).foregroundStyle(.primary)
+                Text(option.name).font(.caption).foregroundStyle(.primary).oneLine()
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }
@@ -207,5 +220,14 @@ struct SettingsView: View {
         case .approved: return "許可済み"
         case .denied: return "許可されていません"
         }
+    }
+}
+
+extension View {
+    /// 設定の各タブ：背景を揃え、中身が収まるときはバウンスさせない。
+    func compactForm() -> some View {
+        self.scrollContentBackground(.hidden)
+            .background(Theme.background.ignoresSafeArea())
+            .scrollBounceBehavior(.basedOnSize)
     }
 }

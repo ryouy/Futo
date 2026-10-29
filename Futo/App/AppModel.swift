@@ -41,6 +41,8 @@ final class AppModel {
     private(set) var unlockResult: UnlockStartResult?
     /// 「使いたい」の後、解除するものを選んでもらっている間だけ true
     private(set) var awaitingUnlockSelection = false
+    /// 解除の処理中（OSへの設定に少し時間がかかるため、先に画面を切り替える）
+    private(set) var isUnlocking = false
     @ObservationIgnored private var finishedSession: Session?
     var showFlow = false
     var permissionError: String?
@@ -229,17 +231,23 @@ final class AppModel {
         }
     }
 
-    /// 選んだものだけを一時解除する。
+    /// 選んだものだけを一時解除する。OSへの設定は少し時間がかかるので、先に画面を「解除しています」に切り替えてから行う。
     func unlockItems(_ items: RestrictedItems) {
         awaitingUnlockSelection = false
-        let result = device.temporaryUnlock(items: items, sessionID: finishedSession?.id)
-        unlockResult = result
-        if case .started(let until) = result, let session = finishedSession {
-            sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(items))
-            schedulePostUseCheck(session: session, at: until)
+        isUnlocking = true
+        let session = finishedSession
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(80))
+            let result = device.temporaryUnlock(items: items, sessionID: session?.id)
+            unlockResult = result
+            if case .started(let until) = result, let session {
+                sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(items))
+                schedulePostUseCheck(session: session, at: until)
+            }
+            finishedSession = nil
+            isUnlocking = false
+            refresh()
         }
-        finishedSession = nil
-        refresh()
     }
 
     func answerReflection(_ session: Session, _ reflection: Reflection) {
@@ -282,6 +290,7 @@ final class AppModel {
             lastResult = nil
             unlockResult = nil
             awaitingUnlockSelection = false
+            isUnlocking = false
             finishedSession = nil
         }
     }

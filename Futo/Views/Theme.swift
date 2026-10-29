@@ -124,6 +124,8 @@ struct FutoButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline.weight(.medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, 16)
@@ -176,6 +178,7 @@ struct ChoiceRow<Content: View>: View {
             }
             .frame(minHeight: 58)
             .padding(.horizontal, 20)
+            .contentShape(Rectangle())
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -183,7 +186,6 @@ struct ChoiceRow<Content: View>: View {
             )
         }
         .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.2), value: isOn)
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }
@@ -241,5 +243,12 @@ struct LeafMark: View {
             .font(.system(size: size, weight: .regular))
             .foregroundStyle(Theme.accent)
             .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// 1行に収める。入りきらないときは少しだけ縮める（折り返さない）。
+    func oneLine(_ minimumScale: CGFloat = 0.7) -> some View {
+        lineLimit(1).minimumScaleFactor(minimumScale)
     }
 }

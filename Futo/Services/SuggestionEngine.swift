@@ -92,8 +92,8 @@ enum SuggestionEngine {
            let longer = options.first(where: { $0 > currentWait }) {
             return Suggestion(
                 weekKey: weekKey, kind: .waitLonger,
-                title: "待機時間を少し長くしてみますか？",
-                evidence: "この7日間、待機のあとの選択は\(chosen.count)件で、そのうち「使いたい」は\(wants)件でした。",
+                title: "待機時間を長くしてみますか？",
+                evidence: "7日間で、待機のあと「使いたい」は\(chosen.count)件中\(wants)件。",
                 currentText: "待機時間 \(durationText(seconds: currentWait))",
                 proposedText: "待機時間 \(durationText(seconds: longer))",
                 change: .waitSeconds(longer))
@@ -106,8 +106,8 @@ enum SuggestionEngine {
             if late >= minimumRecords, earlier < preferences.nightMinute {
                 return Suggestion(
                     weekKey: weekKey, kind: .nightEarlier,
-                    title: "夜の振り返りを、少し早い時間に変えてみますか？",
-                    evidence: "夜の振り返りの時刻（\(clockText(minute: preferences.nightMinute))）より後の記録が、この7日間で\(late)件ありました。",
+                    title: "夜の振り返りを早めますか？",
+                    evidence: "\(clockText(minute: preferences.nightMinute))より後の記録が、7日間で\(late)件。",
                     currentText: "夜の振り返り \(clockText(minute: preferences.nightMinute))",
                     proposedText: "夜の振り返り \(clockText(minute: earlier))",
                     change: .nightMinute(earlier))
@@ -119,8 +119,8 @@ enum SuggestionEngine {
            let shorter = options.last(where: { $0 < currentWait }) {
             return Suggestion(
                 weekKey: weekKey, kind: .waitShorter,
-                title: "待機時間を少し短くしてみますか？",
-                evidence: "この7日間、ひと呼吸を途中でやめたのは\(interrupted)件でした。",
+                title: "待機時間を短くしてみますか？",
+                evidence: "7日間で、途中でやめたのは\(interrupted)件。",
                 currentText: "待機時間 \(durationText(seconds: currentWait))",
                 proposedText: "待機時間 \(durationText(seconds: shorter))",
                 change: .waitSeconds(shorter))

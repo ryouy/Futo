@@ -69,6 +69,7 @@ private struct FlowTitle: View {
     var body: some View {
         Text(text)
             .font(.title2.weight(.medium))
+            .oneLine()
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
     }
@@ -83,12 +84,13 @@ struct PurposeView: View {
             VStack(spacing: 14) {
                 FlowTitle(text: "今、どんなことに使いたいですか？")
                 Text("このあと、\(model.waitDurationText)だけ立ち止まります。")
+                    .oneLine(0.8)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.bottom, 10)
                 ForEach(Purpose.allCases) { item in
                     ChoiceRow(isOn: selected == item) { selected = item } content: {
-                        Text(item.label)
+                        Text(item.label).oneLine()
                     }
                 }
                 Button("ひと呼吸おく") { model.choosePurpose(selected) }
@@ -135,6 +137,7 @@ struct WaitView: View {
             VStack(spacing: 24) {
                 FlowTitle(text: "少し、立ち止まってみましょう。")
                 Text("\(model.waitDurationText)、ゆっくり息をしてみましょう。")
+                    .oneLine(0.8)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
@@ -199,30 +202,16 @@ struct WaitView: View {
 struct FinalChoiceView: View {
     let model: AppModel
 
-    private var footnote: String {
-        if model.canTemporarilyUnlock {
-            return "「使いたい」を選ぶと、選んだものをしばらく使えます。"
-        }
-        if model.mode == .demo {
-            return "デモでは、実際のアプリの制限は変わりません。"
-        }
-        return "この設定では、どちらを選んでも制限は解除されません。"
-    }
-
     var body: some View {
         CenteredScroll {
             VStack(spacing: 16) {
                 FlowTitle(text: "今も使いたいですか？")
                     .padding(.bottom, 12)
+                // 色で区別する。どちらも同じ大きさで、押しやすさは変えない。
+                Button("使いたい") { model.finish(.wantsToUse) }
+                    .buttonStyle(FutoButtonStyle())
                 Button("やめておく") { model.finish(.deferred) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
-                Button("使いたい") { model.finish(.wantsToUse) }
-                    .buttonStyle(FutoButtonStyle(prominent: false))
-                Text(footnote)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 8)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -233,18 +222,20 @@ struct ResultView: View {
     let model: AppModel
     let outcome: SessionOutcome
 
-    private var wantsToUseMessage: String {
+    /// 見出しと本文。解除できたときは「解除しました」と、ひとこと添える。
+    private var content: (title: String, lines: [String]) {
+        if outcome == .deferred { return ("記録しました。", []) }
+        if model.isUnlocking { return ("解除しています…", []) }
         switch model.unlockResult {
-        case .started(let until):
-            return "選んだものを使えます。約\(SharedState.unlockUsageMinutes)分使うか、\(until.formatted(date: .omitted, time: .shortened))になると、制限に戻ります。"
+        case .started:
+            let minutes = SharedState.unlockUsageMinutes
+            return ("解除しました", ["\(minutes)分ほど、ゆっくりどうぞ。", "戻ってきたら、感想を教えてください。"])
         case .failed:
-            return "一時解除を始められなかったため、制限は続いています。"
+            return ("解除できませんでした", ["制限は続いています。"])
         case .unsupported:
-            return "この設定では、一時解除は使えません。使うには、設定で「いつも制限する」をオフにしてください。"
+            return ("記録しました。", ["この設定では、解除は使えません。"])
         case nil:
-            return model.mode == .demo
-                ? "デモでは、実際の制限は変わりません。"
-                : "制限は続いています。"
+            return ("記録しました。", [model.mode == .demo ? "デモでは、実際の制限は変わりません。" : "制限は続いています。"])
         }
     }
 
@@ -253,16 +244,18 @@ struct ResultView: View {
             UnlockChooserView(model: model)
         } else {
             CenteredScroll {
-                VStack(spacing: 16) {
-                    FlowTitle(text: "記録しました。")
-                    if outcome == .wantsToUse {
-                        Text(wantsToUseMessage)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(5)
+                VStack(spacing: 14) {
+                    FlowTitle(text: content.title)
+                    if model.isUnlocking {
+                        ProgressView().padding(.vertical, 4)
+                    }
+                    ForEach(content.lines, id: \.self) { line in
+                        Text(line).oneLine(0.8).foregroundStyle(.secondary)
                     }
                     Button("ホームへ") { model.closeFlow() }
                         .buttonStyle(FutoButtonStyle())
-                        .padding(.top, 12)
+                        .disabled(model.isUnlocking)
+                        .padding(.top, 14)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

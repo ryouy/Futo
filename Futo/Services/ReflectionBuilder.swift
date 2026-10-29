@@ -45,17 +45,17 @@ enum ReflectionBuilder {
     private static func openings(_ kind: ReflectionKind, _ volume: Volume, _ day: String) -> [String] {
         switch (kind, volume) {
         case (.morning, .few):
-            return ["\(day)は、立ち止まった場面が少しだけありました。", "\(day)は、ひと呼吸が少なめでした。"]
+            return ["\(day)は、立ち止まる場面が少なめでした。", "\(day)は、ひと呼吸が少なめでした。"]
         case (.morning, .some):
             return ["\(day)は、何度か立ち止まる時間がありました。", "\(day)は、ひと呼吸が何回かありました。"]
         case (.morning, .many):
-            return ["\(day)は、立ち止まる場面が多めの一日でした。", "\(day)は、ひと呼吸をたくさんおこないました。"]
+            return ["\(day)は、立ち止まる場面が多めでした。", "\(day)は、ひと呼吸をたくさんしました。"]
         case (.night, .few):
-            return ["\(day)は、立ち止まった場面が少しだけでした。", "\(day)は、ひと呼吸が少なめでした。"]
+            return ["\(day)は、立ち止まる場面が少なめでした。", "\(day)は、ひと呼吸が少なめでした。"]
         case (.night, .some):
             return ["\(day)は、何度か立ち止まりました。", "\(day)は、ひと呼吸が何回かありました。"]
         case (.night, .many):
-            return ["\(day)は、立ち止まる場面が多めの一日でした。", "\(day)は、ひと呼吸をたくさんおこないました。"]
+            return ["\(day)は、立ち止まる場面が多めでした。", "\(day)は、ひと呼吸をたくさんしました。"]
         }
     }
 
@@ -76,21 +76,21 @@ enum ReflectionBuilder {
             return "途中でやめました。"
         }
         if interrupted * 2 >= records.count {
-            return pick(["途中でやめる場面が多めでした。", "最後まで進まずにやめることが多めでした。"], seed, 2)
+            return pick(["途中でやめる場面が多めでした。", "途中で終えることが多めでした。"], seed, 2)
         }
         let decided = deferred + wants
         guard decided > 0 else { return nil }
         let share = Double(deferred) / Double(decided)
-        if share >= 0.7 { return pick(["「やめておく」を選ぶ場面が多めでした。", "多くは「やめておく」を選びました。"], seed, 3) }
-        if share <= 0.3 { return pick(["「使いたい」を選ぶ場面が多めでした。", "多くは「使いたい」を選びました。"], seed, 3) }
-        return pick(["「やめておく」と「使いたい」は、同じくらいでした。", "「やめておく」と「使いたい」が、半々くらいでした。"], seed, 3)
+        if share >= 0.7 { return pick(["「やめておく」が多めでした。", "ほとんど「やめておく」でした。"], seed, 3) }
+        if share <= 0.3 { return pick(["「使いたい」が多めでした。", "ほとんど「使いたい」でした。"], seed, 3) }
+        return pick(["「やめておく」と「使いたい」は半々でした。", "どちらも同じくらいでした。"], seed, 3)
     }
 
     private static func purposeLine(_ records: [Session], _ seed: String) -> String? {
         let counts = Purpose.allCases.map { p in (p, records.filter { $0.purpose == p }.count) }.filter { $0.1 > 0 }
         let answered = counts.reduce(0) { $0 + $1.1 }
         if answered == 0 {
-            return records.count == 1 ? "目的は答えませんでした。" : "目的は、答えない場面が多めでした。"
+            return records.count == 1 ? "目的は答えませんでした。" : "目的は、あまり答えませんでした。"
         }
         let top = counts.max { $0.1 < $1.1 }!
         if answered == 1 { return "目的は「\(top.0.label)」でした。" }
@@ -106,12 +106,12 @@ enum ReflectionBuilder {
         let answered = counts.reduce(0) { $0 + $1.1 }
         guard answered > 0 else { return nil }
         let top = counts.max { $0.1 < $1.1 }!
-        if answered == 1 { return "使ったあとの感想は「\(top.0.label)」でした。" }
-        guard Double(top.1) / Double(answered) >= 0.6 else { return "使ったあとの感想は、分かれていました。" }
+        if answered == 1 { return "感想は「\(top.0.label)」でした。" }
+        guard Double(top.1) / Double(answered) >= 0.6 else { return "感想は、分かれていました。" }
         switch top.0 {
-        case .satisfied: return "使ったあとは「満足した」という感想が多めでした。"
-        case .neutral: return "使ったあとの感想は「どちらでもない」が多めでした。"
-        case .wishedLess: return "使ったあとは「もう少し控えたかった」という感想が多めでした。"
+        case .satisfied: return "感想は「満足した」が多めでした。"
+        case .neutral: return "感想は「どちらでもない」が多めでした。"
+        case .wishedLess: return "感想は「もう少し控えたかった」が多めでした。"
         case .skipped: return nil
         }
     }

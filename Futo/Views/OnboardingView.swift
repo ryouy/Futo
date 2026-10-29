@@ -17,9 +17,9 @@ struct OnboardingView: View {
         Page(symbol: nil, title: "使う前に、ひと呼吸。",
              text: "スマホを、ふと開く前に。\n少し立ち止まる時間を作るアプリです。"),
         Page(symbol: "lock.fill", title: "ふだんは、制限をかけておく",
-             text: "選んだアプリやサイトは、\nふだんは使えない状態にします。"),
+             text: "選んだアプリやサイトは、\nふだんは使えなくします。"),
         Page(symbol: "hourglass", title: "使いたいときは、ひと呼吸",
-             text: "何に使いたいかを選んで、少し待ちます。\nそのあと、使うかどうかを自分で決めます。"),
+             text: "使う理由を選んで、少し待ちます。\nそのあと、自分で決めます。"),
         Page(symbol: "moon.stars", title: "そっと、振り返る",
              text: "朝や夜に、短く振り返れます。\n記録は、この端末の中だけにあります。"),
     ]

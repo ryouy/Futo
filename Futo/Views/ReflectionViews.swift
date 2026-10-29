@@ -37,8 +37,9 @@ struct SuggestionCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(suggestion.title).font(.headline.weight(.medium))
+            Text(suggestion.title).font(.headline.weight(.medium)).oneLine(0.8)
             Text(suggestion.evidence)
+                .oneLine(0.8)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .lineSpacing(3)

@@ -3,7 +3,7 @@ import ManagedSettings
 import SwiftUI
 
 /// 制限するもの1つぶんのラベル。名前やアイコンはOSが描画し、アプリ側は名前を取得しない。
-struct ItemLabel: View {
+struct ItemLabel: View, Equatable {
     let item: RestrictedItem
 
     var body: some View {
@@ -96,10 +96,12 @@ struct UnlockChooserView: View {
     init(model: AppModel) {
         self.model = model
         let all = model.device.items.sortedItems
+        self.all = all
         _chosen = State(initialValue: all.count == 1 ? Set(all) : [])
     }
 
-    private var all: [RestrictedItem] { model.device.items.sortedItems }
+    /// 表示のたびに作り直さない（OSが描画するラベルの再読み込みで、選ぶたびにもたつくのを防ぐ）。
+    private let all: [RestrictedItem]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -107,9 +109,7 @@ struct UnlockChooserView: View {
                 VStack(spacing: 14) {
                     Text("どれを使いますか？")
                         .font(.title2.weight(.medium))
-                        .multilineTextAlignment(.center)
-                    Text("選んだものだけ、しばらく使えます。")
-                        .foregroundStyle(.secondary)
+                        .oneLine()
                         .padding(.bottom, 6)
 
                     if all.count > 1 {
@@ -126,7 +126,7 @@ struct UnlockChooserView: View {
                         ChoiceRow(isOn: chosen.contains(item)) {
                             if chosen.contains(item) { chosen.remove(item) } else { chosen.insert(item) }
                         } content: {
-                            ItemLabel(item: item)
+                            ItemLabel(item: item).equatable()
                         }
                     }
                 }

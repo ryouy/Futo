@@ -78,14 +78,14 @@ struct HomeView: View {
         }
     }
 
-    /// 余裕があるときは、制限するものを多めに（最大6件）見せる。足りなければ3件まで減らす。
+    /// 余裕があるときは、制限するものを多めに（最大8件）見せる。足りなければ3件まで減らす。
     private func visibleRows(forHeight height: CGFloat) -> Int {
         var reserved: CGFloat = 270
         #if DEBUG
         reserved += 80
         #endif
         if !model.visibleCards.isEmpty || model.suggestion != nil || pendingReflection != nil { return 3 }
-        return max(3, min(6, Int((height - reserved) / 48)))
+        return max(3, min(8, Int((height - reserved) / 48)))
     }
 
     private func mainContent(rows: Int) -> some View {
@@ -147,15 +147,15 @@ struct HomeView: View {
     private var subline: String {
         if needsPermission {
             return model.permission == .denied
-                ? "iPhoneの設定アプリで、Screen Timeの許可をオンにしてください。"
-                : "制限をかけるために、Screen Timeの許可が必要です。"
+                ? "設定アプリで許可をオンにしてください。"
+                : "Screen Timeの許可が必要です。"
         }
-        if model.targetCount == 0 { return "開きすぎてしまうアプリやサイトを選びます。" }
+        if model.targetCount == 0 { return "アプリやサイトを選びます。" }
         switch model.restriction {
         case .configured: return "使いたいときは、ひと呼吸おいてから。"
         case .temporarilyUnlocked: return "使い終わったら、制限に戻します。"
-        case .unverifiable: return "もう一度、制限をオンにしてみてください。"
-        case .off: return "ふだんはオンにしておくのがおすすめです。"
+        case .unverifiable: return "もう一度オンにしてください。"
+        case .off: return "ふだんはオンがおすすめです。"
         }
     }
 
@@ -182,8 +182,8 @@ struct HomeView: View {
                 }
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(headline).font(.headline.weight(.medium))
-                    Text(subline).font(.footnote).foregroundStyle(.secondary)
+                    Text(headline).font(.headline.weight(.medium)).oneLine()
+                    Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
                 }
                 Spacer(minLength: 0)
             }
