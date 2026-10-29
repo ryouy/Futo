@@ -63,18 +63,14 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         Form {
-            Section {
+            CardSection {
                 row(.night, minute: bind(\.nightMinute))
                 row(.morning, minute: bind(\.morningMinute))
                 row(.postUse)
                 row(.outing, minute: bind(\.outingMinute))
-            } header: {
-                Text("通知（はじめは夜だけがおすすめ）")
-            } footer: {
-                Text("初期はすべてオフ。1日4件まで、3時間以上あけます。")
             }
 
-            Section {
+            CardSection {
                 HStack {
                     Text("静かな時間")
                     Spacer()
@@ -91,28 +87,24 @@ struct NotificationSettingsView: View {
                         .labelsHidden()
                 }
                 .frame(minHeight: 44)
-            } footer: {
-                Text("この間は送りません。翌朝にまとめて送ることもありません。")
             }
 
             let warnings = NotificationPlanner.warnings(preferences: model.prefs)
             if !warnings.isEmpty {
-                Section("お知らせ") {
+                CardSection {
                     ForEach(warnings, id: \.self) { Text($0).font(.footnote) }
                 }
             }
 
             #if DEBUG
-            Section {
+            CardSection {
                 LabeledContent("許可", value: diagnostics?.status ?? "…")
                 if let pending = diagnostics?.pending {
                     Text(pending.isEmpty ? "予約中の通知はありません" : pending.joined(separator: "\n"))
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.subheadline)
                 }
                 Button("更新") { Task { diagnostics = await model.notifications.diagnostics() } }
                     .frame(minHeight: 44)
-            } header: {
-                Text("検証用（Debugのみ）")
             }
             .task { diagnostics = await model.notifications.diagnostics() }
             #endif

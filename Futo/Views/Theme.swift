@@ -19,23 +19,31 @@ enum ThemeColor: String, CaseIterable, Identifiable {
         }
     }
 
-    /// (ライト, ダーク)。文字色との対比が足りるよう、ライトは濃いめ、ダークは明るめ。
+    /// (ライト, ダーク)。ライトは生成り色の地に濃いめの差し色。
+    /// ダークは、黒に寄せず、やわらかい深緑グレーの地に、少し持ち上げたカードと、パステル調の差し色にして、
+    /// 夜でも張りつめない雰囲気にする。
     struct Palette {
         var accent: (UInt32, UInt32)
+        var backgroundTop: (UInt32, UInt32)
         var backgroundBottom: (UInt32, UInt32)
+        var card: (UInt32, UInt32)
         var soft: (UInt32, UInt32)
     }
 
     var palette: Palette {
         switch self {
         case .wakaba:
-            return Palette(accent: (0x196459, 0x6FBBA8), backgroundBottom: (0xE8F1EE, 0x17201E), soft: (0xDDEBE7, 0x21332F))
+            return Palette(accent: (0x196459, 0x8FD0BD), backgroundTop: (0xFCF8F0, 0x26312E),
+                           backgroundBottom: (0xE8F1EE, 0x1F2926), card: (0xFFFEFA, 0x2F3B37), soft: (0xDDEBE7, 0x2B3D39))
         case .sora:
-            return Palette(accent: (0x46789A, 0x8FBEDC), backgroundBottom: (0xEAF1F5, 0x1A1E22), soft: (0xE1EDF4, 0x25323B))
+            return Palette(accent: (0x46789A, 0x9CC9E6), backgroundTop: (0xFCF8F0, 0x262D34),
+                           backgroundBottom: (0xEAF1F5, 0x1F262D), card: (0xFFFEFA, 0x2F3841), soft: (0xE1EDF4, 0x2B3945))
         case .sakura:
-            return Palette(accent: (0xA25A72, 0xE3A0B5), backgroundBottom: (0xF7ECEE, 0x211A1C), soft: (0xF5E3E8, 0x3A2B30))
+            return Palette(accent: (0xA25A72, 0xEAB0C2), backgroundTop: (0xFCF8F0, 0x312B2D),
+                           backgroundBottom: (0xF7ECEE, 0x282224), card: (0xFFFEFA, 0x3A3235), soft: (0xF5E3E8, 0x3B3034))
         case .fuji:
-            return Palette(accent: (0x6F5CA3, 0xBBA8E6), backgroundBottom: (0xF0ECF6, 0x1D1B22), soft: (0xE8E3F3, 0x2E2A3A))
+            return Palette(accent: (0x6F5CA3, 0xC4B3EE), backgroundTop: (0xFCF8F0, 0x2C2B34),
+                           backgroundBottom: (0xF0ECF6, 0x24232C), card: (0xFFFEFA, 0x35343F), soft: (0xE8E3F3, 0x363448))
         }
     }
 }
@@ -72,20 +80,25 @@ enum Theme {
 
     private static var palette: ThemeColor.Palette { ThemeStore.shared.color.palette }
 
-    static var backgroundTop: Color { dynamic((0xFCF8F0, 0x1E1D1A)) }
+    static var backgroundTop: Color { dynamic(palette.backgroundTop) }
     static var backgroundBottom: Color { dynamic(palette.backgroundBottom) }
-    static var card: Color { dynamic((0xFFFEFA, 0x282722)) }
+    static var card: Color { dynamic(palette.card) }
     static var accent: Color { dynamic(palette.accent) }
     /// アクセント色の上に置く文字色
     static var onAccent: Color { dynamic(((0xFFFEFA), 0x151816)) }
     /// 補足や案内に使う、テーマ色の淡い面。
     static var softBlue: Color { dynamic(palette.soft) }
     /// ほんのり暖かい色。お知らせ用。赤い警告色は使わない。
-    static var softPeach: Color { dynamic((0xF8EADF, 0x3A3029)) }
+    static var softPeach: Color { dynamic((0xF8EADF, 0x443A31)) }
+
+    /// 文字の色。ダークでは、真っ白ではなく、やわらかい生成り色。ライトはOS標準のまま。
+    static var text: Color {
+        Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? rgb(0xEEE9DF) : .label })
+    }
 
     /// 円グラフの色。テーマ色を軸に、見分けやすい控えめな色を並べる。
     static var chartColors: [Color] {
-        [accent, accent.opacity(0.5), dynamic((0xE2B48C, 0xB98B62)), dynamic((0xB9B6AE, 0x5F5D58)), dynamic((0xA9C4D4, 0x4C6573))]
+        [accent, accent.opacity(0.5), dynamic((0xE2B48C, 0xD9B48F)), dynamic((0xB9B6AE, 0x8F938E)), dynamic((0xA9C4D4, 0x84A9BC))]
     }
 
     static var background: LinearGradient {
@@ -246,5 +259,15 @@ extension View {
     /// 1行に収める。入りきらないときは少しだけ縮める（折り返さない）。
     func oneLine(_ minimumScale: CGFloat = 0.7) -> some View {
         lineLimit(1).minimumScaleFactor(minimumScale)
+    }
+}
+
+/// 設定のまとまり。行の背景を、アプリのカードの色にそろえる（ダークで標準の灰色が浮かないように）。
+struct CardSection<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Section { content }
+            .listRowBackground(Theme.card)
     }
 }

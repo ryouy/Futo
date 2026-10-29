@@ -60,6 +60,7 @@ struct RootView: View {
             withAnimation(.easeInOut(duration: 0.8)) { showSplash = false }
         }
         .tint(Theme.accent)
+        .foregroundStyle(Theme.text)
         .animation(.easeInOut(duration: 0.3), value: ThemeStore.shared.color)
         .fontDesign(.rounded)
         .onChange(of: scenePhase) { _, phase in

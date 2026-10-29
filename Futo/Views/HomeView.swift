@@ -50,6 +50,7 @@ struct HomeView: View {
         .onChange(of: model.restriction) { _, _ in model.notice = nil }
         .sheet(item: $sheet) { item in
             sheetContent(item)
+                .foregroundStyle(Theme.text)
                 .presentationCornerRadius(32)
                 .presentationBackground(Theme.background)
                 .presentationDragIndicator(.visible)

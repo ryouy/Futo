@@ -73,18 +73,16 @@ struct SettingsView: View {
 
     private var restrictionTab: some View {
         Form {
-            Section {
+            CardSection {
                 Toggle("いつも制限する", isOn: Binding(
                     get: { model.intendsRestriction },
                     set: { on in
                         if on { model.startRestriction() } else { confirmOff = true }
                     }))
                     .frame(minHeight: 44)
-            } footer: {
-                Text("はずすと、自動ではかけ直されません。")
             }
 
-            Section {
+            CardSection {
                 Toggle("デモモード", isOn: Binding(
                     get: { isDemo },
                     set: { wantsDemo in
@@ -95,12 +93,10 @@ struct SettingsView: View {
                         }
                     }))
                     .frame(minHeight: 44)
-            } footer: {
-                Text(isDemo ? "実際のアプリは制限しません。" : "選んだものを実際に制限します。")
             }
 
             if !isDemo {
-                Section {
+                CardSection {
                     LabeledContent("許可", value: permissionText)
                     Button(model.permission == .approved ? "再確認" : "許可する") {
                         if model.permission == .approved {
@@ -111,8 +107,6 @@ struct SettingsView: View {
                     }
                     .frame(minHeight: 44)
                     if let error = model.permissionError { Text(error).font(.footnote) }
-                } header: {
-                    Text("Screen Time")
                 }
             }
         }
@@ -123,7 +117,7 @@ struct SettingsView: View {
 
     private var breathTab: some View {
         Form {
-            Section {
+            CardSection {
                 Picker("待機時間", selection: Binding(
                     get: { model.prefs.effectiveWaitSeconds },
                     set: { value in model.updatePreferences { $0.waitSeconds = value } }
@@ -131,11 +125,9 @@ struct SettingsView: View {
                     ForEach(Preferences.waitOptions, id: \.self) { Text(durationText(seconds: $0)).tag($0) }
                 }
                 .frame(minHeight: 44)
-            } footer: {
-                Text("次のひと呼吸から変わります。")
             }
 
-            Section {
+            CardSection {
                 Picker("解除する時間", selection: Binding(
                     get: { model.prefs.effectiveUnlockMinutes },
                     set: { value in model.updatePreferences { $0.unlockMinutes = value } }
@@ -143,11 +135,9 @@ struct SettingsView: View {
                     ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text("\($0)分").tag($0) }
                 }
                 .frame(minHeight: 44)
-            } footer: {
-                Text("この時間使うと、制限に戻ります。")
             }
 
-            Section {
+            CardSection {
                 TimeToggleRow(
                     title: "朝の振り返り",
                     isOn: Binding(get: { model.prefs.morningEnabled },
@@ -160,10 +150,6 @@ struct SettingsView: View {
                                   set: { on in model.updatePreferences { $0.nightEnabled = on } }),
                     minute: Binding(get: { model.prefs.nightMinute },
                                     set: { value in model.updatePreferences { $0.nightMinute = value } }))
-            } header: {
-                Text("朝・夜の振り返り")
-            } footer: {
-                Text("時刻から約6時間、ホームに出ます。日の区切りは午前4時です。")
             }
         }
         .compactForm()
@@ -173,7 +159,7 @@ struct SettingsView: View {
 
     private var otherTab: some View {
         Form {
-            Section("テーマカラー") {
+            CardSection {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 14) {
                     ForEach(ThemeColor.allCases) { option in
                         themeSwatch(option)
@@ -182,15 +168,13 @@ struct SettingsView: View {
                 .padding(.vertical, 6)
             }
 
-            Section {
+            CardSection {
                 Button("すべての記録を削除", role: .destructive) { confirmDelete = true }
                     .frame(minHeight: 44)
-            } footer: {
-                Text("記録だけが消えます。制限の設定は変わりません。")
             }
 
             #if DEBUG
-            Section {
+            CardSection {
                 Button("初回説明をもう一度表示") {
                     // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
                     dismiss()
@@ -200,19 +184,13 @@ struct SettingsView: View {
                     }
                 }
                 .frame(minHeight: 44)
-            } header: {
-                Text("検証用（Debugのみ）")
-            } footer: {
-                Text("説明を見たかどうかの印だけを戻します。履歴と制限の設定は変わりません。")
             }
             if !isDemo {
-                Section {
+                CardSection {
                     Text(SharedState.lastEvent ?? "拡張の記録はまだありません")
-                        .font(.footnote)
+                        .font(.subheadline)
                     Text(SharedState.isAvailable ? "App Group：利用できます" : "App Group：利用できません")
-                        .font(.footnote).foregroundStyle(.secondary)
-                } header: {
-                    Text("検証用（Debugのみ）")
+                        .font(.subheadline)
                 }
             }
             #endif
