@@ -1,3 +1,5 @@
+import FamilyControls
+import ManagedSettings
 import SwiftData
 import SwiftUI
 
@@ -25,10 +27,7 @@ struct HistoryView: View {
                             Text(session.outcome?.label ?? "中断")
                         }
                         if session.temporaryUnlockStartedAt != nil {
-                            let note = [session.reflection.flatMap { $0 == .skipped ? nil : "感想：\($0.label)" }]
-                                .compactMap { $0 }.first
-                            Text(["一時解除", note].compactMap { $0 }.joined(separator: "・"))
-                                .font(.footnote).foregroundStyle(.secondary)
+                            unlockDetail(session)
                         }
                     }
                     .frame(minHeight: 44)
@@ -40,5 +39,21 @@ struct HistoryView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("履歴")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// 一時解除したアプリ（実機のみ）と、答えた感想。
+    @ViewBuilder
+    private func unlockDetail(_ session: Session) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if let data = session.temporaryUnlockedApps,
+               let tokens = try? JSONDecoder().decode(Set<ApplicationToken>.self, from: data) {
+                ForEach(tokens.sorted { $0.hashValue < $1.hashValue }, id: \.self) { token in
+                    Label(token).font(.footnote)
+                }
+            }
+            let note = session.reflection.flatMap { $0 == .skipped ? nil : "感想：\($0.label)" }
+            Text(["一時解除", note].compactMap { $0 }.joined(separator: "・"))
+                .font(.footnote).foregroundStyle(.secondary)
+        }
     }
 }

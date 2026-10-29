@@ -7,6 +7,8 @@ struct UnlockRecord: Codable, Equatable {
     var activityName: String
     var startedAt: Date
     var endsAt: Date
+    /// 一時解除したアプリ。ホームでの表示と履歴に使う（古い記録には無いので任意）
+    var unlockedApps: Set<ApplicationToken>?
 }
 
 /// 本体とDevice Activity拡張が共有する状態と、再制限の処理。

@@ -1,3 +1,5 @@
+import FamilyControls
+import ManagedSettings
 import SwiftData
 import SwiftUI
 
@@ -7,6 +9,18 @@ struct HomeView: View {
     @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
     @State private var showPicker = false
     @State private var confirmStop = false
+    @State private var pendingRemoval: Removal?
+
+    private enum Removal: Identifiable {
+        case demo
+        case device(ApplicationToken)
+        var id: String {
+            switch self {
+            case .demo: return "demo"
+            case .device(let token): return "device-\(token.hashValue)"
+            }
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -46,13 +60,27 @@ struct HomeView: View {
                 model.refresh()
             }
         }
-        .onChange(of: model.intendsRestriction) { _, _ in model.notice = nil }
+        .onChange(of: model.restriction) { _, _ in model.notice = nil }
         .sheet(isPresented: $showPicker) { picker }
         .confirmationDialog(
             "選んだアプリの制限を終了しますか？ この試作では、自動で再開されません。",
             isPresented: $confirmStop, titleVisibility: .visible
         ) {
             Button("制限を終了", role: .destructive) { model.stopRestriction() }
+            Button("キャンセル", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "このアプリを制限から外しますか？",
+            isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingRemoval
+        ) { removal in
+            Button("制限から外す", role: .destructive) {
+                switch removal {
+                case .demo: model.removeDemoTarget()
+                case .device(let token): model.removeApp(token)
+                }
+            }
             Button("キャンセル", role: .cancel) {}
         }
     }
@@ -64,13 +92,13 @@ struct HomeView: View {
         return false
     }
 
+    private var needsPermission: Bool {
+        model.mode == .device && model.permission != .approved
+    }
+
     private var statusText: String {
-        if model.mode == .device {
-            switch model.permission {
-            case .notDetermined: return "許可が必要です"
-            case .denied: return "許可が必要です。設定アプリで変更できます。"
-            case .approved: break
-            }
+        if needsPermission {
+            return model.permission == .denied ? "許可が必要です。設定アプリで変更できます。" : "許可が必要です"
         }
         if model.targetCount == 0 { return "制限するアプリを選んでください" }
         switch model.restriction {
@@ -82,30 +110,32 @@ struct HomeView: View {
         }
     }
 
+    private var statusIcon: String {
+        if needsPermission { return "hand.raised" }
+        if model.targetCount == 0 { return "lock.open" }
+        switch model.restriction {
+        case .configured: return "lock.fill"
+        case .temporarilyUnlocked: return "lock.open.fill"
+        case .unverifiable: return "questionmark.circle"
+        case .off: return "lock.open"
+        }
+    }
+
     /// 状態・制限するアプリ・お知らせを1枚にまとめる。
     private var statusCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(statusText).lineSpacing(4)
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: statusIcon)
+                    .font(.title2)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 32)
+                    .accessibilityHidden(true)
+                Text(statusText).lineSpacing(4)
+            }
 
             if model.targetCount > 0 {
                 Divider()
-                HStack(alignment: .top) {
-                    Group {
-                        if model.mode == .demo {
-                            Text(model.demo.targetName ?? "")
-                        } else {
-                            DeviceTargetLabels(selection: model.device.selection)
-                        }
-                    }
-                    .foregroundStyle(.secondary)
-                    Spacer()
-                    Button(action: editTargets) {
-                        Image(systemName: "gearshape")
-                            .font(.title3)
-                            .frame(width: 44, height: 44)
-                    }
-                    .accessibilityLabel("制限するアプリを変更")
-                }
+                appsSection
             }
             if let error = model.permissionError { Text(error).font(.footnote) }
             if let notice = model.notice {
@@ -117,13 +147,73 @@ struct HomeView: View {
         .card()
     }
 
-    /// 制限中・待機中は対象を変えられない。理由をお知らせに出す。
-    private func editTargets() {
-        if model.isTargetLocked {
-            model.notice = "制限を終了してから変更してください。"
+    // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
+
+    private var appsSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("制限するアプリ").font(.footnote).foregroundStyle(.secondary)
+                Spacer()
+                Button(action: addApps) {
+                    Image(systemName: "plus")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("アプリを追加")
+            }
+            if model.mode == .demo {
+                if let name = model.demo.targetName {
+                    appRow(unlocked: false, onRemove: { requestRemoval(.demo) }) { Text(name) }
+                }
+            } else {
+                ForEach(sortedTokens, id: \.self) { token in
+                    appRow(unlocked: model.unlockedApps.contains(token),
+                           onRemove: { requestRemoval(.device(token)) }) { Label(token) }
+                }
+            }
+        }
+    }
+
+    private var sortedTokens: [ApplicationToken] {
+        model.device.selection.applicationTokens.sorted { $0.hashValue < $1.hashValue }
+    }
+
+    /// 1行：アプリ名、南京錠（施錠／解除中）、目立たない－。
+    private func appRow<Content: View>(unlocked: Bool, onRemove: @escaping () -> Void,
+                                       @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 10) {
+            content()
+            Spacer()
+            if unlocked {
+                Text("解除中").font(.caption).foregroundStyle(Theme.accent)
+            }
+            Image(systemName: unlocked ? "lock.open.fill" : "lock.fill")
+                .foregroundStyle(unlocked ? Theme.accent : Color.secondary)
+                .accessibilityLabel(unlocked ? "一時解除中" : "制限中")
+            Button(action: onRemove) {
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("制限から外す")
+        }
+        .frame(minHeight: 44)
+    }
+
+    private func addApps() {
+        if model.isTargetEditLocked {
+            model.notice = "一時解除が終わってから変更してください。"
         } else {
             model.notice = nil
             showPicker = true
+        }
+    }
+
+    private func requestRemoval(_ removal: Removal) {
+        if model.isTargetEditLocked {
+            model.notice = "一時解除が終わってから変更してください。"
+        } else {
+            pendingRemoval = removal
         }
     }
 
@@ -137,7 +227,7 @@ struct HomeView: View {
             } else if model.activeSession != nil {
                 Button("ひと呼吸を続ける") { model.resumeBreath() }
                     .buttonStyle(FutoButtonStyle())
-                Button("ひと呼吸を終える") { model.endBreath() }
+                Button("ひと呼吸をやめる") { model.endBreath() }
                     .buttonStyle(FutoTextButtonStyle())
             } else {
                 primaryButton
@@ -151,7 +241,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private var primaryButton: some View {
-        if model.mode == .device, model.permission != .approved {
+        if needsPermission {
             Button("許可する") { Task { await model.requestPermission() } }
                 .buttonStyle(FutoButtonStyle())
         } else if model.targetCount == 0 {

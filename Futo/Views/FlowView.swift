@@ -42,19 +42,7 @@ private struct FlowTitle: View {
 
 struct PurposeView: View {
     let model: AppModel
-
-    /// 「答えずに進む」も選択肢の1つ。待機時間などの扱いは変わらない。
-    private enum Choice: Hashable {
-        case purpose(Purpose)
-        case skip
-    }
-
-    @State private var selected: Choice?
-
-    private func purpose(for choice: Choice) -> Purpose? {
-        if case .purpose(let p) = choice { return p }
-        return nil
-    }
+    @State private var selected: Purpose?
 
     var body: some View {
         CenteredScroll {
@@ -62,19 +50,16 @@ struct PurposeView: View {
                 FlowTitle(text: "今、どんなことに使いたいですか？")
                     .padding(.bottom, 10)
                 ForEach(Purpose.allCases) { item in
-                    ChoiceRow(isOn: selected == .purpose(item)) { selected = .purpose(item) } content: {
+                    ChoiceRow(isOn: selected == item) { selected = item } content: {
                         Text(item.label)
                     }
                 }
-                ChoiceRow(isOn: selected == .skip) { selected = .skip } content: {
-                    Text("答えずに進む")
-                }
-                Button("ひと呼吸おく") {
-                    if let selected { model.choosePurpose(purpose(for: selected)) }
-                }
-                .buttonStyle(FutoButtonStyle())
-                .disabled(selected == nil)
-                .padding(.top, 10)
+                Button("ひと呼吸おく") { model.choosePurpose(selected) }
+                    .buttonStyle(FutoButtonStyle())
+                    .disabled(selected == nil)
+                    .padding(.top, 10)
+                Button("答えずに進む") { model.choosePurpose(nil) }
+                    .buttonStyle(FutoButtonStyle(prominent: false))
             }
         }
         .toolbar {
@@ -130,14 +115,20 @@ struct WaitView: View {
                 .frame(width: 200, height: 200)
                 .padding(.vertical, 12)
 
-                Button("ひと呼吸を終える") { model.endBreath() }
-                    .buttonStyle(FutoTextButtonStyle())
+                VStack(spacing: 2) {
+                    Button("ひと呼吸をやめる") { model.endBreath() }
+                        .buttonStyle(FutoTextButtonStyle())
+                    Text("左上の「ホーム」で戻ると、あとで続きから再開できます。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { model.closeFlow() } label: {
-                    Label("ホームへ戻る", systemImage: "chevron.backward")
+                    Label("ホーム", systemImage: "chevron.backward")
                 }
             }
         }

@@ -68,10 +68,11 @@ final class SessionStore {
         return true
     }
 
-    func recordTemporaryUnlock(_ session: Session) {
+    func recordTemporaryUnlock(_ session: Session, apps: Data? = nil) {
         guard session.phase == .completed, session.outcome == .wantsToUse,
               session.temporaryUnlockStartedAt == nil else { return }
         session.temporaryUnlockStartedAt = now()
+        session.temporaryUnlockedApps = apps
         save()
     }
 

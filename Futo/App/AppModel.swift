@@ -19,6 +19,8 @@ final class AppModel {
     private(set) var restriction: RestrictionState = .off
     private(set) var targetCount = 0
     private(set) var activeSession: Session?
+    /// 一時解除中のアプリ（実機のみ）。ホームで解除中と分かるように表示する
+    private(set) var unlockedApps: Set<ApplicationToken> = []
 
     /// 最終選択の直後に表示する結果
     private(set) var lastResult: SessionOutcome?
@@ -49,9 +51,10 @@ final class AppModel {
 
     var intendsRestriction: Bool { service.intendsRestriction }
 
-    /// 対象変更を許さない状態（制限中、または待機中）
-    var isTargetLocked: Bool {
-        service.intendsRestriction || (activeSession?.phase == .waiting)
+    /// 一時解除中は、解除したアプリの扱いが曖昧になるため対象を変えられない。
+    var isTargetEditLocked: Bool {
+        if case .temporarilyUnlocked = restriction { return true }
+        return false
     }
 
     // MARK: 状態の再確認
@@ -63,6 +66,11 @@ final class AppModel {
         if permission == .approved { permissionError = nil }
         targetCount = service.targetCount
         restriction = service.verify()
+        if mode == .device, case .temporarilyUnlocked = restriction {
+            unlockedApps = device.unlockedApps
+        } else {
+            unlockedApps = []
+        }
         activeSession = sessions.openSession(mode: mode)
 
         // 権限を失った実機では、進行中の振り返りを中断して案内する。
@@ -120,6 +128,18 @@ final class AppModel {
     }
 
     func didChangeDeviceSelection() {
+        refresh()
+    }
+
+    /// 1つのアプリを制限から外す。デモでは唯一の対象を外す。
+    func removeApp(_ token: ApplicationToken) {
+        guard !isTargetEditLocked else { return }
+        device.removeApp(token)
+        refresh()
+    }
+
+    func removeDemoTarget() {
+        demo.selectTarget(nil)
         refresh()
     }
 
@@ -194,7 +214,9 @@ final class AppModel {
         awaitingUnlockSelection = false
         let result = device.temporaryUnlock(apps: apps)
         unlockResult = result
-        if case .started = result, let session = finishedSession { sessions.recordTemporaryUnlock(session) }
+        if case .started = result, let session = finishedSession {
+            sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(apps))
+        }
         finishedSession = nil
         refresh()
     }

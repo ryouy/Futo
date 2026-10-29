@@ -59,10 +59,36 @@ final class DeviceRestrictionService: RestrictionService {
         }
         selection = newSelection
         SharedState.saveSelection(newSelection)
-        if newSelection.applicationTokens.isEmpty {
-            SharedState.intendsRestriction = false
-        }
+        syncShield()
         return .saved
+    }
+
+    /// 1つのアプリを制限の対象から外す。制限中なら、そのアプリのシールドもすぐ外れる。
+    func removeApp(_ token: ApplicationToken) {
+        var tokens = selection.applicationTokens
+        guard tokens.remove(token) != nil else { return }
+        var updated = FamilyActivitySelection()
+        updated.applicationTokens = tokens
+        selection = updated
+        SharedState.saveSelection(updated)
+        syncShield()
+    }
+
+    /// 対象の変更を、制限中の本アプリ専用ストアへ反映する。対象が空になれば制限をオフにする。
+    /// 一時解除中は呼ばない（呼び出し側で変更を止める）。
+    private func syncShield() {
+        guard intendsRestriction, permission == .approved else { return }
+        if selection.applicationTokens.isEmpty {
+            managedStore.shield.applications = nil
+            SharedState.intendsRestriction = false
+        } else {
+            managedStore.shield.applications = selection.applicationTokens
+        }
+    }
+
+    /// 解除中のアプリ。一時解除中でなければ空。
+    var unlockedApps: Set<ApplicationToken> {
+        SharedState.unlock?.unlockedApps ?? []
     }
 
     func start() {
@@ -110,7 +136,7 @@ final class DeviceRestrictionService: RestrictionService {
         )
 
         // 拡張が受け取るイベントを識別できるよう、記録を先に保存する。登録に失敗したら消して制限を維持する。
-        SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end)
+        SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end, unlockedApps: apps)
         do {
             try center.startMonitoring(name, during: schedule,
                                        events: [DeviceActivityEvent.Name(SharedState.usageEventName): usageEvent])
