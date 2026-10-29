@@ -1,0 +1,30 @@
+{
+  "counts" : {
+    "deferred" : 0,
+    "interrupted" : 0,
+    "wantsToUse" : 0
+  },
+  "feelings" : {
+    "neutral" : 0,
+    "satisfied" : 0,
+    "wishedLess" : 0
+  },
+  "idempotencyKey" : "22222222-2222-4222-8222-222222222222",
+  "isPartial" : false,
+  "period" : "lastWeek",
+  "periodEnd" : "2027-01-10T19:00:00.000Z",
+  "periodStart" : "2027-01-03T19:00:00.000Z",
+  "phraseId" : "p2",
+  "purposes" : {
+    "break" : 0,
+    "contact" : 0,
+    "noReason" : 0,
+    "research" : 0,
+    "unanswered" : 0
+  },
+  "recipientUids" : [
+    "friend-uid-1"
+  ],
+  "showName" : true,
+  "timezone" : "Asia\/Tokyo"
+}
