@@ -4,29 +4,43 @@ import SwiftUI
 struct FlowView: View {
     let model: AppModel
 
+    /// 画面が切り替わる単位。値が変わると、ゆっくり重なるように入れ替わる。
+    private var stage: String {
+        if let result = model.lastResult { return "result-\(result.rawValue)-\(model.awaitingUnlockSelection)" }
+        return "phase-\(model.activeSession?.phase.rawValue ?? "none")"
+    }
+
     var body: some View {
         NavigationStack {
-            Group {
-                if let result = model.lastResult {
-                    ResultView(model: model, outcome: result)
-                } else if let session = model.activeSession {
-                    switch session.phase {
-                    case .choosingPurpose:
-                        PurposeView(model: model)
-                    case .waiting:
-                        WaitView(model: model, session: session)
-                    case .awaitingChoice:
-                        FinalChoiceView(model: model)
-                    case .completed, .interrupted:
-                        Color.clear.onAppear { model.closeFlow() }
-                    }
-                } else {
-                    Color.clear.onAppear { model.closeFlow() }
-                }
+            ZStack {
+                content
+                    .id(stage)
+                    .transition(.opacity.combined(with: .offset(y: 14)))
             }
+            .animation(.easeInOut(duration: 0.7), value: stage)
             .background(Theme.background.ignoresSafeArea())
         }
         .demoBanner(model.mode)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let result = model.lastResult {
+            ResultView(model: model, outcome: result)
+        } else if let session = model.activeSession {
+            switch session.phase {
+            case .choosingPurpose:
+                PurposeView(model: model)
+            case .waiting:
+                WaitView(model: model, session: session)
+            case .awaitingChoice:
+                FinalChoiceView(model: model)
+            case .completed, .interrupted:
+                Color.clear.onAppear { model.closeFlow() }
+            }
+        } else {
+            Color.clear.onAppear { model.closeFlow() }
+        }
     }
 }
 

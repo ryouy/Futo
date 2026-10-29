@@ -46,6 +46,15 @@ struct SettingsView: View {
                 }
             }
 
+            Section("テーマカラー") {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 14) {
+                    ForEach(ThemeColor.allCases) { option in
+                        themeSwatch(option)
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+
             Section {
                 Button("すべての記録を削除", role: .destructive) { confirmDelete = true }
                     .frame(minHeight: 44)
@@ -98,6 +107,32 @@ struct SettingsView: View {
             Button("制限を終了して切り替える", role: .destructive) { model.switchMode(to: .demo) }
             Button("キャンセル", role: .cancel) {}
         }
+    }
+
+    private func themeSwatch(_ option: ThemeColor) -> some View {
+        let selected = ThemeStore.shared.color == option
+        let swatch = Color(uiColor: UIColor { trait in
+            let hex = trait.userInterfaceStyle == .dark ? option.palette.accent.1 : option.palette.accent.0
+            return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                           blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        })
+        return Button {
+            withAnimation(.easeInOut(duration: 0.5)) { ThemeStore.shared.select(option) }
+        } label: {
+            VStack(spacing: 6) {
+                Circle()
+                    .fill(swatch)
+                    .frame(width: 44, height: 44)
+                    .overlay(Circle().stroke(.primary.opacity(selected ? 0.7 : 0), lineWidth: 2).padding(-4))
+                    .overlay(Image(systemName: "checkmark").font(.footnote.bold())
+                        .foregroundStyle(.white).opacity(selected ? 1 : 0))
+                Text(option.name).font(.caption).foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(option.name)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var permissionText: String {

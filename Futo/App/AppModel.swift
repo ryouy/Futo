@@ -51,10 +51,10 @@ final class AppModel {
 
     var intendsRestriction: Bool { service.intendsRestriction }
 
-    /// 一時解除中は、解除したアプリの扱いが曖昧になるため対象を変えられない。
+    /// 対象を変えられるのは、制限がかかっていない間だけ（制限オフ、または一時解除中）。
     var isTargetEditLocked: Bool {
-        if case .temporarilyUnlocked = restriction { return true }
-        return false
+        if case .temporarilyUnlocked = restriction { return false }
+        return service.intendsRestriction
     }
 
     // MARK: 状態の再確認
@@ -123,6 +123,7 @@ final class AppModel {
     }
 
     func selectDemoTarget(_ name: String?) {
+        guard !isTargetEditLocked else { return }
         demo.selectTarget(name)
         refresh()
     }
@@ -139,6 +140,7 @@ final class AppModel {
     }
 
     func removeDemoTarget() {
+        guard !isTargetEditLocked else { return }
         demo.selectTarget(nil)
         refresh()
     }

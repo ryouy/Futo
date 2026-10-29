@@ -75,12 +75,21 @@ final class DeviceRestrictionService: RestrictionService {
     }
 
     /// 対象の変更を、制限中の本アプリ専用ストアへ反映する。対象が空になれば制限をオフにする。
-    /// 一時解除中は呼ばない（呼び出し側で変更を止める）。
+    /// 変更できるのは制限オフまたは一時解除中だけ（呼び出し側で止める）。
     private func syncShield() {
         guard intendsRestriction, permission == .approved else { return }
         if selection.applicationTokens.isEmpty {
+            stopUnlockMonitoring()
+            SharedState.unlock = nil
             managedStore.shield.applications = nil
             SharedState.intendsRestriction = false
+        } else if var record = SharedState.unlock {
+            // 一時解除中の変更：解除中のアプリは開けたまま、追加したアプリは制限する。
+            let stillUnlocked = (record.unlockedApps ?? []).intersection(selection.applicationTokens)
+            record.unlockedApps = stillUnlocked
+            SharedState.unlock = record
+            let restricted = selection.applicationTokens.subtracting(stillUnlocked)
+            managedStore.shield.applications = restricted.isEmpty ? nil : restricted
         } else {
             managedStore.shield.applications = selection.applicationTokens
         }

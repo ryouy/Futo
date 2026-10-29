@@ -1,10 +1,71 @@
 import SwiftUI
 import UIKit
 
-/// 温かい生成り色と、くすんだ若葉色。強い白・黒や原色を避け、ダークモードでも同じ穏やかさを保つ。
+/// 選べるテーマカラー。背景の温かい生成り色は共通で、アクセント色と淡い面の色だけが変わる。
+enum ThemeColor: String, CaseIterable, Identifiable {
+    case wakaba
+    case sora
+    case sakura
+    case fuji
+    case yuyake
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .wakaba: return "若葉"
+        case .sora: return "空"
+        case .sakura: return "桜"
+        case .fuji: return "藤"
+        case .yuyake: return "夕焼け"
+        }
+    }
+
+    /// (ライト, ダーク)。文字色との対比が足りるよう、ライトは濃いめ、ダークは明るめ。
+    struct Palette {
+        var accent: (UInt32, UInt32)
+        var backgroundBottom: (UInt32, UInt32)
+        var soft: (UInt32, UInt32)
+    }
+
+    var palette: Palette {
+        switch self {
+        case .wakaba:
+            return Palette(accent: (0x4F7F63, 0x93C7A7), backgroundBottom: (0xEFF3E8, 0x1A1F1B), soft: (0xE5EEF1, 0x26343A))
+        case .sora:
+            return Palette(accent: (0x46789A, 0x8FBEDC), backgroundBottom: (0xEAF1F5, 0x1A1E22), soft: (0xE1EDF4, 0x25323B))
+        case .sakura:
+            return Palette(accent: (0xA25A72, 0xE3A0B5), backgroundBottom: (0xF7ECEE, 0x211A1C), soft: (0xF5E3E8, 0x3A2B30))
+        case .fuji:
+            return Palette(accent: (0x6F5CA3, 0xBBA8E6), backgroundBottom: (0xF0ECF6, 0x1D1B22), soft: (0xE8E3F3, 0x2E2A3A))
+        case .yuyake:
+            return Palette(accent: (0xA25D2E, 0xE8B07F), backgroundBottom: (0xF7EEE3, 0x231D17), soft: (0xF5E6D5, 0x3A2F25))
+        }
+    }
+}
+
+/// 現在のテーマ。Observationにより、`Theme` の色を読んでいる画面は、変更時に自動で再描画される。
+@Observable
+final class ThemeStore {
+    static let shared = ThemeStore()
+    private static let key = "settings.themeColor"
+
+    private(set) var color: ThemeColor
+
+    private init() {
+        color = ThemeColor(rawValue: UserDefaults.standard.string(forKey: Self.key) ?? "") ?? .wakaba
+    }
+
+    func select(_ newColor: ThemeColor) {
+        color = newColor
+        UserDefaults.standard.set(newColor.rawValue, forKey: Self.key)
+    }
+}
+
+/// 温かい生成り色と、選んだテーマの落ち着いた色。強い白・黒や原色を避け、ダークモードでも同じ穏やかさを保つ。
 enum Theme {
-    private static func dynamic(light: UIColor, dark: UIColor) -> Color {
-        Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? dark : light })
+    private static func dynamic(_ pair: (UInt32, UInt32)) -> Color {
+        Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? rgb(pair.1) : rgb(pair.0) })
     }
 
     private static func rgb(_ hex: UInt32) -> UIColor {
@@ -13,23 +74,26 @@ enum Theme {
                 blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
     }
 
-    static let backgroundTop = dynamic(light: rgb(0xFCF8F0), dark: rgb(0x1E1D1A))
-    static let backgroundBottom = dynamic(light: rgb(0xEFF3E8), dark: rgb(0x1A1F1B))
-    static let card = dynamic(light: rgb(0xFFFEFA), dark: rgb(0x282722))
-    static let accent = dynamic(light: rgb(0x4F7F63), dark: rgb(0x93C7A7))
-    /// アクセント色の上に置く文字色
-    static let onAccent = dynamic(light: rgb(0xFFFEFA), dark: rgb(0x14231A))
-    /// 落ち着いた薄い青。補足や案内に必要な箇所だけで使う。
-    static let softBlue = dynamic(light: rgb(0xE5EEF1), dark: rgb(0x26343A))
-    /// ほんのり暖かい色。お知らせ用。赤い警告色は使わない。
-    static let softPeach = dynamic(light: rgb(0xF8EADF), dark: rgb(0x3A3029))
+    private static var palette: ThemeColor.Palette { ThemeStore.shared.color.palette }
 
-    static let background = LinearGradient(
-        colors: [backgroundTop, backgroundBottom], startPoint: .top, endPoint: .bottom)
+    static var backgroundTop: Color { dynamic((0xFCF8F0, 0x1E1D1A)) }
+    static var backgroundBottom: Color { dynamic(palette.backgroundBottom) }
+    static var card: Color { dynamic((0xFFFEFA, 0x282722)) }
+    static var accent: Color { dynamic(palette.accent) }
+    /// アクセント色の上に置く文字色
+    static var onAccent: Color { dynamic(((0xFFFEFA), 0x151816)) }
+    /// 補足や案内に使う、テーマ色の淡い面。
+    static var softBlue: Color { dynamic(palette.soft) }
+    /// ほんのり暖かい色。お知らせ用。赤い警告色は使わない。
+    static var softPeach: Color { dynamic((0xF8EADF, 0x3A3029)) }
+
+    static var background: LinearGradient {
+        LinearGradient(colors: [backgroundTop, backgroundBottom], startPoint: .top, endPoint: .bottom)
+    }
 }
 
 struct CardStyle: ViewModifier {
-    var tint: Color = Theme.card
+    var tint: Color
 
     func body(content: Content) -> some View {
         content
@@ -44,7 +108,7 @@ struct CardStyle: ViewModifier {
 }
 
 extension View {
-    func card(tint: Color = Theme.card) -> some View { modifier(CardStyle(tint: tint)) }
+    func card(tint: Color? = nil) -> some View { modifier(CardStyle(tint: tint ?? Theme.card)) }
 }
 
 /// 主操作・副操作とも、押しやすくやわらかい形のボタン。
@@ -105,6 +169,7 @@ struct ChoiceRow<Content: View>: View {
             )
         }
         .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.35), value: isOn)
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }

@@ -7,9 +7,14 @@ import SwiftUI
 struct HomeView: View {
     @Bindable var model: AppModel
     @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
-    @State private var showPicker = false
+    @State private var sheet: HomeSheet?
     @State private var confirmStop = false
     @State private var pendingRemoval: Removal?
+
+    private enum HomeSheet: Identifiable {
+        case history, settings, picker
+        var id: Self { self }
+    }
 
     private enum Removal: Identifiable {
         case demo
@@ -30,26 +35,26 @@ struct HomeView: View {
                     Text("ふと").font(.largeTitle.weight(.medium)).foregroundStyle(Theme.accent)
                 }
 
-                if let session = pendingReflection { reflectionCard(session) }
+                if let session = pendingReflection {
+                    reflectionCard(session)
+                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                }
                 statusCard
                 actions
                 countsLine
             }
             .padding(20)
+            .animation(.easeInOut(duration: 0.5), value: pendingReflection != nil)
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink { HistoryView(mode: model.mode).demoBanner(model.mode) } label: {
-                    Label("履歴", systemImage: "clock")
-                }
+                Button { sheet = .history } label: { Label("履歴", systemImage: "clock") }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink { SettingsView(model: model).demoBanner(model.mode) } label: {
-                    Label("設定", systemImage: "gearshape")
-                }
+                Button { sheet = .settings } label: { Label("設定", systemImage: "gearshape") }
             }
         }
         .task(id: model.restriction) {
@@ -61,7 +66,12 @@ struct HomeView: View {
             }
         }
         .onChange(of: model.restriction) { _, _ in model.notice = nil }
-        .sheet(isPresented: $showPicker) { picker }
+        .sheet(item: $sheet) { item in
+            sheetContent(item)
+                .presentationCornerRadius(32)
+                .presentationBackground(Theme.background)
+                .presentationDragIndicator(.visible)
+        }
         .confirmationDialog(
             "選んだアプリの制限を終了しますか？ この試作では、自動で再開されません。",
             isPresented: $confirmStop, titleVisibility: .visible
@@ -103,8 +113,8 @@ struct HomeView: View {
         if model.targetCount == 0 { return "制限するアプリを選んでください" }
         switch model.restriction {
         case .configured: return "制限中です"
-        case .temporarilyUnlocked(let until):
-            return "いま一時的に使えます。約\(SharedState.unlockUsageMinutes)分使うか、\(until.formatted(date: .omitted, time: .shortened))になると、制限に戻ります。"
+        case .temporarilyUnlocked:
+            return "一時的に使えます"
         case .unverifiable: return "状態を確認できませんでした。もう一度お試しください"
         case .off: return "制限はオフです"
         }
@@ -145,76 +155,91 @@ struct HomeView: View {
             }
         }
         .card()
+        .animation(.easeInOut(duration: 0.5), value: model.restriction)
+        .animation(.easeInOut(duration: 0.5), value: model.targetCount)
     }
 
     // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
 
+    /// 変更できる間（制限オフ・一時解除中）は淡い面で包んで＋と－を出し、制限中は南京錠だけにする。
     private var appsSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let editable = !model.isTargetEditLocked
+        return VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("制限するアプリ").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
-                Button(action: addApps) {
-                    Image(systemName: "plus")
-                        .font(.title3)
-                        .frame(width: 44, height: 44)
+                if editable {
+                    Button(action: addApps) {
+                        Image(systemName: "plus")
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("アプリを追加")
+                } else {
+                    Button(action: explainLock) {
+                        Image(systemName: "lock.fill")
+                            .font(.body)
+                            .foregroundStyle(.tertiary)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("制限中は変更できません")
                 }
-                .accessibilityLabel("アプリを追加")
             }
             if model.mode == .demo {
                 if let name = model.demo.targetName {
-                    appRow(unlocked: false, onRemove: { requestRemoval(.demo) }) { Text(name) }
+                    appRow(unlocked: false, editable: editable, onRemove: { pendingRemoval = .demo }) { Text(name) }
                 }
             } else {
                 ForEach(sortedTokens, id: \.self) { token in
-                    appRow(unlocked: model.unlockedApps.contains(token),
-                           onRemove: { requestRemoval(.device(token)) }) { Label(token) }
+                    appRow(unlocked: model.unlockedApps.contains(token), editable: editable,
+                           onRemove: { pendingRemoval = .device(token) }) { Label(token) }
+                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
         }
+        .padding(.horizontal, editable ? 12 : 0)
+        .padding(.bottom, editable ? 4 : 0)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(editable ? Theme.accent.opacity(0.10) : Color.clear)
+        )
+        .animation(.easeInOut(duration: 0.5), value: editable)
+        .animation(.easeInOut(duration: 0.5), value: sortedTokens.count)
     }
 
     private var sortedTokens: [ApplicationToken] {
         model.device.selection.applicationTokens.sorted { $0.hashValue < $1.hashValue }
     }
 
-    /// 1行：アプリ名、南京錠（施錠／解除中）、目立たない－。
-    private func appRow<Content: View>(unlocked: Bool, onRemove: @escaping () -> Void,
+    /// 1行：アプリ名、南京錠（施錠／解除中）、変更できる間だけ目立たない－。
+    private func appRow<Content: View>(unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
                                        @ViewBuilder content: () -> Content) -> some View {
         HStack(spacing: 10) {
             content()
             Spacer()
-            if unlocked {
-                Text("解除中").font(.caption).foregroundStyle(Theme.accent)
-            }
             Image(systemName: unlocked ? "lock.open.fill" : "lock.fill")
                 .foregroundStyle(unlocked ? Theme.accent : Color.secondary)
                 .accessibilityLabel(unlocked ? "一時解除中" : "制限中")
-            Button(action: onRemove) {
-                Image(systemName: "minus.circle")
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 44, height: 44)
+            if editable {
+                Button(action: onRemove) {
+                    Image(systemName: "minus.circle")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("制限から外す")
             }
-            .accessibilityLabel("制限から外す")
         }
         .frame(minHeight: 44)
     }
 
     private func addApps() {
-        if model.isTargetEditLocked {
-            model.notice = "一時解除が終わってから変更してください。"
-        } else {
-            model.notice = nil
-            showPicker = true
-        }
+        guard !model.isTargetEditLocked else { return explainLock() }
+        model.notice = nil
+        sheet = .picker
     }
 
-    private func requestRemoval(_ removal: Removal) {
-        if model.isTargetEditLocked {
-            model.notice = "一時解除が終わってから変更してください。"
-        } else {
-            pendingRemoval = removal
-        }
+    private func explainLock() {
+        model.notice = "制限を解除している間だけ、変更できます。"
     }
 
     // MARK: 操作（主操作は常に1つ）
@@ -245,7 +270,7 @@ struct HomeView: View {
             Button("許可する") { Task { await model.requestPermission() } }
                 .buttonStyle(FutoButtonStyle())
         } else if model.targetCount == 0 {
-            Button("アプリを選ぶ") { showPicker = true }
+            Button("アプリを選ぶ") { sheet = .picker }
                 .buttonStyle(FutoButtonStyle())
         } else if model.restriction == .configured {
             Button("使う前に、ひと呼吸") { model.beginBreath() }
@@ -257,11 +282,22 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private var picker: some View {
-        if model.mode == .demo {
-            DemoAppPickerView(model: model)
-        } else {
-            DeviceAppPickerView(model: model)
+    private func sheetContent(_ item: HomeSheet) -> some View {
+        switch item {
+        case .picker:
+            if model.mode == .demo { DemoAppPickerView(model: model) } else { DeviceAppPickerView(model: model) }
+        case .history:
+            NavigationStack {
+                HistoryView(mode: model.mode)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
+            }
+            .demoBanner(model.mode)
+        case .settings:
+            NavigationStack {
+                SettingsView(model: model)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
+            }
+            .demoBanner(model.mode)
         }
     }
 
