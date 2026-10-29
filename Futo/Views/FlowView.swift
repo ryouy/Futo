@@ -30,42 +30,52 @@ struct FlowView: View {
     }
 }
 
+private struct FlowTitle: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.title2.weight(.medium))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+    }
+}
+
 struct PurposeView: View {
     let model: AppModel
-    @State private var selected: Purpose?
+
+    /// 「答えずに進む」も選択肢の1つ。待機時間などの扱いは変わらない。
+    private enum Choice: Hashable {
+        case purpose(Purpose)
+        case skip
+    }
+
+    @State private var selected: Choice?
+
+    private func purpose(for choice: Choice) -> Purpose? {
+        if case .purpose(let p) = choice { return p }
+        return nil
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("今、どんなことに使いたいですか？").font(.title2.weight(.medium))
-                ForEach(Purpose.allCases) { purpose in
-                    Button {
-                        selected = purpose
-                    } label: {
-                        HStack {
-                            Text(purpose.label).foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: selected == purpose ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(Theme.accent)
-                        }
-                        .frame(minHeight: 58)
-                        .padding(.horizontal, 20)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .stroke(selected == purpose ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: selected == purpose ? 2 : 1)
-                        )
+        CenteredScroll {
+            VStack(spacing: 14) {
+                FlowTitle(text: "今、どんなことに使いたいですか？")
+                    .padding(.bottom, 10)
+                ForEach(Purpose.allCases) { item in
+                    ChoiceRow(isOn: selected == .purpose(item)) { selected = .purpose(item) } content: {
+                        Text(item.label)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(selected == purpose ? .isSelected : [])
                 }
-                Button("ひと呼吸おく") { model.choosePurpose(selected) }
-                    .buttonStyle(FutoButtonStyle())
-                    .disabled(selected == nil)
-                Button("答えずに進む") { model.choosePurpose(nil) }
-                    .buttonStyle(FutoTextButtonStyle())
+                ChoiceRow(isOn: selected == .skip) { selected = .skip } content: {
+                    Text("答えずに進む")
+                }
+                Button("ひと呼吸おく") {
+                    if let selected { model.choosePurpose(purpose(for: selected)) }
+                }
+                .buttonStyle(FutoButtonStyle())
+                .disabled(selected == nil)
+                .padding(.top, 10)
             }
-            .padding(20)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -97,12 +107,10 @@ struct WaitView: View {
     }
 
     var body: some View {
-        ScrollView {
+        CenteredScroll {
             VStack(spacing: 24) {
-                Text("少しだけ、立ち止まってみましょう。")
-                    .font(.title2.weight(.medium))
-                    .multilineTextAlignment(.center)
-                Text("画面を閉じると、待機は一時停止します。")
+                FlowTitle(text: "少し、立ち止まってみましょう。")
+                Text("画面を閉じると、止まります。")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
@@ -122,10 +130,9 @@ struct WaitView: View {
                 .frame(width: 200, height: 200)
                 .padding(.vertical, 12)
 
-                Button("この振り返りを終了") { model.endBreath() }
+                Button("ひと呼吸を終える") { model.endBreath() }
                     .buttonStyle(FutoTextButtonStyle())
             }
-            .padding(20)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -162,18 +169,19 @@ struct FinalChoiceView: View {
 
     private var footnote: String {
         if model.canTemporarilyUnlock {
-            return "「使いたい」を選ぶと、使うアプリを選んで、一時的に使えるようにします（試験機能）。「今はやめる」では制限は続きます。"
+            return "「使いたい」を選ぶと、アプリを選んで少しだけ使えます。"
         }
         if model.mode == .demo {
-            return "デモでは、どちらを選んでも実際のアプリの制限は変わりません。"
+            return "デモでは、実際のアプリの制限は変わりません。"
         }
-        return "この試作の設定では、どちらを選んでもアプリの制限は解除されません。"
+        return "この設定では、どちらを選んでも制限は解除されません。"
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("今も使いたいですか？").font(.title2.weight(.medium))
+        CenteredScroll {
+            VStack(spacing: 16) {
+                FlowTitle(text: "今も使いたいですか？")
+                    .padding(.bottom, 12)
                 Button("今はやめる") { model.finish(.deferred) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
                 Button("使いたい") { model.finish(.wantsToUse) }
@@ -181,8 +189,9 @@ struct FinalChoiceView: View {
                 Text(footnote)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 8)
             }
-            .padding(20)
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -195,15 +204,15 @@ struct ResultView: View {
     private var wantsToUseMessage: String {
         switch model.unlockResult {
         case .started(let until):
-            return "選んだアプリを一時的に使えるようにしました。選んだアプリの利用が約\(SharedState.unlockUsageMinutes)分に達するか、遅くとも\(until.formatted(date: .omitted, time: .shortened))までに、自動で制限に戻ります。ホームの「制限に戻す」でいつでも戻せます。"
+            return "選んだアプリを使えます。約\(SharedState.unlockUsageMinutes)分使うか、\(until.formatted(date: .omitted, time: .shortened))になると、制限に戻ります。"
         case .failed:
-            return "利用したい気持ちを記録しました。一時解除を始められなかったため、制限は続いています。使う場合は、ホームの「制限を終了」から終了できます。"
+            return "一時解除を始められなかったため、制限は続いています。"
         case .unsupported:
-            return "利用したい気持ちを記録しました。この設定では一時解除は使えません。使う場合は、ホームの「制限を終了」から終了できます。"
+            return "この設定では、一時解除は使えません。使うには、ホームの「制限を終了」を押してください。"
         case nil:
             return model.mode == .demo
-                ? "利用したい気持ちを記録しました。デモでは、実際のアプリの制限は変わりません。"
-                : "利用したい気持ちを記録しました。制限は続いています。"
+                ? "デモでは、実際の制限は変わりません。"
+                : "制限は続いています。"
         }
     }
 
@@ -211,23 +220,20 @@ struct ResultView: View {
         if model.awaitingUnlockSelection {
             UnlockChooserView(model: model)
         } else {
-            resultBody
-        }
-    }
-
-    private var resultBody: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("記録しました。").font(.title2.weight(.medium))
-                if outcome == .wantsToUse {
-                    Text(wantsToUseMessage).lineSpacing(5)
+            CenteredScroll {
+                VStack(spacing: 16) {
+                    FlowTitle(text: "記録しました。")
+                    if outcome == .wantsToUse {
+                        Text(wantsToUseMessage)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(5)
+                    }
+                    Button("閉じる") { model.closeFlow() }
+                        .buttonStyle(FutoButtonStyle())
+                        .padding(.top, 12)
                 }
-                Button("ホームへ") { model.closeFlow() }
-                    .buttonStyle(FutoButtonStyle())
-                    .padding(.top, 8)
             }
-            .padding(20)
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

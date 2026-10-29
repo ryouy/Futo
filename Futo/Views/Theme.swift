@@ -67,6 +67,48 @@ struct FutoButtonStyle: ButtonStyle {
     }
 }
 
+/// 内容を画面の縦方向の中央に置く。長くなる（文字拡大など）ときはスクロールできる。
+struct CenteredScroll<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            ScrollView {
+                content
+                    .padding(24)
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height, alignment: .center)
+            }
+        }
+    }
+}
+
+/// 単一・複数選択の1行。目的選択とアプリ選択で共通に使う。
+struct ChoiceRow<Content: View>: View {
+    let isOn: Bool
+    let action: () -> Void
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                content.foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(Theme.accent)
+            }
+            .frame(minHeight: 58)
+            .padding(.horizontal, 20)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(isOn ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: isOn ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
 /// 目立たせたくない操作用の、文字だけのボタン。
 struct FutoTextButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

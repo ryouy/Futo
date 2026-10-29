@@ -3,7 +3,6 @@ import SwiftUI
 @MainActor
 struct SettingsView: View {
     @Bindable var model: AppModel
-    @State private var showPicker = false
     @State private var confirmDelete = false
     @State private var confirmLeaveDevice = false
 
@@ -24,14 +23,14 @@ struct SettingsView: View {
                 ))
                 .frame(minHeight: 44)
                 Text(isDemo
-                     ? "デモでは実際のアプリは制限しません。記録もデモ専用です。"
-                     : "実機モードでは、Screen Timeで選んだアプリを実際に制限します。")
+                     ? "実際のアプリは制限しません。記録もデモ専用です。"
+                     : "選んだアプリを実際に制限します。")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 
             if !isDemo {
                 Section("アクセスの許可") {
-                    LabeledContent("状態", value: permissionText)
+                    LabeledContent("許可", value: permissionText)
                         .accessibilityElement(children: .combine)
                     Button(model.permission == .approved ? "再確認" : "許可する") {
                         if model.permission == .approved {
@@ -48,35 +47,20 @@ struct SettingsView: View {
             }
 
             Section {
-                Button("制限するアプリを変更") { showPicker = true }
-                    .frame(minHeight: 44)
-                    .disabled(model.isTargetLocked || (!isDemo && model.permission != .approved))
-            } header: {
-                Text("制限するアプリ")
-            } footer: {
-                if !isDemo, !model.isTargetLocked {
-                    Text("ホームの状態は、権限と設定の照合結果です。シールドが実際に出ているかは、対象アプリを開いて確かめてください。")
-                } else if model.isTargetLocked {
-                    Text("制限を終了してから変更してください。")
-                } else if !isDemo, model.permission != .approved {
-                    Text("先にアクセスを許可してください。")
-                }
-            }
-
-            Section {
                 Button("すべての記録を削除", role: .destructive) { confirmDelete = true }
                     .frame(minHeight: 44)
             } header: {
                 Text("記録")
             } footer: {
-                Text("削除するのは振り返りの記録だけです。制限の設定は変わりません。")
+                Text("記録だけが消えます。制限の設定は変わりません。")
             }
 
             Section("この試作について") {
                 Text("""
-                一時解除と自動再制限は、実機のみの試験機能です。デモでは行いません。\
-                制限はホームの「制限を終了」から、いつでも本人が終了できます。\
-                Screen Timeの許可は、設定アプリからいつでも取り消せます。
+                一時解除と自動再制限は、実機のみの試験機能です。\
+                制限は、ホームの「制限を終了」でいつでも終えられます。\
+                許可は、iPhoneの設定アプリから取り消せます。\
+                ホームの状態は、許可と設定の照合結果です。シールドが出ているかは、対象アプリを開いて確かめてください。
                 """)
                 .font(.footnote)
             }
@@ -100,11 +84,8 @@ struct SettingsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("設定")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showPicker) {
-            if isDemo { DemoAppPickerView(model: model) } else { DeviceAppPickerView(model: model) }
-        }
         .confirmationDialog(
-            "すべての記録を削除しますか？ 振り返りの記録だけが消え、制限の設定は変わりません。進行中の振り返りは中断として閉じてから削除します。",
+            "すべての記録を削除しますか？ 制限の設定は変わりません。進行中のひと呼吸は中断として閉じてから削除します。",
             isPresented: $confirmDelete, titleVisibility: .visible
         ) {
             Button("削除", role: .destructive) { model.deleteAllRecords() }

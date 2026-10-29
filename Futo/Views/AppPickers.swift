@@ -99,6 +99,7 @@ struct DemoAppPickerView: View {
 }
 
 /// 「使いたい」の後、制限中のアプリのうち、一時的に使えるようにするものを1つ以上選ぶ。
+/// 決定の操作は画面下に固定し、選択肢と混ざらないようにする。
 @MainActor
 struct UnlockChooserView: View {
     let model: AppModel
@@ -113,50 +114,45 @@ struct UnlockChooserView: View {
     private var all: [ApplicationToken] { Array(model.device.selection.applicationTokens) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("どのアプリを使いますか？").font(.title2.weight(.medium))
-                Text("選んだアプリだけを、一時的に使えるようにします。選ばなかったアプリは制限されたままです。")
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(4)
+        VStack(spacing: 0) {
+            CenteredScroll {
+                VStack(spacing: 14) {
+                    Text("どのアプリを使いますか？")
+                        .font(.title2.weight(.medium))
+                        .multilineTextAlignment(.center)
+                    Text("選んだアプリだけ、一時的に使えます。")
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 6)
 
-                ForEach(all, id: \.self) { token in
-                    let isOn = chosen.contains(token)
-                    Button {
-                        if isOn { chosen.remove(token) } else { chosen.insert(token) }
-                    } label: {
+                    if all.count > 1 {
                         HStack {
-                            Label(token).foregroundStyle(.primary)
                             Spacer()
-                            Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(Theme.accent)
+                            Button(chosen.count == all.count ? "選択を外す" : "すべて選ぶ") {
+                                chosen = chosen.count == all.count ? [] : Set(all)
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .frame(minHeight: 44)
                         }
-                        .frame(minHeight: 58)
-                        .padding(.horizontal, 20)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .stroke(isOn ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: isOn ? 2 : 1)
-                        )
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(isOn ? .isSelected : [])
-                }
-
-                if all.count > 1 {
-                    Button(chosen.count == all.count ? "すべての選択を外す" : "すべて選ぶ") {
-                        chosen = chosen.count == all.count ? [] : Set(all)
+                    ForEach(all, id: \.self) { token in
+                        ChoiceRow(isOn: chosen.contains(token)) {
+                            if chosen.contains(token) { chosen.remove(token) } else { chosen.insert(token) }
+                        } content: {
+                            Label(token)
+                        }
                     }
-                    .buttonStyle(FutoTextButtonStyle())
                 }
+            }
 
-                Button("選んだアプリを一時的に使う") { model.unlockApps(chosen) }
+            VStack(spacing: 4) {
+                Button("一時的に使う") { model.unlockApps(chosen) }
                     .buttonStyle(FutoButtonStyle())
                     .disabled(chosen.isEmpty)
                 Button("使わない") { model.declineUnlock() }
                     .buttonStyle(FutoTextButtonStyle())
             }
-            .padding(20)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 12)
         }
         .navigationBarTitleDisplayMode(.inline)
     }

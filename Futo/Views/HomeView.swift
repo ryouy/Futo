@@ -46,6 +46,7 @@ struct HomeView: View {
                 model.refresh()
             }
         }
+        .onChange(of: model.intendsRestriction) { _, _ in model.notice = nil }
         .sheet(isPresented: $showPicker) { picker }
         .confirmationDialog(
             "選んだアプリの制限を終了しますか？ この試作では、自動で再開されません。",
@@ -66,17 +67,17 @@ struct HomeView: View {
     private var statusText: String {
         if model.mode == .device {
             switch model.permission {
-            case .notDetermined: return "制限にはアクセスの許可が必要です"
-            case .denied: return "制限にはアクセスの許可が必要です。設定アプリで許可を変更できます。"
+            case .notDetermined: return "許可が必要です"
+            case .denied: return "許可が必要です。設定アプリで変更できます。"
             case .approved: break
             }
         }
-        if model.targetCount == 0 { return "制限したいアプリを選んでください" }
+        if model.targetCount == 0 { return "制限するアプリを選んでください" }
         switch model.restriction {
-        case .configured: return "選択したアプリへの制限を設定しています"
+        case .configured: return "制限中です"
         case .temporarilyUnlocked(let until):
-            return "一時的に使えるようにしています。選んだアプリの利用が約\(SharedState.unlockUsageMinutes)分に達するか、遅くとも\(until.formatted(date: .omitted, time: .shortened))までに、自動で制限に戻ります。"
-        case .unverifiable: return "設定を確認できませんでした。もう一度お試しください"
+            return "いま一時的に使えます。約\(SharedState.unlockUsageMinutes)分使うか、\(until.formatted(date: .omitted, time: .shortened))になると、制限に戻ります。"
+        case .unverifiable: return "状態を確認できませんでした。もう一度お試しください"
         case .off: return "制限はオフです"
         }
     }
@@ -88,11 +89,22 @@ struct HomeView: View {
 
             if model.targetCount > 0 {
                 Divider()
-                if model.mode == .demo {
-                    Text(model.demo.targetName ?? "").foregroundStyle(.secondary)
-                } else {
-                    DeviceTargetLabels(selection: model.device.selection)
-                        .foregroundStyle(.secondary)
+                HStack(alignment: .top) {
+                    Group {
+                        if model.mode == .demo {
+                            Text(model.demo.targetName ?? "")
+                        } else {
+                            DeviceTargetLabels(selection: model.device.selection)
+                        }
+                    }
+                    .foregroundStyle(.secondary)
+                    Spacer()
+                    Button(action: editTargets) {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("制限するアプリを変更")
                 }
             }
             if let error = model.permissionError { Text(error).font(.footnote) }
@@ -105,6 +117,16 @@ struct HomeView: View {
         .card()
     }
 
+    /// 制限中・待機中は対象を変えられない。理由をお知らせに出す。
+    private func editTargets() {
+        if model.isTargetLocked {
+            model.notice = "制限を終了してから変更してください。"
+        } else {
+            model.notice = nil
+            showPicker = true
+        }
+    }
+
     // MARK: 操作（主操作は常に1つ）
 
     private var actions: some View {
@@ -113,9 +135,9 @@ struct HomeView: View {
                 Button("制限に戻す") { model.relockNow() }
                     .buttonStyle(FutoButtonStyle())
             } else if model.activeSession != nil {
-                Button("ひと呼吸を再開") { model.resumeBreath() }
+                Button("ひと呼吸を続ける") { model.resumeBreath() }
                     .buttonStyle(FutoButtonStyle())
-                Button("この振り返りを終了") { model.endBreath() }
+                Button("ひと呼吸を終える") { model.endBreath() }
                     .buttonStyle(FutoTextButtonStyle())
             } else {
                 primaryButton
@@ -167,7 +189,7 @@ struct HomeView: View {
     private func reflectionCard(_ session: Session) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("さっきの時間は、どうでしたか？").font(.headline.weight(.medium))
-            Text("感想を教えてください。答えなくても大丈夫です。")
+            Text("答えなくても大丈夫です。")
                 .font(.footnote).foregroundStyle(.secondary)
             ForEach([Reflection.satisfied, .neutral, .wishedLess], id: \.self) { reflection in
                 Button(reflection.label) { model.answerReflection(session, reflection) }
@@ -184,9 +206,9 @@ struct HomeView: View {
     private var countsLine: some View {
         let counts = DailyCounts.today(sessions: sessions, mode: model.mode)
         return HStack {
-            Text("今日の見送り \(counts.deferred)")
+            Text("今日やめた \(counts.deferred)")
             Spacer()
-            Text("今日の利用希望 \(counts.wantsToUse)")
+            Text("今日使いたかった \(counts.wantsToUse)")
         }
         .font(.footnote.monospacedDigit())
         .foregroundStyle(.secondary)

@@ -70,7 +70,7 @@ final class AppModel {
             sessions.interrupt(session)
             activeSession = nil
             showFlow = false
-            notice = "アクセスの許可を確認できなかったため、進行中のひと呼吸を中断しました。"
+            notice = "許可を確認できなかったため、ひと呼吸を中断しました。"
         }
     }
 
@@ -125,11 +125,11 @@ final class AppModel {
 
     func startRestriction() {
         guard permission == .approved else {
-            notice = "制限にはアクセスの許可が必要です"
+            notice = "許可が必要です"
             return
         }
         guard targetCount > 0 else {
-            notice = "制限したいアプリを選んでください"
+            notice = "制限するアプリを選んでください"
             return
         }
         service.start()
