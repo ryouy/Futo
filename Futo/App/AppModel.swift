@@ -17,6 +17,8 @@ final class AppModel {
 
     private(set) var mode: AppMode
     private(set) var onboardingDone: Bool
+    /// Debugで初回説明を見直しているとき。モードや制限には一切触れず、閉じるだけにする
+    private(set) var isOnboardingReplay = false
     private(set) var permission: PermissionState = .notDetermined
     private(set) var restriction: RestrictionState = .off
     private(set) var targetCount = 0
@@ -115,6 +117,25 @@ final class AppModel {
         settings.mode = newMode
         settings.onboardingDone = true
         onboardingDone = true
+        refresh()
+    }
+
+    #if DEBUG
+    /// 開発用：初回説明をもう一度表示する。変えるのは「説明を見た」フラグだけで、
+    /// 履歴・制限の設定・動作モードは変えない。
+    func replayOnboardingForDebug() {
+        settings.onboardingDone = false
+        onboardingDone = false
+        isOnboardingReplay = true
+        showFlow = false
+    }
+    #endif
+
+    /// 見直し用の説明を閉じる。モードも制限も変えない。
+    func finishOnboardingReplay() {
+        settings.onboardingDone = true
+        onboardingDone = true
+        isOnboardingReplay = false
         refresh()
     }
 

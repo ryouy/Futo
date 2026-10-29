@@ -170,7 +170,7 @@ struct HomeView: View {
         }
     }
 
-    /// 状態（小さな錠と一言）・制限しているもの・お知らせを1枚にまとめる。
+    /// 状態（小さな錠と一言、右端に＋）・制限しているもの・お知らせを1枚にまとめる。
     private func statusCard(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
@@ -186,8 +186,18 @@ struct HomeView: View {
                     Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
                 }
                 Spacer(minLength: 0)
+                if model.targetCount > 0, !model.isTargetEditLocked {
+                    Button(action: addApps) {
+                        Image(systemName: "plus")
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(Theme.accent)
+                            .frame(width: 40, height: 40)
+                            .background(Circle().fill(Theme.accent.opacity(0.14)))
+                    }
+                    .accessibilityLabel("追加")
+                    .transition(.opacity)
+                }
             }
-            .accessibilityElement(children: .combine)
 
             if model.targetCount > 0 {
                 Divider()
@@ -205,27 +215,13 @@ struct HomeView: View {
         .animation(.easeInOut(duration: 0.3), value: model.targetCount)
     }
 
-    // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
+    // MARK: 制限するもの（状態の行の右端の＋で追加、各行の－で外す）
 
     /// 変更できる間（制限オフ・一時解除中）だけ「＋」と「－」を出す。多いときは、この欄の中でスクロールする。
     private func appsSection(rows maxRows: Int) -> some View {
         let editable = !model.isTargetEditLocked
         let rows = appRows(editable: editable)
         return VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("制限しているもの").font(.footnote).foregroundStyle(.secondary)
-                Spacer()
-                if editable {
-                    Button(action: addApps) {
-                        Image(systemName: "plus")
-                            .font(.title3)
-                            .frame(width: 44, height: 44)
-                    }
-                    .accessibilityLabel("追加")
-                }
-            }
-            .frame(minHeight: 32)
-
             if model.targetCount > maxRows {
                 // 最後の行を半分だけ見せ、下端をぼかして、下にまだあることを伝える。
                 ScrollHintList(height: (CGFloat(maxRows) - 0.5) * 48) { rows }

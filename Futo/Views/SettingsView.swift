@@ -199,6 +199,14 @@ struct SettingsView: View {
             }
 
             #if DEBUG
+            Section {
+                Button("初回説明をもう一度表示") { model.replayOnboardingForDebug() }
+                    .frame(minHeight: 44)
+            } header: {
+                Text("検証用（Debugのみ）")
+            } footer: {
+                Text("説明を見たかどうかの印だけを戻します。履歴と制限の設定は変わりません。")
+            }
             if !isDemo {
                 Section {
                     Text(SharedState.lastEvent ?? "拡張の記録はまだありません")

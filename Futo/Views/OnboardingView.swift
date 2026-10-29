@@ -90,7 +90,7 @@ struct OnboardingView: View {
             Text("はじめましょう")
                 .font(.title2.weight(.medium))
                 .foregroundStyle(Self.cream)
-            Text("どちらで始めますか？")
+            Text(model.isOnboardingReplay ? "説明は以上です。" : "どちらで始めますか？")
                 .foregroundStyle(Self.cream.opacity(0.85))
             Spacer(minLength: 0)
         }
@@ -116,11 +116,16 @@ struct OnboardingView: View {
     private var controls: some View {
         if isLast {
             VStack(spacing: 12) {
-                pill("実機で設定する", filled: true) { model.completeOnboarding(mode: .device) }
-                pill("デモで試す", filled: false) { model.completeOnboarding(mode: .demo) }
-                Text("デモでは、実際のアプリは制限されません。")
-                    .font(.footnote)
-                    .foregroundStyle(Self.cream.opacity(0.7))
+                if model.isOnboardingReplay {
+                    // 開発用の見直し：モードも制限も変えず、閉じるだけ。
+                    pill("閉じる", filled: true) { model.finishOnboardingReplay() }
+                } else {
+                    pill("実機で設定する", filled: true) { model.completeOnboarding(mode: .device) }
+                    pill("デモで試す", filled: false) { model.completeOnboarding(mode: .demo) }
+                    Text("デモでは、実際のアプリは制限されません。")
+                        .font(.footnote)
+                        .foregroundStyle(Self.cream.opacity(0.7))
+                }
             }
             .transition(.opacity)
         } else {
