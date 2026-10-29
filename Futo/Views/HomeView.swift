@@ -314,7 +314,7 @@ struct HomeView: View {
     private var debugSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tr("開発用（Debugのみ）")).font(.caption).foregroundStyle(.secondary)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
                 Button(tr("朝の振り返り")) { model.showReflectionNow(.morning) }
                 Button(tr("夜の振り返り")) { model.showReflectionNow(.night) }
                 Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }

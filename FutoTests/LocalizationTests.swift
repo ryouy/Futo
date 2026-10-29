@@ -75,10 +75,10 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(durationText(seconds: 180), "3 min")
         XCTAssertEqual(durationText(seconds: 10), "10 sec")
         XCTAssertEqual(durationText(seconds: 90), "1 min 30 sec")
-        XCTAssertEqual(SessionOutcome.deferred.label, "Not now")
-        XCTAssertEqual(Purpose.research.label, "Looking things up")
+        XCTAssertEqual(SessionOutcome.deferred.label, "Maybe later")
+        XCTAssertEqual(Purpose.research.label, "Looking something up")
         XCTAssertEqual(Reflection.wishedLess.label, "Maybe too much")
-        XCTAssertEqual(ReflectionKind.morning.title, "Morning review")
+        XCTAssertEqual(ReflectionKind.morning.title, "Morning check-in")
     }
 
     @MainActor
@@ -88,8 +88,8 @@ final class LocalizationTests: XCTestCase {
         calendar.timeZone = TimeZone(identifier: "Asia/Tokyo")!
         let day = LogicalCalendar(calendar: calendar).dayInterval(containing: Date())
         let empty = ReflectionBuilder.build(kind: .morning, sessions: [], mode: .demo, interval: day, dayWord: tr("昨日"))
-        XCTAssertEqual(empty.lines.first, "Yesterday, there are no records yet.")
-        XCTAssertEqual(empty.title, "Morning review")
+        XCTAssertEqual(empty.lines.first, "Yesterday, nothing recorded yet.")
+        XCTAssertEqual(empty.title, "Morning check-in")
     }
 
     func testOutingMessagesTranslateOneToOne() {

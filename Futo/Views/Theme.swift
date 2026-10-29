@@ -230,9 +230,11 @@ struct FutoCompactButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.footnote.weight(.medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .foregroundStyle(Theme.accent)
             .padding(.horizontal, 12)
-            .frame(minHeight: 34)
+            .frame(maxWidth: .infinity, minHeight: 34)
             .background(Capsule().fill(Theme.accent.opacity(0.12)))
             .opacity(configuration.isPressed ? 0.6 : 1)
     }

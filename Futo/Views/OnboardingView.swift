@@ -26,6 +26,7 @@ struct OnboardingView: View {
         ]
     }
 
+    @Namespace private var languageNamespace
     @State private var page = 0
     /// 指で動かしている間のずれ
     @State private var drag: CGFloat = 0
@@ -49,6 +50,13 @@ struct OnboardingView: View {
             // 背景はスプラッシュと同じ緑のまま、中身だけがゆっくり現れる。
             .opacity(appeared ? 1 : 0)
             .animation(.easeInOut(duration: 0.9), value: appeared)
+        }
+        .overlay(alignment: .topTrailing) {
+            languageSwitch
+                .padding(.top, 10)
+                .padding(.trailing, 20)
+                .opacity(appeared ? 1 : 0)
+                .animation(.easeInOut(duration: 0.9), value: appeared)
         }
         .preferredColorScheme(.dark)
         .task {
@@ -101,6 +109,40 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: 言語の切り替え
+
+    /// 「日本語 | English」。選んでいるほうの下に、白いカプセルがすべるように動く。
+    private var languageSwitch: some View {
+        HStack(spacing: 0) {
+            ForEach(AppLanguage.allCases) { language in
+                let selected = LanguageStore.shared.language == language
+                Button {
+                    withAnimation(.easeInOut(duration: 0.35)) { LanguageStore.shared.select(language) }
+                } label: {
+                    Text(language.displayName)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(selected ? Self.background : Self.cream.opacity(0.85))
+                        .padding(.horizontal, 14)
+                        .frame(height: 32)
+                        .background {
+                            if selected {
+                                Capsule()
+                                    .fill(Self.cream)
+                                    .matchedGeometryEffect(id: "language", in: languageNamespace)
+                            }
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(3)
+        .background(Capsule().fill(Self.cream.opacity(0.16)))
+        .overlay(Capsule().stroke(Self.cream.opacity(0.28), lineWidth: 1))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("言語 / Language")
     }
 
     // MARK: ページの横スライド
