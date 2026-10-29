@@ -238,7 +238,7 @@ final class AppModel {
         let session = finishedSession
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(80))
-            let result = device.temporaryUnlock(items: items, sessionID: session?.id)
+            let result = device.temporaryUnlock(items: items, sessionID: session?.id, minutes: prefs.effectiveUnlockMinutes)
             unlockResult = result
             if case .started(let until) = result, let session {
                 sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(items))

@@ -14,6 +14,9 @@ struct Preferences: Codable, Equatable {
     /// nil は既定値（Releaseは3分、Debugは10秒）
     var waitSeconds: Double?
 
+    /// 解除していられる分数（その分だけ使うと制限に戻る）。nil は既定（Releaseは5分、Debugは1分）
+    var unlockMinutes: Int?
+
     var morningEnabled = true
     var morningMinute = 8 * 60
     var nightEnabled = true
@@ -42,6 +45,23 @@ struct Preferences: Codable, Equatable {
 
     var effectiveWaitSeconds: Double { waitSeconds ?? Self.defaultWaitSeconds }
 
+    #if DEBUG
+    static let defaultUnlockMinutes = 1
+    #else
+    static let defaultUnlockMinutes = 5
+    #endif
+    static let unlockMinuteOptions = Array(1...30)
+
+    var effectiveUnlockMinutes: Int {
+        min(max(unlockMinutes ?? Self.defaultUnlockMinutes, 1), 30)
+    }
+
+    /// Device Activityの監視区間の長さ。Appleの最短は15分なので、短い設定でも16分を下回らない。
+    /// 長い設定（例：30分）では、使わなくても約31分で必ず制限に戻る。
+    static func unlockWindowSeconds(minutes: Int) -> TimeInterval {
+        Double(max(minutes + 1, 16)) * 60
+    }
+
     func isNotificationOn(_ kind: NotificationKind) -> Bool {
         switch kind {
         case .morning: return notifyMorning
@@ -63,6 +83,7 @@ struct Preferences: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         waitSeconds = try c.decodeIfPresent(Double.self, forKey: .waitSeconds)
+        unlockMinutes = try c.decodeIfPresent(Int.self, forKey: .unlockMinutes)
         morningEnabled = try c.decodeIfPresent(Bool.self, forKey: .morningEnabled) ?? true
         morningMinute = try c.decodeIfPresent(Int.self, forKey: .morningMinute) ?? 8 * 60
         nightEnabled = try c.decodeIfPresent(Bool.self, forKey: .nightEnabled) ?? true

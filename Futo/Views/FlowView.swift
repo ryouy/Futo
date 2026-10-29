@@ -228,7 +228,7 @@ struct ResultView: View {
         if model.isUnlocking { return ("解除しています…", []) }
         switch model.unlockResult {
         case .started:
-            let minutes = SharedState.unlockUsageMinutes
+            let minutes = model.prefs.effectiveUnlockMinutes
             return ("解除しました", ["\(minutes)分ほど、ゆっくりどうぞ。", "戻ってきたら、感想を教えてください。"])
         case .failed:
             return ("解除できませんでした", ["制限は続いています。"])

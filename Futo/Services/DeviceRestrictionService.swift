@@ -106,7 +106,7 @@ final class DeviceRestrictionService: RestrictionService {
 
     /// 選んだものだけを一時的に使えるようにする。監視を登録できた場合だけ解除し、失敗時は制限を維持する。
     /// 選ばれなかったものは制限されたまま。
-    func temporaryUnlock(items unlockItems: RestrictedItems, sessionID: UUID? = nil) -> UnlockStartResult {
+    func temporaryUnlock(items unlockItems: RestrictedItems, sessionID: UUID? = nil, minutes: Int) -> UnlockStartResult {
         guard SharedState.isAvailable else { return .unsupported }
         guard permission == .approved, intendsRestriction,
               !unlockItems.isEmpty, unlockItems.isSubset(of: items) else {
@@ -115,7 +115,7 @@ final class DeviceRestrictionService: RestrictionService {
         stopUnlockMonitoring()
 
         let start = Date()
-        let end = start.addingTimeInterval(SharedState.unlockWindow)
+        let end = start.addingTimeInterval(Preferences.unlockWindowSeconds(minutes: minutes))
         let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
         let calendar = Calendar.current
         let schedule = DeviceActivitySchedule(
@@ -128,12 +128,12 @@ final class DeviceRestrictionService: RestrictionService {
             applications: unlockItems.apps,
             categories: unlockItems.categories,
             webDomains: unlockItems.webDomains,
-            threshold: DateComponents(minute: SharedState.unlockUsageMinutes)
+            threshold: DateComponents(minute: minutes)
         )
 
         // 拡張が受け取るイベントを識別できるよう、記録を先に保存する。登録に失敗したら消して制限を維持する。
         SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end,
-                                          unlocked: unlockItems, sessionID: sessionID)
+                                          unlocked: unlockItems, sessionID: sessionID, minutes: minutes)
         do {
             try center.startMonitoring(name, during: schedule,
                                        events: [DeviceActivityEvent.Name(SharedState.usageEventName): usageEvent])

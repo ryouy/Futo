@@ -382,4 +382,17 @@ final class Phase3Tests: XCTestCase {
         store.recordTemporaryUnlockEnd(s, at: jst("2027-01-13 10:20"))
         XCTAssertEqual(s.temporaryUnlockEndedAt, jst("2027-01-13 10:00"), "2回目は上書きしない")
     }
+
+    func testUnlockWindowRespectsAppleMinimumAndLongSettings() {
+        XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 1), 16 * 60, "最短15分を下回らない")
+        XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 15), 16 * 60)
+        XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 30), 31 * 60, "長い設定は、使わなくても約その分で戻る")
+        XCTAssertEqual(Preferences.unlockMinuteOptions.first, 1)
+        XCTAssertEqual(Preferences.unlockMinuteOptions.last, 30)
+        var p = Preferences(); p.unlockMinutes = 99
+        XCTAssertEqual(p.effectiveUnlockMinutes, 30, "範囲外は30分に丸める")
+        p.unlockMinutes = 0
+        XCTAssertEqual(p.effectiveUnlockMinutes, 1)
+        XCTAssertEqual(Preferences().effectiveUnlockMinutes, Preferences.defaultUnlockMinutes)
+    }
 }

@@ -7,7 +7,6 @@ enum ThemeColor: String, CaseIterable, Identifiable {
     case sora
     case sakura
     case fuji
-    case yuyake
 
     var id: String { rawValue }
 
@@ -17,7 +16,6 @@ enum ThemeColor: String, CaseIterable, Identifiable {
         case .sora: return "空"
         case .sakura: return "桜"
         case .fuji: return "藤"
-        case .yuyake: return "夕焼け"
         }
     }
 
@@ -38,8 +36,6 @@ enum ThemeColor: String, CaseIterable, Identifiable {
             return Palette(accent: (0xA25A72, 0xE3A0B5), backgroundBottom: (0xF7ECEE, 0x211A1C), soft: (0xF5E3E8, 0x3A2B30))
         case .fuji:
             return Palette(accent: (0x6F5CA3, 0xBBA8E6), backgroundBottom: (0xF0ECF6, 0x1D1B22), soft: (0xE8E3F3, 0x2E2A3A))
-        case .yuyake:
-            return Palette(accent: (0xA25D2E, 0xE8B07F), backgroundBottom: (0xF7EEE3, 0x231D17), soft: (0xF5E6D5, 0x3A2F25))
         }
     }
 }

@@ -11,6 +11,8 @@ struct UnlockRecord: Codable, Equatable {
     var unlocked: RestrictedItems?
     /// この解除を始めたひと呼吸（履歴に解除時間を書き戻すため）
     var sessionID: UUID?
+    /// この解除で設定していた分数
+    var minutes: Int?
 }
 
 /// 一時解除が終わった（再制限された）記録。拡張が書き、本体が履歴へ反映する。
@@ -25,15 +27,6 @@ enum SharedState {
     static let storeName = ManagedSettingsStore.Name("jp.futo.restriction")
     static let unlockActivityPrefix = "futo.unlock."
     static let usageEventName = "futo.usage"
-
-    /// 監視区間の長さ。Appleの最短は15分のため、余裕を持たせる。区間が終わると、しきい値未達でも再制限する。
-    static let unlockWindow: TimeInterval = 16 * 60
-    /// 対象アプリの利用がこの分数に達したら再制限する。Debugでは検証しやすいよう1分。
-    #if DEBUG
-    static let unlockUsageMinutes = 1
-    #else
-    static let unlockUsageMinutes = 5
-    #endif
 
     private enum Key {
         static let selection = "device.selection"

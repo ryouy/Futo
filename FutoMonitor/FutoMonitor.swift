@@ -6,7 +6,7 @@ import Foundation
 final class FutoMonitor: DeviceActivityMonitor {
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
-        handle(activity, reason: "利用が\(SharedState.unlockUsageMinutes)分に達した")
+        handle(activity, reason: "利用が設定の分数に達した")
     }
 
     override func intervalDidEnd(for activity: DeviceActivityName) {

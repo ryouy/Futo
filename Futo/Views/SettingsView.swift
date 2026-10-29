@@ -8,27 +8,41 @@ struct SettingsView: View {
     @State private var confirmOff = false
     @State private var confirmLeaveDevice = false
 
-    private enum SettingsTab: Hashable { case restriction, breath, notification, other }
+    private enum SettingsTab: Int, CaseIterable {
+        case restriction, breath, notification, other
+
+        var title: String {
+            switch self {
+            case .restriction: return "制限"
+            case .breath: return "ひと呼吸"
+            case .notification: return "通知"
+            case .other: return "その他"
+            }
+        }
+    }
     @State private var tab: SettingsTab = .restriction
 
     private var isDemo: Bool { model.mode == .demo }
 
+    /// 記録の画面と同じく、上にタブを出して切り替える。
     var body: some View {
-        TabView(selection: $tab) {
-            restrictionTab
-                .tabItem { Label("制限", systemImage: "lock") }
-                .tag(SettingsTab.restriction)
-            breathTab
-                .tabItem { Label("ひと呼吸", systemImage: "hourglass") }
-                .tag(SettingsTab.breath)
-            NotificationSettingsView(model: model)
-                .tabItem { Label("通知", systemImage: "bell") }
-                .tag(SettingsTab.notification)
-            otherTab
-                .tabItem { Label("その他", systemImage: "ellipsis.circle") }
-                .tag(SettingsTab.other)
+        VStack(spacing: 0) {
+            Picker("設定", selection: $tab) {
+                ForEach(SettingsTab.allCases, id: \.self) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
+
+            switch tab {
+            case .restriction: restrictionTab
+            case .breath: breathTab
+            case .notification: NotificationSettingsView(model: model)
+            case .other: otherTab
+            }
         }
         .background(Theme.background.ignoresSafeArea())
+        .animation(.easeInOut(duration: 0.25), value: tab)
         .navigationTitle("設定")
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
@@ -118,6 +132,18 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
             } footer: {
                 Text("次のひと呼吸から変わります。")
+            }
+
+            Section {
+                Picker("解除する時間", selection: Binding(
+                    get: { model.prefs.effectiveUnlockMinutes },
+                    set: { value in model.updatePreferences { $0.unlockMinutes = value } }
+                )) {
+                    ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text("\($0)分").tag($0) }
+                }
+                .frame(minHeight: 44)
+            } footer: {
+                Text("この時間使うと、制限に戻ります。")
             }
 
             Section {
