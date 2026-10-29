@@ -54,10 +54,12 @@ struct RootView: View {
         .overlayPreferenceValue(TutorialAnchorKey.self) { anchors in
             if model.tutorialStep != nil {
                 TutorialOverlay(model: model, anchors: anchors)
-                    .transition(.opacity)
+                    .transition(.asymmetric(
+                        insertion: .opacity.animation(.easeInOut(duration: 0.9)),
+                        removal: .opacity.animation(.easeInOut(duration: 0.3))))
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: model.tutorialStep != nil)
+        .animation(.easeInOut(duration: 0.9), value: model.tutorialStep != nil)
         .overlay {
             if let card = reflectionToShow {
                 ReflectionOverlay(card: card) { model.dismissCard(card) }

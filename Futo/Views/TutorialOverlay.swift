@@ -100,6 +100,7 @@ struct TutorialOverlay: View {
                 }
                 .compositingGroup()
             }
+            .animation(.easeInOut(duration: 0.4), value: rect)
             .contentShape(Rectangle())     // 案内の間は、下の画面を押せない
             .onTapGesture {}
     }

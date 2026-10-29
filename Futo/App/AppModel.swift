@@ -136,6 +136,8 @@ final class AppModel {
         settings.onboardingDone = true
         onboardingDone = true
         refresh()
+        // 説明（暗い緑）のあと、明るいホームを一瞬見せずに、案内の暗い画面の下でホームを現す。
+        tutorialStep = tutorialCompleted ? nil : 0
     }
 
     #if DEBUG
@@ -157,6 +159,7 @@ final class AppModel {
         onboardingDone = true
         isOnboardingReplay = false
         refresh()
+        tutorialStep = tutorialCompleted ? nil : 0
     }
 
     // MARK: ホームのチュートリアル
