@@ -22,7 +22,7 @@
 		304D45FE9E60762F7F4CBCBB /* ReflectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */; };
 		3644D4A15AC907CB6CDA284D /* RestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */; };
 		378B679AC14F0CC336D756AA /* WaitCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4267030096FD083643FBA49A /* WaitCountdown.swift */; };
-		3A707A65C8E6A1315AB5B690 /* WeeklyInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */; };
+		3A707A65C8E6A1315AB5B690 /* PeriodInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D943536ADE05ED82A6CD9E57 /* PeriodInsights.swift */; };
 		3D03BF77A074BD2E46728FD0 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
 		4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */; };
 		4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */; };
@@ -39,7 +39,6 @@
 		74AC9BDCB27B299B0F39EF34 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CFFD65F9C0DFA650DD6BB2 /* HistoryView.swift */; };
 		750995CC03D0153E0D2AEE8B /* ReflectionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */; };
 		7559CC8D141A93DBF5685EEB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
-		7627CADBB6098699D9FA93EC /* GraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52A962F4E7B56240BBB1218 /* GraphView.swift */; };
 		77153F8420388F83F5070A45 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF139CD24EA57AEEABC31B77 /* SettingsView.swift */; };
 		8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57186D513F893809C415EC62 /* AppModel+Phase3.swift */; };
 		89A4BD8B8EBBA8935A01C635 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD20AE72812E367E3277411 /* Preferences.swift */; };
@@ -119,12 +118,11 @@
 		CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase3Tests.swift; sourceTree = "<group>"; };
 		CFC033647C6060CD293D5535 /* ReflectionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionViews.swift; sourceTree = "<group>"; };
 		D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionCard.swift; sourceTree = "<group>"; };
-		D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeeklyInsights.swift; sourceTree = "<group>"; };
+		D943536ADE05ED82A6CD9E57 /* PeriodInsights.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PeriodInsights.swift; sourceTree = "<group>"; };
 		D96FD2843A43E4EF9A3C159E /* AppPickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickers.swift; sourceTree = "<group>"; };
 		D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestrictionService.swift; sourceTree = "<group>"; };
 		E040EA0EF6230253E2A2146C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		E2FD0CD07E4D79EC27C92915 /* FlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowView.swift; sourceTree = "<group>"; };
-		E52A962F4E7B56240BBB1218 /* GraphView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GraphView.swift; sourceTree = "<group>"; };
 		F3ABA836A347ACB128D09C74 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		F7D183B067D9C20E8E848405 /* InsightsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		FDB1C846DC4122660C2FFF45 /* SharedState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedState.swift; sourceTree = "<group>"; };
@@ -214,7 +212,6 @@
 				CFC033647C6060CD293D5535 /* ReflectionViews.swift */,
 				F7D183B067D9C20E8E848405 /* InsightsView.swift */,
 				ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */,
-				E52A962F4E7B56240BBB1218 /* GraphView.swift */,
 				26BD24262F4051951F996334 /* PieChart.swift */,
 			);
 			path = Views;
@@ -283,7 +280,7 @@
 				4267030096FD083643FBA49A /* WaitCountdown.swift */,
 				4042D91A1DA44E257692BC28 /* LogicalCalendar.swift */,
 				272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */,
-				D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */,
+				D943536ADE05ED82A6CD9E57 /* PeriodInsights.swift */,
 				2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */,
 				5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */,
 				C26B0FC1E1229764718CF683 /* NotificationService.swift */,
@@ -472,7 +469,7 @@
 				304D45FE9E60762F7F4CBCBB /* ReflectionCard.swift in Sources */,
 				04F06092D2BCFACB08B35A97 /* LogicalCalendar.swift in Sources */,
 				750995CC03D0153E0D2AEE8B /* ReflectionBuilder.swift in Sources */,
-				3A707A65C8E6A1315AB5B690 /* WeeklyInsights.swift in Sources */,
+				3A707A65C8E6A1315AB5B690 /* PeriodInsights.swift in Sources */,
 				4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */,
 				00A16F2360807B5B316B5609 /* NotificationPlanner.swift in Sources */,
 				D677E926B9023393C7A6EE2F /* NotificationService.swift in Sources */,
@@ -481,7 +478,6 @@
 				4DA8EE1818439D1E2FF3F6AF /* NotificationSettingsView.swift in Sources */,
 				8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */,
 				B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */,
-				7627CADBB6098699D9FA93EC /* GraphView.swift in Sources */,
 				7412D01D55CC6E921027B6AC /* PieChart.swift in Sources */,
 				F4DDD9494C2F58276CEFF243 /* RestrictedItems.swift in Sources */,
 			);

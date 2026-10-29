@@ -26,37 +26,12 @@ struct HomeView: View {
         }
     }
 
+    /// ホームは1画面に収める。通常は上下にスクロールしない。
+    /// 朝夜のカードなどが加わって、どうしても収まらないときだけ、全体をスクロールできるようにする。
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(spacing: 8) {
-                    LeafMark(size: 26)
-                    Text("ふと").font(.largeTitle.weight(.medium)).foregroundStyle(Theme.accent)
-                }
-
-                ForEach(model.visibleCards, id: \.key) { card in
-                    ReflectionCardView(card: card) { model.dismissCard(card) }
-                        .transition(.opacity)
-                }
-                if let suggestion = model.suggestion {
-                    SuggestionCardView(model: model, suggestion: suggestion)
-                        .transition(.opacity)
-                }
-                if let session = pendingReflection {
-                    reflectionCard(session)
-                        .transition(.opacity)
-                }
-                statusCard
-                actions
-                countsRow
-                #if DEBUG
-                debugSection
-                #endif
-            }
-            .padding(20)
-            .animation(.easeInOut(duration: 0.3), value: pendingReflection != nil)
-            .animation(.easeInOut(duration: 0.3), value: model.visibleCards.map(\.key))
-            .animation(.easeInOut(duration: 0.3), value: model.suggestion)
+        ViewThatFits(in: .vertical) {
+            mainContent
+            ScrollView { mainContent }
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
@@ -100,6 +75,40 @@ struct HomeView: View {
         }
     }
 
+    private var mainContent: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                LeafMark(size: 24)
+                Text("ふと").font(.title.weight(.medium)).foregroundStyle(Theme.accent)
+            }
+
+            ForEach(model.visibleCards, id: \.key) { card in
+                ReflectionCardView(card: card) { model.dismissCard(card) }
+                    .transition(.opacity)
+            }
+            if let suggestion = model.suggestion {
+                SuggestionCardView(model: model, suggestion: suggestion)
+                    .transition(.opacity)
+            }
+            if let session = pendingReflection {
+                reflectionCard(session)
+                    .transition(.opacity)
+            }
+            statusCard
+            Spacer(minLength: 0)
+            actions
+            countsRow
+            #if DEBUG
+            debugSection
+            #endif
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .animation(.easeInOut(duration: 0.3), value: pendingReflection != nil)
+        .animation(.easeInOut(duration: 0.3), value: model.visibleCards.map(\.key))
+        .animation(.easeInOut(duration: 0.3), value: model.suggestion)
+    }
+
     // MARK: 状態
 
     private var isUnlocked: Bool {
@@ -129,12 +138,12 @@ struct HomeView: View {
                 ? "iPhoneの設定アプリで、Screen Timeの許可をオンにしてください。"
                 : "制限をかけるために、Screen Timeの許可が必要です。"
         }
-        if model.targetCount == 0 { return "ふだん開きすぎてしまうアプリやサイトを選びます。" }
+        if model.targetCount == 0 { return "開きすぎてしまうアプリやサイトを選びます。" }
         switch model.restriction {
-        case .configured: return "ふだんは、選んだものを使えません。使いたいときは、ひと呼吸おいてから。"
+        case .configured: return "使いたいときは、ひと呼吸おいてから。"
         case .temporarilyUnlocked: return "使い終わったら、制限に戻します。"
         case .unverifiable: return "もう一度、制限をオンにしてみてください。"
-        case .off: return "ふだんは制限をオンにしておくと、ふと開くのを防げます。"
+        case .off: return "ふだんはオンにしておくのがおすすめです。"
         }
     }
 
@@ -149,25 +158,23 @@ struct HomeView: View {
         }
     }
 
-    /// 状態（大きな錠と一言）・制限しているもの・お知らせを1枚にまとめる。
+    /// 状態（小さな錠と一言）・制限しているもの・お知らせを1枚にまとめる。
     private var statusCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
                 ZStack {
-                    Circle().fill(Theme.accent.opacity(0.14)).frame(width: 88, height: 88)
+                    Circle().fill(Theme.accent.opacity(0.14)).frame(width: 40, height: 40)
                     Image(systemName: statusIcon)
-                        .font(.system(size: 36, weight: .regular))
+                        .font(.system(size: 18, weight: .regular))
                         .foregroundStyle(Theme.accent)
                 }
                 .accessibilityHidden(true)
-                Text(headline).font(.title2.weight(.medium))
-                Text(subline)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(headline).font(.headline.weight(.medium))
+                    Text(subline).font(.footnote).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
 
             if model.targetCount > 0 {
@@ -207,9 +214,9 @@ struct HomeView: View {
             }
             .frame(minHeight: 32)
 
-            if model.targetCount > 4 {
-                ScrollView(.vertical, showsIndicators: true) { rows }
-                    .frame(height: 4 * 48)
+            if model.targetCount > 3 {
+                // 4行目を半分だけ見せ、下端をぼかして、下にまだあることを伝える。
+                ScrollHintList(height: 3.5 * 48) { rows }
             } else {
                 rows
             }
@@ -268,8 +275,6 @@ struct HomeView: View {
             if isUnlocked {
                 Button("使い終わる") { model.relockNow() }
                     .buttonStyle(FutoButtonStyle())
-                Text("押すと、すぐ制限に戻ります。")
-                    .font(.caption).foregroundStyle(.secondary)
             } else {
                 primaryButton
             }
@@ -390,4 +395,46 @@ struct HomeView: View {
         .padding(.top, 12)
     }
     #endif
+}
+
+private struct ScrollBottomKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
+/// 高さを固定した縦スクロール。下にまだ続くときだけ、下端のぼかしと矢印で「スクロールできる」ことを伝える。
+private struct ScrollHintList<Content: View>: View {
+    let height: CGFloat
+    @ViewBuilder var content: Content
+    @State private var atBottom = false
+
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 0) {
+                content
+                Color.clear
+                    .frame(height: 1)
+                    .background(GeometryReader { proxy in
+                        Color.clear.preference(key: ScrollBottomKey.self, value: proxy.frame(in: .named("scrollHintList")).maxY)
+                    })
+            }
+        }
+        .coordinateSpace(name: "scrollHintList")
+        .onPreferenceChange(ScrollBottomKey.self) { atBottom = $0 <= height + 2 }
+        .frame(height: height)
+        .overlay(alignment: .bottom) {
+            ZStack(alignment: .bottom) {
+                LinearGradient(colors: [Theme.card.opacity(0), Theme.card], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 36)
+                Image(systemName: "chevron.compact.down")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 2)
+            }
+            .opacity(atBottom ? 0 : 1)
+            .animation(.easeInOut(duration: 0.2), value: atBottom)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+    }
 }

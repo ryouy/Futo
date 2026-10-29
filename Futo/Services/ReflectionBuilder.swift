@@ -23,9 +23,11 @@ enum ReflectionBuilder {
         }
         let seed = seed + kind.rawValue
         let closing = pick(closings(kind), seed, 9)
+        // 朝は、どの記録を使っていても「昨日は、」で始める（開発中は今日の記録で作るため）。
+        let dayWord = kind == .morning ? "昨日" : dayWord
 
         guard !records.isEmpty else {
-            return ReflectionContent(title: kind.title, lines: ["\(dayWord)の記録はまだありません。", closing])
+            return ReflectionContent(title: kind.title, lines: ["\(dayWord)は、記録がまだありません。", closing])
         }
 
         let volume: Volume = records.count <= 2 ? .few : (records.count <= 5 ? .some : .many)
@@ -43,13 +45,13 @@ enum ReflectionBuilder {
     private static func openings(_ kind: ReflectionKind, _ volume: Volume, _ day: String) -> [String] {
         switch (kind, volume) {
         case (.morning, .few):
-            return ["\(day)は、立ち止まった場面が少しだけありました。", "\(day)のひと呼吸は、少なめでした。"]
+            return ["\(day)は、立ち止まった場面が少しだけありました。", "\(day)は、ひと呼吸が少なめでした。"]
         case (.morning, .some):
             return ["\(day)は、何度か立ち止まる時間がありました。", "\(day)は、ひと呼吸が何回かありました。"]
         case (.morning, .many):
             return ["\(day)は、立ち止まる場面が多めの一日でした。", "\(day)は、ひと呼吸をたくさんおこないました。"]
         case (.night, .few):
-            return ["\(day)は、立ち止まった場面が少しだけでした。", "\(day)のひと呼吸は、少なめでした。"]
+            return ["\(day)は、立ち止まった場面が少しだけでした。", "\(day)は、ひと呼吸が少なめでした。"]
         case (.night, .some):
             return ["\(day)は、何度か立ち止まりました。", "\(day)は、ひと呼吸が何回かありました。"]
         case (.night, .many):

@@ -3,7 +3,7 @@ import ManagedSettings
 import SwiftData
 import SwiftUI
 
-/// 1件の記録。何が起きたか（やめた／解除した／途中でやめた）、目的、解除していた時間、解除したアプリ、感想を、必要な分だけ出す。
+/// 1件の記録。何が起きたか、目的、解除していた時間、解除したもの（アイコンだけ）、感想を、必要な分だけ出す。
 struct SessionRow: View {
     let session: Session
     var showsDate = true
@@ -18,8 +18,12 @@ struct SessionRow: View {
             Text([session.purposeText, session.unlockDurationText].compactMap { $0 }.joined(separator: "　・　"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-            ForEach(unlockedItems) { item in
-                ItemLabel(item: item).font(.footnote)
+            if !unlockedItems.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(unlockedItems) { item in
+                        ItemLabel(item: item).labelStyle(.iconOnly)
+                    }
+                }
             }
             if let reflection = session.reflection, reflection != .skipped {
                 Text("感想：\(reflection.label)").font(.footnote).foregroundStyle(.secondary)
@@ -39,30 +43,6 @@ struct SessionRow: View {
     /// 解除したもの（アプリ・カテゴリ・ウェブサイト）。以前の版の保存形式（アプリのみ）も読める。
     var unlockedItems: [RestrictedItem] {
         RestrictedItems.decode(session.temporaryUnlockedApps).sortedItems
-    }
-}
-
-/// 現在のモードの完了した記録を、新しい順に表示する。
-struct HistoryView: View {
-    let mode: AppMode
-    @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
-
-    private var finished: [Session] {
-        sessions.filter { $0.mode == mode && !$0.phase.isOpen }
-    }
-
-    var body: some View {
-        Group {
-            if finished.isEmpty {
-                ContentUnavailableView("まだ記録はありません。", systemImage: "tray")
-            } else {
-                List(finished) { session in
-                    SessionRow(session: session)
-                        .listRowBackground(Theme.card)
-                }
-                .scrollContentBackground(.hidden)
-            }
-        }
     }
 }
 
@@ -100,7 +80,7 @@ struct TodayDetailView: View {
                         Section("解除したもの") {
                             ForEach(itemTotals, id: \.item) { item in
                                 HStack {
-                                    ItemLabel(item: item.item)
+                                    ItemLabel(item: item.item).labelStyle(.iconOnly)
                                     Spacer()
                                     Text(totalText(item.count, item.seconds))
                                         .font(.footnote).foregroundStyle(.secondary)
@@ -123,11 +103,6 @@ struct TodayDetailView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(kind == .deferred ? "今日やめた" : "今日使いたかった")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                NavigationLink { GraphView(mode: mode) } label: { Label("グラフ", systemImage: "chart.bar") }
-            }
-        }
     }
 
     private func totalText(_ count: Int, _ seconds: TimeInterval) -> String {

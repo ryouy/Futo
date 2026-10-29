@@ -6,7 +6,6 @@ struct PieCard: View {
     let title: String
     let slices: [Breakdown.Slice]
     var emptyText = "まだ記録がありません。"
-    var footnote: String?
 
     private var shown: [Breakdown.Slice] { slices.filter { $0.count > 0 } }
 
@@ -26,9 +25,6 @@ struct PieCard: View {
                 .frame(height: 210)
                 .accessibilityLabel(title)
                 .accessibilityValue(shown.map { "\($0.label) \($0.count)件" }.joined(separator: "、"))
-            }
-            if let footnote {
-                Text(footnote).font(.caption).foregroundStyle(.secondary).lineSpacing(3)
             }
         }
         .card()

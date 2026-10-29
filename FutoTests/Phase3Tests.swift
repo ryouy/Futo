@@ -80,7 +80,7 @@ final class Phase3Tests: XCTestCase {
 
     func testBuilderNeutralWhenNoRecords() {
         let c = build(.night)
-        XCTAssertEqual(c.lines.first, "今日の記録はまだありません。")
+        XCTAssertEqual(c.lines.first, "今日は、記録がまだありません。")
         XCTAssertEqual(c.lines.count, 2, "記録が無くても、短い締めの一文だけ")
     }
 
@@ -130,6 +130,14 @@ final class Phase3Tests: XCTestCase {
         XCTAssertFalse(text.contains("使った時間"))
     }
 
+    func testMorningAlwaysStartsWithYesterday() {
+        XCTAssertEqual(build(.morning).lines.first, "昨日は、記録がまだありません。")
+        for i in 0..<7 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
+        for seed in ["a", "b", "c", "d"] {
+            XCTAssertTrue(build(.morning, seed).lines[0].hasPrefix("昨日は、"), build(.morning, seed).lines[0])
+        }
+    }
+
     func testBuilderIsStableForTheSameSeed() {
         for i in 0..<4 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
         XCTAssertEqual(build(.night, "a"), build(.night, "a"))
@@ -140,7 +148,7 @@ final class Phase3Tests: XCTestCase {
         record("2027-01-13 11:00", purpose: .contact, reflection: .skipped)
         record("2027-01-12 11:00", purpose: nil)
         record("2027-01-13 12:00", mode: .device, purpose: .research)
-        let b = Breakdown.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00"))
+        let b = Breakdown.make(sessions: sessions(), mode: .demo, interval: cal.weekInterval(containing: jst("2027-01-13 20:00")))
         XCTAssertEqual(b.purposes.first(where: { $0.label == "連絡" })?.count, 2)
         XCTAssertEqual(b.purposes.first(where: { $0.label == Breakdown.noAnswer })?.count, 1)
         XCTAssertEqual(b.answeredReflections, 1, "「答えない」は感想の回答に数えない")
@@ -175,14 +183,14 @@ final class Phase3Tests: XCTestCase {
         XCTAssertNil(again.dismissedAt)
     }
 
-    // MARK: 今週の傾向
+    // MARK: 期間ごとの集計（今週・今月・すべて）
 
-    func testWeeklyInsightsCountsAndSeparatesModes() {
+    func testPeriodInsightsCountsAndSeparatesModes() {
         record("2027-01-12 09:00", purpose: .contact, outcome: .wantsToUse, reflection: .satisfied, unlocked: true)
         record("2027-01-12 23:00", purpose: .contact, outcome: .deferred, reflection: .skipped)
         record("2027-01-13 12:00", purpose: nil, outcome: .interrupted)
         record("2027-01-13 12:00", mode: .device, purpose: .research, outcome: .deferred)
-        let w = WeeklyInsights.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00"))
+        let w = PeriodInsights.make(sessions: sessions(), mode: .demo, period: .week, calendar: cal, now: jst("2027-01-13 20:00"))
         XCTAssertEqual(w.total, 3)
         XCTAssertEqual(w.wantsToUse, 1)
         XCTAssertEqual(w.deferred, 1)
@@ -192,14 +200,25 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(w.answeredReflections, 1, "「答えない」は回答に数えない")
         XCTAssertEqual(w.bandCounts[.morning], 1)
         XCTAssertEqual(w.bandCounts[.night], 1)
-        XCTAssertNil(w.previousTotal, "前週の記録が無いので比較しない")
     }
 
-    func testPreviousWeekComparedOnlyWhenBothWeeksHaveRecords() {
-        record("2027-01-05 10:00")
-        XCTAssertNil(WeeklyInsights.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00")).previousTotal)
-        record("2027-01-12 10:00")
-        XCTAssertEqual(WeeklyInsights.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00")).previousTotal, 1)
+    func testWeekMonthAndAllCoverDifferentRanges() {
+        record("2027-01-13 10:00")   // 今週
+        record("2027-01-04 10:00")   // 今月・先週
+        record("2026-12-20 10:00")   // 先月
+        let now = jst("2027-01-13 20:00")
+        func total(_ p: InsightPeriod) -> Int {
+            PeriodInsights.make(sessions: sessions(), mode: .demo, period: p, calendar: cal, now: now).total
+        }
+        XCTAssertEqual(total(.week), 1)
+        XCTAssertEqual(total(.month), 2)
+        XCTAssertEqual(total(.all), 3)
+        XCTAssertEqual(cal.monthInterval(containing: now).start, jst("2027-01-01 04:00"))
+        XCTAssertEqual(cal.monthInterval(containing: jst("2027-01-01 02:00")).start, jst("2026-12-01 04:00"), "月初の深夜は前の月")
+    }
+
+    func testBandLabelsDoNotShowHours() {
+        for band in TimeBand.allCases { XCTAssertFalse(band.label.contains("時"), band.label) }
     }
 
     // MARK: 設定改善の提案
@@ -362,23 +381,5 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(s.temporaryUnlockEndedAt, jst("2027-01-13 10:00"))
         store.recordTemporaryUnlockEnd(s, at: jst("2027-01-13 10:20"))
         XCTAssertEqual(s.temporaryUnlockEndedAt, jst("2027-01-13 10:00"), "2回目は上書きしない")
-    }
-
-    func testDailySeriesFillsEmptyDaysAndSeparatesModes() {
-        let a = record("2027-01-13 10:00", outcome: .wantsToUse, unlocked: true)
-        a.temporaryUnlockEndedAt = jst("2027-01-13 10:04")
-        record("2027-01-13 12:00", outcome: .deferred)
-        record("2027-01-14 02:00", outcome: .interrupted)               // 深夜は前日（13日）
-        record("2027-01-11 09:00", outcome: .deferred)
-        record("2027-01-13 12:00", mode: .device, outcome: .deferred)
-        let series = DailySeries.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00"), days: 7)
-        XCTAssertEqual(series.count, 7)
-        XCTAssertEqual(series.last?.label, "1/13")
-        XCTAssertEqual(series.last?.deferred, 1)
-        XCTAssertEqual(series.last?.wantsToUse, 1)
-        XCTAssertEqual(series.last?.interrupted, 1)
-        XCTAssertEqual(series.last?.unlockSeconds, 240)
-        XCTAssertEqual(series.first(where: { $0.label == "1/12" })?.total, 0, "記録の無い日は0件")
-        XCTAssertEqual(series.first(where: { $0.label == "1/11" })?.deferred, 1)
     }
 }

@@ -44,6 +44,16 @@ struct LogicalCalendar {
         return DateInterval(start: start, end: end)
     }
 
+    /// 今月（暦の月。論理日で数える）。
+    func monthInterval(containing date: Date) -> DateInterval {
+        guard let month = calendar.dateInterval(of: .month, for: shifted(date)) else {
+            return dayInterval(containing: date)
+        }
+        let start = calendar.date(byAdding: .hour, value: dayStartHour, to: month.start) ?? month.start
+        let end = calendar.date(byAdding: .hour, value: dayStartHour, to: month.end) ?? month.end
+        return DateInterval(start: start, end: end)
+    }
+
     func previousWeekInterval(before date: Date) -> DateInterval {
         weekInterval(containing: weekInterval(containing: date).start.addingTimeInterval(-1))
     }

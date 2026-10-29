@@ -36,45 +36,7 @@ extension Session {
     }
 }
 
-/// 直近の日ごとの集計（グラフ用）。論理日（午前4時区切り）で数える。
-struct DayStat: Identifiable, Equatable {
-    var dayKey: String
-    var label: String
-    var deferred = 0
-    var wantsToUse = 0
-    var interrupted = 0
-    /// 解除していた時間の合計（秒）。解除中のものは含めない
-    var unlockSeconds: Double = 0
-
-    var id: String { dayKey }
-    var total: Int { deferred + wantsToUse + interrupted }
-}
-
-enum DailySeries {
-    /// 今日を含む直近 `days` 日。記録が無い日も0件として並べる。
-    static func make(sessions: [Session], mode: AppMode, calendar: LogicalCalendar, now: Date, days: Int = 7) -> [DayStat] {
-        var stats: [DayStat] = []
-        var cursor = calendar.dayInterval(containing: now)
-        for _ in 0..<days {
-            let day = cursor
-            let comps = calendar.calendar.dateComponents([.month, .day], from: day.start)
-            var stat = DayStat(dayKey: calendar.dayKey(for: day.start), label: "\(comps.month ?? 0)/\(comps.day ?? 0)")
-            for s in sessions where s.mode == mode && s.phase != .choosingPurpose && day.contains(s.startedAt) {
-                switch s.outcome {
-                case .deferred: stat.deferred += 1
-                case .wantsToUse: stat.wantsToUse += 1
-                case .interrupted, nil: stat.interrupted += 1
-                }
-                if let duration = s.unlockDuration { stat.unlockSeconds += duration }
-            }
-            stats.append(stat)
-            cursor = calendar.dayInterval(containing: day.start.addingTimeInterval(-1))
-        }
-        return stats.reversed()
-    }
-}
-
-/// 直近の目的・感想の内訳（円グラフ用）。
+/// 期間内の目的・感想の内訳（円グラフ用）。
 struct Breakdown: Equatable {
     var purposes: [Slice]
     var reflections: [Slice]
@@ -90,17 +52,12 @@ struct Breakdown: Equatable {
 
     static let noAnswer = "答えなかった"
 
-    static func make(sessions: [Session], mode: AppMode, calendar: LogicalCalendar, now: Date, days: Int = 7) -> Breakdown {
-        let end = calendar.dayInterval(containing: now).end
-        let start = calendar.calendar.date(byAdding: .day, value: -days, to: end) ?? end
-        let records = sessions.filter {
-            $0.mode == mode && $0.phase != .choosingPurpose && $0.startedAt >= start && $0.startedAt < end
-        }
+    static func make(sessions: [Session], mode: AppMode, interval: DateInterval?) -> Breakdown {
+        let records = PeriodInsights.records(sessions: sessions, mode: mode, interval: interval)
         var purposes = Purpose.allCases.map { p in Slice(label: p.label, count: records.filter { $0.purpose == p }.count) }
         purposes.append(Slice(label: noAnswer, count: records.filter { $0.purpose == nil }.count))
-        let reflections = [Reflection.satisfied, .neutral, .wishedLess].map { r in
-            Slice(label: r.label, count: records.filter { $0.reflection == r }.count)
-        }
+        let kinds: [Reflection] = [.satisfied, .neutral, .wishedLess]
+        let reflections = kinds.map { r in Slice(label: r.label, count: records.filter { $0.reflection == r }.count) }
         return Breakdown(purposes: purposes, reflections: reflections)
     }
 }
