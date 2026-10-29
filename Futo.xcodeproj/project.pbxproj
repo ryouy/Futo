@@ -23,9 +23,11 @@
 		3644D4A15AC907CB6CDA284D /* RestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */; };
 		378B679AC14F0CC336D756AA /* WaitCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4267030096FD083643FBA49A /* WaitCountdown.swift */; };
 		3A707A65C8E6A1315AB5B690 /* WeeklyInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */; };
+		3D03BF77A074BD2E46728FD0 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
 		4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */; };
 		4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */; };
 		4DA8EE1818439D1E2FF3F6AF /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */; };
+		50385D5EF115309ACFEF6079 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */; };
 		5070FBDEC949AEF0E9A02901 /* ReflectionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC033647C6060CD293D5535 /* ReflectionViews.swift */; };
 		50E53F79005F1DBD1B3DB8C6 /* SessionFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B768EB594A2A04EC20521A /* SessionFlowTests.swift */; };
 		56269CD9A8AA67F43BD50711 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */; };
@@ -48,6 +50,7 @@
 		D9DCD71B7EBE925EB79D8A86 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6C85F6C90FCE546C929F5F /* Session.swift */; };
 		EA7E5B92B9D41E40AC4C8F54 /* FutoMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		EACD01277BEC46AE8EC9590B /* Phase3Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */; };
+		F4DDD9494C2F58276CEFF243 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,9 +103,11 @@
 		55D3E8121D07DD1E3765C988 /* FutoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FutoApp.swift; sourceTree = "<group>"; };
 		57186D513F893809C415EC62 /* AppModel+Phase3.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AppModel+Phase3.swift"; sourceTree = "<group>"; };
 		5A6C85F6C90FCE546C929F5F /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		645EC79F22BEC5EFE970061D /* Futo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Futo.entitlements; sourceTree = "<group>"; };
 		7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		84F628C366DFB1684C45D06A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestrictedItems.swift; sourceTree = "<group>"; };
 		99B055470C5F5029EA491ECB /* FutoMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FutoMonitor.swift; sourceTree = "<group>"; };
 		9D7D8876509532823B515AC5 /* FutoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FutoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A95DEA83570D048231C077F6 /* WaitController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitController.swift; sourceTree = "<group>"; };
@@ -248,6 +253,7 @@
 			isa = PBXGroup;
 			children = (
 				FDB1C846DC4122660C2FFF45 /* SharedState.swift */,
+				8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */,
 			);
 			name = Shared;
 			path = Shared;
@@ -290,6 +296,7 @@
 			isa = PBXGroup;
 			children = (
 				32BB636196F91ED59D7A4919 /* Assets.xcassets */,
+				5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -421,6 +428,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7559CC8D141A93DBF5685EEB /* Assets.xcassets in Resources */,
+				50385D5EF115309ACFEF6079 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,6 +441,7 @@
 			files = (
 				18A9F4B0BFEF76BFEAA33DAB /* FutoMonitor.swift in Sources */,
 				6004556B9472BDBA86337E6D /* SharedState.swift in Sources */,
+				3D03BF77A074BD2E46728FD0 /* RestrictedItems.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -474,6 +483,7 @@
 				B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */,
 				7627CADBB6098699D9FA93EC /* GraphView.swift in Sources */,
 				7412D01D55CC6E921027B6AC /* PieChart.swift in Sources */,
+				F4DDD9494C2F58276CEFF243 /* RestrictedItems.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -565,7 +575,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ふと";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -632,7 +642,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ふと";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

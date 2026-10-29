@@ -13,7 +13,7 @@ enum ThemeColor: String, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .wakaba: return "若葉"
+        case .wakaba: return "深緑"
         case .sora: return "空"
         case .sakura: return "桜"
         case .fuji: return "藤"
@@ -31,7 +31,7 @@ enum ThemeColor: String, CaseIterable, Identifiable {
     var palette: Palette {
         switch self {
         case .wakaba:
-            return Palette(accent: (0x4F7F63, 0x93C7A7), backgroundBottom: (0xEFF3E8, 0x1A1F1B), soft: (0xE5EEF1, 0x26343A))
+            return Palette(accent: (0x196459, 0x6FBBA8), backgroundBottom: (0xE8F1EE, 0x17201E), soft: (0xDDEBE7, 0x21332F))
         case .sora:
             return Palette(accent: (0x46789A, 0x8FBEDC), backgroundBottom: (0xEAF1F5, 0x1A1E22), soft: (0xE1EDF4, 0x25323B))
         case .sakura:

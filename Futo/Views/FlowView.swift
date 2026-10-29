@@ -142,7 +142,7 @@ struct WaitView: View {
                     .opacity(showTimer ? 1 : 0)
                     .padding(.vertical, 12)
 
-                Button("ひと呼吸をやめる") { model.endBreath() }
+                Button("やめてホームへ") { model.endBreath() }
                     .buttonStyle(FutoTextButtonStyle())
                     .opacity(showTimer ? 1 : 0)
             }
@@ -201,7 +201,7 @@ struct FinalChoiceView: View {
 
     private var footnote: String {
         if model.canTemporarilyUnlock {
-            return "「使いたい」を選ぶと、アプリを選んで少しだけ使えます。"
+            return "「使いたい」を選ぶと、選んだものをしばらく使えます。"
         }
         if model.mode == .demo {
             return "デモでは、実際のアプリの制限は変わりません。"
@@ -214,7 +214,7 @@ struct FinalChoiceView: View {
             VStack(spacing: 16) {
                 FlowTitle(text: "今も使いたいですか？")
                     .padding(.bottom, 12)
-                Button("今はやめる") { model.finish(.deferred) }
+                Button("やめておく") { model.finish(.deferred) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
                 Button("使いたい") { model.finish(.wantsToUse) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
@@ -236,11 +236,11 @@ struct ResultView: View {
     private var wantsToUseMessage: String {
         switch model.unlockResult {
         case .started(let until):
-            return "選んだアプリを使えます。約\(SharedState.unlockUsageMinutes)分使うか、\(until.formatted(date: .omitted, time: .shortened))になると、制限に戻ります。"
+            return "選んだものを使えます。約\(SharedState.unlockUsageMinutes)分使うか、\(until.formatted(date: .omitted, time: .shortened))になると、制限に戻ります。"
         case .failed:
             return "一時解除を始められなかったため、制限は続いています。"
         case .unsupported:
-            return "この設定では、一時解除は使えません。使うには、ホームの「制限を終了」を押してください。"
+            return "この設定では、一時解除は使えません。使うには、設定で「いつも制限する」をオフにしてください。"
         case nil:
             return model.mode == .demo
                 ? "デモでは、実際の制限は変わりません。"

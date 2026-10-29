@@ -16,7 +16,7 @@ struct OnboardingView: View {
                 VStack(spacing: 12) {
                     Text("使う前に、ひと呼吸。")
                         .font(.title2.weight(.medium))
-                    Text("何に使いたいか確かめてから、自分で選ぶためのアプリです。")
+                    Text("ふだんは制限をかけておき、使いたいときだけ、ひと呼吸おいて選ぶためのアプリです。")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
                         .lineSpacing(5)

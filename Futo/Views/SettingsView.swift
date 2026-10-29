@@ -4,12 +4,26 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var model: AppModel
     @State private var confirmDelete = false
+    @State private var confirmOff = false
     @State private var confirmLeaveDevice = false
 
     private var isDemo: Bool { model.mode == .demo }
 
     var body: some View {
         Form {
+            Section {
+                Toggle("いつも制限する", isOn: Binding(
+                    get: { model.intendsRestriction },
+                    set: { on in
+                        if on { model.startRestriction() } else { confirmOff = true }
+                    }))
+                    .frame(minHeight: 44)
+            } header: {
+                Text("制限")
+            } footer: {
+                Text("ふだんは制限をかけておき、使いたいときだけ、ひと呼吸おいて解除します。オフにすると、自動ではオンに戻りません。")
+            }
+
             Section("動作モード") {
                 Toggle("デモモード", isOn: Binding(
                     get: { isDemo },
@@ -24,7 +38,7 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
                 Text(isDemo
                      ? "実際のアプリは制限しません。記録もデモ専用です。"
-                     : "選んだアプリを実際に制限します。")
+                     : "選んだものを実際に制限します。")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 
@@ -112,7 +126,7 @@ struct SettingsView: View {
             Section("この試作について") {
                 Text("""
                 一時解除と自動再制限は、実機のみの試験機能です。\
-                制限は、ホームの「制限を終了」でいつでも終えられます。\
+                制限は、「いつも制限する」をオフにすれば、いつでも外せます。\
                 許可は、iPhoneの設定アプリから取り消せます。\
                 ホームの状態は、許可と設定の照合結果です。シールドが出ているかは、対象アプリを開いて確かめてください。
                 """)
@@ -146,10 +160,17 @@ struct SettingsView: View {
             Button("キャンセル", role: .cancel) {}
         }
         .confirmationDialog(
-            "実際の制限を終了して、デモに切り替えますか？",
+            "制限をオフにしますか？ 自動ではオンに戻りません。",
+            isPresented: $confirmOff, titleVisibility: .visible
+        ) {
+            Button("オフにする", role: .destructive) { model.stopRestriction() }
+            Button("キャンセル", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "実際の制限をオフにして、デモに切り替えますか？",
             isPresented: $confirmLeaveDevice, titleVisibility: .visible
         ) {
-            Button("制限を終了して切り替える", role: .destructive) { model.switchMode(to: .demo) }
+            Button("オフにして切り替える", role: .destructive) { model.switchMode(to: .demo) }
             Button("キャンセル", role: .cancel) {}
         }
     }

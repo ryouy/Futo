@@ -117,7 +117,7 @@ final class Phase3Tests: XCTestCase {
         for i in 0..<4 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
         record("2027-01-13 16:00", purpose: .contact, outcome: .wantsToUse, reflection: .wishedLess, unlocked: true)
         let text = build(.night).lines.joined(separator: "\n")
-        XCTAssertTrue(text.contains("「今はやめる」"), text)
+        XCTAssertTrue(text.contains("「やめておく」"), text)
         XCTAssertTrue(text.contains("「連絡」"), text)
         XCTAssertTrue(text.contains("「もう少し控えたかった」"), "単独の感想はそのまま述べる: \(text)")
     }

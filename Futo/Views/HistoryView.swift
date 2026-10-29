@@ -18,8 +18,8 @@ struct SessionRow: View {
             Text([session.purposeText, session.unlockDurationText].compactMap { $0 }.joined(separator: "　・　"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-            ForEach(unlockedTokens, id: \.self) { token in
-                Label(token).font(.footnote)
+            ForEach(unlockedItems) { item in
+                ItemLabel(item: item).font(.footnote)
             }
             if let reflection = session.reflection, reflection != .skipped {
                 Text("感想：\(reflection.label)").font(.footnote).foregroundStyle(.secondary)
@@ -36,10 +36,9 @@ struct SessionRow: View {
             : session.startedAt.formatted(.dateTime.hour().minute())
     }
 
-    var unlockedTokens: [ApplicationToken] {
-        guard let data = session.temporaryUnlockedApps,
-              let tokens = try? JSONDecoder().decode(Set<ApplicationToken>.self, from: data) else { return [] }
-        return tokens.sorted { $0.hashValue < $1.hashValue }
+    /// 解除したもの（アプリ・カテゴリ・ウェブサイト）。以前の版の保存形式（アプリのみ）も読める。
+    var unlockedItems: [RestrictedItem] {
+        RestrictedItems.decode(session.temporaryUnlockedApps).sortedItems
     }
 }
 
@@ -78,18 +77,17 @@ struct TodayDetailView: View {
         return sessions.filter { $0.mode == mode && $0.outcome == kind && day.contains($0.completedAt ?? $0.startedAt) }
     }
 
-    /// 解除したアプリごとの回数と、解除していた時間の合計。
-    private var appTotals: [(token: ApplicationToken, count: Int, seconds: TimeInterval)] {
-        var totals: [ApplicationToken: (Int, TimeInterval)] = [:]
+    /// 解除したものごとの回数と、解除していた時間の合計。
+    private var itemTotals: [(item: RestrictedItem, count: Int, seconds: TimeInterval)] {
+        var totals: [RestrictedItem: (Int, TimeInterval)] = [:]
         for session in today {
-            let row = SessionRow(session: session)
-            for token in row.unlockedTokens {
-                let old = totals[token] ?? (0, 0)
-                totals[token] = (old.0 + 1, old.1 + (session.unlockDuration ?? 0))
+            for item in SessionRow(session: session).unlockedItems {
+                let old = totals[item] ?? (0, 0)
+                totals[item] = (old.0 + 1, old.1 + (session.unlockDuration ?? 0))
             }
         }
-        return totals.map { (token: $0.key, count: $0.value.0, seconds: $0.value.1) }
-            .sorted { $0.token.hashValue < $1.token.hashValue }
+        return totals.map { (item: $0.key, count: $0.value.0, seconds: $0.value.1) }
+            .sorted { $0.item.hashValue < $1.item.hashValue }
     }
 
     var body: some View {
@@ -98,11 +96,11 @@ struct TodayDetailView: View {
                 ContentUnavailableView("今日はまだありません。", systemImage: "tray")
             } else {
                 List {
-                    if kind == .wantsToUse, !appTotals.isEmpty {
-                        Section("解除したアプリ") {
-                            ForEach(appTotals, id: \.token) { item in
+                    if kind == .wantsToUse, !itemTotals.isEmpty {
+                        Section("解除したもの") {
+                            ForEach(itemTotals, id: \.item) { item in
                                 HStack {
-                                    Label(item.token)
+                                    ItemLabel(item: item.item)
                                     Spacer()
                                     Text(totalText(item.count, item.seconds))
                                         .font(.footnote).foregroundStyle(.secondary)

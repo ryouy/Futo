@@ -21,8 +21,8 @@ final class AppModel {
     private(set) var restriction: RestrictionState = .off
     private(set) var targetCount = 0
     private(set) var activeSession: Session?
-    /// 一時解除中のアプリ（実機のみ）。ホームで解除中と分かるように表示する
-    private(set) var unlockedApps: Set<ApplicationToken> = []
+    /// 一時解除中のもの（実機のみ）。ホームで解除中と分かるように表示する
+    private(set) var unlockedItems = RestrictedItems()
 
     /// 設定値（待機時間・朝夜・通知）。変更は `updatePreferences` を通す
     var prefs: Preferences
@@ -39,7 +39,7 @@ final class AppModel {
     private(set) var lastResult: SessionOutcome?
     /// 最終選択で「使いたい」を選んだ直後の、一時解除の結果
     private(set) var unlockResult: UnlockStartResult?
-    /// 「使いたい」の後、解除するアプリを選んでもらっている間だけ true
+    /// 「使いたい」の後、解除するものを選んでもらっている間だけ true
     private(set) var awaitingUnlockSelection = false
     @ObservationIgnored private var finishedSession: Session?
     var showFlow = false
@@ -82,9 +82,9 @@ final class AppModel {
         targetCount = service.targetCount
         restriction = service.verify()
         if mode == .device, case .temporarilyUnlocked = restriction {
-            unlockedApps = device.unlockedApps
+            unlockedItems = device.unlockedItems
         } else {
-            unlockedApps = []
+            unlockedItems = RestrictedItems()
         }
         activeSession = sessions.openSession(mode: mode)
         applyUnlockEnds()
@@ -124,7 +124,7 @@ final class AppModel {
         guard newMode != mode else { return true }
         if mode == .device, device.intendsRestriction {
             guard device.stop() else {
-                errorMessage = "実際の制限を終了できたか確認できないため、切り替えを保留しました。ホームの「制限を終了」をお試しください。"
+                errorMessage = "実際の制限を終了できたか確認できないため、切り替えを保留しました。設定の「いつも制限する」をオフにしてお試しください。"
                 refresh()
                 return false
             }
@@ -156,10 +156,10 @@ final class AppModel {
         refresh()
     }
 
-    /// 1つのアプリを制限から外す。デモでは唯一の対象を外す。
-    func removeApp(_ token: ApplicationToken) {
+    /// 1つを制限から外す。デモでは唯一の対象を外す。
+    func removeItem(_ item: RestrictedItem) {
         guard !isTargetEditLocked else { return }
-        device.removeApp(token)
+        device.removeItem(item)
         refresh()
     }
 
@@ -175,7 +175,7 @@ final class AppModel {
             return
         }
         guard targetCount > 0 else {
-            notice = "制限するアプリを選んでください"
+            notice = "制限するものを選んでください"
             return
         }
         service.start()
@@ -229,13 +229,13 @@ final class AppModel {
         }
     }
 
-    /// 選んだアプリだけを一時解除する。
-    func unlockApps(_ apps: Set<ApplicationToken>) {
+    /// 選んだものだけを一時解除する。
+    func unlockItems(_ items: RestrictedItems) {
         awaitingUnlockSelection = false
-        let result = device.temporaryUnlock(apps: apps, sessionID: finishedSession?.id)
+        let result = device.temporaryUnlock(items: items, sessionID: finishedSession?.id)
         unlockResult = result
         if case .started(let until) = result, let session = finishedSession {
-            sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(apps))
+            sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(items))
             schedulePostUseCheck(session: session, at: until)
         }
         finishedSession = nil

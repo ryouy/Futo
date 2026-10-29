@@ -69,7 +69,7 @@ enum ReflectionBuilder {
         let wants = records.filter { $0.outcome == .wantsToUse }.count
         let interrupted = records.count - deferred - wants
         if records.count == 1 {
-            if deferred == 1 { return "「今はやめる」を選びました。" }
+            if deferred == 1 { return "「やめておく」を選びました。" }
             if wants == 1 { return "「使いたい」を選びました。" }
             return "途中でやめました。"
         }
@@ -79,9 +79,9 @@ enum ReflectionBuilder {
         let decided = deferred + wants
         guard decided > 0 else { return nil }
         let share = Double(deferred) / Double(decided)
-        if share >= 0.7 { return pick(["「今はやめる」を選ぶ場面が多めでした。", "多くは「今はやめる」を選びました。"], seed, 3) }
+        if share >= 0.7 { return pick(["「やめておく」を選ぶ場面が多めでした。", "多くは「やめておく」を選びました。"], seed, 3) }
         if share <= 0.3 { return pick(["「使いたい」を選ぶ場面が多めでした。", "多くは「使いたい」を選びました。"], seed, 3) }
-        return pick(["「今はやめる」と「使いたい」は、同じくらいでした。", "「今はやめる」と「使いたい」が、半々くらいでした。"], seed, 3)
+        return pick(["「やめておく」と「使いたい」は、同じくらいでした。", "「やめておく」と「使いたい」が、半々くらいでした。"], seed, 3)
     }
 
     private static func purposeLine(_ records: [Session], _ seed: String) -> String? {

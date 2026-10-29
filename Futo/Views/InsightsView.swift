@@ -47,7 +47,7 @@ struct InsightsView: View {
     private func countsCard(_ w: WeeklyInsights) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             row("ひと呼吸", w.total)
-            row("「今はやめる」を選んだ", w.deferred)
+            row("「やめておく」を選んだ", w.deferred)
             row("「使いたい」を選んだ", w.wantsToUse)
             row("使ったあとの感想に答えた", w.answeredReflections)
             if w.unlockStarted > 0 { row("一時解除を始めた", w.unlockStarted) }

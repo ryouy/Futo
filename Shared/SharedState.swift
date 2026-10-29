@@ -7,8 +7,8 @@ struct UnlockRecord: Codable, Equatable {
     var activityName: String
     var startedAt: Date
     var endsAt: Date
-    /// 一時解除したアプリ。ホームでの表示と履歴に使う（古い記録には無いので任意）
-    var unlockedApps: Set<ApplicationToken>?
+    /// 一時解除したもの（アプリ・カテゴリ・ウェブサイト）。ホームでの表示と履歴に使う（古い記録には無いので任意）
+    var unlocked: RestrictedItems?
     /// この解除を始めたひと呼吸（履歴に解除時間を書き戻すため）
     var sessionID: UUID?
 }
@@ -125,6 +125,50 @@ enum SharedState {
 
     static var lastEvent: String? { defaults.string(forKey: Key.lastEvent) }
 
+    // MARK: シールド（本アプリ専用ストア）
+
+    /// 制限するものを、本アプリ専用ストアへ反映する。`unlocked` に含まれるものは外す。
+    /// 解除したアプリは、制限中のカテゴリの例外にもする（カテゴリ経由で止められないように）。
+    static func applyShield(items: RestrictedItems, unlocked: RestrictedItems = RestrictedItems()) {
+        let store = ManagedSettingsStore(named: storeName)
+        let apps = items.apps.subtracting(unlocked.apps)
+        let categories = items.categories.subtracting(unlocked.categories)
+        let webs = items.webDomains.subtracting(unlocked.webDomains)
+        store.shield.applications = apps.isEmpty ? nil : apps
+        store.shield.applicationCategories = categories.isEmpty ? nil : .specific(categories, except: unlocked.apps)
+        store.shield.webDomains = webs.isEmpty ? nil : webs
+    }
+
+    static func clearShield() {
+        let store = ManagedSettingsStore(named: storeName)
+        store.shield.applications = nil
+        store.shield.applicationCategories = nil
+        store.shield.webDomains = nil
+    }
+
+    /// 本アプリのストアの中身が、期待する制限と一致しているか。OS上でシールドが出ているかまでは確認できない。
+    static func shieldMatches(items: RestrictedItems, unlocked: RestrictedItems = RestrictedItems()) -> Bool {
+        let store = ManagedSettingsStore(named: storeName)
+        var categories: Set<ActivityCategoryToken> = []
+        if let policy = store.shield.applicationCategories, case .specific(let tokens, _) = policy {
+            categories = tokens
+        }
+        let currentApps: Set<ApplicationToken> = store.shield.applications ?? []
+        let currentWebs: Set<WebDomainToken> = store.shield.webDomains ?? []
+        let expectedApps = items.apps.subtracting(unlocked.apps)
+        let expectedCategories = items.categories.subtracting(unlocked.categories)
+        let expectedWebs = items.webDomains.subtracting(unlocked.webDomains)
+        if currentApps != expectedApps { return false }
+        if categories != expectedCategories { return false }
+        return currentWebs == expectedWebs
+    }
+
+    /// ストアに何も残っていないか。
+    static var isShieldEmpty: Bool {
+        let store = ManagedSettingsStore(named: storeName)
+        return store.shield.applications == nil && store.shield.applicationCategories == nil && store.shield.webDomains == nil
+    }
+
     // MARK: 再制限
 
     /// 現在有効な一時解除に対応するイベントか。古い・重複したイベントは無視するために使う。
@@ -136,12 +180,12 @@ enum SharedState {
     @discardableResult
     static func relock(reason: String) -> Bool {
         guard intendsRestriction,
-              let selection = loadSelection(), !selection.applicationTokens.isEmpty else {
+              let selection = loadSelection(), !RestrictedItems(selection: selection).isEmpty else {
             clearUnlock()
             log("再制限できませんでした（対象または意図がありません）: \(reason)")
             return false
         }
-        ManagedSettingsStore(named: storeName).shield.applications = selection.applicationTokens
+        applyShield(items: RestrictedItems(selection: selection))
         clearUnlock()
         log("再制限しました: \(reason)")
         return true

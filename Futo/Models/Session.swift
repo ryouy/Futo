@@ -48,7 +48,7 @@ enum SessionOutcome: String, Codable {
 
     var label: String {
         switch self {
-        case .deferred: return "今はやめる"
+        case .deferred: return "やめておく"
         case .wantsToUse: return "使いたい"
         case .interrupted: return "中断"
         }
