@@ -11,7 +11,7 @@ struct HomeView: View {
     @State private var pendingRemoval: Removal?
 
     private enum HomeSheet: Identifiable {
-        case history, settings, picker, todayDeferred, todayWants
+        case history, settings, picker
         var id: Self { self }
     }
 
@@ -29,9 +29,12 @@ struct HomeView: View {
     /// ホームは1画面に収める。通常は上下にスクロールしない。
     /// 朝夜のカードなどが加わって、どうしても収まらないときだけ、全体をスクロールできるようにする。
     var body: some View {
-        ViewThatFits(in: .vertical) {
-            mainContent
-            ScrollView { mainContent }
+        GeometryReader { geo in
+            let rows = visibleRows(forHeight: geo.size.height)
+            ViewThatFits(in: .vertical) {
+                mainContent(rows: rows)
+                ScrollView { mainContent(rows: rows) }
+            }
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
@@ -75,7 +78,17 @@ struct HomeView: View {
         }
     }
 
-    private var mainContent: some View {
+    /// 余裕があるときは、制限するものを多めに（最大6件）見せる。足りなければ3件まで減らす。
+    private func visibleRows(forHeight height: CGFloat) -> Int {
+        var reserved: CGFloat = 270
+        #if DEBUG
+        reserved += 80
+        #endif
+        if !model.visibleCards.isEmpty || model.suggestion != nil || pendingReflection != nil { return 3 }
+        return max(3, min(6, Int((height - reserved) / 48)))
+    }
+
+    private func mainContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
                 LeafMark(size: 24)
@@ -94,10 +107,9 @@ struct HomeView: View {
                 reflectionCard(session)
                     .transition(.opacity)
             }
-            statusCard
+            statusCard(rows: rows)
             Spacer(minLength: 0)
             actions
-            countsRow
             #if DEBUG
             debugSection
             #endif
@@ -159,7 +171,7 @@ struct HomeView: View {
     }
 
     /// 状態（小さな錠と一言）・制限しているもの・お知らせを1枚にまとめる。
-    private var statusCard: some View {
+    private func statusCard(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 ZStack {
@@ -179,7 +191,7 @@ struct HomeView: View {
 
             if model.targetCount > 0 {
                 Divider()
-                appsSection
+                appsSection(rows: rows)
             }
             if let error = model.permissionError { Text(error).font(.footnote) }
             if let notice = model.notice {
@@ -196,7 +208,7 @@ struct HomeView: View {
     // MARK: 制限するアプリ（右上の＋で追加、各行の－で外す）
 
     /// 変更できる間（制限オフ・一時解除中）だけ「＋」と「－」を出す。多いときは、この欄の中でスクロールする。
-    private var appsSection: some View {
+    private func appsSection(rows maxRows: Int) -> some View {
         let editable = !model.isTargetEditLocked
         let rows = appRows(editable: editable)
         return VStack(alignment: .leading, spacing: 0) {
@@ -214,9 +226,9 @@ struct HomeView: View {
             }
             .frame(minHeight: 32)
 
-            if model.targetCount > 3 {
-                // 4行目を半分だけ見せ、下端をぼかして、下にまだあることを伝える。
-                ScrollHintList(height: 3.5 * 48) { rows }
+            if model.targetCount > maxRows {
+                // 最後の行を半分だけ見せ、下端をぼかして、下にまだあることを伝える。
+                ScrollHintList(height: (CGFloat(maxRows) - 0.5) * 48) { rows }
             } else {
                 rows
             }
@@ -316,12 +328,6 @@ struct HomeView: View {
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
             }
             .demoBanner(model.mode)
-        case .todayDeferred, .todayWants:
-            NavigationStack {
-                TodayDetailView(mode: model.mode, kind: item == .todayDeferred ? .deferred : .wantsToUse)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
-            }
-            .demoBanner(model.mode)
         }
     }
 
@@ -349,35 +355,6 @@ struct HomeView: View {
                 .buttonStyle(FutoTextButtonStyle())
         }
         .card(tint: Theme.softBlue)
-    }
-
-    // MARK: やめた／使いたかった（小さなボタン。押すと今日の中身）
-
-    private var countsRow: some View {
-        let counts = DailyCounts.today(sessions: sessions, mode: model.mode)
-        return HStack(spacing: 8) {
-            countChip("やめた", counts.deferred, .todayDeferred)
-            countChip("使いたかった", counts.wantsToUse, .todayWants)
-            Spacer()
-        }
-    }
-
-    private func countChip(_ title: String, _ value: Int, _ target: HomeSheet) -> some View {
-        Button { sheet = target } label: {
-            HStack(spacing: 6) {
-                Text(title)
-                Text("\(value)").monospacedDigit().foregroundStyle(.primary)
-                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
-            }
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-            .background(Capsule().fill(Theme.accent.opacity(0.08)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("今日の記録を開きます")
     }
 
     #if DEBUG

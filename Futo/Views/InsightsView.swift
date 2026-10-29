@@ -23,6 +23,14 @@ struct RecordsView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
 
+            let today = DailyCounts.today(sessions: sessions, mode: mode)
+            Text("今日　やめた \(today.deferred)　使いたかった \(today.wantsToUse)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
+
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
                     if insights.total == 0 {

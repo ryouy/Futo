@@ -3,6 +3,8 @@ import SwiftUI
 struct RootView: View {
     @Bindable var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
+    /// 起動時に約1秒、スプラッシュを見せる。
+    @State private var showSplash = true
 
     var body: some View {
         Group {
@@ -25,6 +27,15 @@ struct RootView: View {
             } else {
                 OnboardingView(model: model)
             }
+        }
+        .overlay {
+            if showSplash {
+                SplashView().transition(.opacity)
+            }
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(1000))
+            withAnimation(.easeInOut(duration: 0.4)) { showSplash = false }
         }
         .tint(Theme.accent)
         .animation(.easeInOut(duration: 0.3), value: ThemeStore.shared.color)
