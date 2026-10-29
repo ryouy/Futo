@@ -1,4 +1,6 @@
+import FamilyControls
 import Foundation
+import ManagedSettings
 import Observation
 import SwiftData
 
@@ -22,6 +24,9 @@ final class AppModel {
     private(set) var lastResult: SessionOutcome?
     /// 最終選択で「使いたい」を選んだ直後の、一時解除の結果
     private(set) var unlockResult: UnlockStartResult?
+    /// 「使いたい」の後、解除するアプリを選んでもらっている間だけ true
+    private(set) var awaitingUnlockSelection = false
+    @ObservationIgnored private var finishedSession: Session?
     var showFlow = false
     var permissionError: String?
     var notice: String?
@@ -176,10 +181,28 @@ final class AppModel {
         activeSession = nil
         unlockResult = nil
         guard outcome == .wantsToUse, mode == .device else { return }
-        let result = service.temporaryUnlock()
+        if canTemporarilyUnlock {
+            finishedSession = session
+            awaitingUnlockSelection = true
+        } else {
+            unlockResult = .unsupported
+        }
+    }
+
+    /// 選んだアプリだけを一時解除する。
+    func unlockApps(_ apps: Set<ApplicationToken>) {
+        awaitingUnlockSelection = false
+        let result = device.temporaryUnlock(apps: apps)
         unlockResult = result
-        if case .started = result { sessions.recordTemporaryUnlock(session) }
+        if case .started = result, let session = finishedSession { sessions.recordTemporaryUnlock(session) }
+        finishedSession = nil
         refresh()
+    }
+
+    /// 解除せずに閉じる。制限は続く。
+    func declineUnlock() {
+        awaitingUnlockSelection = false
+        finishedSession = nil
     }
 
     var canTemporarilyUnlock: Bool { mode == .device && service.supportsTemporaryUnlock }
@@ -200,6 +223,8 @@ final class AppModel {
     func closeFlow() {
         lastResult = nil
         unlockResult = nil
+        awaitingUnlockSelection = false
+        finishedSession = nil
         showFlow = false
     }
 

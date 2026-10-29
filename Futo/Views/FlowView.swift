@@ -162,7 +162,7 @@ struct FinalChoiceView: View {
 
     private var footnote: String {
         if model.canTemporarilyUnlock {
-            return "「使いたい」を選ぶと、選んだアプリを一時的に使えるようにします（試験機能）。「今はやめる」では制限は続きます。"
+            return "「使いたい」を選ぶと、使うアプリを選んで、一時的に使えるようにします（試験機能）。「今はやめる」では制限は続きます。"
         }
         if model.mode == .demo {
             return "デモでは、どちらを選んでも実際のアプリの制限は変わりません。"
@@ -195,17 +195,27 @@ struct ResultView: View {
     private var wantsToUseMessage: String {
         switch model.unlockResult {
         case .started(let until):
-            return "対象のアプリを一時的に使えるようにしました。利用が約\(SharedState.unlockUsageMinutes)分に達するか、遅くとも\(until.formatted(date: .omitted, time: .shortened))までに、自動で制限に戻ります。ホームの「制限に戻す」でいつでも戻せます。"
+            return "選んだアプリを一時的に使えるようにしました。選んだアプリの利用が約\(SharedState.unlockUsageMinutes)分に達するか、遅くとも\(until.formatted(date: .omitted, time: .shortened))までに、自動で制限に戻ります。ホームの「制限に戻す」でいつでも戻せます。"
         case .failed:
             return "利用したい気持ちを記録しました。一時解除を始められなかったため、制限は続いています。使う場合は、ホームの「制限を終了」から終了できます。"
         case .unsupported:
             return "利用したい気持ちを記録しました。この設定では一時解除は使えません。使う場合は、ホームの「制限を終了」から終了できます。"
         case nil:
-            return "利用したい気持ちを記録しました。デモでは、実際のアプリの制限は変わりません。"
+            return model.mode == .demo
+                ? "利用したい気持ちを記録しました。デモでは、実際のアプリの制限は変わりません。"
+                : "利用したい気持ちを記録しました。制限は続いています。"
         }
     }
 
     var body: some View {
+        if model.awaitingUnlockSelection {
+            UnlockChooserView(model: model)
+        } else {
+            resultBody
+        }
+    }
+
+    private var resultBody: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("記録しました。").font(.title2.weight(.medium))

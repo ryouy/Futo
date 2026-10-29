@@ -84,9 +84,12 @@ final class DeviceRestrictionService: RestrictionService {
 
     var supportsTemporaryUnlock: Bool { SharedState.isAvailable }
 
-    func temporaryUnlock() -> UnlockStartResult {
+    /// 選んだアプリだけを一時的に使えるようにする。監視を登録できた場合だけ解除し、失敗時は制限を維持する。
+    /// 選ばれなかったアプリは制限されたまま。
+    func temporaryUnlock(apps: Set<ApplicationToken>) -> UnlockStartResult {
         guard SharedState.isAvailable else { return .unsupported }
-        guard permission == .approved, intendsRestriction, !selection.applicationTokens.isEmpty else {
+        guard permission == .approved, intendsRestriction,
+              !apps.isEmpty, apps.isSubset(of: selection.applicationTokens) else {
             return .failed
         }
         stopUnlockMonitoring()
@@ -102,7 +105,7 @@ final class DeviceRestrictionService: RestrictionService {
         )
         let name = DeviceActivityName(SharedState.unlockActivityPrefix + UUID().uuidString)
         let usageEvent = DeviceActivityEvent(
-            applications: selection.applicationTokens,
+            applications: apps,
             threshold: DateComponents(minute: SharedState.unlockUsageMinutes)
         )
 
@@ -116,8 +119,9 @@ final class DeviceRestrictionService: RestrictionService {
             SharedState.log("監視を登録できませんでした: \(error.localizedDescription)")
             return .failed
         }
-        managedStore.shield.applications = nil
-        SharedState.log("一時解除を開始しました")
+        let remaining = selection.applicationTokens.subtracting(apps)
+        managedStore.shield.applications = remaining.isEmpty ? nil : remaining
+        SharedState.log("一時解除を開始しました（\(apps.count)件）")
         return .started(until: end)
     }
 

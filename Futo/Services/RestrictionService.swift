@@ -42,8 +42,6 @@ protocol RestrictionService: AnyObject {
     func verify() -> RestrictionState
 
     var supportsTemporaryUnlock: Bool { get }
-    /// 監視の登録に成功した場合だけ解除する。失敗時は制限を維持する。
-    func temporaryUnlock() -> UnlockStartResult
     /// 一時解除を取り消し、対象を再び制限する。
     func relock()
 }

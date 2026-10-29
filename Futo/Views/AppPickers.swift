@@ -1,4 +1,5 @@
 import FamilyControls
+import ManagedSettings
 import SwiftUI
 
 /// 実機で選んだ対象のラベル表示。名前やbundle IDは取得せず、OS提供のラベルだけを使う。
@@ -94,5 +95,69 @@ struct DemoAppPickerView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() } }
             }
         }
+    }
+}
+
+/// 「使いたい」の後、制限中のアプリのうち、一時的に使えるようにするものを1つ以上選ぶ。
+@MainActor
+struct UnlockChooserView: View {
+    let model: AppModel
+    @State private var chosen: Set<ApplicationToken>
+
+    init(model: AppModel) {
+        self.model = model
+        let all = model.device.selection.applicationTokens
+        _chosen = State(initialValue: all.count == 1 ? all : [])
+    }
+
+    private var all: [ApplicationToken] { Array(model.device.selection.applicationTokens) }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("どのアプリを使いますか？").font(.title2.weight(.medium))
+                Text("選んだアプリだけを、一時的に使えるようにします。選ばなかったアプリは制限されたままです。")
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(4)
+
+                ForEach(all, id: \.self) { token in
+                    let isOn = chosen.contains(token)
+                    Button {
+                        if isOn { chosen.remove(token) } else { chosen.insert(token) }
+                    } label: {
+                        HStack {
+                            Label(token).foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(Theme.accent)
+                        }
+                        .frame(minHeight: 58)
+                        .padding(.horizontal, 20)
+                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .stroke(isOn ? Theme.accent : Theme.accent.opacity(0.10), lineWidth: isOn ? 2 : 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(isOn ? .isSelected : [])
+                }
+
+                if all.count > 1 {
+                    Button(chosen.count == all.count ? "すべての選択を外す" : "すべて選ぶ") {
+                        chosen = chosen.count == all.count ? [] : Set(all)
+                    }
+                    .buttonStyle(FutoButtonStyle(prominent: false))
+                }
+
+                Button("選んだアプリを一時的に使う") { model.unlockApps(chosen) }
+                    .buttonStyle(FutoButtonStyle())
+                    .disabled(chosen.isEmpty)
+                Button("使わない") { model.declineUnlock() }
+                    .buttonStyle(FutoButtonStyle(prominent: false))
+            }
+            .padding(20)
+        }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
