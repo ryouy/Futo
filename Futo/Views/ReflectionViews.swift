@@ -1,5 +1,17 @@
 import SwiftUI
 
+/// 画面全体をやわらかく覆う地。後ろの画面は、うっすら透ける。
+private struct SoftBackdrop: View {
+    var body: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .overlay(Theme.background.opacity(0.88))
+            .ignoresSafeArea()
+            .contentShape(Rectangle())
+            .onTapGesture {}
+    }
+}
+
 /// 朝・夜の振り返り。アプリを開いたとき、画面全体をやわらかく覆うカードで出し、「わかった」で閉じる。
 struct ReflectionOverlay: View {
     let card: ReflectionCard
@@ -7,14 +19,7 @@ struct ReflectionOverlay: View {
 
     var body: some View {
         ZStack {
-            // 全体をやわらかく覆う。後ろの画面は、うっすら透ける。
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .overlay(Theme.background.opacity(0.88))
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture {}
-
+            SoftBackdrop()
             VStack(spacing: 20) {
                 Image(systemName: card.kind == .morning ? "sunrise" : "moon.stars")
                     .font(.system(size: 34, weight: .light))
@@ -30,6 +35,37 @@ struct ReflectionOverlay: View {
                 Button("わかった", action: onClose)
                     .buttonStyle(FutoButtonStyle())
                     .padding(.top, 8)
+            }
+            .padding(28)
+            .frame(maxWidth: .infinity)
+            .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
+            .padding(.horizontal, 24)
+        }
+    }
+}
+
+/// 「さっきの時間は、どうでしたか？」。一時解除のあと、戻ってきたときに、画面全体を覆うカードで尋ねる。
+struct ReflectionQuestionOverlay: View {
+    let onAnswer: (Reflection) -> Void
+
+    var body: some View {
+        ZStack {
+            SoftBackdrop()
+            VStack(spacing: 14) {
+                Image(systemName: "leaf")
+                    .font(.system(size: 30, weight: .light))
+                    .foregroundStyle(Theme.accent)
+                    .accessibilityHidden(true)
+                Text("さっきの時間は、どうでしたか？")
+                    .font(.title3.weight(.medium))
+                    .oneLine(0.8)
+                    .padding(.bottom, 6)
+                ForEach([Reflection.satisfied, .neutral, .wishedLess], id: \.self) { reflection in
+                    Button(reflection.label) { onAnswer(reflection) }
+                        .buttonStyle(FutoButtonStyle(prominent: false))
+                }
+                Button("答えない") { onAnswer(.skipped) }
+                    .buttonStyle(FutoTextButtonStyle())
             }
             .padding(28)
             .frame(maxWidth: .infinity)

@@ -6,24 +6,11 @@ import SwiftUI
 @MainActor
 struct HomeView: View {
     @Bindable var model: AppModel
-    @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
     @State private var sheet: HomeSheet?
-    @State private var pendingRemoval: Removal?
 
     private enum HomeSheet: Identifiable {
         case history, settings, picker
         var id: Self { self }
-    }
-
-    private enum Removal: Identifiable {
-        case demo
-        case device(RestrictedItem)
-        var id: String {
-            switch self {
-            case .demo: return "demo"
-            case .device(let item): return "device-\(item.id)"
-            }
-        }
     }
 
     /// ホームは1画面に収める。通常は上下にスクロールしない。
@@ -55,20 +42,6 @@ struct HomeView: View {
                 .presentationBackground(Theme.background)
                 .presentationDragIndicator(.visible)
         }
-        .confirmationDialog(
-            "制限から外しますか？",
-            isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),
-            titleVisibility: .visible,
-            presenting: pendingRemoval
-        ) { removal in
-            Button("制限から外す", role: .destructive) {
-                switch removal {
-                case .demo: model.removeDemoTarget()
-                case .device(let item): model.removeItem(item)
-                }
-            }
-            Button("キャンセル", role: .cancel) {}
-        }
     }
 
     /// 余裕があるときは、制限するものを多めに（最大8件）見せる。足りなければ3件まで減らす。
@@ -77,7 +50,7 @@ struct HomeView: View {
         #if DEBUG
         reserved += 80
         #endif
-        if model.suggestion != nil || pendingReflection != nil { return 3 }
+        if model.suggestion != nil { return 3 }
         return max(3, min(8, Int((height - reserved) / 48)))
     }
 
@@ -104,10 +77,6 @@ struct HomeView: View {
                 SuggestionCardView(model: model, suggestion: suggestion)
                     .transition(.opacity)
             }
-            if let session = pendingReflection {
-                reflectionCard(session)
-                    .transition(.opacity)
-            }
             statusCard(rows: rows)
             actions
             Spacer(minLength: 0)
@@ -117,7 +86,6 @@ struct HomeView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .animation(.easeInOut(duration: 0.3), value: pendingReflection != nil)
         .animation(.easeInOut(duration: 0.3), value: model.suggestion)
     }
 
@@ -238,12 +206,12 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             if model.mode == .demo {
                 if let name = model.demo.targetName {
-                    appRow(unlocked: false, editable: editable, onRemove: { pendingRemoval = .demo }) { Text(name) }
+                    appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget() }) { Text(name) }
                 }
             } else {
                 ForEach(model.device.items.sortedItems) { item in
                     appRow(unlocked: model.unlockedItems.contains(item), editable: editable,
-                           onRemove: { pendingRemoval = .device(item) }) { ItemLabel(item: item) }
+                           onRemove: { model.removeItem(item) }) { ItemLabel(item: item) }
                 }
             }
         }
@@ -338,32 +306,6 @@ struct HomeView: View {
             }
             .demoBanner(model.mode)
         }
-    }
-
-    // MARK: 一時解除のあとの感想
-
-    /// 一時解除が終わり（再制限され）、まだ感想を尋ねていない直近のSession。
-    private var pendingReflection: Session? {
-        guard !isUnlocked else { return nil }
-        return sessions.first {
-            $0.mode == model.mode && $0.phase == .completed
-                && $0.temporaryUnlockStartedAt != nil && $0.reflection == nil
-        }
-    }
-
-    private func reflectionCard(_ session: Session) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("さっきの時間は、どうでしたか？").font(.headline.weight(.medium))
-            Text("答えなくても大丈夫です。")
-                .font(.footnote).foregroundStyle(.secondary)
-            ForEach([Reflection.satisfied, .neutral, .wishedLess], id: \.self) { reflection in
-                Button(reflection.label) { model.answerReflection(session, reflection) }
-                    .buttonStyle(FutoButtonStyle(prominent: false))
-            }
-            Button("答えない") { model.answerReflection(session, .skipped) }
-                .buttonStyle(FutoTextButtonStyle())
-        }
-        .card(tint: Theme.softBlue)
     }
 
     #if DEBUG

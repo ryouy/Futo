@@ -134,11 +134,12 @@ struct UnlockChooserView: View {
             }
 
             VStack(spacing: 4) {
+                // 使う側は薄く、やめる側は濃く。
                 Button("選んだものを使う") { model.unlockItems(RestrictedItems(items: Array(chosen))) }
-                    .buttonStyle(FutoButtonStyle())
+                    .buttonStyle(FutoButtonStyle(prominent: false))
                     .disabled(chosen.isEmpty)
                 Button("やめておく") { model.declineUnlock() }
-                    .buttonStyle(FutoTextButtonStyle())
+                    .buttonStyle(FutoButtonStyle())
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 12)

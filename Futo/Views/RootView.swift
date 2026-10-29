@@ -9,11 +9,18 @@ struct RootView: View {
     /// スプラッシュ・初回説明と同じ緑。
     private let introGreen = Color(red: 25 / 255, green: 100 / 255, blue: 89 / 255)
 
+    private var canShowOverlays: Bool {
+        model.onboardingDone && model.tutorialCompleted && model.tutorialStep == nil && !showSplash && !model.showFlow
+    }
+
     /// 開いたときに出す振り返り。スプラッシュ・説明・チュートリアル・ひと呼吸の最中は出さない。
     private var reflectionToShow: ReflectionCard? {
-        guard model.onboardingDone, model.tutorialCompleted, model.tutorialStep == nil,
-              !showSplash, !model.showFlow else { return nil }
-        return model.visibleCards.first
+        canShowOverlays ? model.visibleCards.first : nil
+    }
+
+    /// 一時解除のあとの感想。朝夜の振り返りが出ていないときに出す。
+    private var questionToShow: Session? {
+        canShowOverlays && reflectionToShow == nil ? model.pendingReflection : nil
     }
 
     var body: some View {
@@ -58,6 +65,13 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.5), value: reflectionToShow?.key)
+        .overlay {
+            if let session = questionToShow {
+                ReflectionQuestionOverlay { model.answerReflection(session, $0) }
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.5), value: questionToShow?.id)
         .task(id: model.onboardingDone) {
             // ホームが現れてから、初回（または説明の見直しのあと）だけチュートリアルを始める。
             guard model.onboardingDone, !model.tutorialCompleted else { return }

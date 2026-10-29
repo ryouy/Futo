@@ -29,6 +29,8 @@ final class AppModel {
     /// 一時解除中のもの（実機のみ）。ホームで解除中と分かるように表示する
     private(set) var unlockedItems = RestrictedItems()
 
+    /// 一時解除のあとの感想を、まだ尋ねていない直近のひと呼吸（解除が終わったあとだけ）。
+    var pendingReflection: Session?
     /// 設定値（待機時間・朝夜・通知）。変更は `updatePreferences` を通す
     var prefs: Preferences
     /// ホームに出す、今日の未クローズの朝夜カード
@@ -101,6 +103,13 @@ final class AppModel {
         }
         activeSession = sessions.openSession(mode: mode)
         applyUnlockEnds()
+        if case .temporarilyUnlocked = restriction {
+            pendingReflection = nil
+        } else {
+            pendingReflection = sessions.all().first {
+                $0.mode == mode && $0.phase == .completed && $0.temporaryUnlockStartedAt != nil && $0.reflection == nil
+            }
+        }
         updateCards()
         updateSuggestion()
 
@@ -299,6 +308,7 @@ final class AppModel {
     func answerReflection(_ session: Session, _ reflection: Reflection) {
         sessions.recordReflection(session, reflection)
         removePostUseCheck(session: session)
+        refresh()
     }
 
     /// 解除せずに閉じる。制限は続く。

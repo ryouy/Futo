@@ -207,11 +207,11 @@ struct FinalChoiceView: View {
             VStack(spacing: 16) {
                 FlowTitle(text: "今も使いたいですか？")
                     .padding(.bottom, 12)
-                // 色で区別する。どちらも同じ大きさで、押しやすさは変えない。
+                // 色で区別する。使う側は薄く、やめる側は濃く。どちらも同じ大きさで、押しやすさは変えない。
                 Button("使いたい") { model.finish(.wantsToUse) }
-                    .buttonStyle(FutoButtonStyle())
-                Button("やめておく") { model.finish(.deferred) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
+                Button("やめておく") { model.finish(.deferred) }
+                    .buttonStyle(FutoButtonStyle())
             }
         }
         .navigationBarTitleDisplayMode(.inline)
