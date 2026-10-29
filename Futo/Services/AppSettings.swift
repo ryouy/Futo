@@ -5,14 +5,10 @@ final class AppSettings {
     private enum Key {
         static let onboardingDone = "settings.onboardingDone"
         static let mode = "settings.mode"
+        static let preferences = "settings.preferences"
+        static let suggestion = "settings.suggestion"
+        static let postUse = "notif.postUse"
     }
-
-    /// 待機時間。Debugビルドは開発用に10秒、Releaseは180秒。切り替え用のUIや設定はない。
-    #if DEBUG
-    static let waitSeconds: Double = 10
-    #else
-    static let waitSeconds: Double = 180
-    #endif
 
     private let defaults: UserDefaults
 
@@ -29,4 +25,36 @@ final class AppSettings {
         get { AppMode(rawValue: defaults.string(forKey: Key.mode) ?? "") ?? .demo }
         set { defaults.set(newValue.rawValue, forKey: Key.mode) }
     }
+
+    // MARK: 設定値（JSON）
+
+    var preferences: Preferences {
+        get { load(Preferences.self, Key.preferences) ?? Preferences() }
+        set { save(newValue, Key.preferences) }
+    }
+
+    var suggestionState: SuggestionState {
+        get { load(SuggestionState.self, Key.suggestion) ?? SuggestionState() }
+        set { save(newValue, Key.suggestion) }
+    }
+
+    /// 利用後の確認通知の予定（セッションごと）。回答したり時刻を過ぎたら取り除く。
+    var postUseEntries: [PostUseEntry] {
+        get { load([PostUseEntry].self, Key.postUse) ?? [] }
+        set { save(newValue, Key.postUse) }
+    }
+
+    private func load<T: Decodable>(_ type: T.Type, _ key: String) -> T? {
+        guard let data = defaults.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
+    }
+
+    private func save<T: Encodable>(_ value: T, _ key: String) {
+        if let data = try? JSONEncoder().encode(value) { defaults.set(data, forKey: key) }
+    }
+}
+
+struct PostUseEntry: Codable, Equatable {
+    var sessionID: UUID
+    var fireDate: Date
 }

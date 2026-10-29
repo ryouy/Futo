@@ -46,6 +46,51 @@ struct SettingsView: View {
                 }
             }
 
+            Section {
+                Picker("待機時間", selection: Binding(
+                    get: { model.prefs.effectiveWaitSeconds },
+                    set: { value in model.updatePreferences { $0.waitSeconds = value } }
+                )) {
+                    ForEach(Preferences.waitOptions, id: \.self) { Text(durationText(seconds: $0)).tag($0) }
+                }
+                .frame(minHeight: 44)
+            } header: {
+                Text("ひと呼吸")
+            } footer: {
+                Text("使いたい気持ちを確かめるまでの待ち時間です。次のひと呼吸から変わります。")
+            }
+
+            Section {
+                Toggle("朝の振り返り", isOn: Binding(
+                    get: { model.prefs.morningEnabled },
+                    set: { on in model.updatePreferences { $0.morningEnabled = on } }))
+                    .frame(minHeight: 44)
+                if model.prefs.morningEnabled {
+                    DatePicker("時刻", selection: minuteBinding(
+                        get: { model.prefs.morningMinute },
+                        set: { value in model.updatePreferences { $0.morningMinute = value } }),
+                        displayedComponents: .hourAndMinute)
+                        .frame(minHeight: 44)
+                }
+                Toggle("夜の振り返り", isOn: Binding(
+                    get: { model.prefs.nightEnabled },
+                    set: { on in model.updatePreferences { $0.nightEnabled = on } }))
+                    .frame(minHeight: 44)
+                if model.prefs.nightEnabled {
+                    DatePicker("時刻", selection: minuteBinding(
+                        get: { model.prefs.nightMinute },
+                        set: { value in model.updatePreferences { $0.nightMinute = value } }),
+                        displayedComponents: .hourAndMinute)
+                        .frame(minHeight: 44)
+                }
+                NavigationLink("通知") { NotificationSettingsView(model: model) }
+                    .frame(minHeight: 44)
+            } header: {
+                Text("朝・夜の振り返り")
+            } footer: {
+                Text("設定した時刻から約6時間、ホームにカードを出します。日の区切りは午前4時で、深夜の記録は前日として数えます。カードは閉じられ、答えを求めることはありません。")
+            }
+
             Section("テーマカラー") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 14) {
                     ForEach(ThemeColor.allCases) { option in
@@ -84,7 +129,7 @@ struct SettingsView: View {
                 } header: {
                     Text("検証用：拡張の最後の動作")
                 } footer: {
-                    Text("Debugビルドのみ表示。待機は10秒、一時解除の利用しきい値は\(SharedState.unlockUsageMinutes)分です。")
+                    Text("Debugビルドのみ表示。待機の既定は10秒、一時解除の利用しきい値は\(SharedState.unlockUsageMinutes)分です。")
                 }
             }
             #endif

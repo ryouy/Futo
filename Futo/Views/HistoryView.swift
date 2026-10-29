@@ -36,9 +36,6 @@ struct HistoryView: View {
                 .scrollContentBackground(.hidden)
             }
         }
-        .background(Theme.background.ignoresSafeArea())
-        .navigationTitle("履歴")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// 一時解除したアプリ（実機のみ）と、答えた感想。

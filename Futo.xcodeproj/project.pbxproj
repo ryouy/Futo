@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00A16F2360807B5B316B5609 /* NotificationPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */; };
+		04F06092D2BCFACB08B35A97 /* LogicalCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4042D91A1DA44E257692BC28 /* LogicalCalendar.swift */; };
 		074DB794CB80AB347EC6C144 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE5A750D94E24C9C5B9CB7C3 /* OnboardingView.swift */; };
 		07C27F3A6EFFB00AF62F8527 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F628C366DFB1684C45D06A /* HomeView.swift */; };
 		0AD4B04D8720107077F2D34A /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3ABA836A347ACB128D09C74 /* AppModel.swift */; };
@@ -17,21 +19,32 @@
 		1FEE66558600DAA92886798D /* AppPickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96FD2843A43E4EF9A3C159E /* AppPickers.swift */; };
 		20EA90C7CC747D4D21C26A0B /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF093F77E0ECBB37A7693291 /* SessionStore.swift */; };
 		2AF650B58BEFB4B318603675 /* FutoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55D3E8121D07DD1E3765C988 /* FutoApp.swift */; };
+		304D45FE9E60762F7F4CBCBB /* ReflectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */; };
 		3644D4A15AC907CB6CDA284D /* RestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */; };
 		378B679AC14F0CC336D756AA /* WaitCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4267030096FD083643FBA49A /* WaitCountdown.swift */; };
+		3A707A65C8E6A1315AB5B690 /* WeeklyInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */; };
 		4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */; };
+		4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */; };
+		4DA8EE1818439D1E2FF3F6AF /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */; };
+		5070FBDEC949AEF0E9A02901 /* ReflectionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC033647C6060CD293D5535 /* ReflectionViews.swift */; };
 		50E53F79005F1DBD1B3DB8C6 /* SessionFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B768EB594A2A04EC20521A /* SessionFlowTests.swift */; };
 		56269CD9A8AA67F43BD50711 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */; };
+		5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D183B067D9C20E8E848405 /* InsightsView.swift */; };
 		5C0345F5EA81CAE5EC7D4015 /* DemoRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */; };
 		6004556B9472BDBA86337E6D /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		6701903BE9BD43EF8CDD200A /* WaitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95DEA83570D048231C077F6 /* WaitController.swift */; };
 		74AC9BDCB27B299B0F39EF34 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03CFFD65F9C0DFA650DD6BB2 /* HistoryView.swift */; };
+		750995CC03D0153E0D2AEE8B /* ReflectionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */; };
 		7559CC8D141A93DBF5685EEB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
 		77153F8420388F83F5070A45 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF139CD24EA57AEEABC31B77 /* SettingsView.swift */; };
+		8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57186D513F893809C415EC62 /* AppModel+Phase3.swift */; };
+		89A4BD8B8EBBA8935A01C635 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD20AE72812E367E3277411 /* Preferences.swift */; };
 		8A92752BBED311CF09D4AECA /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		8C03781D30A6220B1604A7DE /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE4BA309E788D84B95854AD /* AppSettings.swift */; };
+		D677E926B9023393C7A6EE2F /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26B0FC1E1229764718CF683 /* NotificationService.swift */; };
 		D9DCD71B7EBE925EB79D8A86 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6C85F6C90FCE546C929F5F /* Session.swift */; };
 		EA7E5B92B9D41E40AC4C8F54 /* FutoMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		EACD01277BEC46AE8EC9590B /* Phase3Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,12 +82,18 @@
 		03CFFD65F9C0DFA650DD6BB2 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		0B2DB6C1570F469DB3B9453F /* FutoMonitor.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = FutoMonitor.entitlements; sourceTree = "<group>"; };
 		0C9513AADAE02448E4B8ACAA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1DD20AE72812E367E3277411 /* Preferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
+		2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SuggestionEngine.swift; sourceTree = "<group>"; };
+		272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionBuilder.swift; sourceTree = "<group>"; };
 		2BE4BA309E788D84B95854AD /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		32BB636196F91ED59D7A4919 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		39B768EB594A2A04EC20521A /* SessionFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFlowTests.swift; sourceTree = "<group>"; };
+		4042D91A1DA44E257692BC28 /* LogicalCalendar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogicalCalendar.swift; sourceTree = "<group>"; };
 		4267030096FD083643FBA49A /* WaitCountdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitCountdown.swift; sourceTree = "<group>"; };
 		48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationPlanner.swift; sourceTree = "<group>"; };
 		55D3E8121D07DD1E3765C988 /* FutoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FutoApp.swift; sourceTree = "<group>"; };
+		57186D513F893809C415EC62 /* AppModel+Phase3.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AppModel+Phase3.swift"; sourceTree = "<group>"; };
 		5A6C85F6C90FCE546C929F5F /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		645EC79F22BEC5EFE970061D /* Futo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Futo.entitlements; sourceTree = "<group>"; };
 		7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -82,14 +101,21 @@
 		99B055470C5F5029EA491ECB /* FutoMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FutoMonitor.swift; sourceTree = "<group>"; };
 		9D7D8876509532823B515AC5 /* FutoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FutoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A95DEA83570D048231C077F6 /* WaitController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitController.swift; sourceTree = "<group>"; };
+		ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
 		AF093F77E0ECBB37A7693291 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRestrictionService.swift; sourceTree = "<group>"; };
+		C26B0FC1E1229764718CF683 /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceRestrictionService.swift; sourceTree = "<group>"; };
+		CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase3Tests.swift; sourceTree = "<group>"; };
+		CFC033647C6060CD293D5535 /* ReflectionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionViews.swift; sourceTree = "<group>"; };
+		D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionCard.swift; sourceTree = "<group>"; };
+		D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeeklyInsights.swift; sourceTree = "<group>"; };
 		D96FD2843A43E4EF9A3C159E /* AppPickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickers.swift; sourceTree = "<group>"; };
 		D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestrictionService.swift; sourceTree = "<group>"; };
 		E040EA0EF6230253E2A2146C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		E2FD0CD07E4D79EC27C92915 /* FlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowView.swift; sourceTree = "<group>"; };
 		F3ABA836A347ACB128D09C74 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		F7D183B067D9C20E8E848405 /* InsightsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		FDB1C846DC4122660C2FFF45 /* SharedState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedState.swift; sourceTree = "<group>"; };
 		FE5A750D94E24C9C5B9CB7C3 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FED8F394DA3FFC4EAC9D8A20 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -141,6 +167,7 @@
 			children = (
 				F3ABA836A347ACB128D09C74 /* AppModel.swift */,
 				55D3E8121D07DD1E3765C988 /* FutoApp.swift */,
+				57186D513F893809C415EC62 /* AppModel+Phase3.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -149,6 +176,7 @@
 			isa = PBXGroup;
 			children = (
 				39B768EB594A2A04EC20521A /* SessionFlowTests.swift */,
+				CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */,
 			);
 			path = FutoTests;
 			sourceTree = "<group>";
@@ -172,6 +200,9 @@
 				7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */,
 				FF139CD24EA57AEEABC31B77 /* SettingsView.swift */,
 				FED8F394DA3FFC4EAC9D8A20 /* Theme.swift */,
+				CFC033647C6060CD293D5535 /* ReflectionViews.swift */,
+				F7D183B067D9C20E8E848405 /* InsightsView.swift */,
+				ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -180,6 +211,8 @@
 			isa = PBXGroup;
 			children = (
 				5A6C85F6C90FCE546C929F5F /* Session.swift */,
+				1DD20AE72812E367E3277411 /* Preferences.swift */,
+				D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -234,6 +267,12 @@
 				AF093F77E0ECBB37A7693291 /* SessionStore.swift */,
 				A95DEA83570D048231C077F6 /* WaitController.swift */,
 				4267030096FD083643FBA49A /* WaitCountdown.swift */,
+				4042D91A1DA44E257692BC28 /* LogicalCalendar.swift */,
+				272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */,
+				D943536ADE05ED82A6CD9E57 /* WeeklyInsights.swift */,
+				2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */,
+				5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */,
+				C26B0FC1E1229764718CF683 /* NotificationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -411,6 +450,18 @@
 				77153F8420388F83F5070A45 /* SettingsView.swift in Sources */,
 				0E95F7E4CF3BD195ACC83FB2 /* Theme.swift in Sources */,
 				8A92752BBED311CF09D4AECA /* SharedState.swift in Sources */,
+				89A4BD8B8EBBA8935A01C635 /* Preferences.swift in Sources */,
+				304D45FE9E60762F7F4CBCBB /* ReflectionCard.swift in Sources */,
+				04F06092D2BCFACB08B35A97 /* LogicalCalendar.swift in Sources */,
+				750995CC03D0153E0D2AEE8B /* ReflectionBuilder.swift in Sources */,
+				3A707A65C8E6A1315AB5B690 /* WeeklyInsights.swift in Sources */,
+				4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */,
+				00A16F2360807B5B316B5609 /* NotificationPlanner.swift in Sources */,
+				D677E926B9023393C7A6EE2F /* NotificationService.swift in Sources */,
+				5070FBDEC949AEF0E9A02901 /* ReflectionViews.swift in Sources */,
+				5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */,
+				4DA8EE1818439D1E2FF3F6AF /* NotificationSettingsView.swift in Sources */,
+				8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,6 +470,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				50E53F79005F1DBD1B3DB8C6 /* SessionFlowTests.swift in Sources */,
+				EACD01277BEC46AE8EC9590B /* Phase3Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

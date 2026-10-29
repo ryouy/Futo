@@ -35,6 +35,14 @@ struct HomeView: View {
                     Text("ふと").font(.largeTitle.weight(.medium)).foregroundStyle(Theme.accent)
                 }
 
+                ForEach(model.visibleCards, id: \.key) { card in
+                    ReflectionCardView(card: card) { model.dismissCard(card) }
+                        .transition(.opacity)
+                }
+                if let suggestion = model.suggestion {
+                    SuggestionCardView(model: model, suggestion: suggestion)
+                        .transition(.opacity)
+                }
                 if let session = pendingReflection {
                     reflectionCard(session)
                         .transition(.opacity)
@@ -42,9 +50,14 @@ struct HomeView: View {
                 statusCard
                 actions
                 countsLine
+                #if DEBUG
+                debugSection
+                #endif
             }
             .padding(20)
             .animation(.easeInOut(duration: 0.3), value: pendingReflection != nil)
+            .animation(.easeInOut(duration: 0.3), value: model.visibleCards.map(\.key))
+            .animation(.easeInOut(duration: 0.3), value: model.suggestion)
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
@@ -288,7 +301,7 @@ struct HomeView: View {
             if model.mode == .demo { DemoAppPickerView(model: model) } else { DeviceAppPickerView(model: model) }
         case .history:
             NavigationStack {
-                HistoryView(mode: model.mode)
+                RecordsView(mode: model.mode)
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("閉じる") { sheet = nil } } }
             }
             .demoBanner(model.mode)
@@ -341,4 +354,20 @@ struct HomeView: View {
         .padding(.horizontal, 4)
         .accessibilityElement(children: .combine)
     }
+
+    #if DEBUG
+    /// 開発用：朝夜の振り返りと通知を、時間を待たずに確かめる（Debugビルドにだけ存在する）。
+    private var debugSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("開発用（Debugのみ）").font(.caption).foregroundStyle(.secondary)
+            Button("朝の振り返りをいま見る") { model.showReflectionNow(.morning) }
+                .buttonStyle(FutoButtonStyle(prominent: false))
+            Button("夜の振り返りをいま見る") { model.showReflectionNow(.night) }
+                .buttonStyle(FutoButtonStyle(prominent: false))
+            Button("お出かけ通知を3秒後に送る") { model.sendTestNotification(.outing) }
+                .buttonStyle(FutoButtonStyle(prominent: false))
+        }
+        .padding(.top, 12)
+    }
+    #endif
 }

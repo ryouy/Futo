@@ -28,7 +28,7 @@ struct RootView: View {
         .fontDesign(.rounded)
         .onChange(of: scenePhase) { _, phase in
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。
-            if phase == .active { model.refresh() }
+            if phase == .active { model.didBecomeActive() }
         }
         .alert("お知らせ", isPresented: Binding(
             get: { model.errorMessage != nil },

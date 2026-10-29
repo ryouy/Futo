@@ -12,6 +12,8 @@ final class AppModel {
     let sessions: SessionStore
     let demo: DemoRestrictionService
     let device: DeviceRestrictionService
+    let cards: ReflectionCardStore
+    let notifications = NotificationService.shared
 
     private(set) var mode: AppMode
     private(set) var onboardingDone: Bool
@@ -21,6 +23,17 @@ final class AppModel {
     private(set) var activeSession: Session?
     /// 一時解除中のアプリ（実機のみ）。ホームで解除中と分かるように表示する
     private(set) var unlockedApps: Set<ApplicationToken> = []
+
+    /// 設定値（待機時間・朝夜・通知）。変更は `updatePreferences` を通す
+    var prefs: Preferences
+    /// ホームに出す、今日の未クローズの朝夜カード
+    var visibleCards: [ReflectionCard] = []
+    /// 今表示する設定改善の提案（週1回まで）
+    var suggestion: Suggestion?
+    var notificationMessage: String?
+    /// 通知を有効にする前の説明を出している間だけ値が入る
+    var pendingNotificationEnable: NotificationKind?
+    @ObservationIgnored var scheduleTask: Task<Void, Never>?
 
     /// 最終選択の直後に表示する結果
     private(set) var lastResult: SessionOutcome?
@@ -38,6 +51,8 @@ final class AppModel {
         let settings = AppSettings(defaults: defaults)
         self.settings = settings
         self.sessions = SessionStore(context: context)
+        self.cards = ReflectionCardStore(context: context)
+        self.prefs = settings.preferences
         self.demo = DemoRestrictionService(defaults: defaults)
         self.device = DeviceRestrictionService()
         self.mode = settings.mode
@@ -72,6 +87,8 @@ final class AppModel {
             unlockedApps = []
         }
         activeSession = sessions.openSession(mode: mode)
+        updateCards()
+        updateSuggestion()
 
         // 権限を失った実機では、進行中の振り返りを中断して案内する。
         if mode == .device, permission != .approved, let session = activeSession {
@@ -173,7 +190,7 @@ final class AppModel {
     func beginBreath() {
         guard activeSession != nil || restriction == .configured else { return }
         lastResult = nil
-        activeSession = sessions.begin(mode: mode, requiredWaitSeconds: AppSettings.waitSeconds)
+        activeSession = sessions.begin(mode: mode, requiredWaitSeconds: prefs.effectiveWaitSeconds)
         showFlow = true
     }
 
@@ -216,8 +233,9 @@ final class AppModel {
         awaitingUnlockSelection = false
         let result = device.temporaryUnlock(apps: apps)
         unlockResult = result
-        if case .started = result, let session = finishedSession {
+        if case .started(let until) = result, let session = finishedSession {
             sessions.recordTemporaryUnlock(session, apps: try? JSONEncoder().encode(apps))
+            schedulePostUseCheck(session: session, at: until)
         }
         finishedSession = nil
         refresh()
@@ -225,6 +243,7 @@ final class AppModel {
 
     func answerReflection(_ session: Session, _ reflection: Reflection) {
         sessions.recordReflection(session, reflection)
+        removePostUseCheck(session: session)
     }
 
     /// 解除せずに閉じる。制限は続く。
@@ -235,10 +254,7 @@ final class AppModel {
 
     /// 「3分」「10秒」のような、待機時間の言い表し。
     var waitDurationText: String {
-        let total = Int((activeSession?.requiredWaitSeconds ?? AppSettings.waitSeconds).rounded())
-        let minutes = total / 60, seconds = total % 60
-        if minutes == 0 { return "\(seconds)秒" }
-        return seconds == 0 ? "\(minutes)分" : "\(minutes)分\(seconds)秒"
+        durationText(seconds: activeSession?.requiredWaitSeconds ?? prefs.effectiveWaitSeconds)
     }
 
     var canTemporarilyUnlock: Bool { mode == .device && service.supportsTemporaryUnlock }
@@ -266,6 +282,10 @@ final class AppModel {
 
     func deleteAllRecords() {
         sessions.deleteAll()
+        cards.deleteAll()
+        settings.postUseEntries = []
+        visibleCards = []
+        rescheduleNotifications()
         activeSession = nil
         showFlow = false
         lastResult = nil

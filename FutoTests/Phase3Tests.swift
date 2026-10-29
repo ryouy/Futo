@@ -1,0 +1,284 @@
+import SwiftData
+import XCTest
+@testable import Futo
+
+@MainActor
+final class Phase3Tests: XCTestCase {
+    private var container: ModelContainer!
+    private var context: ModelContext!
+    private var cal: LogicalCalendar!
+
+    override func setUp() async throws {
+        container = try ModelContainer(
+            for: Session.self, ReflectionCard.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        context = ModelContext(container)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Tokyo")!
+        calendar.firstWeekday = 2   // 月曜始まり
+        cal = LogicalCalendar(calendar: calendar)
+    }
+
+    private func jst(_ text: String) -> Date {
+        let f = DateFormatter()
+        f.calendar = cal.calendar
+        f.timeZone = cal.calendar.timeZone
+        f.dateFormat = "yyyy-MM-dd HH:mm"
+        return f.date(from: text)!
+    }
+
+    @discardableResult
+    private func record(_ at: String, mode: AppMode = .demo, purpose: Purpose? = nil,
+                        outcome: SessionOutcome? = .deferred, reflection: Reflection? = nil,
+                        unlocked: Bool = false) -> Session {
+        let s = Session(mode: mode, startedAt: jst(at), requiredWaitSeconds: 180)
+        s.purpose = purpose
+        s.outcome = outcome
+        s.phase = outcome == .interrupted ? .interrupted : .completed
+        s.reflection = reflection
+        if unlocked { s.temporaryUnlockStartedAt = jst(at) }
+        context.insert(s)
+        return s
+    }
+
+    private func sessions() -> [Session] { (try? context.fetch(FetchDescriptor<Session>())) ?? [] }
+
+    // MARK: 論理日（深夜の帰属）
+
+    func testMidnightBelongsToPreviousDay() {
+        XCTAssertEqual(cal.dayKey(for: jst("2027-01-14 01:30")), "2027-01-13")
+        XCTAssertEqual(cal.dayKey(for: jst("2027-01-14 03:59")), "2027-01-13")
+        XCTAssertEqual(cal.dayKey(for: jst("2027-01-14 04:00")), "2027-01-14")
+    }
+
+    func testWeekBoundaryUsesLogicalDay() {
+        let week = cal.weekInterval(containing: jst("2027-01-13 12:00"))
+        XCTAssertEqual(week.start, jst("2027-01-11 04:00"))
+        XCTAssertEqual(week.end, jst("2027-01-18 04:00"))
+        // 月曜の午前2時は、前の週（日曜の夜）に数える
+        XCTAssertEqual(cal.weekInterval(containing: jst("2027-01-11 02:00")).start, jst("2027-01-04 04:00"))
+    }
+
+    // MARK: 朝夜の振り返り
+
+    func testReflectionWindowAndMidnight() {
+        let night = 21 * 60
+        XCTAssertFalse(ReflectionSchedule.isAvailable(clockMinute: night, now: jst("2027-01-13 20:59"), calendar: cal))
+        XCTAssertTrue(ReflectionSchedule.isAvailable(clockMinute: night, now: jst("2027-01-13 21:00"), calendar: cal))
+        XCTAssertTrue(ReflectionSchedule.isAvailable(clockMinute: night, now: jst("2027-01-14 02:00"), calendar: cal))
+        XCTAssertFalse(ReflectionSchedule.isAvailable(clockMinute: night, now: jst("2027-01-14 03:30"), calendar: cal))
+        // 深夜0〜4時は前日の論理日なので、同じ夜のカードと同じキーになる
+        XCTAssertEqual(cal.dayKey(for: jst("2027-01-13 22:00")), cal.dayKey(for: jst("2027-01-14 02:00")))
+    }
+
+    func testBuilderNeutralWhenNoRecords() {
+        let range = ReflectionSchedule.contentRange(kind: .morning, now: jst("2027-01-13 08:00"),
+                                                    calendar: cal, useTodayForMorning: false)
+        let content = ReflectionBuilder.build(kind: .morning, sessions: [], mode: .demo,
+                                              interval: range.interval, dayWord: range.dayWord)
+        XCTAssertEqual(content.lines, ["昨日の記録はまだありません。"])
+    }
+
+    func testBuilderStatesOnlyRecordedFacts() {
+        record("2027-01-13 10:00", purpose: .contact, outcome: .deferred)
+        record("2027-01-13 15:00", purpose: .contact, outcome: .wantsToUse, reflection: .satisfied, unlocked: true)
+        record("2027-01-13 16:00", purpose: nil, outcome: .interrupted)
+        record("2027-01-13 17:00", mode: .device, purpose: .research, outcome: .deferred)   // 別モードは混ぜない
+        let range = ReflectionSchedule.contentRange(kind: .night, now: jst("2027-01-13 21:30"),
+                                                    calendar: cal, useTodayForMorning: false)
+        let text = ReflectionBuilder.build(kind: .night, sessions: sessions(), mode: .demo,
+                                           interval: range.interval, dayWord: range.dayWord).lines.joined(separator: "\n")
+        XCTAssertTrue(text.contains("ひと呼吸を3回"))
+        XCTAssertTrue(text.contains("「連絡」2回"))
+        XCTAssertFalse(text.contains("調べもの"))
+        XCTAssertTrue(text.contains("実際に使ったかどうかは記録していません"))
+    }
+
+    func testMorningUsesTodayOnlyWhenDevelopmentFlagIsOn() {
+        let now = jst("2027-01-13 08:00")
+        XCTAssertEqual(ReflectionSchedule.contentRange(kind: .morning, now: now, calendar: cal, useTodayForMorning: true).dayWord, "今日")
+        let normal = ReflectionSchedule.contentRange(kind: .morning, now: now, calendar: cal, useTodayForMorning: false)
+        XCTAssertEqual(normal.dayWord, "昨日")
+        XCTAssertEqual(normal.interval.start, jst("2027-01-12 04:00"))
+    }
+
+    func testCardIsSavedOnceAndNotRegeneratedOnEveryLaunch() {
+        let store = ReflectionCardStore(context: context, now: { self.jst("2027-01-13 21:00") })
+        var builds = 0
+        func content() -> ReflectionContent { builds += 1; return ReflectionContent(title: "夜の振り返り", lines: ["a"]) }
+        let first = store.ensureCard(mode: .demo, kind: .night, dayKey: "2027-01-13", content: content())
+        let second = store.ensureCard(mode: .demo, kind: .night, dayKey: "2027-01-13", content: content())
+        XCTAssertEqual(first.key, second.key)
+        XCTAssertEqual(store.all().count, 1)
+        store.dismiss(first)
+        store.ensureCard(mode: .demo, kind: .night, dayKey: "2027-01-13", content: content())
+        XCTAssertNotNil(store.card(mode: .demo, kind: .night, dayKey: "2027-01-13")?.dismissedAt)  // 閉じたら再表示しない
+        // 別モード・別の日は別のカード
+        store.ensureCard(mode: .device, kind: .night, dayKey: "2027-01-13", content: content())
+        store.ensureCard(mode: .demo, kind: .night, dayKey: "2027-01-14", content: content())
+        XCTAssertEqual(store.all().count, 3)
+        // 開発用の作り直しは、閉じた状態を戻す
+        let again = store.ensureCard(mode: .demo, kind: .night, dayKey: "2027-01-13", content: content(), regenerate: true)
+        XCTAssertNil(again.dismissedAt)
+    }
+
+    // MARK: 今週の傾向
+
+    func testWeeklyInsightsCountsAndSeparatesModes() {
+        record("2027-01-12 09:00", purpose: .contact, outcome: .wantsToUse, reflection: .satisfied, unlocked: true)
+        record("2027-01-12 23:00", purpose: .contact, outcome: .deferred, reflection: .skipped)
+        record("2027-01-13 12:00", purpose: nil, outcome: .interrupted)
+        record("2027-01-13 12:00", mode: .device, purpose: .research, outcome: .deferred)
+        let w = WeeklyInsights.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00"))
+        XCTAssertEqual(w.total, 3)
+        XCTAssertEqual(w.wantsToUse, 1)
+        XCTAssertEqual(w.deferred, 1)
+        XCTAssertEqual(w.unlockStarted, 1)
+        XCTAssertEqual(w.purposeCounts[.contact], 2)
+        XCTAssertEqual(w.purposeSkipped, 1)
+        XCTAssertEqual(w.answeredReflections, 1, "「答えない」は回答に数えない")
+        XCTAssertEqual(w.bandCounts[.morning], 1)
+        XCTAssertEqual(w.bandCounts[.night], 1)
+        XCTAssertNil(w.previousTotal, "前週の記録が無いので比較しない")
+    }
+
+    func testPreviousWeekComparedOnlyWhenBothWeeksHaveRecords() {
+        record("2027-01-05 10:00")
+        XCTAssertNil(WeeklyInsights.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00")).previousTotal)
+        record("2027-01-12 10:00")
+        XCTAssertEqual(WeeklyInsights.make(sessions: sessions(), mode: .demo, calendar: cal, now: jst("2027-01-13 20:00")).previousTotal, 1)
+    }
+
+    // MARK: 設定改善の提案
+
+    private func fill(_ n: Int, outcome: SessionOutcome, at hour: String = "12:00") {
+        for i in 0..<n { record("2027-01-1\(1 + i % 3) \(hour)", outcome: outcome) }
+    }
+
+    func testNoSuggestionWithFewerThanFiveRecords() {
+        fill(4, outcome: .wantsToUse)
+        var state = SuggestionState()
+        XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo,
+                                               preferences: Preferences(), calendar: cal, now: jst("2027-01-13 20:00")))
+    }
+
+    func testSuggestionNeedsFiveRecordsAndIsOncePerWeek() throws {
+        fill(5, outcome: .wantsToUse)
+        var prefs = Preferences(); prefs.waitSeconds = 180
+        var state = SuggestionState()
+        let now = jst("2027-01-13 20:00")
+        let s = try XCTUnwrap(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo,
+                                                       preferences: prefs, calendar: cal, now: now))
+        XCTAssertEqual(s.kind, .waitLonger)
+        XCTAssertEqual(s.change, .waitSeconds(300))
+        XCTAssertTrue(s.currentText.contains("3分") && s.proposedText.contains("5分"))
+        // 回答するまで同じ提案を返し、回答後はその週は出さない
+        XCTAssertEqual(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now), s)
+        SuggestionEngine.resolve(state: &state, status: .skipped, now: now, calendar: cal.calendar)
+        XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now.addingTimeInterval(3600)))
+    }
+
+    func testKeepingSuppressesSameSuggestionForAWhile() {
+        fill(5, outcome: .wantsToUse)
+        var prefs = Preferences(); prefs.waitSeconds = 180
+        var state = SuggestionState()
+        let now = jst("2027-01-13 20:00")
+        _ = SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now)
+        SuggestionEngine.resolve(state: &state, status: .kept, now: now, calendar: cal.calendar)
+        // 翌週でも、「今のまま」にした提案は出ない
+        XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: jst("2027-01-20 20:00")))
+    }
+
+    func testNightSuggestionIsBasedOnRecordsAfterNightTime() throws {
+        for _ in 0..<5 { record("2027-01-12 22:30", outcome: .deferred) }
+        var state = SuggestionState()
+        let s = try XCTUnwrap(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo,
+                                                       preferences: Preferences(), calendar: cal, now: jst("2027-01-13 20:00")))
+        XCTAssertEqual(s.kind, .nightEarlier)
+        XCTAssertEqual(s.change, .nightMinute(20 * 60))
+        XCTAssertTrue(s.evidence.contains("5件"))
+    }
+
+    func testNoSuggestionAtLargestWaitOption() {
+        fill(6, outcome: .wantsToUse)
+        var prefs = Preferences(); prefs.waitSeconds = 600
+        var state = SuggestionState()
+        XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: jst("2027-01-13 20:00")))
+    }
+
+    // MARK: 通知
+
+    private func policy(quiet: Bool = true, gapHours: Double = 3) -> NotificationPolicy {
+        var p = NotificationPolicy(calendar: cal.calendar)
+        p.minimumGap = gapHours * 3600
+        if !quiet { p.quietStartMinute = 0; p.quietEndMinute = 0 }
+        return p
+    }
+
+    private func c(_ kind: NotificationKind, _ at: String) -> NotificationCandidate {
+        NotificationCandidate(kind: kind, id: "\(kind.rawValue).\(at)", fireDate: jst(at))
+    }
+
+    func testQuietHoursAreDroppedNotBatchedToMorning() {
+        let r = NotificationPlanner.select([c(.night, "2027-01-13 23:00"), c(.morning, "2027-01-14 07:59")], policy: policy())
+        XCTAssertTrue(r.accepted.isEmpty)
+        XCTAssertEqual(r.dropped.map(\.reason), [.quietHours, .quietHours])
+        XCTAssertEqual(NotificationPlanner.select([c(.morning, "2027-01-14 08:00")], policy: policy()).accepted.count, 1)
+    }
+
+    func testMinimumGapIncludingAcrossMidnight() {
+        let r = NotificationPlanner.select([c(.night, "2027-01-13 21:00"), c(.outing, "2027-01-13 19:00")], policy: policy())
+        XCTAssertEqual(r.accepted.map(\.kind), [.night])
+        XCTAssertEqual(r.dropped.first?.reason, .tooCloseToAnother)
+        let cross = NotificationPlanner.select([c(.night, "2027-01-13 23:00"), c(.morning, "2027-01-14 01:00")], policy: policy(quiet: false))
+        XCTAssertEqual(cross.accepted.count, 1, "日付をまたいでも3時間は空ける")
+    }
+
+    func testDailyLimitOfFour() {
+        let items = ["09:00", "10:00", "11:00", "12:00", "13:00"].map { c(.outing, "2027-01-13 \($0)") }
+        let r = NotificationPlanner.select(items, policy: policy(quiet: false, gapHours: 0))
+        XCTAssertEqual(r.accepted.count, 4)
+        XCTAssertEqual(r.dropped.first?.reason, .dailyLimit)
+    }
+
+    func testPostUseIsLowestPriorityAndOncePerDay() {
+        let near = NotificationPlanner.select([c(.postUse, "2027-01-13 09:00"), c(.morning, "2027-01-13 08:00")], policy: policy())
+        XCTAssertEqual(near.accepted.map(\.kind), [.morning], "朝の通知と近いときは追加しない")
+        let two = NotificationPlanner.select([c(.postUse, "2027-01-13 12:00"), c(.postUse, "2027-01-13 18:00")], policy: policy())
+        XCTAssertEqual(two.accepted.count, 1)
+        XCTAssertEqual(two.dropped.first?.reason, .kindDailyLimit)
+    }
+
+    func testDuplicateIdsAreNotScheduledTwice() {
+        let a = c(.night, "2027-01-13 21:00")
+        XCTAssertEqual(NotificationPlanner.select([a, a], policy: policy()).accepted.count, 1)
+    }
+
+    func testRecurringIsEmptyByDefaultAndSkipsViewed() {
+        let now = jst("2027-01-13 12:00")
+        XCTAssertTrue(NotificationPlanner.recurring(preferences: Preferences(), now: now, calendar: cal, viewed: []).isEmpty)
+        var prefs = Preferences(); prefs.notifyNight = true
+        XCTAssertEqual(NotificationPlanner.recurring(preferences: prefs, now: now, calendar: cal, viewed: []).count, 2)
+        let viewed = NotificationPlanner.recurring(preferences: prefs, now: now, calendar: cal, viewed: ["night.2027-01-13"])
+        XCTAssertEqual(viewed.map { cal.dayKey(for: $0.fireDate) }, ["2027-01-14"])
+        // 時刻を過ぎた今日の分は作らない
+        XCTAssertEqual(NotificationPlanner.recurring(preferences: prefs, now: jst("2027-01-13 22:00"), calendar: cal, viewed: []).count, 1)
+    }
+
+    func testSettingsWarningsForQuietAndClose() {
+        var prefs = Preferences()
+        prefs.notifyMorning = true; prefs.morningMinute = 6 * 60
+        prefs.notifyNight = true; prefs.nightMinute = 21 * 60
+        prefs.notifyOuting = true; prefs.outingMinute = 20 * 60
+        let text = NotificationPlanner.warnings(preferences: prefs, calendar: cal.calendar).joined()
+        XCTAssertTrue(text.contains("朝の振り返り"))      // 6:00は静かな時間
+        XCTAssertTrue(text.contains("3時間以内"))          // 夜21:00とお出かけ20:00
+    }
+
+    func testPreferencesDecodeWithMissingKeys() throws {
+        let p = try JSONDecoder().decode(Preferences.self, from: Data("{}".utf8))
+        XCTAssertFalse(p.notifyMorning || p.notifyNight || p.notifyPostUse || p.notifyOuting, "通知は初期状態ですべてオフ")
+        XCTAssertEqual(p.quietStartMinute, 22 * 60)
+        XCTAssertEqual(p.quietEndMinute, 8 * 60)
+    }
+}
