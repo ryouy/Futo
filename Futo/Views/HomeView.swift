@@ -252,27 +252,30 @@ struct HomeView: View {
     /// 1行：名前。解除中のものだけ開いた南京錠。変更できる間だけ目立たない－。
     private func appRow<Content: View>(unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
                                        @ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 10) {
+        // 右側（解除中の錠・－）の幅を決め、名前はそのぶん引いた幅に収める。
+        let trailing: CGFloat = (unlocked ? 28 : 0) + (editable ? 44 : 0)
+        return FixedWidthRow(height: 48, trailingWidth: trailing) {
             content()
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .clipped()
-            if unlocked {
-                Image(systemName: "lock.open.fill")
-                    .foregroundStyle(Theme.accent)
-                    .accessibilityLabel("一時解除中")
-            }
-            if editable {
-                Button(action: onRemove) {
-                    Image(systemName: "minus.circle")
-                        .foregroundStyle(.tertiary)
-                        .frame(width: 44, height: 44)
+        } trailing: {
+            HStack(spacing: 4) {
+                if unlocked {
+                    Image(systemName: "lock.open.fill")
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 24)
+                        .accessibilityLabel("一時解除中")
                 }
-                .accessibilityLabel("制限から外す")
+                if editable {
+                    Button(action: onRemove) {
+                        Image(systemName: "minus.circle")
+                            .foregroundStyle(.tertiary)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("制限から外す")
+                }
             }
         }
-        .frame(minHeight: 48)
     }
 
     private func addApps() {

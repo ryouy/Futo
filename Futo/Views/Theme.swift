@@ -171,6 +171,30 @@ struct CenteredScroll<Content: View>: View {
     }
 }
 
+/// 左に名前、右に操作を置く1行。名前の幅を、行の幅から右側の幅を引いた値に固定する。
+/// アプリ名のラベルはOSが描画する部品で、親の幅を無視して広がることがあるため、
+/// `maxWidth` では押さえきれず、行が画面の外へはみ出す。幅を測って固定し、はみ出しを切り落とす。
+struct FixedWidthRow<Leading: View, Trailing: View>: View {
+    let height: CGFloat
+    let trailingWidth: CGFloat
+    @ViewBuilder var leading: Leading
+    @ViewBuilder var trailing: Trailing
+
+    var body: some View {
+        GeometryReader { proxy in
+            HStack(spacing: 0) {
+                leading
+                    .frame(width: max(0, proxy.size.width - trailingWidth), alignment: .leading)
+                    .clipped()
+                trailing
+                    .frame(width: trailingWidth, alignment: .trailing)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .leading)
+        }
+        .frame(height: height)
+    }
+}
+
 /// 単一・複数選択の1行。目的選択とアプリ選択で共通に使う。
 struct ChoiceRow<Content: View>: View {
     let isOn: Bool
@@ -179,17 +203,15 @@ struct ChoiceRow<Content: View>: View {
 
     var body: some View {
         Button(action: action) {
-            HStack {
+            FixedWidthRow(height: 58, trailingWidth: 30) {
                 content
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .clipped()
+            } trailing: {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(Theme.accent)
             }
-            .frame(minHeight: 58)
             .padding(.horizontal, 20)
             .contentShape(Rectangle())
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
