@@ -164,9 +164,26 @@ struct TutorialOverlay: View {
     private var endView: some View {
         VStack(spacing: 22) {
             messageCard(["準備はできました。"])
-            pill("はじめる") { model.finishTutorial() }
+            startButton
         }
         .frame(maxHeight: .infinity)
+    }
+
+    /// 「はじめる」：ロゴの丸と同じレモン色で、深い緑の文字。暗い案内画面の上でも、はっきり見える。
+    private var startButton: some View {
+        Button { model.finishTutorial() } label: {
+            HStack(spacing: 8) {
+                Text("はじめる")
+                Image(systemName: "arrow.right")
+            }
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(Color(red: 25 / 255, green: 100 / 255, blue: 89 / 255))
+            .padding(.horizontal, 40)
+            .frame(minHeight: 56)
+            .background(Capsule().fill(Color(red: 1.0, green: 0.89, blue: 0.54)))
+            .shadow(color: Color(red: 1.0, green: 0.89, blue: 0.54).opacity(0.45), radius: 18)
+        }
+        .buttonStyle(.plain)
     }
 
     private func pill(_ title: String, action: @escaping () -> Void) -> some View {

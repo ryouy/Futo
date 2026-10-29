@@ -6,9 +6,13 @@ struct RootView: View {
     /// 起動時に約1秒、スプラッシュを見せる。
     @State private var showSplash = true
 
+    /// スプラッシュ・初回説明と同じ緑。
+    private let introGreen = Color(red: 25 / 255, green: 100 / 255, blue: 89 / 255)
+
     var body: some View {
         ZStack {
-            Theme.background.ignoresSafeArea()
+            (model.onboardingDone ? Theme.background : LinearGradient(colors: [introGreen, introGreen], startPoint: .top, endPoint: .bottom))
+                .ignoresSafeArea()
             if model.onboardingDone {
                 ZStack {
                     Theme.background.ignoresSafeArea()
@@ -25,14 +29,14 @@ struct RootView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.3), value: model.showFlow)
-                .transition(.sequentialFade)
+                .transition(.opacity)
             } else {
-                // 説明からホームへは、他の画面と同じように、ゆっくり切り替える。
                 OnboardingView(model: model)
-                    .transition(.sequentialFade)
+                    .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: model.onboardingDone)
+        // 説明（緑）からホームへは、間に下地が見えないよう、ゆっくり溶けるように切り替える。
+        .animation(.easeInOut(duration: 1.0), value: model.onboardingDone)
         .overlayPreferenceValue(TutorialAnchorKey.self) { anchors in
             if model.tutorialStep != nil {
                 TutorialOverlay(model: model, anchors: anchors)
