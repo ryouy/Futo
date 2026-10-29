@@ -1,0 +1,36 @@
+/* ふと — 生成り色と深い緑。外部フォント・解析・広告は使わない */
+:root {
+  --green: #196459;
+  --green-deep: #124a42;
+  --soft: #e3efeb;
+  --cream: #fcf8f0;
+  --ink: #1d2b27;
+  --muted: #5d6d68;
+  --lemon: #ffe38a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", system-ui, -apple-system, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.8;
+}
+header.site { background: var(--green); color: var(--cream); text-align: center; padding: 28px 16px 36px; }
+header.site img { width: 72px; height: auto; display: block; margin: 0 auto 6px; }
+header.site h1 { margin: 0; font-size: 22px; letter-spacing: .08em; font-weight: 600; }
+main { width: min(640px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; }
+.card { background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 22px; padding: 22px; margin-bottom: 16px; }
+.card h2 { margin: 0 0 10px; font-size: 17px; color: var(--green); }
+.muted { color: var(--muted); font-size: 14px; }
+.who { font-size: 20px; font-weight: 600; color: var(--green); margin: 0; }
+.row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(25, 100, 89, .08); }
+.row:last-child { border-bottom: 0; }
+.phrase { text-align: center; background: var(--soft); border-radius: 18px; padding: 16px; font-weight: 600; color: var(--green); }
+.notice { background: #f8eadf; border-radius: 16px; padding: 12px 16px; font-size: 14px; }
+.unavailable { text-align: center; padding: 56px 0; }
+footer.site { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 40px; }
+button.report, summary.report { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; }
+details.report { margin-top: 8px; text-align: center; }
+details.report label { display: block; padding: 4px 0; }
+details.report button { margin-top: 8px; background: var(--green); color: var(--cream); border: 0; border-radius: 999px; padding: 8px 22px; font: inherit; cursor: pointer; }

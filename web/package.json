@@ -1,0 +1,33 @@
+{
+  "name": "futo-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ふと — 共有・フレンド用のWebとAPI（Vercel Functions + Firebase Admin）",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "firebase emulators:exec --only auth,firestore --project demo-futo \"vitest run\"",
+    "test:unit": "vitest run tests/unit",
+    "cleanup:dry-run": "tsx scripts/cleanup.ts --dry-run"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "firebase": "^11.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": { "node": ">=20" }
+}

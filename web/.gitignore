@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env.local
+.env.*.local
+*.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.vercel/
+tsconfig.tsbuildinfo
+next-env.d.ts
