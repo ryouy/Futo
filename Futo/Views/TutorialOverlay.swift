@@ -169,7 +169,7 @@ struct TutorialOverlay: View {
         .frame(maxHeight: .infinity)
     }
 
-    /// 「はじめる」：ロゴの丸と同じレモン色で、深い緑の文字。暗い案内画面の上でも、はっきり見える。
+    /// 「はじめる」：テーマカラー。暗い案内画面の上でも見えるよう、細い縁とやわらかい光を添える。
     private var startButton: some View {
         Button { model.finishTutorial() } label: {
             HStack(spacing: 8) {
@@ -177,11 +177,12 @@ struct TutorialOverlay: View {
                 Image(systemName: "arrow.right")
             }
             .font(.headline.weight(.semibold))
-            .foregroundStyle(Color(red: 25 / 255, green: 100 / 255, blue: 89 / 255))
+            .foregroundStyle(Theme.onAccent)
             .padding(.horizontal, 40)
             .frame(minHeight: 56)
-            .background(Capsule().fill(Color(red: 1.0, green: 0.89, blue: 0.54)))
-            .shadow(color: Color(red: 1.0, green: 0.89, blue: 0.54).opacity(0.45), radius: 18)
+            .background(Capsule().fill(Theme.accent))
+            .overlay(Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1.5))
+            .shadow(color: Theme.accent.opacity(0.5), radius: 18)
         }
         .buttonStyle(.plain)
     }

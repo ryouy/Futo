@@ -84,7 +84,7 @@ struct HomeView: View {
     private func mainContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Text("ふと").font(.title.weight(.medium)).foregroundStyle(Theme.accent)
+                Text("ふと").font(.title3.weight(.medium)).foregroundStyle(Theme.accent)
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
@@ -254,7 +254,10 @@ struct HomeView: View {
                                        @ViewBuilder content: () -> Content) -> some View {
         HStack(spacing: 10) {
             content()
-            Spacer()
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .clipped()
             if unlocked {
                 Image(systemName: "lock.open.fill")
                     .foregroundStyle(Theme.accent)

@@ -180,8 +180,12 @@ struct ChoiceRow<Content: View>: View {
     var body: some View {
         Button(action: action) {
             HStack {
-                content.foregroundStyle(.primary)
-                Spacer()
+                content
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(Theme.accent)
             }
