@@ -10,13 +10,14 @@ struct SettingsView: View {
     @State private var confirmLeaveDevice = false
 
     private enum SettingsTab: Int, CaseIterable {
-        case restriction, breath, notification, other
+        case restriction, breath, notification, sharing, other
 
         var title: String {
             switch self {
             case .restriction: return tr("制限")
             case .breath: return tr("ひと呼吸")
             case .notification: return tr("通知")
+            case .sharing: return tr("共有")
             case .other: return tr("その他")
             }
         }
@@ -39,6 +40,7 @@ struct SettingsView: View {
             case .restriction: restrictionTab
             case .breath: breathTab
             case .notification: NotificationSettingsView(model: model)
+            case .sharing: SharingTab(model: model)
             case .other: otherTab
             }
         }
