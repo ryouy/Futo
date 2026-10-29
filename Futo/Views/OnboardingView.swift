@@ -25,6 +25,8 @@ struct OnboardingView: View {
     ]
 
     @State private var page = 0
+    /// 指で動かしている間のずれ
+    @State private var drag: CGFloat = 0
     /// スプラッシュが消えるのに合わせて、ゆっくり現れる（見直しのときは、すぐ）。
     @State private var appeared = false
     private var isLast: Bool { page == pages.count }   // 最後は「はじめる」の画面
@@ -33,25 +35,20 @@ struct OnboardingView: View {
         ZStack {
             Self.background.ignoresSafeArea()
             VStack(spacing: 0) {
-                TabView(selection: $page) {
-                    ForEach(pages.indices, id: \.self) { index in
-                        pageView(pages[index], index: index).tag(index)
-                    }
-                    startView.tag(pages.count)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                pager
 
                 indicator.padding(.bottom, 20)
+                    .animation(.easeInOut(duration: 0.4), value: page)
                 controls
                     .frame(height: 150, alignment: .top)
                     .padding(.horizontal, 28)
+                    .animation(.easeInOut(duration: 0.4), value: isLast)
             }
             // 背景はスプラッシュと同じ緑のまま、中身だけがゆっくり現れる。
             .opacity(appeared ? 1 : 0)
             .animation(.easeInOut(duration: 0.9), value: appeared)
         }
         .preferredColorScheme(.dark)
-        .animation(.easeInOut(duration: 0.4), value: page)
         .task {
             if !model.isOnboardingReplay { try? await Task.sleep(for: .milliseconds(900)) }
             appeared = true
@@ -88,8 +85,6 @@ struct OnboardingView: View {
         }
         .padding(.horizontal, 32)
         .frame(maxWidth: .infinity)
-        // 表示中のページだけ、ふわっと現れる。
-        .opacity(page == index ? 1 : 0)
     }
 
     private var startView: some View {
@@ -104,7 +99,53 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)
-        .opacity(isLast ? 1 : 0)
+    }
+
+    // MARK: ページの横スライド
+
+    private var pageCount: Int { pages.count + 1 }   // 説明のページ＋最後の「はじめましょう」
+    private let slide = Animation.easeInOut(duration: 0.65)
+
+    /// ページを横に並べて動かす。ボタンでもスワイプでも、前のページが左へゆるっと流れる。
+    private var pager: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            HStack(spacing: 0) {
+                ForEach(0..<pageCount, id: \.self) { index in
+                    Group {
+                        if index < pages.count { pageView(pages[index], index: index) } else { startView }
+                    }
+                    .frame(width: width)
+                    .accessibilityHidden(index != page)
+                }
+            }
+            .offset(x: -CGFloat(page) * width + drag)
+            .animation(slide, value: page)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 12)
+                    .onChanged { value in
+                        // 端では、抵抗をつけて少ししか動かさない。
+                        let atStart = page == 0 && value.translation.width > 0
+                        let atEnd = page == pageCount - 1 && value.translation.width < 0
+                        drag = (atStart || atEnd) ? value.translation.width / 4 : value.translation.width
+                    }
+                    .onEnded { value in
+                        let threshold = width * 0.2
+                        var next = page
+                        if value.translation.width < -threshold || value.predictedEndTranslation.width < -width * 0.5 {
+                            next = min(page + 1, pageCount - 1)
+                        } else if value.translation.width > threshold || value.predictedEndTranslation.width > width * 0.5 {
+                            next = max(page - 1, 0)
+                        }
+                        withAnimation(slide) {
+                            drag = 0
+                            page = next
+                        }
+                    }
+            )
+        }
+        .clipped()
     }
 
     // MARK: インジケータと操作
@@ -139,8 +180,8 @@ struct OnboardingView: View {
             .transition(.opacity)
         } else {
             VStack(spacing: 4) {
-                pill("つぎへ", filled: true) { page += 1 }
-                Button("スキップ") { page = pages.count }
+                pill("つぎへ", filled: true) { withAnimation(slide) { page += 1 } }
+                Button("スキップ") { withAnimation(slide) { page = pages.count } }
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Self.cream.opacity(0.75))
                     .frame(minHeight: 44)

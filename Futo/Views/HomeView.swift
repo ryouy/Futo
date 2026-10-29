@@ -84,7 +84,6 @@ struct HomeView: View {
     private func mainContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                LeafMark(size: 24)
                 Text("ふと").font(.title.weight(.medium)).foregroundStyle(Theme.accent)
                 Spacer()
                 HStack(spacing: 0) {
