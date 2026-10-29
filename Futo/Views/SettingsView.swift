@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor
 struct SettingsView: View {
     @Bindable var model: AppModel
+    @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
     @State private var confirmOff = false
     @State private var confirmLeaveDevice = false
@@ -190,8 +191,15 @@ struct SettingsView: View {
 
             #if DEBUG
             Section {
-                Button("初回説明をもう一度表示") { model.replayOnboardingForDebug() }
-                    .frame(minHeight: 44)
+                Button("初回説明をもう一度表示") {
+                    // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
+                    dismiss()
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(700))
+                        model.replayOnboardingForDebug()
+                    }
+                }
+                .frame(minHeight: 44)
             } header: {
                 Text("検証用（Debugのみ）")
             } footer: {
