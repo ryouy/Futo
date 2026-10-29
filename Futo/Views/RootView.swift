@@ -7,7 +7,8 @@ struct RootView: View {
     @State private var showSplash = true
 
     var body: some View {
-        Group {
+        ZStack {
+            Theme.background.ignoresSafeArea()
             if model.onboardingDone {
                 ZStack {
                     Theme.background.ignoresSafeArea()
@@ -24,9 +25,26 @@ struct RootView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.3), value: model.showFlow)
+                .transition(.sequentialFade)
             } else {
+                // 説明からホームへは、他の画面と同じように、ゆっくり切り替える。
                 OnboardingView(model: model)
+                    .transition(.sequentialFade)
             }
+        }
+        .animation(.easeInOut(duration: 0.3), value: model.onboardingDone)
+        .overlayPreferenceValue(TutorialAnchorKey.self) { anchors in
+            if model.tutorialStep != nil {
+                TutorialOverlay(model: model, anchors: anchors)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: model.tutorialStep != nil)
+        .task(id: model.onboardingDone) {
+            // ホームが現れてから、初回（または説明の見直しのあと）だけチュートリアルを始める。
+            guard model.onboardingDone, !model.tutorialCompleted else { return }
+            try? await Task.sleep(for: .milliseconds(1900))
+            model.startTutorialIfNeeded()
         }
         .overlay {
             if showSplash {

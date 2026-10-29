@@ -5,6 +5,7 @@ final class AppSettings {
     private enum Key {
         static let onboardingDone = "settings.onboardingDone"
         static let mode = "settings.mode"
+        static let tutorialDone = "settings.tutorialDone"
         static let preferences = "settings.preferences"
         static let suggestion = "settings.suggestion"
         static let postUse = "notif.postUse"
@@ -19,6 +20,12 @@ final class AppSettings {
     var onboardingDone: Bool {
         get { defaults.bool(forKey: Key.onboardingDone) }
         set { defaults.set(newValue, forKey: Key.onboardingDone) }
+    }
+
+    /// ホームのチュートリアルを見たか。
+    var tutorialDone: Bool {
+        get { defaults.bool(forKey: Key.tutorialDone) }
+        set { defaults.set(newValue, forKey: Key.tutorialDone) }
     }
 
     var mode: AppMode {

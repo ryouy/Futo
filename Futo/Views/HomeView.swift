@@ -195,6 +195,7 @@ struct HomeView: View {
                             .background(Circle().fill(Theme.accent.opacity(0.14)))
                     }
                     .accessibilityLabel("追加")
+                    .tutorialTarget(.plus)
                     .transition(.opacity)
                 }
             }
@@ -211,6 +212,7 @@ struct HomeView: View {
             }
         }
         .card()
+        .tutorialTarget(.status)
         .animation(.easeInOut(duration: 0.3), value: model.restriction)
         .animation(.easeInOut(duration: 0.3), value: model.targetCount)
     }
@@ -286,6 +288,7 @@ struct HomeView: View {
             primaryButton
         }
         .frame(maxWidth: .infinity)
+        .tutorialTarget(.main)
     }
 
     @ViewBuilder

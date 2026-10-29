@@ -19,6 +19,9 @@ final class AppModel {
     private(set) var onboardingDone: Bool
     /// Debugで初回説明を見直しているとき。モードや制限には一切触れず、閉じるだけにする
     private(set) var isOnboardingReplay = false
+    /// ホームのチュートリアルの現在のステップ。nil は表示していない
+    var tutorialStep: Int?
+    private(set) var tutorialCompleted: Bool
     private(set) var permission: PermissionState = .notDetermined
     private(set) var restriction: RestrictionState = .off
     private(set) var targetCount = 0
@@ -61,6 +64,7 @@ final class AppModel {
         self.device = DeviceRestrictionService()
         self.mode = settings.mode
         self.onboardingDone = settings.onboardingDone
+        self.tutorialCompleted = settings.tutorialDone
         refresh()
     }
 
@@ -126,6 +130,8 @@ final class AppModel {
     func replayOnboardingForDebug() {
         settings.onboardingDone = false
         onboardingDone = false
+        settings.tutorialDone = false     // 説明のあとに、ホームのチュートリアルまで流す
+        tutorialCompleted = false
         isOnboardingReplay = true
         showFlow = false
     }
@@ -137,6 +143,20 @@ final class AppModel {
         onboardingDone = true
         isOnboardingReplay = false
         refresh()
+    }
+
+    // MARK: ホームのチュートリアル
+
+    /// 説明を終えて、まだチュートリアルを見ていなければ始める。
+    func startTutorialIfNeeded() {
+        guard onboardingDone, !tutorialCompleted, tutorialStep == nil, !showFlow else { return }
+        tutorialStep = 0
+    }
+
+    func finishTutorial() {
+        tutorialStep = nil
+        tutorialCompleted = true
+        settings.tutorialDone = true
     }
 
     // MARK: モード
