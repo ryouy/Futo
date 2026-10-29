@@ -4,6 +4,8 @@
 
 スマホを開く前に、ひと呼吸。使うかどうかを、自分で選ぶ iPhone アプリです。
 
+**[紹介サイト → ryouy.github.io/Futo](https://ryouy.github.io/Futo/)**
+
 <table>
   <tr>
     <td align="center"><img src="docs/screenshots/01-intro.png" width="170"></td>
