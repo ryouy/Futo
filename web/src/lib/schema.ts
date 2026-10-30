@@ -17,6 +17,18 @@ export const displayNameSchema = z
   .refine((value) => value.length >= 1 && [...value].length <= 20, "length")
   .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control");
 
+/**
+ * フレンドへの一言（自由入力）。フレンド共有だけで使い、Webの公開リンクでは受け付けない。
+ * 1〜60文字。制御文字・URL（迷惑・誘導の防止）は拒否する。
+ */
+export const MESSAGE_MAX = 60;
+export const messageSchema = z
+  .string()
+  .transform((value) => value.normalize("NFC").trim())
+  .refine((value) => value.length >= 1 && [...value].length <= MESSAGE_MAX, "length")
+  .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control")
+  .refine((value) => !/:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|jp|io|co|app|me|ly|xyz)\b/i.test(value), "url");
+
 /** 共有する統計。選んだ項目だけを送り、選ばなかった項目はキー自体を付けない。 */
 const statsShape = {
   period: z.enum(["thisWeek", "lastWeek", "all"]),
@@ -62,6 +74,7 @@ export const webSharePayload = z
 export const friendSharePayload = z
   .object({
     ...statsShape,
+    message: messageSchema.optional(),
     recipientUids: z.array(z.string().min(1).max(128)).min(1).max(50),
     idempotencyKey: z.string().uuid(),
   })
@@ -69,7 +82,7 @@ export const friendSharePayload = z
   .superRefine(checkStats);
 
 /** 継続共有の更新：受信者は変えず、統計だけを差し替える。 */
-export const friendShareUpdatePayload = z.object({ ...statsShape }).strict().superRefine(checkStats);
+export const friendShareUpdatePayload = z.object({ ...statsShape, message: messageSchema.optional() }).strict().superRefine(checkStats);
 
 export type WebSharePayload = z.infer<typeof webSharePayload>;
 export type FriendSharePayload = z.infer<typeof friendSharePayload>;
@@ -85,6 +98,8 @@ export interface StatsSnapshot {
   purposes?: { contact: number; research: number; break: number; noReason: number; unanswered: number };
   feelings?: { satisfied: number; neutral: number; wishedLess: number; answered: number };
   phrase?: string;
+  /** フレンドへの一言（自由入力）。フレンド共有だけ */
+  message?: string;
 }
 
 export function snapshotFrom(payload: WebSharePayload | FriendSharePayload | z.infer<typeof friendShareUpdatePayload>): StatsSnapshot {
@@ -103,6 +118,7 @@ export function snapshotFrom(payload: WebSharePayload | FriendSharePayload | z.i
     snapshot.feelings = { satisfied, neutral, wishedLess, answered: satisfied + neutral + wishedLess };
   }
   if (payload.phraseId) snapshot.phrase = PHRASES[payload.phraseId];
+  if ("message" in payload && payload.message) snapshot.message = payload.message;
   return snapshot;
 }
 

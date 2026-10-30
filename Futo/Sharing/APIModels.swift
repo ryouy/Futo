@@ -97,6 +97,7 @@ struct StatsSnapshotDTO: Codable, Equatable {
     var purposes: Purposes?
     var feelings: Feelings?
     var phrase: String?
+    var message: String?
 }
 
 struct ReceivedFriendShare: Codable, Equatable, Identifiable {

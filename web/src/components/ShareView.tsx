@@ -1,5 +1,5 @@
 import type { PublicShare } from "@/lib/shares";
-import { Donut, StackBar, type Slice } from "./Charts";
+import { Donut, type Slice } from "./Charts";
 import { ReportButton } from "./ReportButton";
 
 // テーマの緑を中心にした、区別しやすい配色
@@ -44,7 +44,7 @@ export function ShareView({ share, token }: { share: PublicShare; token?: string
       {stats.counts && (
         <div className="card">
           <h2>選んだ回数</h2>
-          <StackBar
+          <Donut
             title="使いたい・やめておく・途中でやめたの割合"
             slices={[
               { label: "使いたい", value: stats.counts.wantsToUse, color: PALETTE[2] },

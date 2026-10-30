@@ -47,6 +47,41 @@ final class StandingShareTests: XCTestCase {
     }
 }
 
+final class ShareMessageTests: XCTestCase {
+    func testNormalizedTrimsLimitsAndDropsControlCharacters() {
+        XCTAssertEqual(ShareMessage.normalized("  今週は、がんばった！ \n"), "今週は、がんばった！")
+        XCTAssertEqual(ShareMessage.normalized(String(repeating: "あ", count: 80))?.count, 60)
+        XCTAssertEqual(ShareMessage.normalized("a\u{0}b"), "ab")
+        XCTAssertNil(ShareMessage.normalized("   "))
+        XCTAssertNil(ShareMessage.normalized(""))
+    }
+
+    func testLinksAreRecognizedLikeTheServerDoes() {
+        XCTAssertTrue(ShareMessage.looksLikeLink("見て https://evil.example/x"))
+        XCTAssertTrue(ShareMessage.looksLikeLink("www.example.com へ"))
+        XCTAssertTrue(ShareMessage.looksLikeLink("pay me at evil.com"))
+        XCTAssertFalse(ShareMessage.looksLikeLink("今週は少しがんばった！"))
+        XCTAssertFalse(ShareMessage.looksLikeLink("3.5時間減った"))
+    }
+
+    func testMessageIsOnlyAttachedToFriendPayloads() throws {
+        var selection = ShareSelection(); selection.counts = true; selection.message = "こんにちは"; selection.phrase = .p1
+        let web = try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, expiresInDays: 7)
+        XCTAssertNil(web.message, "公開リンクには、自由入力の一言を付けない")
+        XCTAssertEqual(web.phraseId, "p1")
+        let friend = try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, expiresInDays: nil, recipientUids: ["u1"], allowsMessage: true)
+        XCTAssertEqual(friend.message, "こんにちは")
+        XCTAssertNil(friend.phraseId, "フレンド共有では、一言は1つだけ")
+        XCTAssertEqual(friend.updateBody.message, "こんにちは")
+    }
+
+    func testStandingConfigRemembersTheMessage() {
+        var selection = ShareSelection(); selection.counts = true; selection.message = "  また来週 "
+        let config = StandingShareConfig(shareId: "S", period: .thisWeek, selection: selection, refreshedAt: Date())
+        XCTAssertEqual(config.selection.message, "また来週")
+    }
+}
+
 @MainActor
 final class AllPeriodStatsTests: XCTestCase {
     private func make(_ start: Date, outcome: SessionOutcome = .deferred, purpose: Purpose? = .research) -> Session {

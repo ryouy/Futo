@@ -72,7 +72,7 @@ describe("Web共有ページの表示", () => {
     expect(html).toContain("<svg");
     expect(html).toContain("連絡");
     expect(html).toContain("3件");
-    const none = { ...base, stats: { ...base.stats, purposes: { contact: 0, research: 0, break: 0, noReason: 0, unanswered: 4 } } };
+    const none = { ...base, stats: { ...base.stats, counts: undefined, purposes: { contact: 0, research: 0, break: 0, noReason: 0, unanswered: 4 } } };
     expect(renderToStaticMarkup(<ShareView share={none} />)).not.toContain("<svg");
   });
 });

@@ -7,12 +7,14 @@ struct ChartStats {
     var purposes: (contact: Int, research: Int, change: Int, noReason: Int, unanswered: Int)?
     var feelings: (satisfied: Int, neutral: Int, wishedLess: Int)?
     var phrase: String?
+    var message: String?
 
     init(payload: SharePayload) {
         counts = payload.counts.map { ($0.wantsToUse, $0.deferred, $0.interrupted) }
         purposes = payload.purposes.map { ($0.contact, $0.research, $0.break, $0.noReason, $0.unanswered) }
         feelings = payload.feelings.map { ($0.satisfied, $0.neutral, $0.wishedLess) }
         phrase = payload.phraseId.flatMap(SharePhrase.init(rawValue:))?.text
+        message = payload.message
     }
 
     init(snapshot: StatsSnapshotDTO) {
@@ -20,6 +22,7 @@ struct ChartStats {
         purposes = snapshot.purposes.map { ($0.contact, $0.research, $0.break, $0.noReason, $0.unanswered) }
         feelings = snapshot.feelings.map { ($0.satisfied, $0.neutral, $0.wishedLess) }
         phrase = snapshot.phrase
+        message = snapshot.message
     }
 }
 
@@ -36,6 +39,14 @@ struct StatsChartsView: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            if let message = stats.message {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "quote.opening").foregroundStyle(Theme.accent).font(.footnote)
+                    Text(message).font(.body).frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(14).card()
+                .accessibilityElement(children: .combine)
+            }
             if let c = stats.counts { countsCard(c) }
             if let p = stats.purposes { purposesCard(p) }
             if let f = stats.feelings { feelingsCard(f) }

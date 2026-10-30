@@ -10,6 +10,8 @@ struct StandingShareConfig: Codable, Equatable, Identifiable {
     var purposes: Bool
     var feelings: Bool
     var phraseId: String?
+    /// フレンドへの一言（本人が入力した文）。統計の値ではない
+    var message: String? = nil
     var lastRefreshedAt: Date
 
     var id: String { shareId }
@@ -22,6 +24,7 @@ struct StandingShareConfig: Codable, Equatable, Identifiable {
         self.purposes = selection.purposes
         self.feelings = selection.feelings
         self.phraseId = selection.phrase?.rawValue
+        self.message = ShareMessage.normalized(selection.message)
         self.lastRefreshedAt = refreshedAt
     }
 
@@ -31,6 +34,7 @@ struct StandingShareConfig: Codable, Equatable, Identifiable {
         var s = ShareSelection()
         s.showName = showName; s.counts = counts; s.purposes = purposes; s.feelings = feelings
         s.phrase = phraseId.flatMap(SharePhrase.init(rawValue:))
+        s.message = message ?? ""
         return s
     }
 

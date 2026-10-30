@@ -98,8 +98,8 @@ final class SharingModel {
 
     // MARK: Web共有
 
-    func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased()) throws -> SharePayload {
-        try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key)
+    func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased(), allowsMessage: Bool = false) throws -> SharePayload {
+        try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage)
     }
 
     /// 共有リンクを作る。サーバーが成功を返し、リンクを受け取れたときだけ、端末（Keychain）に保存する。
@@ -274,7 +274,7 @@ final class SharingModel {
         var lapsed = 0
         for index in configs.indices.reversed() where force || configs[index].isDue(now: now) {
             let config = configs[index]
-            guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now) else { continue }
+            guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now, allowsMessage: true) else { continue }
             do {
                 let _: EmptyResponse = try await api.send("PUT", "/api/friend-shares/\(config.shareId)", body: payload.updateBody)
                 configs[index].lastRefreshedAt = now
@@ -351,6 +351,7 @@ final class SharingModel {
     }
 
     static func text(for error: APIError) -> String {
+        if error.code == "self_invite" { return tr("自分の招待には、申請できません。") }
         switch error.kind {
         case .notConfigured: return tr("共有の設定がまだ終わっていません。")
         case .offline: return tr("通信できませんでした。つながってから、もう一度お試しください。")

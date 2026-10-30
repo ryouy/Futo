@@ -142,110 +142,254 @@ struct CreateShareView: View {
     @State private var done = false
     @State private var standing = true
 
+    private var isFriends: Bool { kind == .friends }
+
     private var payload: SharePayload? {
         try? sharing.previewPayload(sessions: allSessions, mode: model.mode, period: period, selection: selection,
-                                    expiresInDays: kind == .web ? expiresInDays : nil,
-                                    recipientUids: kind == .friends ? Array(chosen) : nil)
+                                    expiresInDays: isFriends ? nil : expiresInDays,
+                                    recipientUids: isFriends ? Array(chosen) : nil, allowsMessage: isFriends)
+    }
+
+    private var messageProblem: String? {
+        guard isFriends, let text = ShareMessage.normalized(selection.message) else { return nil }
+        return ShareMessage.looksLikeLink(text) ? tr("リンクやURLは、一言に入れられません。") : nil
     }
 
     private var canCreate: Bool {
-        selection.hasStats && !sharing.isWorking && (kind == .web || !chosen.isEmpty)
+        selection.hasStats && !sharing.isWorking && messageProblem == nil && (!isFriends || !chosen.isEmpty)
+    }
+
+    /// いまの設定を、ひとことで言い直す（送る前の最終確認）。
+    private var summary: String {
+        var items: [String] = []
+        if selection.counts { items.append(tr("回数")) }
+        if selection.purposes { items.append(tr("目的")) }
+        if selection.feelings { items.append(tr("気持ち")) }
+        let what = items.isEmpty ? tr("（項目が未選択）") : items.joined(separator: tr("・"))
+        if isFriends {
+            return tr("{0}人に、{1}（{2}）を共有します。", "\(chosen.count)", what, period.label)
+        }
+        return tr("リンクを知っている人に、{0}（{1}）を見せます。", what, period.label)
     }
 
     var body: some View {
         Form {
-            CardSection {
-                Text(tr("選んだ項目だけが、共有されます。記録の一覧や、アプリ名は含まれません。"))
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
-            CardSection {
-                Picker(tr("期間"), selection: $period) {
-                    ForEach(SharePeriod.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
-            }
-            CardSection {
-                Toggle(tr("回数（使いたい・やめておく・中断）"), isOn: $selection.counts)
-                Toggle(tr("使いたかった目的の内訳"), isOn: $selection.purposes)
-                Toggle(tr("使ったあとの気持ち"), isOn: $selection.feelings)
-            }
-            CardSection {
-                Toggle(tr("表示名を出す"), isOn: $selection.showName)
-                Picker(tr("ひとこと"), selection: Binding(get: { selection.phrase?.rawValue ?? "" }, set: { selection.phrase = SharePhrase(rawValue: $0) })) {
-                    Text(tr("なし")).tag("")
-                    ForEach(SharePhrase.allCases) { Text($0.text).tag($0.rawValue) }
-                }
-            }
-            if kind == .web {
-                CardSection {
-                    Picker(tr("有効期間"), selection: $expiresInDays) {
-                        Text(tr("1日")).tag(1); Text(tr("7日")).tag(7); Text(tr("30日")).tag(30)
-                    }
-                }
-            } else {
-                CardSection {
-                    ForEach(recipients) { friend in
-                        Toggle(friend.displayName, isOn: Binding(get: { chosen.contains(friend.uid) }, set: { on in
-                            if on { chosen.insert(friend.uid) } else { chosen.remove(friend.uid) }
-                        }))
-                    }
-                }
-                CardSection {
-                    Toggle(tr("アプリを開いたとき、最新にする"), isOn: $standing)
-                    Text(standing
-                         ? tr("選んだ項目だけが、アプリを開くたびに更新されます。最後の更新から30日たつと、自動で見えなくなります。")
-                         : tr("いまの内容を、1回だけ共有します。30日で見えなくなります。"))
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-            }
+            if isFriends { whoSection }
+            whatSection
+            periodSection
+            if isFriends { messageSection } else { phraseSection }
+            nameSection
+            if isFriends { updateSection } else { expirySection }
             preview
-            if let created {
-                CardSection {
-                    Text(created.absoluteString).font(.footnote).textSelection(.enabled)
-                    HStack(spacing: 8) {
-                        ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
-                        Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
-                    }
-                    QRImage(text: created.absoluteString).frame(maxWidth: .infinity).padding(.vertical, 6)
-                    Text(tr("リンクを知っている人は、期限まで見られます。転送されることもあります。やめたいときは「共有中のリンク」から止めてください。"))
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-            } else if done {
-                CardSection { Text(tr("共有しました。")) }
-            } else {
-                PrimarySection {
-                    Button(kind == .web ? tr("リンクを作る") : tr("フレンドに共有")) { Task { await create() } }
-                        .disabled(!canCreate)
-                }
-                if let message = sharing.message { CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) } }
-            }
+            footer
         }
         .compactForm()
-        .navigationTitle(kind == .web ? tr("リンクで共有") : tr("フレンドに共有"))
+        .navigationTitle(isFriends ? tr("フレンドに共有") : tr("リンクで共有"))
         .navigationBarTitleDisplayMode(.inline)
     }
+
+    // MARK: 入力
+
+    private func header(_ title: String, _ detail: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+            if let detail { Text(detail).font(.footnote).foregroundStyle(.secondary) }
+        }
+        .textCase(nil)
+        .padding(.bottom, 2)
+    }
+
+    private var whoSection: some View {
+        Section {
+            if recipients.isEmpty {
+                Text(tr("まだフレンドがいません。「フレンド」の画面から招待して、承認されると、ここで選べます。"))
+                    .font(.footnote).foregroundStyle(.secondary)
+            } else {
+                ForEach(recipients) { friend in
+                    Button {
+                        if chosen.contains(friend.uid) { chosen.remove(friend.uid) } else { chosen.insert(friend.uid) }
+                    } label: {
+                        HStack(spacing: 12) {
+                            AccountAvatar(name: friend.displayName, size: 34)
+                            Text(friend.displayName).foregroundStyle(.primary).oneLine()
+                            Spacer(minLength: 0)
+                            Image(systemName: chosen.contains(friend.uid) ? "checkmark.circle.fill" : "circle")
+                                .font(.title3).foregroundStyle(chosen.contains(friend.uid) ? Theme.accent : .secondary)
+                        }
+                        .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(chosen.contains(friend.uid) ? .isSelected : [])
+                }
+                Button(chosen.count == recipients.count ? tr("選択をすべて外す") : tr("全員を選ぶ")) {
+                    chosen = chosen.count == recipients.count ? [] : Set(recipients.map(\.uid))
+                }
+                .buttonStyle(ChipButtonStyle())
+            }
+        } header: {
+            header(tr("① 誰に共有する？"), tr("選んだ人だけが見られます。ほかのフレンドや、ほかの人には見えません。"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var whatSection: some View {
+        Section {
+            Toggle(isOn: $selection.counts) { toggleLabel(tr("回数"), tr("使いたい・やめておく・中断の数")) }
+            Toggle(isOn: $selection.purposes) { toggleLabel(tr("目的"), tr("使いたかった理由の内訳")) }
+            Toggle(isOn: $selection.feelings) { toggleLabel(tr("気持ち"), tr("使ったあとの感想の内訳")) }
+        } header: {
+            header(isFriends ? tr("② 何を見せる？") : tr("① 何を見せる？"), tr("選んだ項目だけが共有されます。記録の一覧や、アプリの名前は含まれません。"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private func toggleLabel(_ title: String, _ detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(detail).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var periodSection: some View {
+        Section {
+            Picker(tr("期間"), selection: $period) {
+                ForEach(SharePeriod.allCases) { Text($0.label).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            Text(periodHint).font(.footnote).foregroundStyle(.secondary)
+        } header: {
+            header(isFriends ? tr("③ いつの分？") : tr("② いつの分？"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var periodHint: String {
+        switch period {
+        case .thisWeek: return tr("今週の、いままでの分です（途中経過）。")
+        case .lastWeek: return tr("先週の1週間の分です。")
+        case .all: return tr("最初の記録から、いままでの分です。")
+        }
+    }
+
+    /// フレンドへの一言：自由に入力できる。定型文から選んで、直すこともできる。
+    private var messageSection: some View {
+        Section {
+            TextField(tr("例：今週は少しがんばった！"), text: $selection.message, axis: .vertical)
+                .lineLimit(1...3)
+                .onChange(of: selection.message) { _, value in
+                    if value.count > ShareMessage.maxLength { selection.message = String(value.prefix(ShareMessage.maxLength)) }
+                }
+            HStack {
+                Menu {
+                    ForEach(SharePhrase.allCases) { phrase in Button(phrase.text) { selection.message = phrase.text } }
+                    if !selection.message.isEmpty { Button(tr("消す"), role: .destructive) { selection.message = "" } }
+                } label: {
+                    Label(tr("定型文から選ぶ"), systemImage: "text.quote")
+                }
+                .buttonStyle(ChipButtonStyle()).fixedSize()
+                Spacer()
+                Text("\(selection.message.count)/\(ShareMessage.maxLength)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+            }
+            if let problem = messageProblem { Text(problem).font(.footnote).foregroundStyle(.red) }
+        } header: {
+            header(tr("④ ひとこと（任意）"), tr("相手に、短いメッセージを添えられます。空のままでも共有できます。"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var phraseSection: some View {
+        Section {
+            Picker(tr("ひとこと"), selection: Binding(get: { selection.phrase?.rawValue ?? "" }, set: { selection.phrase = SharePhrase(rawValue: $0) })) {
+                Text(tr("なし")).tag("")
+                ForEach(SharePhrase.allCases) { Text($0.text).tag($0.rawValue) }
+            }
+        } header: {
+            header(tr("③ ひとこと（任意）"), tr("公開リンクでは、決まった文から選べます。"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var nameSection: some View {
+        Section {
+            Toggle(isOn: $selection.showName) {
+                toggleLabel(tr("表示名を出す"), selection.showName ? tr("「{0}」と表示されます。", sharing.profile?.displayName ?? "") : tr("「匿名」と表示されます。"))
+            }
+        } header: {
+            header(isFriends ? tr("⑤ 名前") : tr("④ 名前"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var updateSection: some View {
+        Section {
+            Toggle(isOn: $standing) { toggleLabel(tr("アプリを開いたとき、最新にする"), standing ? tr("継続して共有します") : tr("1回だけ共有します")) }
+            Text(standing
+                 ? tr("選んだ項目だけが、アプリを開くたびに更新されます。最後の更新から30日たつと、自動で見えなくなります。")
+                 : tr("いまの内容を、1回だけ共有します。30日で見えなくなります。"))
+                .font(.footnote).foregroundStyle(.secondary)
+        } header: {
+            header(tr("⑥ 更新のしかた"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var expirySection: some View {
+        Section {
+            Picker(tr("有効期間"), selection: $expiresInDays) {
+                Text(tr("1日")).tag(1); Text(tr("7日")).tag(7); Text(tr("30日")).tag(30)
+            }
+            .pickerStyle(.segmented)
+        } header: {
+            header(tr("⑤ いつまで見られる？"), tr("期限がくると、リンクは自動で使えなくなります。"))
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    // MARK: 確認と実行
 
     /// 送る内容そのままを、先にグラフで見せる。
     private var preview: some View {
         Group {
             if let payload {
-                CardSection {
-                    Text(tr("共有される内容")).font(.footnote).foregroundStyle(.secondary)
-                    Text(selection.showName ? tr("表示名：{0}", sharing.profile?.displayName ?? "") : tr("表示名：匿名"))
-                        .font(.footnote)
-                    if payload.isPartial { Text(tr("今週はまだ途中です。")).font(.footnote).foregroundStyle(.secondary) }
-                }
-                .listRowBackground(Color.clear)
                 Section {
                     StatsChartsView(stats: ChartStats(payload: payload))
                         .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                         .listRowBackground(Color.clear)
+                } header: {
+                    header(tr("共有される内容"), selection.showName ? tr("表示名：{0}", sharing.profile?.displayName ?? "") : tr("表示名：匿名"))
                 }
             } else {
                 CardSection {
                     Text(tr("項目を選ぶと、ここにグラフで表示されます。")).font(.footnote).foregroundStyle(.secondary)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var footer: some View {
+        if let created {
+            CardSection {
+                Text(created.absoluteString).font(.footnote).textSelection(.enabled)
+                HStack(spacing: 8) {
+                    ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
+                    Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
+                }
+                QRImage(text: created.absoluteString).frame(maxWidth: .infinity).padding(.vertical, 6)
+                Text(tr("リンクを知っている人は、期限まで見られます。転送されることもあります。やめたいときは「共有中のリンク」から止めてください。"))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        } else if done {
+            CardSection {
+                Label(tr("共有しました。"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+            }
+        } else {
+            CardSection { Text(summary).font(.footnote.weight(.medium)) }
+            PrimarySection {
+                Button(isFriends ? tr("フレンドに共有") : tr("リンクを作る")) { Task { await create() } }
+                    .disabled(!canCreate)
+            }
+            if let message = sharing.message { CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) } }
         }
     }
 

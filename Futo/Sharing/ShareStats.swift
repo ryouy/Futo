@@ -6,7 +6,8 @@ struct ShareSelection: Equatable, Codable {
     var counts = false             // 解除申込数・見送り数・中断数
     var purposes = false           // 利用目的の内訳
     var feelings = false           // 利用後の満足感（回答件数を併記）
-    var phrase: SharePhrase?       // 定型のひとこと（任意）
+    var phrase: SharePhrase?       // 定型のひとこと（任意。Webリンク用）
+    var message = ""              // フレンドへの一言（自由入力。フレンド共有だけ）
 
     /// 統計の項目が1つも選ばれていなければ、公開しない。
     var hasStats: Bool { counts || purposes || feelings }
@@ -40,6 +41,7 @@ struct ShareUpdatePayload: Codable, Equatable {
     var purposes: SharePayload.Purposes?
     var feelings: SharePayload.Feelings?
     var phraseId: String?
+    var message: String?
 }
 
 /// サーバーが受け付ける、定型のひとこと（IDだけを送る）。
@@ -72,6 +74,8 @@ struct SharePayload: Codable, Equatable {
     var purposes: Purposes?
     var feelings: Feelings?
     var phraseId: String?
+    /// フレンドへの一言（自由入力）。Webの公開リンクには付けない
+    var message: String?
     var expiresInDays: Int?
     var recipientUids: [String]?
     var idempotencyKey: String
@@ -98,7 +102,8 @@ enum ShareStatsBuilder {
     static func make(
         sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection,
         calendar: LogicalCalendar = LogicalCalendar(), now: Date = Date(),
-        expiresInDays: Int? = 7, recipientUids: [String]? = nil, idempotencyKey: String = UUID().uuidString.lowercased()
+        expiresInDays: Int? = 7, recipientUids: [String]? = nil, idempotencyKey: String = UUID().uuidString.lowercased(),
+        allowsMessage: Bool = false
     ) throws -> SharePayload {
         guard selection.hasStats else { throw BuildError.nothingSelected }
         let interval: DateInterval
@@ -123,7 +128,8 @@ enum ShareStatsBuilder {
             isPartial: period == .thisWeek && now < interval.end,
             showName: selection.showName,
             counts: nil, purposes: nil, feelings: nil,
-            phraseId: selection.phrase?.rawValue,
+            phraseId: allowsMessage ? nil : selection.phrase?.rawValue,
+            message: allowsMessage ? ShareMessage.normalized(selection.message) : nil,
             expiresInDays: expiresInDays,
             recipientUids: recipientUids,
             idempotencyKey: idempotencyKey
@@ -158,7 +164,7 @@ extension SharePayload {
     /// 継続共有の更新用（受信者・冪等キー・期限を除く）
     var updateBody: ShareUpdatePayload {
         ShareUpdatePayload(period: period, periodStart: periodStart, periodEnd: periodEnd, timezone: timezone, isPartial: isPartial,
-                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, phraseId: phraseId)
+                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, phraseId: phraseId, message: message)
     }
 }
 
@@ -171,5 +177,27 @@ enum DisplayName {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let limited = String(cleaned.prefix(20)).trimmingCharacters(in: .whitespacesAndNewlines)
         return limited.isEmpty ? tr("ふと") : limited
+    }
+}
+
+/// フレンドへの一言（自由入力）。サーバーと同じ規則：1〜60文字、制御文字・URLは不可。
+enum ShareMessage {
+    static let maxLength = 60
+
+    /// 整えた文字列（空なら nil）。長すぎるものは、先頭の60文字に切る。
+    static func normalized(_ raw: String) -> String? {
+        let cleaned = raw.precomposedStringWithCanonicalMapping
+            .unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) && $0 != "\u{2028}" && $0 != "\u{2029}" }
+            .map(String.init).joined()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let limited = String(cleaned.prefix(maxLength)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return limited.isEmpty ? nil : limited
+    }
+
+    /// URLのように見える文字列は、送れない（迷惑な誘導を防ぐ）。
+    static func looksLikeLink(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        if lower.contains("://") || lower.contains("www.") { return true }
+        return lower.range(of: #"\b[a-z0-9-]+\.(com|net|org|jp|io|co|app|me|ly|xyz)\b"#, options: .regularExpression) != nil
     }
 }

@@ -491,3 +491,61 @@ function friendlessWeb() {
     showName: true, counts: { wantsToUse: 50, deferred: 30, interrupted: 10 }, expiresInDays: 7, idempotencyKey: crypto.randomUUID(),
   };
 }
+
+describe("自分自身の招待・一言（自由入力）", () => {
+  it("自分の招待には、リンクでもコードでも申請できない。申請は作られない", async () => {
+    const alice = await newUser("アリス");
+    const invitation = await invite(alice);
+    const byToken = await request(alice, { token: invitation.token });
+    expect(byToken.status).toBe(400);
+    expect(byToken.body.error).toBe("self_invite");
+    const byCode = await request(alice, { code: invitation.code });
+    expect(byCode.status).toBe(400);
+    expect(byCode.body.error).toBe("self_invite");
+    expect((await call("GET", "/api/friends", { token: alice.token })).body.outgoing).toEqual([]);
+    expect((await call("GET", "/api/friends", { token: alice.token })).body.incoming).toEqual([]);
+    // 招待は、本人が試したあとも、他の人が使える
+    const bob = await newUser("ボブ");
+    expect((await request(bob, { token: invitation.token })).status).toBe(201);
+  });
+
+  it("一言は、フレンドに届く。更新でも変えられ、空にすると消える", async () => {
+    const alice = await newUser("アリス");
+    const bob = await newUser("ボブ");
+    await makeFriends(alice, bob);
+    const created = await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid], { message: "  今週は少しがんばった！ " }) });
+    expect(created.status).toBe(201);
+    const id = created.body.shareId as string;
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: bob.token })).body.stats.message).toBe("今週は少しがんばった！");
+    const { recipientUids: _r, idempotencyKey: _k, ...rest } = friendPayload([]);
+    await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: { ...rest, message: "更新しました" } });
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: bob.token })).body.stats.message).toBe("更新しました");
+    await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: rest });
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: bob.token })).body.stats.message).toBeUndefined();
+  });
+
+  it("一言は、61文字以上・URL・制御文字・空白だけを拒否する", async () => {
+    const alice = await newUser("アリス");
+    const bob = await newUser("ボブ");
+    await makeFriends(alice, bob);
+    for (const bad of ["あ".repeat(61), "見て https://evil.example/x", "www.example.com へ", "pay me at evil.com", "a\u0000b", "   "]) {
+      const r = await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid], { message: bad }) });
+      expect(r.status, JSON.stringify(bad)).toBe(400);
+    }
+    const ok = await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid], { message: "あ".repeat(60) }) });
+    expect(ok.status).toBe(201);
+  });
+
+  it("Webの公開リンクでは、自由入力の一言は受け付けない", async () => {
+    const alice = await newUser("アリス");
+    const r = await call("POST", "/api/shares", { token: alice.token, body: webPayloadWithMessage() });
+    expect(r.status).toBe(400);
+  });
+});
+
+function webPayloadWithMessage() {
+  return {
+    period: "thisWeek", periodStart: "2027-01-10T19:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z", timezone: "Asia/Tokyo", isPartial: true,
+    showName: true, counts: { wantsToUse: 1, deferred: 1, interrupted: 0 }, expiresInDays: 7, idempotencyKey: crypto.randomUUID(), message: "こんにちは",
+  };
+}
