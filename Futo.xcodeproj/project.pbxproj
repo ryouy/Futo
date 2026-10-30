@@ -53,7 +53,6 @@
 		55E8A401941C243E50A2E61C /* FutoShield.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		56269CD9A8AA67F43BD50711 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */; };
 		5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D183B067D9C20E8E848405 /* InsightsView.swift */; };
-		5C0345F5EA81CAE5EC7D4015 /* DemoRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */; };
 		5F21563494D63721948F802E /* RestrictionEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A74E35431C3F5CF9B7356C7 /* RestrictionEventTests.swift */; };
 		5FF5104A86D141EF2D4DA87D /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = E640CE9BAC5D46E1D1FB0617 /* PKCE.swift */; };
 		6004556B9472BDBA86337E6D /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
@@ -219,7 +218,6 @@
 		B561B8915898FF11685A4CEA /* BackupDocument.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupDocument.swift; sourceTree = "<group>"; };
 		B6051214DE403B48EBD6213D /* ShieldIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = ShieldIcon.png; sourceTree = "<group>"; };
 		BDB877B03A1742CC4E16B704 /* Localization.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
-		C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRestrictionService.swift; sourceTree = "<group>"; };
 		C26B0FC1E1229764718CF683 /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceRestrictionService.swift; sourceTree = "<group>"; };
 		C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -486,7 +484,6 @@
 			isa = PBXGroup;
 			children = (
 				2BE4BA309E788D84B95854AD /* AppSettings.swift */,
-				C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */,
 				C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */,
 				D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */,
 				AF093F77E0ECBB37A7693291 /* SessionStore.swift */,
@@ -743,7 +740,6 @@
 				2AF650B58BEFB4B318603675 /* FutoApp.swift in Sources */,
 				D9DCD71B7EBE925EB79D8A86 /* Session.swift in Sources */,
 				8C03781D30A6220B1604A7DE /* AppSettings.swift in Sources */,
-				5C0345F5EA81CAE5EC7D4015 /* DemoRestrictionService.swift in Sources */,
 				4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */,
 				3644D4A15AC907CB6CDA284D /* RestrictionService.swift in Sources */,
 				20EA90C7CC747D4D21C26A0B /* SessionStore.swift in Sources */,

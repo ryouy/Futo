@@ -10,9 +10,6 @@ struct BackupView: View {
 
     var body: some View {
         Form {
-            if backup.app.mode != .device {
-                CardSection { Text(tr("デモモードの記録は、バックアップできません。")).font(.footnote).foregroundStyle(.secondary) }
-            }
             explanation
             if backup.isConnected { connected } else { notConnected }
             if let text = backup.message, !text.isEmpty { CardSection { Text(text).font(.footnote).foregroundStyle(.secondary) } }
@@ -63,7 +60,7 @@ struct BackupView: View {
             Button { Task { await backup.backupNow() } } label: {
                 Label(tr("今すぐバックアップ"), systemImage: "icloud.and.arrow.up")
             }
-            .buttonStyle(FutoButtonStyle()).disabled(backup.isWorking || !backup.canBackup)
+            .buttonStyle(FutoButtonStyle()).disabled(backup.isWorking)
             if backup.isWorking { ProgressView() }
         }
         CardSection {
@@ -72,14 +69,15 @@ struct BackupView: View {
             }
             .buttonStyle(FutoButtonStyle(prominent: false)).disabled(backup.isWorking || backup.remote == nil)
         }
-        PrimarySection {
-            HStack(spacing: 10) {
-                Button(role: .destructive) { confirmDeleteRemote = true } label: { Label(tr("バックアップを削除"), systemImage: "trash") }
-                    .disabled(backup.isWorking || backup.remote == nil)
-                Button { confirmDisconnect = true } label: { Label(tr("許可を取り消す"), systemImage: "xmark.circle") }
-                    .disabled(backup.isWorking)
+        CardSection {
+            Button(role: .destructive) { confirmDeleteRemote = true } label: {
+                Label(tr("Driveのバックアップを削除"), systemImage: "trash").foregroundStyle(.red)
             }
-            .buttonStyle(ChipButtonStyle())
+            .frame(minHeight: 44).disabled(backup.isWorking || backup.remote == nil)
+            Button { confirmDisconnect = true } label: {
+                Label(tr("Driveの許可を取り消す"), systemImage: "xmark.circle").foregroundStyle(Theme.accent)
+            }
+            .frame(minHeight: 44).disabled(backup.isWorking)
         }
     }
 

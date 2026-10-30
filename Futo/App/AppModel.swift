@@ -10,7 +10,6 @@ import SwiftData
 final class AppModel {
     let settings: AppSettings
     let sessions: SessionStore
-    let demo: DemoRestrictionService
     let device: DeviceRestrictionService
     let cards: ReflectionCardStore
     let events: RestrictionEventStore
@@ -66,29 +65,31 @@ final class AppModel {
         self.cards = ReflectionCardStore(context: context)
         self.events = RestrictionEventStore(context: context)
         self.prefs = settings.preferences
-        self.demo = DemoRestrictionService(defaults: defaults)
         self.device = DeviceRestrictionService()
         self.pause = PauseFlow(store: DevicePauseStore(), scheduler: DevicePauseScheduler(), shield: DevicePauseShield())
-        // デモモードは廃止。以前にデモを選んでいた場合は、実機の利用に切り替える
-        if settings.mode == .demo { settings.mode = .device }
-        self.mode = settings.mode
+        // デモモードは廃止。以前のデモの記録は消し、実機の利用に切り替える
+        settings.mode = .device
+        self.mode = .device
+        Self.purgeLegacyDemoData(sessions: sessions, cards: cards, events: events)
         self.onboardingDone = settings.onboardingDone
         self.tutorialCompleted = settings.tutorialDone
         refresh()
     }
 
-    private var service: RestrictionService {
-        mode == .demo ? demo : device
+    private var service: RestrictionService { device }
+
+    /// 以前のデモの記録（Session・振り返り・制限の管理）を、すべて消す。
+    private static func purgeLegacyDemoData(sessions: SessionStore, cards: ReflectionCardStore, events: RestrictionEventStore) {
+        for session in sessions.all() where session.mode == .demo { sessions.context.delete(session) }
+        for card in cards.all() where card.mode == .demo { cards.context.delete(card) }
+        for event in events.all() where event.mode == .demo { events.context.delete(event) }
+        try? sessions.context.save()
     }
 
     var intendsRestriction: Bool { service.intendsRestriction }
 
-    /// 追加はいつでもできる（実機）。デモは対象が1つだけなので、未選択か、制限していない間だけ。
-    /// 一時停止中は、停止前の設定へ確実に戻すため、追加もできない。
-    var canAddItems: Bool {
-        if isPaused { return false }
-        return mode == .device || targetCount == 0 || !isTargetEditLocked
-    }
+    /// 追加はいつでもできる。ただし一時停止中は、停止前の設定へ確実に戻すため、追加もできない。
+    var canAddItems: Bool { !isPaused }
 
     /// 対象を外せるのは、制限そのものをオフにしている間だけ。
     /// 一時解除中・一時停止中も外せない（待機を通らずに、対象を外す抜け道にならないように）。
@@ -193,26 +194,6 @@ final class AppModel {
         settings.tutorialDone = true
     }
 
-    // MARK: モード
-
-    /// デモ ⇄ 実機。実機の制限を有効にしたままデモへは移らない。
-    @discardableResult
-    func switchMode(to newMode: AppMode) -> Bool {
-        guard newMode != mode else { return true }
-        // 実際の制限がかかっている間は、デモへ切り替えない（切り替えで、待機なしに制限全体が外れてしまうため）。
-        if mode == .device, device.intendsRestriction {
-            errorMessage = tr("実際の制限がかかっている間は、デモに切り替えられません。「制限の管理」で制限を終了してから、切り替えてください。")
-            return false
-        }
-        mode = newMode
-        settings.mode = newMode
-        showFlow = false
-        lastResult = nil
-        unlockResult = nil
-        refresh()
-        return true
-    }
-
     // MARK: 権限・対象・制限
 
     func requestPermission() async {
@@ -221,26 +202,14 @@ final class AppModel {
         refresh()
     }
 
-    func selectDemoTarget(_ name: String?) {
-        guard !isTargetEditLocked else { return }
-        demo.selectTarget(name)
-        refresh()
-    }
-
     func didChangeDeviceSelection() {
         refresh()
     }
 
-    /// 1つを制限から外す。デモでは唯一の対象を外す。
+    /// 1つを制限から外す。
     func removeItem(_ item: RestrictedItem) {
         guard !isTargetEditLocked else { return }
         device.removeItem(item)
-        refresh()
-    }
-
-    func removeDemoTarget() {
-        guard !isTargetEditLocked else { return }
-        demo.selectTarget(nil)
         refresh()
     }
 

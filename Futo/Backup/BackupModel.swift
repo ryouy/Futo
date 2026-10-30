@@ -48,7 +48,6 @@ final class BackupModel {
 
     var isConnected: Bool { drive.connectedUID != nil && drive.connectedUID == sharing.uid }
     var isWorking: Bool { phase == .working }
-    var canBackup: Bool { app.mode == .device }
 
     func syncConnection() { drive.refreshConnection(uid: sharing.uid) }
 
@@ -62,11 +61,9 @@ final class BackupModel {
             if self.remote != nil {
                 // すでにバックアップがあるときは、上書きしない（新しい端末で、空の記録に置き換えてしまわないため）
                 self.resultMessage = tr("Driveに、すでにバックアップがあります。上書きしないよう、自動のバックアップはしていません。必要なら「バックアップから戻す」を使ってください。")
-            } else if self.canBackup {
+            } else {
                 // 有効にしたら、最初の1回を自動で保存する
                 try await self.performBackup()
-            } else {
-                self.resultMessage = tr("バックアップを有効にしました。デモモードの記録は、保存されません。")
             }
         }
     }
@@ -92,7 +89,6 @@ final class BackupModel {
     }
 
     func backupNow() async {
-        guard canBackup else { message = tr("デモモードの記録は、バックアップできません。"); return }
         await run { try await self.performBackup() }
     }
 

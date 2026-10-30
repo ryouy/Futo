@@ -29,7 +29,7 @@ final class AppSettings {
     }
 
     var mode: AppMode {
-        get { AppMode(rawValue: defaults.string(forKey: Key.mode) ?? "") ?? .demo }
+        get { AppMode(rawValue: defaults.string(forKey: Key.mode) ?? "") ?? .device }
         set { defaults.set(newValue.rawValue, forKey: Key.mode) }
     }
 

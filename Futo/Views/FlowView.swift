@@ -43,7 +43,6 @@ struct FlowView: View {
             .animation(.easeInOut(duration: 0.3), value: shown?.id)
             .background(Theme.background.ignoresSafeArea())
         }
-        .demoBanner(model.mode)
         .onChange(of: Self.currentStage(of: model)?.id) { _, _ in
             // 閉じている間（showFlow が false）は更新しない。
             if model.showFlow, let next = Self.currentStage(of: model) { shown = next }
@@ -250,7 +249,7 @@ struct ResultView: View {
         case .unsupported:
             return (tr("記録しました。"), [tr("この設定では、解除は使えません。")])
         case nil:
-            return (tr("記録しました。"), [model.mode == .demo ? tr("デモでは、実際の制限は変わりません。") : tr("制限は続いています。")])
+            return (tr("記録しました。"), [tr("制限は続いています。")])
         }
     }
 

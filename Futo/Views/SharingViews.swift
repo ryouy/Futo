@@ -16,10 +16,6 @@ struct SharingTab: View {
                 CardSection {
                     Text(tr("共有の機能は、まだ使えません。"))
                 }
-            } else if model.mode == .demo {
-                CardSection {
-                    Text(tr("デモモードでは、共有できません。"))
-                }
             } else {
                 switch sharing.auth.state {
                 case .signedOut, .signingIn: signedOut
@@ -94,16 +90,15 @@ struct SharingTab: View {
                 Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accent)
             }.frame(minHeight: 44)
         }
-        PrimarySection {
-            HStack(spacing: 10) {
-                Button { confirmSignOut = true } label: {
-                    Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right")
-                }
-                Button(role: .destructive) { confirmDelete = true } label: {
-                    Label(tr("アカウントを削除"), systemImage: "trash")
-                }
+        CardSection {
+            Button { confirmSignOut = true } label: {
+                Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right").foregroundStyle(Theme.accent)
             }
-            .buttonStyle(ChipButtonStyle())
+            .frame(minHeight: 44)
+            Button(role: .destructive) { confirmDelete = true } label: {
+                Label(tr("アカウントを削除"), systemImage: "trash").foregroundStyle(.red)
+            }
+            .frame(minHeight: 44)
         }
     }
 }
@@ -198,7 +193,7 @@ struct CreateShareView: View {
                     Button(chosen.count == recipients.count ? tr("すべて外す") : tr("全員を選ぶ")) {
                         chosen = chosen.count == recipients.count ? [] : Set(recipients.map(\.uid))
                     }
-                    .buttonStyle(ChipButtonStyle()).fixedSize().textCase(nil)
+                    .font(.footnote.weight(.medium)).foregroundStyle(Theme.accent).textCase(nil)
                 }
             }
         }

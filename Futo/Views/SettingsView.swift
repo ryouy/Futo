@@ -90,14 +90,18 @@ struct SettingsView: View {
     private var permissionSection: some View {
         CardSection {
             LabeledContent(tr("許可"), value: permissionText)
-            Button(model.permission == .approved ? tr("再確認") : tr("許可する")) {
+            Button {
                 if model.permission == .approved {
                     model.refresh()
                 } else {
                     Task { await model.requestPermission() }
                 }
+            } label: {
+                Label(model.permission == .approved ? tr("再確認") : tr("許可する"),
+                      systemImage: model.permission == .approved ? "arrow.clockwise" : "hand.raised")
+                    .foregroundStyle(Theme.accent)
             }
-            .buttonStyle(ChipButtonStyle())
+            .frame(minHeight: 44)
             if let error = model.permissionError { Text(error).font(.footnote) }
         }
     }
@@ -126,30 +130,26 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
             }
 
-            PrimarySection {
+            CardSection {
                 Button(role: .destructive) { confirmDelete = true } label: {
-                    Label(tr("すべての記録を削除"), systemImage: "trash")
+                    Label(tr("すべての記録を削除"), systemImage: "trash").foregroundStyle(.red)
                 }
-                .buttonStyle(ChipButtonStyle())
+                .frame(minHeight: 44)
             }
 
             #if DEBUG
             CardSection {
-                Button(tr("初回説明をもう一度表示")) {
+                Button {
                     // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
                     dismiss()
                     Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(700))
                         model.replayOnboardingForDebug()
                     }
+                } label: {
+                    Label(tr("初回説明をもう一度表示"), systemImage: "arrow.counterclockwise").foregroundStyle(Theme.accent)
                 }
-                .buttonStyle(ChipButtonStyle())
-            }
-            CardSection {
-                Text(SharedState.lastEvent ?? tr("拡張の記録はまだありません"))
-                    .font(.subheadline)
-                Text(SharedState.isAvailable ? tr("App Group：利用できます") : tr("App Group：利用できません"))
-                    .font(.subheadline)
+                .frame(minHeight: 44)
             }
             #endif
         }

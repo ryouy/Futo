@@ -20,12 +20,18 @@ struct HomeView: View {
         VStack(spacing: 0) {
             ScrollView {
                 scrollContent
+                    .padding(.horizontal, 20)
                     .padding(.top, 12)
+                    .padding(.bottom, 40)
             }
             .scrollBounceBehavior(.basedOnSize)
-            // 一覧の下端は、カードの角に合わせて丸く切る（急に切れて見えないように）。下のボタンとの間は、あける。
-            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 26, bottomTrailingRadius: 26, topTrailingRadius: 0, style: .continuous))
-            .padding(.horizontal, 20)
+            // 下の方は、見切れつつ、ぼかすように薄れて消える。下のボタンとの間は、あけて、重ならない。
+            .mask(
+                VStack(spacing: 0) {
+                    Rectangle()
+                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 40)
+                }
+            )
             VStack(spacing: 12) {
                 actions
                 #if DEBUG
@@ -37,7 +43,6 @@ struct HomeView: View {
             .padding(.bottom, 12)
         }
         .background(Theme.background.ignoresSafeArea())
-        .demoBanner(model.mode)
         .toolbar(.hidden, for: .navigationBar)
         .task(id: model.restriction) {
             // 一時解除中だけ、拡張による再制限を表示に反映するため定期的に再確認する（再制限そのものは拡張が行う）。
@@ -222,11 +227,7 @@ struct HomeView: View {
 
     private func appRows(editable: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            if model.mode == .demo {
-                if let name = model.demo.targetName {
-                    appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget() }) { Text(tr(name)) }
-                }
-            } else {
+            do {
                 ForEach(model.device.items.sortedItems) { item in
                     appRow(unlocked: model.unlockedItems.contains(item), editable: editable,
                            onRemove: { model.removeItem(item) }) { ItemLabel(item: item) }
@@ -315,27 +316,24 @@ struct HomeView: View {
     private func sheetContent(_ item: HomeSheet) -> some View {
         switch item {
         case .picker:
-            if model.mode == .demo { DemoAppPickerView(model: model) } else { DeviceAppPickerView(model: model) }
+            DeviceAppPickerView(model: model)
         case .history:
             NavigationStack {
                 RecordsView(mode: model.mode)
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { sheet = nil } } }
             }
-            .demoBanner(model.mode)
-        case .settings:
+            case .settings:
             NavigationStack {
                 SettingsView(model: model)
                     .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { sheet = nil } } }
             }
-            .demoBanner(model.mode)
-        }
+            }
     }
 
     #if DEBUG
     /// 開発用：朝夜の振り返り・通知・制限の解除を、時間を待たずに確かめる（Debugビルドにだけ存在する）。1列に並べる。
     private var debugSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(tr("開発用（Debugのみ）")).font(.caption).foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 Button(tr("朝の振り返り")) { model.showReflectionNow(.morning) }
                 Button(tr("夜の振り返り")) { model.showReflectionNow(.night) }

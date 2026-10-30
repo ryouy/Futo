@@ -327,27 +327,6 @@ struct FutoTextButtonStyle: ButtonStyle {
     }
 }
 
-/// デモ中は全画面の上部に常時表示する。
-struct DemoBanner: View {
-    var body: some View {
-        Label(tr("デモモード：実際のアプリは制限しません"), systemImage: "info.circle")
-            .font(.footnote.weight(.medium))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(Theme.softBlue)
-            .accessibilityElement(children: .combine)
-    }
-}
-
-extension View {
-    func demoBanner(_ mode: AppMode) -> some View {
-        safeAreaInset(edge: .top, spacing: 0) {
-            if mode == .demo { DemoBanner() }
-        }
-    }
-}
-
 /// ホームや説明で使う、控えめな葉のしるし。
 struct LeafMark: View {
     var size: CGFloat = 22
