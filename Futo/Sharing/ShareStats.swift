@@ -1,7 +1,7 @@
 import Foundation
 
 /// 共有する統計の選択。初期は、すべてオフ（詳細を初期オンにして、公開を急がせない）。
-struct ShareSelection: Equatable {
+struct ShareSelection: Equatable, Codable {
     var showName = true            // 表示名は初期オン。匿名表示も選べる
     var counts = false             // 解除申込数・見送り数・中断数
     var purposes = false           // 利用目的の内訳
@@ -15,13 +15,35 @@ struct ShareSelection: Equatable {
 enum SharePeriod: String, CaseIterable, Identifiable {
     case thisWeek
     case lastWeek
+    /// 記録のある、全期間（最初の記録から、いままで）
+    case all
 
     var id: String { rawValue }
-    var label: String { self == .thisWeek ? tr("今週") : tr("先週") }
+    var label: String {
+        switch self {
+        case .thisWeek: return tr("今週")
+        case .lastWeek: return tr("先週")
+        case .all: return tr("全期間")
+        }
+    }
+}
+
+/// 継続共有の更新で送る内容（受信者・冪等キー・期限は含めない。サーバーの更新APIの形）。
+struct ShareUpdatePayload: Codable, Equatable {
+    var period: String
+    var periodStart: String
+    var periodEnd: String
+    var timezone: String
+    var isPartial: Bool
+    var showName: Bool
+    var counts: SharePayload.Counts?
+    var purposes: SharePayload.Purposes?
+    var feelings: SharePayload.Feelings?
+    var phraseId: String?
 }
 
 /// サーバーが受け付ける、定型のひとこと（IDだけを送る）。
-enum SharePhrase: String, CaseIterable, Identifiable {
+enum SharePhrase: String, CaseIterable, Identifiable, Codable {
     case p1, p2, p3
 
     var id: String { rawValue }
@@ -79,8 +101,19 @@ enum ShareStatsBuilder {
         expiresInDays: Int? = 7, recipientUids: [String]? = nil, idempotencyKey: String = UUID().uuidString.lowercased()
     ) throws -> SharePayload {
         guard selection.hasStats else { throw BuildError.nothingSelected }
-        let interval = period == .thisWeek ? calendar.weekInterval(containing: now) : calendar.previousWeekInterval(before: now)
-        let records = PeriodInsights.records(sessions: sessions, mode: mode, interval: interval).filter { !$0.phase.isOpen }
+        let interval: DateInterval
+        switch period {
+        case .thisWeek: interval = calendar.weekInterval(containing: now)
+        case .lastWeek: interval = calendar.previousWeekInterval(before: now)
+        case .all:
+            // 最初の記録から、いままで。サーバーが受け付ける最長（10年）を超えないようにする
+            let closed = PeriodInsights.records(sessions: sessions, mode: mode, interval: nil).filter { !$0.phase.isOpen }
+            let earliest = closed.map(\.startedAt).min() ?? now.addingTimeInterval(-86_400)
+            let limit = now.addingTimeInterval(-3_600 * 86_400)
+            interval = DateInterval(start: min(max(earliest, limit), now.addingTimeInterval(-1)), end: now)
+        }
+        let records = PeriodInsights.records(sessions: sessions, mode: mode, interval: period == .all ? nil : interval).filter { !$0.phase.isOpen }
+            .filter { period != .all || $0.startedAt >= interval.start }
 
         var payload = SharePayload(
             period: period.rawValue,
@@ -118,6 +151,14 @@ enum ShareStatsBuilder {
             payload.feelings = SharePayload.Feelings(satisfied: satisfied, neutral: neutral, wishedLess: wishedLess)
         }
         return payload
+    }
+}
+
+extension SharePayload {
+    /// 継続共有の更新用（受信者・冪等キー・期限を除く）
+    var updateBody: ShareUpdatePayload {
+        ShareUpdatePayload(period: period, periodStart: periodStart, periodEnd: periodEnd, timezone: timezone, isPartial: isPartial,
+                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, phraseId: phraseId)
     }
 }
 

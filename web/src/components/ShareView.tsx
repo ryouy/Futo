@@ -19,8 +19,8 @@ const FEELINGS: [keyof NonNullable<PublicShare["stats"]["feelings"]>, string][] 
 
 const percent = (part: number, whole: number) => `${Math.round((part / whole) * 100)}%`;
 
-function dateRange(start: string, end: string, timeZone: string): string {
-  const fmt = new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric", timeZone });
+function dateRange(start: string, end: string, timeZone: string, withYear = false): string {
+  const fmt = new Intl.DateTimeFormat("ja-JP", { ...(withYear ? { year: "numeric" as const } : {}), month: "numeric", day: "numeric", timeZone });
   return `${fmt.format(new Date(start))}〜${fmt.format(new Date(Date.parse(end) - 1000))}`;
 }
 
@@ -36,7 +36,7 @@ export function ShareView({ share, token }: { share: PublicShare; token?: string
       <div className="card">
         <p className="who">{share.displayName ?? "匿名"}</p>
         <p className="muted">
-          {stats.period === "thisWeek" ? "今週" : "先週"}（{dateRange(stats.periodStart, stats.periodEnd, stats.timezone)}）
+          {stats.period === "all" ? "全期間" : stats.period === "thisWeek" ? "今週" : "先週"}（{dateRange(stats.periodStart, stats.periodEnd, stats.timezone, stats.period === "all")}）
         </p>
         {stats.isPartial && <p className="notice">今週は、共有した時点までの途中経過です。</p>}
       </div>

@@ -10,14 +10,13 @@ struct SettingsView: View {
     @State private var confirmLeaveDevice = false
 
     private enum SettingsTab: Int, CaseIterable {
-        case restriction, breath, notification, sharing, other
+        case restriction, notification, account, other
 
         var title: String {
             switch self {
             case .restriction: return tr("制限")
-            case .breath: return tr("ひと呼吸")
             case .notification: return tr("通知")
-            case .sharing: return tr("共有")
+            case .account: return tr("アカウント")
             case .other: return tr("その他")
             }
         }
@@ -38,9 +37,8 @@ struct SettingsView: View {
 
             switch tab {
             case .restriction: restrictionTab
-            case .breath: breathTab
             case .notification: NotificationSettingsView(model: model)
-            case .sharing: SharingTab(model: model)
+            case .account: SharingTab(model: model)
             case .other: otherTab
             }
         }
@@ -82,9 +80,6 @@ struct SettingsView: View {
                         if on { model.startRestriction() } else { confirmOff = true }
                     }))
                     .frame(minHeight: 44)
-            }
-
-            CardSection {
                 Toggle(tr("デモモード"), isOn: Binding(
                     get: { isDemo },
                     set: { wantsDemo in
@@ -95,6 +90,23 @@ struct SettingsView: View {
                         }
                     }))
                     .frame(minHeight: 44)
+            }
+
+            CardSection {
+                Picker(tr("待機時間"), selection: Binding(
+                    get: { model.prefs.effectiveWaitSeconds },
+                    set: { value in model.updatePreferences { $0.waitSeconds = value } }
+                )) {
+                    ForEach(Preferences.waitOptions, id: \.self) { Text(durationText(seconds: $0)).tag($0) }
+                }
+                .frame(minHeight: 44)
+                Picker(tr("解除する時間"), selection: Binding(
+                    get: { model.prefs.effectiveUnlockMinutes },
+                    set: { value in model.updatePreferences { $0.unlockMinutes = value } }
+                )) {
+                    ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text(tr("{0}分", "\($0)")).tag($0) }
+                }
+                .frame(minHeight: 44)
             }
 
             if !isDemo {
@@ -110,48 +122,6 @@ struct SettingsView: View {
                     .frame(minHeight: 44)
                     if let error = model.permissionError { Text(error).font(.footnote) }
                 }
-            }
-        }
-        .compactForm()
-    }
-
-    // MARK: ひと呼吸
-
-    private var breathTab: some View {
-        Form {
-            CardSection {
-                Picker(tr("待機時間"), selection: Binding(
-                    get: { model.prefs.effectiveWaitSeconds },
-                    set: { value in model.updatePreferences { $0.waitSeconds = value } }
-                )) {
-                    ForEach(Preferences.waitOptions, id: \.self) { Text(durationText(seconds: $0)).tag($0) }
-                }
-                .frame(minHeight: 44)
-            }
-
-            CardSection {
-                Picker(tr("解除する時間"), selection: Binding(
-                    get: { model.prefs.effectiveUnlockMinutes },
-                    set: { value in model.updatePreferences { $0.unlockMinutes = value } }
-                )) {
-                    ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text(tr("{0}分", "\($0)")).tag($0) }
-                }
-                .frame(minHeight: 44)
-            }
-
-            CardSection {
-                TimeToggleRow(
-                    title: tr("朝の振り返り"),
-                    isOn: Binding(get: { model.prefs.morningEnabled },
-                                  set: { on in model.updatePreferences { $0.morningEnabled = on } }),
-                    minute: Binding(get: { model.prefs.morningMinute },
-                                    set: { value in model.updatePreferences { $0.morningMinute = value } }))
-                TimeToggleRow(
-                    title: tr("夜の振り返り"),
-                    isOn: Binding(get: { model.prefs.nightEnabled },
-                                  set: { on in model.updatePreferences { $0.nightEnabled = on } }),
-                    minute: Binding(get: { model.prefs.nightMinute },
-                                    set: { value in model.updatePreferences { $0.nightMinute = value } }))
             }
         }
         .compactForm()

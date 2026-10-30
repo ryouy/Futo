@@ -19,7 +19,7 @@ export const displayNameSchema = z
 
 /** 共有する統計。選んだ項目だけを送り、選ばなかった項目はキー自体を付けない。 */
 const statsShape = {
-  period: z.enum(["thisWeek", "lastWeek"]),
+  period: z.enum(["thisWeek", "lastWeek", "all"]),
   periodStart: z.string().datetime(),
   periodEnd: z.string().datetime(),
   timezone: z.string().min(1).max(64),
@@ -34,10 +34,14 @@ const statsShape = {
   phraseId: z.enum(["p1", "p2", "p3"]).optional(),
 };
 
-function checkStats(value: { periodStart: string; periodEnd: string; counts?: unknown; purposes?: unknown; feelings?: unknown; phraseId?: unknown }, ctx: z.RefinementCtx) {
+/** 週は最大8日。「全期間」は、最大10年。 */
+const MAX_SPAN_DAYS = { week: 8, all: 3650 };
+
+function checkStats(value: { period: string; periodStart: string; periodEnd: string; counts?: unknown; purposes?: unknown; feelings?: unknown; phraseId?: unknown }, ctx: z.RefinementCtx) {
   const start = Date.parse(value.periodStart);
   const end = Date.parse(value.periodEnd);
-  if (!(end > start) || end - start > 8 * 86_400_000) {
+  const maxDays = value.period === "all" ? MAX_SPAN_DAYS.all : MAX_SPAN_DAYS.week;
+  if (!(end > start) || end - start > maxDays * 86_400_000) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "period" });
   }
   // 全項目が未選択なら公開しない（ひとことだけの共有も作らない）
@@ -64,12 +68,15 @@ export const friendSharePayload = z
   .strict()
   .superRefine(checkStats);
 
+/** 継続共有の更新：受信者は変えず、統計だけを差し替える。 */
+export const friendShareUpdatePayload = z.object({ ...statsShape }).strict().superRefine(checkStats);
+
 export type WebSharePayload = z.infer<typeof webSharePayload>;
 export type FriendSharePayload = z.infer<typeof friendSharePayload>;
 
 /** 保存・返却する統計のコピー。送られた項目だけを、型で絞って取り出す。 */
 export interface StatsSnapshot {
-  period: "thisWeek" | "lastWeek";
+  period: "thisWeek" | "lastWeek" | "all";
   periodStart: string;
   periodEnd: string;
   timezone: string;
@@ -80,7 +87,7 @@ export interface StatsSnapshot {
   phrase?: string;
 }
 
-export function snapshotFrom(payload: WebSharePayload | FriendSharePayload): StatsSnapshot {
+export function snapshotFrom(payload: WebSharePayload | FriendSharePayload | z.infer<typeof friendShareUpdatePayload>): StatsSnapshot {
   const snapshot: StatsSnapshot = {
     period: payload.period,
     periodStart: payload.periodStart,

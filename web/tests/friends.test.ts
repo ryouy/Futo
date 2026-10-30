@@ -391,3 +391,103 @@ describe("通報", () => {
     expect((await call("POST", "/api/public/reports", { body: { token: share.body.token, reason: "spam" }, ip: "198.51.100.8" })).status).toBe(201);
   });
 });
+
+describe("継続共有（更新）と全期間", () => {
+  const stats = (overrides: Record<string, unknown> = {}) => {
+    const { recipientUids: _r, idempotencyKey: _k, ...rest } = friendPayload([]);
+    return { ...rest, ...overrides };
+  };
+
+  async function setup() {
+    const alice = await newUser("アリス");
+    const bob = await newUser("ボブ");
+    const carol = await newUser("キャロル");
+    await makeFriends(alice, bob);
+    await makeFriends(alice, carol);
+    const created = await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid]) });
+    return { alice, bob, carol, id: created.body.shareId as string };
+  }
+
+  it("作成者は、統計を差し替えられる。期限は更新時点から30日に延び、受信者は変わらない", async () => {
+    const { alice, bob, carol, id } = await setup();
+    setClockForTests(() => addDays(new Date(), 10));
+    const updated = await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: stats({ counts: { wantsToUse: 9, deferred: 8, interrupted: 7 }, purposes: { contact: 1, research: 2, break: 3, noReason: 4, unanswered: 0 } }) });
+    expect(updated.status).toBe(200);
+    const seen = await call("GET", `/api/friend-shares/${id}`, { token: bob.token });
+    expect(seen.body.stats.counts).toEqual({ wantsToUse: 9, deferred: 8, interrupted: 7 });
+    expect(seen.body.stats.purposes.break).toBe(3);
+    expect(Date.parse(seen.body.expiresAt)).toBeGreaterThan(addDays(new Date(), 38).getTime());
+    expect(Date.parse(seen.body.updatedAt)).toBeGreaterThan(Date.parse(seen.body.createdAt));
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: carol.token })).status).toBe(404); // 受信者は増えない
+  });
+
+  it("選ばなくなった項目は、更新後に消える（以前の値は残らない）", async () => {
+    const { alice, bob, id } = await setup();
+    await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: stats({ counts: undefined, feelings: { satisfied: 1, neutral: 0, wishedLess: 0 } }) });
+    const seen = await call("GET", `/api/friend-shares/${id}`, { token: bob.token });
+    expect(seen.body.stats.counts).toBeUndefined();
+    expect(seen.body.stats.feelings.answered).toBe(1);
+  });
+
+  it("作成者以外・受信者・無関係の人・未ログインは、更新できない", async () => {
+    const { bob, carol, id } = await setup();
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: bob.token, body: stats() })).status).toBe(404);
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: carol.token, body: stats() })).status).toBe(404);
+    expect((await call("PUT", `/api/friend-shares/${id}`, { body: stats() })).status).toBe(401);
+  });
+
+  it("停止した共有・期限切れの共有は、更新で復活しない", async () => {
+    const { alice, bob, id } = await setup();
+    await call("DELETE", `/api/friend-shares/${id}`, { token: alice.token });
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: stats() })).status).toBe(404);
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: bob.token })).status).toBe(404);
+
+    const second = await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid]) });
+    setClockForTests(() => addDays(new Date(), 31));
+    const lapsed = await call("PUT", `/api/friend-shares/${second.body.shareId}`, { token: alice.token, body: stats() });
+    expect(lapsed.status).toBe(410);
+    expect((await call("GET", `/api/friend-shares/${second.body.shareId}`, { token: bob.token })).status).toBe(404);
+  });
+
+  it("フレンドをやめた相手には、更新しても見えない", async () => {
+    const { alice, bob, id } = await setup();
+    const friends = await call("GET", "/api/friends", { token: alice.token });
+    await call("DELETE", `/api/friends/${friends.body.friends.find((f: { uid: string }) => f.uid === bob.uid).friendshipId}`, { token: alice.token });
+    await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: stats() });
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: bob.token })).status).toBe(404);
+  });
+
+  it("更新は1日48回まで（サーバーで強制）", async () => {
+    const { alice, id } = await setup();
+    for (let i = 0; i < 48; i++) {
+      const r = await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: stats() });
+      expect(r.status).toBe(200);
+    }
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: stats() })).status).toBe(429);
+  }, 60_000);
+
+  it("全期間は、最大10年まで。週は8日まで", async () => {
+    const { alice, id } = await setup();
+    const all = stats({ period: "all", periodStart: "2024-01-01T00:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z", isPartial: false });
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: all })).status).toBe(200);
+    const tooLong = stats({ period: "all", periodStart: "2010-01-01T00:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z" });
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: tooLong })).status).toBe(400);
+    const longWeek = stats({ period: "thisWeek", periodStart: "2026-12-01T00:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z" });
+    expect((await call("PUT", `/api/friend-shares/${id}`, { token: alice.token, body: longWeek })).status).toBe(400);
+  });
+
+  it("Webリンクでも、全期間を共有できる。ページに全期間と表示される", async () => {
+    const alice = await newUser("アリス");
+    const created = await call("POST", "/api/shares", { token: alice.token, body: friendlessWeb() });
+    expect(created.status).toBe(201);
+    const page = await call("GET", `/api/public/shares/${created.body.token}`);
+    expect(page.body.stats.period).toBe("all");
+  });
+});
+
+function friendlessWeb() {
+  return {
+    period: "all", periodStart: "2025-01-01T00:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z", timezone: "Asia/Tokyo", isPartial: false,
+    showName: true, counts: { wantsToUse: 50, deferred: 30, interrupted: 10 }, expiresInDays: 7, idempotencyKey: crypto.randomUUID(),
+  };
+}

@@ -7,6 +7,7 @@ struct FutoApp: App {
     @State private var model: AppModel
     @State private var sharing: SharingModel
     @State private var backup: BackupModel
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         LanguageStore.shared.applySystemDefaultIfUnset()
@@ -32,7 +33,15 @@ struct FutoApp: App {
             RootView(model: model)
                 .environment(sharing)
                 .environment(backup)
-                .task { await sharing.loadProfile() }
+                .onChange(of: scenePhase) { _, phase in
+                    // アプリを開いたとき、継続共有を最新にする（常時同期ではない）
+                    if phase == .active { Task { await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode) } }
+                }
+                .task {
+                    await sharing.loadProfile()
+                    sharing.loadStandingConfigs()
+                    await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode)
+                }
                 .onOpenURL { sharing.handleIncoming(url: $0) }
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
                     if let url = activity.webpageURL { sharing.handleIncoming(url: url) }

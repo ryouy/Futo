@@ -224,6 +224,7 @@ final class AuthService {
 enum ShareLinkCleanup {
     nonisolated(unsafe) static var run: (String) -> Void = {
         ShareLinkStore.removeAll(uid: $0)
+        UserDefaultsStandingStore().save([], uid: $0)
         // Driveの許可も、端末から除く（Drive上のバックアップは消えない）
         KeychainDriveTokenStore().clear(uid: $0)
     }

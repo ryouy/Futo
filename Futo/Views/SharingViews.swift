@@ -84,29 +84,24 @@ struct SharingTab: View {
     @ViewBuilder
     private var signedIn: some View {
         CardSection {
-            HStack(spacing: 14) {
-                AccountAvatar(name: sharing.profile?.displayName ?? "", photoURL: sharing.auth.photoURL, size: 48)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(sharing.profile?.displayName ?? "…").font(.headline).oneLine()
-                    Text(tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
-                }
-            }
-            .padding(.vertical, 4)
-            .accessibilityElement(children: .combine)
             Button { nameDraft = sharing.profile?.displayName ?? ""; editingName = true } label: {
-                Label(tr("表示名を変える"), systemImage: "pencil").tint(Theme.accent)
+                HStack(spacing: 14) {
+                    AccountAvatar(name: sharing.profile?.displayName ?? "", photoURL: sharing.auth.photoURL, size: 48)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(sharing.profile?.displayName ?? "…").font(.headline).foregroundStyle(.primary).oneLine()
+                        Text(tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "pencil").font(.footnote).foregroundStyle(Theme.accent)
+                }
+                .padding(.vertical, 4)
             }
-            .frame(minHeight: 44)
+            .accessibilityHint(tr("表示名を変える"))
         }
         CardSection {
-            NavigationLink { CreateShareView(model: model, kind: .web) } label: {
-                Label(tr("統計をリンクで共有"), systemImage: "link").foregroundStyle(Theme.accent)
+            NavigationLink { SharedLinksView(model: model) } label: {
+                Label(tr("リンクで共有"), systemImage: "link").foregroundStyle(Theme.accent)
             }.frame(minHeight: 44)
-            NavigationLink { SharedLinksView() } label: {
-                Label(tr("共有中のリンク"), systemImage: "list.bullet").foregroundStyle(Theme.accent)
-            }.frame(minHeight: 44)
-        }
-        CardSection {
             NavigationLink { FriendsView(model: model) } label: {
                 Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accent)
             }.frame(minHeight: 44)
@@ -143,6 +138,7 @@ struct CreateShareView: View {
     @State private var chosen: Set<String> = []
     @State private var created: URL?
     @State private var done = false
+    @State private var standing = true
 
     private var payload: SharePayload? {
         try? sharing.previewPayload(sessions: allSessions, mode: model.mode, period: period, selection: selection,
@@ -192,6 +188,13 @@ struct CreateShareView: View {
                         }))
                     }
                 }
+                CardSection {
+                    Toggle(tr("アプリを開いたとき、最新にする"), isOn: $standing)
+                    Text(standing
+                         ? tr("選んだ項目だけが、アプリを開くたびに更新されます。最後の更新から30日たつと、自動で見えなくなります。")
+                         : tr("いまの内容を、1回だけ共有します。30日で見えなくなります。"))
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
             }
             preview
             if let created {
@@ -218,26 +221,26 @@ struct CreateShareView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// 送る内容そのままを、先に見せる。
+    /// 送る内容そのままを、先にグラフで見せる。
     private var preview: some View {
-        CardSection {
-            Text(tr("共有される内容")).font(.footnote).foregroundStyle(.secondary)
+        Group {
             if let payload {
-                if let c = payload.counts {
-                    LabeledContent(tr("使いたい / やめておく / 中断"), value: "\(c.wantsToUse) / \(c.deferred) / \(c.interrupted)")
+                CardSection {
+                    Text(tr("共有される内容")).font(.footnote).foregroundStyle(.secondary)
+                    Text(selection.showName ? tr("表示名：{0}", sharing.profile?.displayName ?? "") : tr("表示名：匿名"))
+                        .font(.footnote)
+                    if payload.isPartial { Text(tr("今週はまだ途中です。")).font(.footnote).foregroundStyle(.secondary) }
                 }
-                if let p = payload.purposes {
-                    LabeledContent(tr("目的"), value: tr("連絡 {0}・調べもの {1}・気分転換 {2}・理由なし {3}・未回答 {4}", "\(p.contact)", "\(p.research)", "\(p.break)", "\(p.noReason)", "\(p.unanswered)"))
+                .listRowBackground(Color.clear)
+                Section {
+                    StatsChartsView(stats: ChartStats(payload: payload))
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
                 }
-                if let f = payload.feelings {
-                    let answered = f.satisfied + f.neutral + f.wishedLess
-                    LabeledContent(tr("気持ち（回答 {0} 件）", "\(answered)"), value: "\(f.satisfied) / \(f.neutral) / \(f.wishedLess)")
-                }
-                if payload.isPartial { Text(tr("今週はまだ途中です。")).font(.footnote).foregroundStyle(.secondary) }
-                Text(selection.showName ? tr("表示名：{0}", sharing.profile?.displayName ?? "") : tr("表示名：匿名"))
-                    .font(.footnote)
             } else {
-                Text(tr("項目を選ぶと、ここに表示されます。")).font(.footnote).foregroundStyle(.secondary)
+                CardSection {
+                    Text(tr("項目を選ぶと、ここにグラフで表示されます。")).font(.footnote).foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -246,7 +249,7 @@ struct CreateShareView: View {
         guard let payload else { return }
         switch kind {
         case .web: created = await sharing.createWebShare(payload)
-        case .friends: done = await sharing.createFriendShare(payload)
+        case .friends: done = await sharing.createFriendShare(payload, standing: standing ? (period, selection) : nil)
         }
     }
 }
@@ -275,18 +278,24 @@ struct QRImage: View {
 
 @MainActor
 struct SharedLinksView: View {
+    let model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var confirmRevoke: ShareListItem?
     @State private var rotated: URL?
 
     var body: some View {
         Form {
+            CardSection {
+                NavigationLink { CreateShareView(model: model, kind: .web) } label: {
+                    Label(tr("新しいリンクを作る"), systemImage: "plus.circle").foregroundStyle(Theme.accent)
+                }.frame(minHeight: 44)
+            }
             if sharing.shares.isEmpty {
                 CardSection { Text(tr("共有中のリンクはありません。")).foregroundStyle(.secondary) }
             }
             ForEach(sharing.shares) { item in
                 CardSection {
-                    LabeledContent(item.period == "thisWeek" ? tr("今週") : tr("先週"), value: statusText(item.status))
+                    LabeledContent(periodLabel(item.period), value: statusText(item.status))
                     Text(tr("期限：{0}", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                     if item.status == "active" {
                         if let url = sharing.localURL(for: item) {
@@ -361,5 +370,13 @@ struct AccountAvatar: View {
                     .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
             )
+    }
+}
+
+func periodLabel(_ period: String) -> String {
+    switch period {
+    case "thisWeek": return tr("今週")
+    case "lastWeek": return tr("先週")
+    default: return tr("全期間")
     }
 }

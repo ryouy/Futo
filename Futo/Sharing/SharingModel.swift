@@ -11,6 +11,8 @@ final class SharingModel {
     let config: Phase4Config
     let auth: AuthService
     @ObservationIgnored private let api: APIClient
+    @ObservationIgnored private let standingStore: StandingShareStoring
+    private(set) var standingConfigs: [StandingShareConfig] = []
 
     private(set) var phase: Phase = .idle
     private(set) var profile: MeResponse?
@@ -26,8 +28,9 @@ final class SharingModel {
     /// 作成直後の共有リンク（その場で見せるため。Keychainにも保存する）
     private(set) var lastCreatedURL: URL?
 
-    init(config: Phase4Config = .load(), auth: AuthService? = nil, urlSession: URLSession = .shared) {
+    init(config: Phase4Config = .load(), auth: AuthService? = nil, urlSession: URLSession = .shared, standingStore: StandingShareStoring = UserDefaultsStandingStore()) {
         self.config = config
+        self.standingStore = standingStore
         let service = auth ?? AuthService(config: config, urlSession: urlSession, web: WebAuthRunner(), store: KeychainSessionStore())
         self.auth = service
         self.api = APIClient(baseURL: config.apiBaseURL, session: urlSession) { [weak service] force in
@@ -65,7 +68,7 @@ final class SharingModel {
 
     private func reset() {
         profile = nil; shares = []; friends = FriendsResponse(friends: [], incoming: [], outgoing: [])
-        receivedShares = []; sentShares = []; invitation = nil; lastCreatedURL = nil; message = nil
+        receivedShares = []; sentShares = []; invitation = nil; lastCreatedURL = nil; message = nil; standingConfigs = []
     }
 
     func loadProfile() async {
@@ -235,15 +238,60 @@ final class SharingModel {
 
     // MARK: フレンド限定共有
 
-    func createFriendShare(_ payload: SharePayload) async -> Bool {
+    /// `standing` が true なら、継続共有にする（アプリを開いたときに更新する設定を、端末に保存する）。
+    func createFriendShare(_ payload: SharePayload, standing: (period: SharePeriod, selection: ShareSelection)? = nil) async -> Bool {
         phase = .working
         defer { phase = .idle }
         do {
-            let _: CreatedShareResponse = try await api.send("POST", "/api/friend-shares", body: payload)
+            let created: CreatedShareResponse = try await api.send("POST", "/api/friend-shares", body: payload)
+            if let standing, let uid {
+                var configs = standingStore.load(uid: uid)
+                configs.removeAll { $0.shareId == created.shareId }
+                configs.append(StandingShareConfig(shareId: created.shareId, period: standing.period, selection: standing.selection, refreshedAt: Date()))
+                standingStore.save(configs, uid: uid)
+                standingConfigs = configs
+            }
             message = nil
             await loadFriendShares()
             return true
         } catch { fail(error); return false }
+    }
+
+    // MARK: 継続共有の更新
+
+    func isStanding(_ shareId: String) -> StandingShareConfig? { standingConfigs.first { $0.shareId == shareId } }
+
+    func loadStandingConfigs() {
+        standingConfigs = uid.map { standingStore.load(uid: $0) } ?? []
+    }
+
+    /// アプリを開いたとき（一定時間ごと）・手動のときに、継続共有の統計を最新にする。失敗しても、個人の機能には影響しない。
+    func refreshStanding(sessions: [Session], mode: AppMode, force: Bool = false, now: Date = Date()) async {
+        guard isSignedIn, mode == .device, let uid else { return }
+        var configs = standingStore.load(uid: uid)
+        guard !configs.isEmpty else { standingConfigs = []; return }
+        var changed = false
+        var lapsed = 0
+        for index in configs.indices.reversed() where force || configs[index].isDue(now: now) {
+            let config = configs[index]
+            guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now) else { continue }
+            do {
+                let _: EmptyResponse = try await api.send("PUT", "/api/friend-shares/\(config.shareId)", body: payload.updateBody)
+                configs[index].lastRefreshedAt = now
+                changed = true
+            } catch let error as APIError where error.kind == .gone || error.kind == .notFound {
+                // 期限切れ・停止済み：更新を続けない
+                configs.remove(at: index)
+                changed = true
+                lapsed += 1
+            } catch let error as APIError where error.kind == .unauthorized || error.kind == .offline {
+                break
+            } catch { continue }
+        }
+        if changed { standingStore.save(configs, uid: uid) }
+        standingConfigs = configs
+        if lapsed > 0 { await loadFriendShares() }
+        if force { await loadFriendShares() }
     }
 
     func loadFriendShares() async {
@@ -261,6 +309,11 @@ final class SharingModel {
     func revokeFriendShare(id: String) async {
         do {
             let _: EmptyResponse = try await api.send("DELETE", "/api/friend-shares/\(id)")
+            if let uid {
+                let remaining = standingStore.load(uid: uid).filter { $0.shareId != id }
+                standingStore.save(remaining, uid: uid)
+                standingConfigs = remaining
+            }
             await loadFriendShares()
         } catch { fail(error) }
     }

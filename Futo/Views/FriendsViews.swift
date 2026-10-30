@@ -136,7 +136,7 @@ struct FriendsView: View {
                     NavigationLink { FriendShareDetailView(id: item.id) } label: {
                         VStack(alignment: .leading) {
                             Text(item.ownerName ?? tr("匿名"))
-                            Text(item.period == "thisWeek" ? tr("今週") : tr("先週")).font(.footnote).foregroundStyle(.secondary)
+                            Text(periodLabel(item.period) + (item.updatedAt.map { " · " + tr("更新 {0}", dateText($0)) } ?? "")).font(.footnote).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -147,11 +147,15 @@ struct FriendsView: View {
                     ForEach(sharing.sentShares) { item in
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(item.period == "thisWeek" ? tr("今週") : tr("先週"))
+                                Text(periodLabel(item.period) + (sharing.isStanding(item.id) != nil ? " · " + tr("継続中") : ""))
                                 Text(tr("{0}人・期限 {1}", "\(item.recipientCount)", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                             }
                             Spacer()
                             if item.status == "active" {
+                                if sharing.isStanding(item.id) != nil {
+                                    Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode, force: true) } }
+                                        .buttonStyle(.borderless).disabled(sharing.isWorking)
+                                }
                                 Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }.buttonStyle(.borderless)
                             }
                         }
@@ -175,24 +179,20 @@ struct FriendShareDetailView: View {
             if let detail {
                 let s = detail.stats
                 CardSection {
-                    LabeledContent(tr("送り主"), value: detail.ownerName ?? tr("匿名"))
-                    LabeledContent(tr("期間"), value: s.period == "thisWeek" ? tr("今週") : tr("先週"))
-                    if s.isPartial { Text(tr("途中までの集計です。")).font(.footnote).foregroundStyle(.secondary) }
-                }
-                if let c = s.counts {
-                    CardSection { LabeledContent(tr("使いたい / やめておく / 中断"), value: "\(c.wantsToUse) / \(c.deferred) / \(c.interrupted)") }
-                }
-                if let p = s.purposes {
-                    CardSection {
-                        LabeledContent(tr("連絡"), value: "\(p.contact)"); LabeledContent(tr("調べもの"), value: "\(p.research)")
-                        LabeledContent(tr("気分転換"), value: "\(p.break)"); LabeledContent(tr("理由なし"), value: "\(p.noReason)")
-                        LabeledContent(tr("未回答"), value: "\(p.unanswered)")
+                    HStack(spacing: 12) {
+                        AccountAvatar(name: detail.ownerName ?? "?", size: 40)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(detail.ownerName ?? tr("匿名")).font(.headline)
+                            Text(periodLabel(s.period) + (s.isPartial ? " · " + tr("途中までの集計") : "")).font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
+                    Text(tr("更新 {0}", dateText(detail.updatedAt ?? detail.createdAt))).font(.footnote).foregroundStyle(.secondary)
                 }
-                if let f = s.feelings {
-                    CardSection { LabeledContent(tr("気持ち（回答 {0} 件）", "\(f.answered)"), value: "\(f.satisfied) / \(f.neutral) / \(f.wishedLess)") }
+                Section {
+                    StatsChartsView(stats: ChartStats(snapshot: s))
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
                 }
-                if let phrase = s.phrase { CardSection { Text(phrase) } }
             } else if failed {
                 CardSection { Text(sharing.message ?? tr("見られませんでした。")).foregroundStyle(.secondary) }
             } else {

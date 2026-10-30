@@ -5,11 +5,15 @@ import { ApiError } from "./http";
 import { blockRef, friendships, isBlockedBetween } from "./friends";
 import { consumeDaily, readDaily } from "./limits";
 import { snapshotFrom, type FriendSharePayload, type StatsSnapshot } from "./schema";
+import type { z } from "zod";
+import type { friendShareUpdatePayload } from "./schema";
 import { pairKey } from "./tokens";
 import { loadActiveUser, userRef } from "./users";
 
 export const FRIEND_SHARE_TTL_DAYS = 30;
 export const MAX_FRIEND_SHARES_PER_DAY = 20;
+/** 継続共有の更新は、1日48回まで（アプリを開くたびの更新を想定）。 */
+export const MAX_FRIEND_SHARE_UPDATES_PER_DAY = 48;
 
 const friendShares = () => db().collection("friendShares");
 const iso = (ts: Timestamp) => ts.toDate().toISOString();
@@ -49,6 +53,7 @@ export async function createFriendShare(uid: string, payload: FriendSharePayload
       stats: snapshotFrom(payload),
       selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), phrase: Boolean(payload.phraseId) },
       createdAt: Timestamp.fromDate(t),
+      updatedAt: Timestamp.fromDate(t),
       expiresAt,
     });
     tx.set(opRef, { uid, shareId: ref.id, expiresAt, createdAt: Timestamp.fromDate(t) });
@@ -79,6 +84,7 @@ export async function getFriendShare(uid: string, shareId: string) {
     ownerName: (data.ownerName as string | null) ?? null,
     isOwner,
     createdAt: iso(data.createdAt),
+    updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp),
     expiresAt: iso(data.expiresAt),
     status: data.status as string,
     stats: data.stats as StatsSnapshot,
@@ -96,7 +102,7 @@ export async function listReceivedFriendShares(uid: string, limit = 20) {
   for (const doc of snap.docs) {
     const data = doc.data();
     if (await canRead(data, uid)) {
-      items.push({ id: doc.id, ownerName: (data.ownerName as string | null) ?? null, period: (data.stats as StatsSnapshot).period, createdAt: iso(data.createdAt), expiresAt: iso(data.expiresAt) });
+      items.push({ id: doc.id, ownerName: (data.ownerName as string | null) ?? null, period: (data.stats as StatsSnapshot).period, createdAt: iso(data.createdAt), updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp), expiresAt: iso(data.expiresAt) });
     }
   }
   return { items };
@@ -112,6 +118,7 @@ export async function listSentFriendShares(uid: string, limit = 20) {
         period: (data.stats as StatsSnapshot).period,
         recipientCount: (data.recipientUids as string[]).length,
         createdAt: iso(data.createdAt),
+        updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp),
         expiresAt: iso(data.expiresAt),
         status: data.status === "revoked" ? "revoked" : (data.expiresAt as Timestamp).toMillis() <= now().getTime() ? "expired" : "active",
       };
@@ -125,5 +132,33 @@ export async function revokeFriendShare(uid: string, shareId: string): Promise<v
     const snap = await tx.get(ref);
     if (!snap.exists || snap.data()?.ownerUid !== uid) throw new ApiError(404, "not_found");
     tx.update(ref, { status: "revoked", revokedAt: Timestamp.fromDate(now()) });
+  });
+}
+
+/**
+ * 継続共有の更新：作成者が、統計を最新のものに差し替える。受信者は変わらない。
+ * 取り消し済み・期限切れの共有は、更新しない（期限切れは「もう一度共有」で作り直す）。
+ * 更新のたびに、期限をその時点から30日に延ばす。更新されなくなって30日たつと、自動で見えなくなる。
+ */
+export async function updateFriendShare(uid: string, shareId: string, payload: z.infer<typeof friendShareUpdatePayload>) {
+  const user = await loadActiveUser(uid);
+  const t = now();
+  const expiresAt = Timestamp.fromDate(addDays(t, FRIEND_SHARE_TTL_DAYS));
+  const ref = friendShares().doc(shareId);
+  return db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.data();
+    if (!data || data.ownerUid !== uid || data.status !== "active") throw new ApiError(404, "not_found");
+    if ((data.expiresAt as Timestamp).toMillis() <= t.getTime()) throw new ApiError(410, "expired");
+    const counter = await readDaily(tx, uid, "friendShareUpdate");
+    consumeDaily(tx, counter, uid, "friendShareUpdate", MAX_FRIEND_SHARE_UPDATES_PER_DAY);
+    tx.update(ref, {
+      ownerName: payload.showName ? user.displayName : null,
+      stats: snapshotFrom(payload),
+      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), phrase: Boolean(payload.phraseId) },
+      updatedAt: Timestamp.fromDate(t),
+      expiresAt,
+    });
+    return { shareId, updatedAt: iso(Timestamp.fromDate(t)), expiresAt: iso(expiresAt) };
   });
 }

@@ -104,6 +104,7 @@ struct ReceivedFriendShare: Codable, Equatable, Identifiable {
     var ownerName: String?
     var period: String
     var createdAt: String
+    var updatedAt: String?
     var expiresAt: String
 }
 
@@ -116,6 +117,7 @@ struct SentFriendShare: Codable, Equatable, Identifiable {
     var period: String
     var recipientCount: Int
     var createdAt: String
+    var updatedAt: String?
     var expiresAt: String
     var status: String
 }
@@ -129,6 +131,7 @@ struct FriendShareDetail: Codable, Equatable {
     var ownerName: String?
     var isOwner: Bool
     var createdAt: String
+    var updatedAt: String?
     var expiresAt: String
     var status: String
     var stats: StatsSnapshotDTO

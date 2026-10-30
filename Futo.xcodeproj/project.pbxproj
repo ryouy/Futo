@@ -60,11 +60,14 @@
 		8A92752BBED311CF09D4AECA /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		8C03781D30A6220B1604A7DE /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE4BA309E788D84B95854AD /* AppSettings.swift */; };
 		8C0A1EDFF95440EA18FB9168 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF89A44A3244DEF110D2FD5 /* AuthServiceTests.swift */; };
+		91B2ECE1C38EB051A1989FE6 /* StandingShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */; };
+		95DDC63148329F84382E3A65 /* StandingShareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67A8F8585F9F7584FC510770 /* StandingShareTests.swift */; };
 		A792D9702B0A5ECF567404C3 /* SharingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */; };
 		B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0604FAD36D34A141ED936C80 /* SessionSummary.swift */; };
 		B35EE4150B6ED67BC21646EC /* SharingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F135E43B0E027CEB7C5623E3 /* SharingTests.swift */; };
 		B8BB5DE9D67E635126881316 /* Phase4Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9F9AF641B9C85775FA877F36 /* Phase4Config.plist */; };
 		B9ADBE7840BCB17E993A8148 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7D6F2D068E20BC2CB84D11 /* AuthService.swift */; };
+		C362185EE1AF8F06BE892F74 /* StatsCharts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */; };
 		C97999953E09EDCC3B90042A /* DriveAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126548157E958BD21500124 /* DriveAuth.swift */; };
 		D38A5109C08DEC235E07BE77 /* InviteLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E9AE22A2DD42A5BA4FF900D /* InviteLink.swift */; };
 		D39E6E051DDA730B7DCF1887 /* DriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42DC2CE93889F66F68CEA1BD /* DriveClient.swift */; };
@@ -135,7 +138,9 @@
 		57186D513F893809C415EC62 /* AppModel+Phase3.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AppModel+Phase3.swift"; sourceTree = "<group>"; };
 		5A6C85F6C90FCE546C929F5F /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatsCharts.swift; sourceTree = "<group>"; };
 		645EC79F22BEC5EFE970061D /* Futo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Futo.entitlements; sourceTree = "<group>"; };
+		67A8F8585F9F7584FC510770 /* StandingShareTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingShareTests.swift; sourceTree = "<group>"; };
 		6D1F074481297D230F696E4A /* Phase4Config.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase4Config.swift; sourceTree = "<group>"; };
 		6D6E702890F1D0A6A89F84AB /* WebAuthRunner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebAuthRunner.swift; sourceTree = "<group>"; };
 		6E4FEB320F54297D02F1B5B9 /* SplashView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
@@ -164,6 +169,7 @@
 		C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRestrictionService.swift; sourceTree = "<group>"; };
 		C26B0FC1E1229764718CF683 /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceRestrictionService.swift; sourceTree = "<group>"; };
+		C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingShare.swift; sourceTree = "<group>"; };
 		CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase3Tests.swift; sourceTree = "<group>"; };
 		CFC033647C6060CD293D5535 /* ReflectionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionViews.swift; sourceTree = "<group>"; };
 		D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionCard.swift; sourceTree = "<group>"; };
@@ -247,6 +253,7 @@
 				7CF89A44A3244DEF110D2FD5 /* AuthServiceTests.swift */,
 				AE7744A612187441CC771BE2 /* BackupTests.swift */,
 				99A12D1CD44C264F49DA847A /* DriveTests.swift */,
+				67A8F8585F9F7584FC510770 /* StandingShareTests.swift */,
 			);
 			path = FutoTests;
 			sourceTree = "<group>";
@@ -264,6 +271,7 @@
 				2E7D6F2D068E20BC2CB84D11 /* AuthService.swift */,
 				6D6E702890F1D0A6A89F84AB /* WebAuthRunner.swift */,
 				0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */,
+				C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */,
 			);
 			name = Sharing;
 			path = Sharing;
@@ -297,6 +305,7 @@
 				8CB23ABB578D87C290E440A7 /* SharingViews.swift */,
 				991EEDC925EAC3F1447C11D7 /* FriendsViews.swift */,
 				D5AB94950F0760F7FCF9AF18 /* BackupViews.swift */,
+				61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -601,6 +610,8 @@
 				D39E6E051DDA730B7DCF1887 /* DriveClient.swift in Sources */,
 				D4CA517D53B4AE4FC5D3C0E3 /* BackupModel.swift in Sources */,
 				22C505E61C337ED9F4D1B6E6 /* BackupViews.swift in Sources */,
+				91B2ECE1C38EB051A1989FE6 /* StandingShare.swift in Sources */,
+				C362185EE1AF8F06BE892F74 /* StatsCharts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -615,6 +626,7 @@
 				8C0A1EDFF95440EA18FB9168 /* AuthServiceTests.swift in Sources */,
 				F397E7B2FE82AA8EC2EC269A /* BackupTests.swift in Sources */,
 				43624583AFDC1FD9F7939A27 /* DriveTests.swift in Sources */,
+				95DDC63148329F84382E3A65 /* StandingShareTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

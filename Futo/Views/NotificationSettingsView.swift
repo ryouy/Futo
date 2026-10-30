@@ -89,6 +89,19 @@ struct NotificationSettingsView: View {
                 .frame(minHeight: 44)
             }
 
+            CardSection {
+                TimeToggleRow(
+                    title: tr("朝の振り返りカード"),
+                    isOn: Binding(get: { model.prefs.morningEnabled },
+                                  set: { on in model.updatePreferences { $0.morningEnabled = on } }),
+                    minute: bind(\.morningMinute))
+                TimeToggleRow(
+                    title: tr("夜の振り返りカード"),
+                    isOn: Binding(get: { model.prefs.nightEnabled },
+                                  set: { on in model.updatePreferences { $0.nightEnabled = on } }),
+                    minute: bind(\.nightMinute))
+            }
+
             let warnings = NotificationPlanner.warnings(preferences: model.prefs)
             if !warnings.isEmpty {
                 CardSection {
