@@ -39,6 +39,7 @@
 		378B679AC14F0CC336D756AA /* WaitCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4267030096FD083643FBA49A /* WaitCountdown.swift */; };
 		3A707A65C8E6A1315AB5B690 /* PeriodInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D943536ADE05ED82A6CD9E57 /* PeriodInsights.swift */; };
 		3D03BF77A074BD2E46728FD0 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
+		3FFF3D9CA97852A6C24BE77F /* RestrictionEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B570372683665F0BBE807D /* RestrictionEvent.swift */; };
 		40D60010D7AE55A236CBB48F /* AppNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14B387E89C10E3530B150F06 /* AppNames.swift */; };
 		43624583AFDC1FD9F7939A27 /* DriveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99A12D1CD44C264F49DA847A /* DriveTests.swift */; };
 		4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */; };
@@ -53,6 +54,7 @@
 		56269CD9A8AA67F43BD50711 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */; };
 		5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D183B067D9C20E8E848405 /* InsightsView.swift */; };
 		5C0345F5EA81CAE5EC7D4015 /* DemoRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */; };
+		5F21563494D63721948F802E /* RestrictionEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A74E35431C3F5CF9B7356C7 /* RestrictionEventTests.swift */; };
 		5FF5104A86D141EF2D4DA87D /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = E640CE9BAC5D46E1D1FB0617 /* PKCE.swift */; };
 		6004556B9472BDBA86337E6D /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		6701903BE9BD43EF8CDD200A /* WaitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95DEA83570D048231C077F6 /* WaitController.swift */; };
@@ -185,6 +187,7 @@
 		6D6E702890F1D0A6A89F84AB /* WebAuthRunner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebAuthRunner.swift; sourceTree = "<group>"; };
 		6E4FEB320F54297D02F1B5B9 /* SplashView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		7374470A04DEE6A31639424D /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A74E35431C3F5CF9B7356C7 /* RestrictionEventTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestrictionEventTests.swift; sourceTree = "<group>"; };
 		7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		7CF89A44A3244DEF110D2FD5 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		8126548157E958BD21500124 /* DriveAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriveAuth.swift; sourceTree = "<group>"; };
@@ -217,6 +220,7 @@
 		C26B0FC1E1229764718CF683 /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceRestrictionService.swift; sourceTree = "<group>"; };
 		C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C7B570372683665F0BBE807D /* RestrictionEvent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestrictionEvent.swift; sourceTree = "<group>"; };
 		C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingShare.swift; sourceTree = "<group>"; };
 		CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase3Tests.swift; sourceTree = "<group>"; };
 		CFC033647C6060CD293D5535 /* ReflectionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionViews.swift; sourceTree = "<group>"; };
@@ -346,6 +350,7 @@
 				67A8F8585F9F7584FC510770 /* StandingShareTests.swift */,
 				6C7654A63B964559C5355DEA /* PauseFlowTests.swift */,
 				9F1205ABDB91847DB8948188 /* DailyUnlockSummaryTests.swift */,
+				7A74E35431C3F5CF9B7356C7 /* RestrictionEventTests.swift */,
 			);
 			path = FutoTests;
 			sourceTree = "<group>";
@@ -410,6 +415,7 @@
 				5A6C85F6C90FCE546C929F5F /* Session.swift */,
 				1DD20AE72812E367E3277411 /* Preferences.swift */,
 				D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */,
+				C7B570372683665F0BBE807D /* RestrictionEvent.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -790,6 +796,7 @@
 				1926C3D42807BC57054A3778 /* PauseModel.swift in Sources */,
 				8AB7C7078D389FCB348E72FA /* DailyUnlockSummary.swift in Sources */,
 				40D60010D7AE55A236CBB48F /* AppNames.swift in Sources */,
+				3FFF3D9CA97852A6C24BE77F /* RestrictionEvent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -807,6 +814,7 @@
 				95DDC63148329F84382E3A65 /* StandingShareTests.swift in Sources */,
 				FB091407F84BD6470B5A6E0A /* PauseFlowTests.swift in Sources */,
 				1D1BC0AAB9E2674E6A01E29C /* DailyUnlockSummaryTests.swift in Sources */,
+				5F21563494D63721948F802E /* RestrictionEventTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

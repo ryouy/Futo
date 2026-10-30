@@ -69,7 +69,7 @@ struct FriendsView: View {
                 if showQR {
                     QRImage(text: invitation.url).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                Text(tr("相手が申請し、あなたが承認するまで、統計は見えません。"))
+                Text(tr("相手が受け入れて、あなたが承認するまで、統計は見えません。"))
                     .font(.footnote).foregroundStyle(.secondary)
                 Button(role: .destructive) { Task { await sharing.cancelInvitation() } } label: { Label(tr("招待を取り消す"), systemImage: "xmark.circle") }
                     .buttonStyle(ChipButtonStyle())
@@ -93,7 +93,7 @@ struct FriendsView: View {
                 .buttonBorderShape(.circle)
                 .accessibilityLabel(tr("貼り付け"))
             }
-            Button(tr("申請する")) {
+            Button(tr("受け入れる")) {
                 if let normalized = InviteLink.normalizedCode(code) {
                     Task { if await sharing.sendFriendRequest(code: normalized) { code = "" } }
                 }
@@ -105,7 +105,7 @@ struct FriendsView: View {
 
     private var incomingSection: some View {
         CardSection {
-            Text(tr("承認待ちの申請")).font(.footnote).foregroundStyle(.secondary)
+            Text(tr("承認待ち")).font(.footnote).foregroundStyle(.secondary)
             ForEach(sharing.friends.incoming) { request in
                 VStack(alignment: .leading, spacing: 8) {
                     Text(request.displayName)
@@ -121,7 +121,7 @@ struct FriendsView: View {
 
     private var outgoingSection: some View {
         CardSection {
-            Text(tr("送った申請")).font(.footnote).foregroundStyle(.secondary)
+            Text(tr("返事待ち")).font(.footnote).foregroundStyle(.secondary)
             ForEach(sharing.friends.outgoing) { request in
                 HStack {
                     Text(request.displayName)
@@ -173,7 +173,7 @@ struct FriendsView: View {
                             Spacer()
                             if item.status == "active" {
                                 if sharing.isStanding(item.id) != nil {
-                                    Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode, force: true) } }
+                                    Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode, force: true) } }
                                         .buttonStyle(ChipButtonStyle()).fixedSize().disabled(sharing.isWorking)
                                 }
                                 Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }
@@ -230,7 +230,7 @@ struct FriendShareDetailView: View {
     }
 }
 
-/// 招待リンクから開いたときの確認。申請は、確認してから送る（開いただけでは送らない）。
+/// 招待リンクから開いたときの確認。「受け入れる」を押してから送る（開いただけでは送らない）。
 @MainActor
 struct InviteLandingView: View {
     let token: String
@@ -245,19 +245,19 @@ struct InviteLandingView: View {
             Form {
                 if !sharing.isConfigured || !sharing.isSignedIn {
                     CardSection {
-                        Text(sharing.isConfigured ? tr("フレンドの申請には、ログインが必要です。") : tr("共有の設定がまだ終わっていません。"))
+                        Text(sharing.isConfigured ? tr("招待を受け入れるには、ログインが必要です。") : tr("共有の設定がまだ終わっていません。"))
                         if sharing.isConfigured {
                             Button { Task { await sharing.signIn() } } label: { Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark") }
                                 .buttonStyle(FutoButtonStyle())
                         }
                     }
                 } else if sent {
-                    CardSection { Text(tr("申請しました。承認されると、フレンドになります。")) }
+                    CardSection { Text(tr("受け入れました。相手が承認すると、フレンドになります。")) }
                 } else if let inviter {
                     CardSection {
                         Text(tr("{0} さんからの招待です。", inviter.inviterName))
-                        Text(tr("申請して、相手が承認するまで、統計は見えません。")).font(.footnote).foregroundStyle(.secondary)
-                        Button(tr("フレンドに申請する")) { Task { sent = await sharing.sendFriendRequest(token: token) } }
+                        Text(tr("相手が承認するまで、統計は見えません。")).font(.footnote).foregroundStyle(.secondary)
+                        Button(tr("招待を受け入れる")) { Task { sent = await sharing.sendFriendRequest(token: token) } }
                             .buttonStyle(FutoButtonStyle()).disabled(sharing.isWorking)
                     }
                 } else if loaded {

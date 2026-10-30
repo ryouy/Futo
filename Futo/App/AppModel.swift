@@ -13,6 +13,7 @@ final class AppModel {
     let demo: DemoRestrictionService
     let device: DeviceRestrictionService
     let cards: ReflectionCardStore
+    let events: RestrictionEventStore
     /// 制限全体の一時停止（待機→停止→自動で再制限）。実機のみ
     let pause: PauseFlow
     let notifications = NotificationService.shared
@@ -63,6 +64,7 @@ final class AppModel {
         self.settings = settings
         self.sessions = SessionStore(context: context)
         self.cards = ReflectionCardStore(context: context)
+        self.events = RestrictionEventStore(context: context)
         self.prefs = settings.preferences
         self.demo = DemoRestrictionService(defaults: defaults)
         self.device = DeviceRestrictionService()
@@ -261,23 +263,32 @@ final class AppModel {
     /// 待機を始める。ここでは何も解除しない。制限がかかっているとき（または一時停止の延長）だけ始められる。
     @discardableResult
     func startPauseWait() -> Bool {
+        startWait(.pause)
+    }
+
+    /// 待機を始める（一時停止は短く、制限の終了は長い）。ここでは何も解除しない。
+    @discardableResult
+    func startWait(_ kind: WaitKind) -> Bool {
         guard mode == .device, permission == .approved else { return false }
-        guard restriction == .configured || isPaused else {
+        guard restriction == .configured || isPaused || (kind == .end && intendsRestriction) else {
             notice = tr("制限がかかっているときに、使えます。")
             return false
         }
         guard device.supportsTemporaryUnlock else {
-            errorMessage = tr("この環境では、一時停止を使えません。")
+            errorMessage = tr("この環境では、使えません。")
             return false
         }
-        return pause.beginWait()
+        return pause.beginWait(kind: kind)
     }
 
     /// 本人が「停止する」を押したとき。再制限の監視と状態を保存できた場合だけ、解除する。
     func confirmPause() -> PauseStartResult {
         let result = pause.confirmPause()
         switch result {
-        case .started, .notReady: break
+        case .started:
+            // 実際に解除できたときだけ記録する
+            events.record(.pause, mode: .device, minutes: pause.rules.pauseMinutes)
+        case .notReady: break
         case .failed(.scheduling):
             errorMessage = tr("自動で制限に戻す準備ができなかったため、停止しませんでした。制限は続いています。もう一度お試しください。")
         case .failed(.shield):
@@ -295,8 +306,24 @@ final class AppModel {
         refresh()
     }
 
-    /// 制限全体を終了する（恒久）。一時停止の状態も消す。
-    func stopRestriction() {
+    /// 実機：待機（30分）が終わったあと、本人が「終了する」を押したとき。待機を省略した終了はできない。
+    @discardableResult
+    func confirmEnd() -> Bool {
+        guard pause.confirmEnd() else { return false }
+        events.record(.end, mode: .device)
+        stopRestriction()
+        return !intendsRestriction
+    }
+
+    /// デモ：待機なしで終了する（デモでは、実際の制限は変わらない）。実機の終了は `confirmEnd()` を通る。
+    func endDemoRestriction() {
+        guard mode == .demo else { return }
+        events.record(.end, mode: .demo)
+        stopRestriction()
+    }
+
+    /// 制限全体を終了する（恒久）。一時停止の状態も消す。画面からは、待機を通る `confirmEnd()` を使う。
+    private func stopRestriction() {
         pause.clearAll()
         if !service.stop() {
             errorMessage = tr("制限を外せたか確認できませんでした。もう一度お試しください")
@@ -420,6 +447,7 @@ final class AppModel {
     func deleteAllRecords() {
         sessions.deleteAll()
         cards.deleteAll()
+        events.deleteAll()
         settings.postUseEntries = []
         visibleCards = []
         rescheduleNotifications()

@@ -83,7 +83,7 @@ final class ShareStatsTests: XCTestCase {
     private var cal: LogicalCalendar!
 
     override func setUp() async throws {
-        container = try ModelContainer(for: Session.self, ReflectionCard.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        container = try ModelContainer(for: Session.self, ReflectionCard.self, RestrictionEvent.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         context = ModelContext(container)
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Asia/Tokyo")!

@@ -99,7 +99,8 @@ final class BackupModel {
     private func performBackup() async throws {
         let document = BackupDocument.make(
             sessions: app.sessions.all(), cards: app.cards.all(), preferences: app.prefs,
-            theme: ThemeStore.shared.color.rawValue, language: LanguageStore.shared.language.rawValue)
+            theme: ThemeStore.shared.color.rawValue, language: LanguageStore.shared.language.rawValue,
+            events: app.events.all())
         let data = try document.encoded()
         // 既存のファイルを確認してから上書きする（重複して作らない）
         let existing = try await client.find()
@@ -125,7 +126,8 @@ final class BackupModel {
             let plan = BackupMergePlan.make(
                 document: document,
                 existingSessionIDs: Set(self.app.sessions.all().map(\.id)),
-                existingCardKeys: Set(self.app.cards.all().map(\.key)))
+                existingCardKeys: Set(self.app.cards.all().map(\.key)),
+                existingEventIDs: Set(self.app.events.all().map(\.id)))
             self.pendingDocument = document
             self.pendingPlan = plan
             self.preview = RestorePreview(createdAt: document.createdAt, totalSessions: document.sessions.count,

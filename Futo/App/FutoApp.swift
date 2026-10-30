@@ -13,7 +13,7 @@ struct FutoApp: App {
         LanguageStore.shared.applySystemDefaultIfUnset()
         let container: ModelContainer
         do {
-            container = try ModelContainer(for: Session.self, ReflectionCard.self)
+            container = try ModelContainer(for: Session.self, ReflectionCard.self, RestrictionEvent.self)
         } catch {
             fatalError("記録の保存先を開けませんでした: \(error)")
         }
@@ -35,12 +35,12 @@ struct FutoApp: App {
                 .environment(backup)
                 .onChange(of: scenePhase) { _, phase in
                     // アプリを開いたとき、継続共有を最新にする（常時同期ではない）
-                    if phase == .active { Task { await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode) } }
+                    if phase == .active { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode) } }
                 }
                 .task {
                     await sharing.loadProfile()
                     sharing.loadStandingConfigs()
-                    await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode)
+                    await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode)
                 }
                 .onOpenURL { sharing.handleIncoming(url: $0) }
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in

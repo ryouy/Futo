@@ -97,6 +97,7 @@ struct StatsSnapshotDTO: Codable, Equatable {
     var purposes: Purposes?
     var feelings: Feelings?
     var apps: [AppCount]?
+    var restriction: RestrictionCounts?
     var phrase: String?
     var message: String?
 }

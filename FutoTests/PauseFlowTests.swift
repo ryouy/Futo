@@ -326,6 +326,80 @@ final class PauseFlowTests: XCTestCase {
         XCTAssertNil(store.state)
         XCTAssertTrue(scheduler.monitoring.isEmpty)
     }
+
+    // MARK: 制限の終了（長い待機）
+
+    func testEndingTheRestrictionNeedsTheLongWaitAndTouchesNothingUntilThen() {
+        let flow = makeFlow()
+        flow.beginWait(kind: .end); flow.activate()
+        XCTAssertEqual(flow.liveRemaining(), 1_800, accuracy: 0.01, "終了の待機は30分")
+        spend(1_799, in: flow)
+        XCTAssertFalse(flow.isReady)
+        XCTAssertFalse(flow.confirmEnd())
+        XCTAssertFalse(shield.relaxed)
+        XCTAssertTrue(scheduler.log.isEmpty)
+        spend(1, in: flow)
+        XCTAssertTrue(flow.isReady)
+        XCTAssertFalse(shield.relaxed, "待機が終わっても、自動では終了しない")
+        XCTAssertTrue(flow.confirmEnd())
+        XCTAssertNil(flow.wait)
+        XCTAssertFalse(flow.confirmEnd(), "2回目は何も起きない")
+    }
+
+    func testAPauseWaitCannotEndTheRestrictionAndAnEndWaitCannotPause() {
+        let flow = makeFlow()
+        finishWait(flow)                           // 一時停止の待機（10分のテスト設定）
+        XCTAssertFalse(flow.confirmEnd(), "一時停止の待機では、終了できない")
+        flow.cancelWait()
+
+        flow.beginWait(kind: .end); flow.activate()
+        spend(1_800, in: flow)
+        XCTAssertEqual(flow.confirmPause(), .notReady, "終了の待機では、停止できない")
+        XCTAssertFalse(shield.relaxed)
+    }
+
+    func testStartingTheOtherKindDropsTheOldProgress() {
+        let flow = makeFlow()
+        flow.beginWait(kind: .pause); flow.activate()
+        spend(300, in: flow)
+        flow.beginWait(kind: .end)
+        XCTAssertEqual(flow.waitKind, .end)
+        XCTAssertEqual(flow.liveRemaining(), 1_800, accuracy: 0.01, "別の待機に、進みを引き継げない")
+    }
+
+    func testEndWaitAlsoExpiresIfNotPressedInTime() {
+        let flow = makeFlow()
+        flow.beginWait(kind: .end); flow.activate()
+        spend(1_800, in: flow)
+        wall.addTimeInterval(601)
+        XCTAssertFalse(flow.confirmEnd())
+    }
+
+    func testRelaunchKeepsTheEndWaitProgress() {
+        let first = makeFlow()
+        first.beginWait(kind: .end); first.activate()
+        spend(900, in: first)
+        first.deactivate()
+        let second = makeFlow()
+        second.reconcile()
+        XCTAssertEqual(second.waitKind, .end)
+        XCTAssertEqual(second.liveRemaining(), 900, accuracy: 0.01)
+    }
+
+    func testWaitsSavedByAnOlderVersionAreReadAsPauseWaits() throws {
+        let old = #"{"required":600,"remaining":120,"lastActiveAt":790000000}"#
+        let wait = try JSONDecoder().decode(PauseWait.self, from: Data(old.utf8))
+        XCTAssertEqual(wait.kind, .pause)
+        XCTAssertEqual(wait.remaining, 120)
+    }
+
+    func testStandardRulesMatchTheSpec() {
+        #if !DEBUG
+        XCTAssertEqual(PauseRules.standard.waitSeconds, 30)
+        XCTAssertEqual(PauseRules.standard.endWaitSeconds, 1_800)
+        #endif
+        XCTAssertEqual(PauseRules.standard.pauseMinutes, 30)
+    }
 }
 
 /// 保存・登録・解除の呼び出し順を、1つの記録にまとめる。

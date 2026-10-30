@@ -574,3 +574,18 @@ function webPayloadApps(apps: { name: string; count: number }[]) {
     showName: true, counts: { wantsToUse: 1, deferred: 1, interrupted: 0 }, apps, expiresInDays: 7, idempotencyKey: crypto.randomUUID(),
   };
 }
+
+describe("制限の管理の共有", () => {
+  it("一時停止・終了の回数は、選んだときだけ保存される。それだけを選んだ共有も作れる", async () => {
+    const alice = await newUser("アリス");
+    const body = { ...webPayloadApps([{ name: "動画", count: 1 }]), apps: undefined, counts: undefined, restriction: { pauses: 3, ends: 1 } };
+    const created = await call("POST", "/api/shares", { token: alice.token, body });
+    expect(created.status).toBe(201);
+    const page = await call("GET", `/api/public/shares/${created.body.token}`);
+    expect(page.body.stats.restriction).toEqual({ pauses: 3, ends: 1 });
+    const bad = { ...body, restriction: { pauses: -1, ends: 0 }, idempotencyKey: crypto.randomUUID() };
+    expect((await call("POST", "/api/shares", { token: alice.token, body: bad })).status).toBe(400);
+    const extra = { ...body, restriction: { pauses: 1, ends: 0, note: "x" }, idempotencyKey: crypto.randomUUID() };
+    expect((await call("POST", "/api/shares", { token: alice.token, body: extra })).status).toBe(400);
+  });
+});

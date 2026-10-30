@@ -23,6 +23,13 @@ struct BackupDocument: Codable, Equatable {
         var reflection: Reflection?
     }
 
+    struct EventRecord: Codable, Equatable {
+        var id: UUID
+        var kind: RestrictionEventKind
+        var at: Date
+        var minutes: Int?
+    }
+
     struct CardRecord: Codable, Equatable {
         var key: String
         var kind: ReflectionKind
@@ -37,12 +44,14 @@ struct BackupDocument: Codable, Equatable {
     var createdAt: Date
     var sessions: [SessionRecord]
     var cards: [CardRecord]
+    /// 制限の一時停止・終了の記録（古いバックアップには無い）
+    var restrictionEvents: [EventRecord]? = nil
     var preferences: Preferences
     var theme: String?
     var language: String?
 
     static func make(sessions: [Session], cards: [ReflectionCard], preferences: Preferences,
-                     theme: String?, language: String?, now: Date = Date()) -> BackupDocument {
+                     theme: String?, language: String?, now: Date = Date(), events: [RestrictionEvent] = []) -> BackupDocument {
         let records: [SessionRecord] = sessions
             .filter { $0.mode == .device && !$0.phase.isOpen }
             .sorted { $0.startedAt < $1.startedAt }
@@ -56,8 +65,10 @@ struct BackupDocument: Codable, Equatable {
             .filter { $0.mode == .device }
             .sorted { $0.createdAt < $1.createdAt }
             .map { CardRecord(key: $0.key, kind: $0.kind, dayKey: $0.dayKey, title: $0.title, body: $0.body, createdAt: $0.createdAt, dismissedAt: $0.dismissedAt) }
+        let eventRecords: [EventRecord] = events.filter { $0.mode == .device }.sorted { $0.at < $1.at }
+            .map { EventRecord(id: $0.id, kind: $0.kind, at: $0.at, minutes: $0.minutes) }
         return BackupDocument(schemaVersion: currentVersion, createdAt: now, sessions: records, cards: cardRecords,
-                              preferences: preferences, theme: theme, language: language)
+                              restrictionEvents: eventRecords, preferences: preferences, theme: theme, language: language)
     }
 
     // MARK: 符号化
@@ -109,10 +120,11 @@ struct BackupDocument: Codable, Equatable {
 struct BackupMergePlan: Equatable {
     var newSessions: [BackupDocument.SessionRecord]
     var newCards: [BackupDocument.CardRecord]
+    var newEvents: [BackupDocument.EventRecord] = []
     /// すでに端末にあって、取り込まなかった件数
     var skippedSessions: Int
 
-    static func make(document: BackupDocument, existingSessionIDs: Set<UUID>, existingCardKeys: Set<String>) -> BackupMergePlan {
+    static func make(document: BackupDocument, existingSessionIDs: Set<UUID>, existingCardKeys: Set<String>, existingEventIDs: Set<UUID> = []) -> BackupMergePlan {
         var seen = existingSessionIDs
         var sessions: [BackupDocument.SessionRecord] = []
         var skipped = 0
@@ -130,7 +142,13 @@ struct BackupMergePlan: Equatable {
             keys.insert(card.key)
             cards.append(card)
         }
-        return BackupMergePlan(newSessions: sessions, newCards: cards, skippedSessions: skipped)
+        var eventIDs = existingEventIDs
+        var events: [BackupDocument.EventRecord] = []
+        for event in document.restrictionEvents ?? [] where !eventIDs.contains(event.id) {
+            eventIDs.insert(event.id)
+            events.append(event)
+        }
+        return BackupMergePlan(newSessions: sessions, newCards: cards, newEvents: events, skippedSessions: skipped)
     }
 }
 
@@ -157,6 +175,11 @@ enum BackupRestorer {
                                        lines: card.body.split(separator: "\n").map(String.init), createdAt: card.createdAt)
             model.key = card.key
             model.dismissedAt = card.dismissedAt
+            context.insert(model)
+        }
+        for event in plan.newEvents {
+            let model = RestrictionEvent(mode: .device, kind: event.kind, at: event.at, minutes: event.minutes)
+            model.id = event.id
             context.insert(model)
         }
         do { try context.save(); return true } catch { return false }

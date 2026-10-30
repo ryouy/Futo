@@ -8,7 +8,7 @@ final class BackupDocumentTests: XCTestCase {
     private var context: ModelContext!
 
     override func setUpWithError() throws {
-        container = try ModelContainer(for: Session.self, ReflectionCard.self,
+        container = try ModelContainer(for: Session.self, ReflectionCard.self, RestrictionEvent.self,
                                        configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         context = container.mainContext
     }
@@ -85,7 +85,7 @@ final class BackupDocumentTests: XCTestCase {
         let original = session()
         let doc = BackupDocument.make(sessions: [original], cards: [], preferences: Preferences(), theme: nil, language: nil)
         // 別の端末（空）に戻す
-        let otherContainer = try ModelContainer(for: Session.self, ReflectionCard.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let otherContainer = try ModelContainer(for: Session.self, ReflectionCard.self, RestrictionEvent.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let other = otherContainer.mainContext
         let local = Session(mode: .device, startedAt: Date(timeIntervalSince1970: 1_700_000_000), requiredWaitSeconds: 60)
         local.phase = .completed; local.outcome = .deferred

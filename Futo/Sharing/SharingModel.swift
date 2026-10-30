@@ -98,9 +98,18 @@ final class SharingModel {
 
     // MARK: Web共有
 
-    func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased(), allowsMessage: Bool = false) throws -> SharePayload {
+    func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased(), allowsMessage: Bool = false, events: [RestrictionEvent] = []) throws -> SharePayload {
         try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage,
-                                        appCounts: AppNameResolver.counts(sessions: sessions, mode: mode))
+                                        appCounts: AppNameResolver.counts(sessions: sessions, mode: mode),
+                                        restrictionCounts: Self.restrictionCounts(events: events, mode: mode))
+    }
+
+    /// 制限の一時停止・終了の回数（期間内）。
+    static func restrictionCounts(events: [RestrictionEvent], mode: AppMode) -> (DateInterval) -> RestrictionCounts {
+        { interval in
+            let c = RestrictionEventSummary.counts(events, mode: mode, interval: interval)
+            return RestrictionCounts(pauses: c.pauses, ends: c.ends)
+        }
     }
 
     /// 共有リンクを作る。サーバーが成功を返し、リンクを受け取れたときだけ、端末（Keychain）に保存する。
@@ -260,7 +269,7 @@ final class SharingModel {
     }
 
     /// アプリを開いたとき（一定時間ごと）・手動のときに、継続共有の統計を最新にする。失敗しても、個人の機能には影響しない。
-    func refreshStanding(sessions: [Session], mode: AppMode, force: Bool = false, now: Date = Date()) async {
+    func refreshStanding(sessions: [Session], events: [RestrictionEvent] = [], mode: AppMode, force: Bool = false, now: Date = Date()) async {
         guard isSignedIn, mode == .device, let uid else { return }
         var configs = standingStore.load(uid: uid)
         guard !configs.isEmpty else { standingConfigs = []; return }
@@ -269,7 +278,8 @@ final class SharingModel {
         for index in configs.indices.reversed() where force || configs[index].isDue(now: now) {
             let config = configs[index]
             guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now, allowsMessage: true,
-                                                            appCounts: AppNameResolver.counts(sessions: sessions, mode: mode)) else { continue }
+                                                            appCounts: AppNameResolver.counts(sessions: sessions, mode: mode),
+                                                            restrictionCounts: Self.restrictionCounts(events: events, mode: mode)) else { continue }
             do {
                 let _: EmptyResponse = try await api.send("PUT", "/api/friend-shares/\(config.shareId)", body: payload.updateBody)
                 configs[index].lastRefreshedAt = now
@@ -346,7 +356,7 @@ final class SharingModel {
     }
 
     static func text(for error: APIError) -> String {
-        if error.code == "self_invite" { return tr("自分の招待には、申請できません。") }
+        if error.code == "self_invite" { return tr("自分の招待は、受け入れられません。") }
         switch error.kind {
         case .notConfigured: return tr("共有の設定がまだ終わっていません。")
         case .offline: return tr("通信できませんでした。つながってから、もう一度お試しください。")

@@ -14,10 +14,6 @@ struct RestrictionManagementView: View {
             statusSection
             if isDevice { pauseSection }
             endSection
-            CardSection {
-                Text(tr("iPhoneの設定アプリで、Screen Timeの許可を取り消すこともできます。ふとは、それを防ぐことはできません。"))
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
         }
         .compactForm()
         .navigationTitle(tr("制限の管理"))
@@ -26,7 +22,7 @@ struct RestrictionManagementView: View {
             tr("制限を終了しますか？ 自動ではかけ直されません。"),
             isPresented: $confirmEnd, titleVisibility: .visible
         ) {
-            Button(tr("制限を終了する"), role: .destructive) { model.stopRestriction() }
+            Button(tr("制限を終了する"), role: .destructive) { model.endDemoRestriction() }
             Button(tr("キャンセル"), role: .cancel) {}
         }
     }
@@ -54,7 +50,7 @@ struct RestrictionManagementView: View {
             CardSection {
                 Text(tr("設定したルール"))
                     .font(.footnote).foregroundStyle(.secondary)
-                Text(tr("{0}待ってから、{1}分間だけ、制限を停止できます。", durationText(seconds: rules.waitSeconds), "\(rules.pauseMinutes)"))
+                Text(tr("{0}待つと、{1}分間だけ、制限を停止できます。", durationText(seconds: rules.waitSeconds), "\(rules.pauseMinutes)"))
                 Text(tr("待機中も、制限は続きます。停止の時間が終わると、自動で制限に戻ります。"))
                     .font(.footnote).foregroundStyle(.secondary)
             }
@@ -63,7 +59,7 @@ struct RestrictionManagementView: View {
                     Button { model.resumeRestriction() } label: { Label(tr("制限を再開する"), systemImage: "lock.fill") }
                 }
                 CardSection {
-                    NavigationLink { PauseWaitView(model: model) } label: {
+                    NavigationLink { RestrictionWaitView(model: model, kind: .pause) } label: {
                         Label(tr("停止の時間を延ばす"), systemImage: "clock.arrow.circlepath").foregroundStyle(Theme.accent)
                     }.frame(minHeight: 44)
                     Text(tr("延ばすときも、{0}の待機があります。", durationText(seconds: rules.waitSeconds)))
@@ -72,7 +68,7 @@ struct RestrictionManagementView: View {
             } else {
                 CardSection {
                     if canPause {
-                        NavigationLink { PauseWaitView(model: model) } label: {
+                        NavigationLink { RestrictionWaitView(model: model, kind: .pause) } label: {
                             Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(Theme.accent)
                         }.frame(minHeight: 44)
                     } else {
@@ -99,10 +95,19 @@ struct RestrictionManagementView: View {
     private var endSection: some View {
         CardSection {
             if model.intendsRestriction {
-                Text(tr("制限そのものを終了します。もう一度かけるまで、自動では戻りません。"))
-                    .font(.footnote).foregroundStyle(.secondary)
-                Button(role: .destructive) { confirmEnd = true } label: { Label(tr("制限を終了する"), systemImage: "lock.open") }
+                if isDevice {
+                    Text(tr("{0}待つと、制限を終了できます。もう一度かけるまで、自動では戻りません。", durationText(seconds: rules.endWaitSeconds)))
+                        .font(.footnote).foregroundStyle(.secondary)
+                    NavigationLink { RestrictionWaitView(model: model, kind: .end) } label: {
+                        Label(tr("制限を終了する"), systemImage: "lock.open").foregroundStyle(.red)
+                    }
                     .frame(minHeight: 44)
+                } else {
+                    Text(tr("制限そのものを終了します。もう一度かけるまで、自動では戻りません。"))
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button(role: .destructive) { confirmEnd = true } label: { Label(tr("制限を終了する"), systemImage: "lock.open") }
+                        .frame(minHeight: 44)
+                }
             } else {
                 Text(tr("制限は、かかっていません。")).foregroundStyle(.secondary)
             }
@@ -110,17 +115,20 @@ struct RestrictionManagementView: View {
     }
 }
 
-/// 一時停止の待機。前面で表示している間だけ進む。待機中も、制限は外れない。
+/// 一時停止・制限の終了の待機。前面で表示している間だけ進む。待機中も、制限は外れない。
 @MainActor
-struct PauseWaitView: View {
+struct RestrictionWaitView: View {
     let model: AppModel
+    let kind: WaitKind
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
     @State private var started: Date?
+    @State private var ended = false
     @State private var working = false
 
     private var pause: PauseFlow { model.pause }
     private var rules: PauseRules { pause.rules }
+    private var isCurrentKind: Bool { pause.waitKind == kind }
 
     private func timeText(_ remaining: TimeInterval) -> String {
         let total = Int(remaining.rounded(.up))
@@ -130,11 +138,13 @@ struct PauseWaitView: View {
     var body: some View {
         CenteredScroll {
             VStack(spacing: 20) {
-                if let started {
+                if ended {
+                    endedView
+                } else if let started {
                     done(until: started)
-                } else if pause.isReady {
+                } else if isCurrentKind, pause.isReady {
                     ready
-                } else if pause.isWaiting {
+                } else if isCurrentKind {
                     waiting
                 } else {
                     ProgressView()
@@ -142,19 +152,24 @@ struct PauseWaitView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(pause.isWaiting && started == nil)
-        .task { if started == nil, !pause.isWaiting { model.startPauseWait() } }
+        .navigationBarBackButtonHidden(isCurrentKind && started == nil && !ended)
+        .task { if started == nil, !ended, !isCurrentKind { model.startWait(kind) } }
         .task(id: scenePhase) {
             // 前面にいる間だけ進む。バックグラウンド・画面ロックでは止まる。
             guard scenePhase == .active else { pause.deactivate(); return }
             pause.activate()
+            // 長い待機の間、画面が自動で暗くならないようにする（ロックされると待機が止まるため）。この画面を離れたら戻す。
+            UIApplication.shared.isIdleTimerDisabled = true
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(250))
                 pause.tick()
             }
             pause.deactivate()
         }
-        .onDisappear { pause.deactivate() }
+        .onDisappear {
+            pause.deactivate()
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
 
     // MARK: 段階
@@ -184,7 +199,9 @@ struct PauseWaitView: View {
             }
             .frame(width: 200, height: 200)
             .padding(.vertical, 8)
-            Text(tr("待機が終わると、「{0}分間停止する」を押せます。ここを開いている間だけ、時間が進みます。", "\(rules.pauseMinutes)"))
+            Text(kind == .pause
+                 ? tr("待機が終わると、「{0}分間停止する」を押せます。ここを開いている間だけ、時間が進みます。", "\(rules.pauseMinutes)")
+                 : tr("待機が終わると、「制限を終了する」を押せます。ここを開いている間だけ、時間が進みます。"))
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button(tr("やめて、制限を続ける")) {
                 pause.cancelWait()
@@ -196,21 +213,34 @@ struct PauseWaitView: View {
 
     private var ready: some View {
         VStack(spacing: 18) {
-            stage(2, tr("停止の確認"))
+            stage(2, tr("確認"))
             Text(tr("待機が終わりました。"))
                 .font(.title3.weight(.medium))
-            Text(tr("押すと、いまから{0}分間、制限を停止します。時間が終わると、自動で制限に戻ります。", "\(rules.pauseMinutes)"))
+            Text(kind == .pause
+                 ? tr("押すと、いまから{0}分間、制限を停止します。時間が終わると、自動で制限に戻ります。", "\(rules.pauseMinutes)")
+                 : tr("押すと、制限そのものを終了します。もう一度かけるまで、自動では戻りません。"))
                 .multilineTextAlignment(.center)
             Text(tr("{0}分以内に押さないと、待機からやり直しになります。", "\(Int(rules.readyValidSeconds / 60))"))
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            Button(tr("{0}分間停止する", "\(rules.pauseMinutes)")) {
-                guard !working else { return }
-                working = true
-                if case .started(let until) = model.confirmPause() { started = until }
-                working = false
+            if kind == .pause {
+                Button(tr("{0}分間停止する", "\(rules.pauseMinutes)")) {
+                    guard !working else { return }
+                    working = true
+                    if case .started(let until) = model.confirmPause() { started = until }
+                    working = false
+                }
+                .buttonStyle(FutoButtonStyle())
+                .disabled(working)
+            } else {
+                Button(tr("制限を終了する")) {
+                    guard !working else { return }
+                    working = true
+                    if model.confirmEnd() { ended = true }
+                    working = false
+                }
+                .buttonStyle(FutoButtonStyle())
+                .disabled(working)
             }
-            .buttonStyle(FutoButtonStyle())
-            .disabled(working)
             Button(tr("制限を続ける")) {
                 pause.cancelWait()
                 dismiss()
@@ -226,6 +256,17 @@ struct PauseWaitView: View {
             Text(tr("{0} に、自動で制限に戻ります。", until.formatted(date: .omitted, time: .shortened)))
                 .multilineTextAlignment(.center)
             Text(tr("先に戻したいときは、ホームの「制限を再開する」を押してください。"))
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Button(tr("閉じる")) { dismiss() }
+                .buttonStyle(FutoButtonStyle())
+        }
+    }
+
+    private var endedView: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "lock.open").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accent)
+            Text(tr("制限を終了しました。")).font(.title3.weight(.medium))
+            Text(tr("もう一度かけるときは、設定の「制限をかける」を押してください。"))
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button(tr("閉じる")) { dismiss() }
                 .buttonStyle(FutoButtonStyle())

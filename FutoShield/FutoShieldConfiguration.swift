@@ -38,19 +38,42 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
 
     static var title: String { isJapanese ? "使う前に、ひと呼吸。" : "A breath before you use it." }
 
+    /// 1行を短くして、折り返しで文が不自然に切れないようにする（改行は、文の区切りに合わせて自分で入れる）。
     static var subtitle: String {
         isJapanese
-            ? "今、何に使いたいですか。『ふと』で少し立ち止まれます。\nホーム画面から「ふと」を開いてください。"
-            : "What do you want to use it for? Futo can help you pause.\nOpen Futo from your Home Screen."
+            ? "今、何に使いたいですか。\n『ふと』で少し立ち止まれます。\nホーム画面から開いてください。"
+            : "What do you want to use it for?\nFuto can help you pause.\nOpen it from your Home Screen."
     }
 
     static var buttonTitle: String { isJapanese ? "ホームに戻る" : "Back to Home" }
+
+    /// ロゴは、背景の明暗に関わらず見えるよう、生成りの角丸の台に載せる（ダークの深い緑でも、埋もれない）。
+    private static let icon: UIImage? = {
+        guard let logo = UIImage(named: "ShieldIcon") else { return nil }
+        let side: CGFloat = 112
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: side, height: side))
+        return renderer.image { context in
+            let rect = CGRect(x: 0, y: 0, width: side, height: side)
+            let tile = UIBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: 28)
+            UIColor(red: 0xFC / 255, green: 0xF8 / 255, blue: 0xF0 / 255, alpha: 1).setFill()
+            tile.fill()
+            UIColor(red: 0x19 / 255, green: 0x64 / 255, blue: 0x59 / 255, alpha: 0.18).setStroke()
+            tile.lineWidth = 1
+            tile.stroke()
+            let inset: CGFloat = 18
+            let target = rect.insetBy(dx: inset, dy: inset)
+            let scale = min(target.width / logo.size.width, target.height / logo.size.height)
+            let size = CGSize(width: logo.size.width * scale, height: logo.size.height * scale)
+            logo.draw(in: CGRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height))
+            _ = context
+        }
+    }()
 
     static func make() -> ShieldConfiguration {
         ShieldConfiguration(
             backgroundBlurStyle: nil,
             backgroundColor: background,
-            icon: UIImage(named: "ShieldIcon"),
+            icon: icon,
             title: .init(text: title, color: titleColor),
             subtitle: .init(text: subtitle, color: bodyColor),
             primaryButtonLabel: .init(text: buttonTitle, color: buttonText),

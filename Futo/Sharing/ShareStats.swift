@@ -6,12 +6,13 @@ struct ShareSelection: Equatable, Codable {
     var counts = false             // 解除申込数・見送り数・中断数
     var purposes = false           // 利用目的の内訳
     var feelings = false           // 利用後の満足感（回答件数を併記）
+    var restriction = false        // 制限の管理（一時停止・終了の回数）。初期はオフ
     var apps = true                // よく解除したアプリ名と回数（初期はオン。名前を読み取れないときは、含まれない）
     var phrase: SharePhrase?       // 定型のひとこと（任意。Webリンク用）
     var message = ""              // フレンドへの一言（自由入力。フレンド共有だけ）
 
     /// 統計の項目が1つも選ばれていなければ、公開しない。
-    var hasStats: Bool { counts || purposes || feelings || apps }
+    var hasStats: Bool { counts || purposes || feelings || apps || restriction }
 }
 
 enum SharePeriod: String, CaseIterable, Identifiable {
@@ -42,6 +43,7 @@ struct ShareUpdatePayload: Codable, Equatable {
     var purposes: SharePayload.Purposes?
     var feelings: SharePayload.Feelings?
     var apps: [AppCount]?
+    var restriction: RestrictionCounts?
     var phraseId: String?
     var message: String?
 }
@@ -61,6 +63,12 @@ enum SharePhrase: String, CaseIterable, Identifiable, Codable {
 }
 
 /// サーバーへ送る、Web共有・フレンド共有の統計（選んだ項目だけ。選ばなかった項目は、キー自体を送らない）。
+/// 制限の一時停止・終了の回数。
+struct RestrictionCounts: Codable, Equatable {
+    var pauses: Int
+    var ends: Int
+}
+
 /// アプリ名と、一時解除した回数。
 struct AppCount: Codable, Equatable {
     var name: String
@@ -82,6 +90,7 @@ struct SharePayload: Codable, Equatable {
     var purposes: Purposes?
     var feelings: Feelings?
     var apps: [AppCount]?
+    var restriction: RestrictionCounts?
     var phraseId: String?
     /// フレンドへの一言（自由入力）。Webの公開リンクには付けない
     var message: String?
@@ -113,7 +122,8 @@ enum ShareStatsBuilder {
         calendar: LogicalCalendar = LogicalCalendar(), now: Date = Date(),
         expiresInDays: Int? = 7, recipientUids: [String]? = nil, idempotencyKey: String = UUID().uuidString.lowercased(),
         allowsMessage: Bool = false,
-        appCounts: (DateInterval) -> [AppCount] = { _ in [] }
+        appCounts: (DateInterval) -> [AppCount] = { _ in [] },
+        restrictionCounts: (DateInterval) -> RestrictionCounts = { _ in RestrictionCounts(pauses: 0, ends: 0) }
     ) throws -> SharePayload {
         guard selection.hasStats else { throw BuildError.nothingSelected }
         let interval: DateInterval
@@ -137,7 +147,7 @@ enum ShareStatsBuilder {
             timezone: calendar.calendar.timeZone.identifier,
             isPartial: period == .thisWeek && now < interval.end,
             showName: selection.showName,
-            counts: nil, purposes: nil, feelings: nil, apps: nil,
+            counts: nil, purposes: nil, feelings: nil, apps: nil, restriction: nil,
             phraseId: allowsMessage ? nil : selection.phrase?.rawValue,
             message: allowsMessage ? ShareMessage.normalized(selection.message) : nil,
             expiresInDays: expiresInDays,
@@ -171,8 +181,9 @@ enum ShareStatsBuilder {
             let apps = AppUsageSummary.sanitized(appCounts(interval))
             if !apps.isEmpty { payload.apps = apps }
         }
+        if selection.restriction { payload.restriction = restrictionCounts(interval) }
         // 項目を選んでいても、中身が何もなければ、共有しない
-        guard payload.counts != nil || payload.purposes != nil || payload.feelings != nil || payload.apps != nil else { throw BuildError.nothingSelected }
+        guard payload.counts != nil || payload.purposes != nil || payload.feelings != nil || payload.apps != nil || payload.restriction != nil else { throw BuildError.nothingSelected }
         return payload
     }
 }
@@ -181,7 +192,7 @@ extension SharePayload {
     /// 継続共有の更新用（受信者・冪等キー・期限を除く）
     var updateBody: ShareUpdatePayload {
         ShareUpdatePayload(period: period, periodStart: periodStart, periodEnd: periodEnd, timezone: timezone, isPartial: isPartial,
-                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, apps: apps, phraseId: phraseId, message: message)
+                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, apps: apps, restriction: restriction, phraseId: phraseId, message: message)
     }
 }
 

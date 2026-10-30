@@ -7,6 +7,7 @@ struct RecordsView: View {
     @State private var period: InsightPeriod = .week
     @State private var detail: DayDetail?
     @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
+    @Query(sort: \RestrictionEvent.at, order: .reverse) private var events: [RestrictionEvent]
 
     var body: some View {
         let calendar = LogicalCalendar()
@@ -33,10 +34,10 @@ struct RecordsView: View {
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
-                    if insights.total == 0 {
+                    if insights.total == 0 && RestrictionEventSummary.counts(events, mode: mode, interval: interval).isEmpty {
                         Text(tr("この期間の記録はまだありません。")).foregroundStyle(.secondary).card()
                     } else {
-                        countsCard(insights)
+                        countsCard(insights, restriction: RestrictionEventSummary.counts(events, mode: mode, interval: interval))
                         PieCard(title: tr("目的"), slices: breakdown.purposes)
                         if insights.answeredReflections > 0 {
                             PieCard(title: tr("感想"), slices: breakdown.reflections)
@@ -57,12 +58,14 @@ struct RecordsView: View {
 
     // MARK: カード
 
-    private func countsCard(_ w: PeriodInsights) -> some View {
+    private func countsCard(_ w: PeriodInsights, restriction r: RestrictionEventSummary.Counts) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             row(tr("ひと呼吸"), "\(w.total)")
             row(tr("やめておく"), "\(w.deferred)")
             row(tr("使いたい"), "\(w.wantsToUse)")
             if w.answeredReflections > 0 { row(tr("感想に答えた"), "\(w.answeredReflections)") }
+            if r.pauses > 0 { row(tr("制限の一時停止"), tr("{0}回", "\(r.pauses)")) }
+            if r.ends > 0 { row(tr("制限の終了"), tr("{0}回", "\(r.ends)")) }
             if w.unlockStarted > 0 {
                 row(tr("解除した"), w.unlockSeconds >= 60 ? tr("{0}回・約{1}分", "\(w.unlockStarted)", "\(Int((w.unlockSeconds / 60).rounded()))") : tr("{0}回", "\(w.unlockStarted)"))
             }

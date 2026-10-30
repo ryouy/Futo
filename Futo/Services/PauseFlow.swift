@@ -75,7 +75,9 @@ final class PauseFlow {
     var isPaused: Bool { window != nil }
     var isWaiting: Bool { wait != nil }
 
-    /// 待機が終わっていて、「停止する」を押せる。
+    var waitKind: WaitKind? { wait?.kind }
+
+    /// 待機が終わっていて、「停止する」「終了する」を押せる。
     var isReady: Bool {
         guard let wait, wait.isReady, let readyAt = wait.readyAt else { return false }
         return now().timeIntervalSince(readyAt) <= rules.readyValidSeconds
@@ -115,11 +117,13 @@ final class PauseFlow {
     /// 待機を始める（すでにあれば、そのまま続ける）。ここでは、制限を解除しない。
     /// 制限が「かかっている」ときだけ始められる（呼び出し側が確認する）。
     @discardableResult
-    func beginWait() -> Bool {
+    func beginWait(kind: WaitKind = .pause) -> Bool {
         reconcile()
-        if wait != nil { return true }
+        // 同じ種類の待機は、続きから。別の種類の待機が残っていたら、それは破棄して、新しく始める（進みは引き継がない）
+        if let wait, wait.kind == kind { return true }
+        let seconds = rules.waitSeconds(for: kind)
         var next = state ?? PauseState()
-        next.wait = PauseWait(required: rules.waitSeconds, remaining: rules.waitSeconds, lastActiveAt: now(), readyAt: nil)
+        next.wait = PauseWait(kind: kind, required: seconds, remaining: seconds, lastActiveAt: now(), readyAt: nil)
         save(next)
         countdown = nil
         return true
@@ -193,8 +197,8 @@ final class PauseFlow {
     /// 延長・再停止も、この手順（待機）を通る。30分は、いまこの瞬間から数える。
     func confirmPause() -> PauseStartResult {
         reconcile()
-        guard isReady else {
-            if let wait, wait.isReady { var next = state ?? PauseState(); next.wait = nil; save(next) }
+        guard isReady, wait?.kind == .pause else {
+            if let wait, wait.isReady, wait.kind == .pause { var next = state ?? PauseState(); next.wait = nil; save(next) }
             return .notReady
         }
         let previous = state
@@ -229,6 +233,16 @@ final class PauseFlow {
         state = pending
         countdown = nil
         return .started(until: end)
+    }
+
+    /// 制限の終了：待機（長い）が終わっているときだけ true を返し、待機を消す。実際の終了は、呼び出し側が行う。
+    func confirmEnd() -> Bool {
+        reconcile()
+        guard isReady, wait?.kind == .end else { return false }
+        var next = state ?? PauseState()
+        next.wait = nil
+        save(next)
+        return true
     }
 
     /// 停止を、いま終える（制限を強める操作なので、待機なしでいつでもできる）。

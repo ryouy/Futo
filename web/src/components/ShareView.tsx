@@ -78,6 +78,14 @@ export function ShareView({ share }: { share: PublicShare }) {
         </div>
       )}
 
+      {stats.restriction && (
+        <div className="card">
+          <h2>制限の管理</h2>
+          <div className="row"><span>一時停止</span><span>{stats.restriction.pauses}回</span></div>
+          <div className="row"><span>制限の終了</span><span>{stats.restriction.ends}回</span></div>
+        </div>
+      )}
+
       {stats.phrase && <p className="phrase">{stats.phrase}</p>}
 
       <p className="muted" style={{ textAlign: "center" }}>

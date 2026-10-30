@@ -63,6 +63,7 @@ export async function createWebShare(uid: string, payload: WebSharePayload): Pro
         purposes: Boolean(payload.purposes),
         feelings: Boolean(payload.feelings),
         apps: Boolean(payload.apps),
+        restriction: Boolean(payload.restriction),
         phrase: Boolean(payload.phraseId),
       },
       tokenHash: hash,

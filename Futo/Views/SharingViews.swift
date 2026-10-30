@@ -148,7 +148,8 @@ struct CreateShareView: View {
     private var payload: SharePayload? {
         try? sharing.previewPayload(sessions: allSessions, mode: model.mode, period: period, selection: selection,
                                     expiresInDays: isFriends ? nil : expiresInDays,
-                                    recipientUids: isFriends ? Array(chosen) : nil, allowsMessage: isFriends)
+                                    recipientUids: isFriends ? Array(chosen) : nil, allowsMessage: isFriends,
+                                    events: model.events.all())
     }
 
     private var messageProblem: String? {
@@ -239,6 +240,7 @@ struct CreateShareView: View {
             Toggle(isOn: $selection.purposes) { toggleLabel(tr("目的"), tr("使いたかった理由の内訳")) }
             Toggle(isOn: $selection.feelings) { toggleLabel(tr("気持ち"), tr("使ったあとの感想の内訳")) }
             Toggle(isOn: $selection.apps) { toggleLabel(tr("アプリ名"), appsDetail) }
+            Toggle(isOn: $selection.restriction) { toggleLabel(tr("制限の管理"), tr("一時停止・制限の終了の回数")) }
         } header: {
             header(isFriends ? tr("② 何を見せる？") : tr("① 何を見せる？"), tr("選んだ項目だけが共有されます。記録の一覧や、アプリの名前は含まれません。"))
         }

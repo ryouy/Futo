@@ -63,6 +63,15 @@ describe("Web共有ページの表示", () => {
     expect(html).toContain("動画");
   });
 
+  it("制限の管理：選んだときだけ、一時停止と終了の回数が出る", () => {
+    expect(renderToStaticMarkup(<ShareView share={base} />)).not.toContain("制限の管理");
+    const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, restriction: { pauses: 2, ends: 1 } } }} />);
+    expect(html).toContain("制限の管理");
+    expect(html).toContain("一時停止");
+    expect(html).toContain("2回");
+    expect(html).toContain("制限の終了");
+  });
+
   it("実測していない使用時間や節約時間は、どこにも出ない", () => {
     const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, purposes: { contact: 1, research: 1, break: 1, noReason: 1, unanswered: 0 }, feelings: { satisfied: 1, neutral: 1, wishedLess: 1, answered: 3 } } }} />);
     expect(html).not.toMatch(/使用時間|節約|スクリーンタイム/);

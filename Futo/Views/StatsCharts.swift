@@ -7,6 +7,7 @@ struct ChartStats {
     var purposes: (contact: Int, research: Int, change: Int, noReason: Int, unanswered: Int)?
     var feelings: (satisfied: Int, neutral: Int, wishedLess: Int)?
     var apps: [AppCount]?
+    var restriction: RestrictionCounts?
     var phrase: String?
     var message: String?
 
@@ -17,6 +18,7 @@ struct ChartStats {
         phrase = payload.phraseId.flatMap(SharePhrase.init(rawValue:))?.text
         message = payload.message
         apps = payload.apps
+        restriction = payload.restriction
     }
 
     init(snapshot: StatsSnapshotDTO) {
@@ -26,6 +28,7 @@ struct ChartStats {
         phrase = snapshot.phrase
         message = snapshot.message
         apps = snapshot.apps
+        restriction = snapshot.restriction
     }
 }
 
@@ -54,6 +57,7 @@ struct StatsChartsView: View {
             if let p = stats.purposes { purposesCard(p) }
             if let f = stats.feelings { feelingsCard(f) }
             if let apps = stats.apps, !apps.isEmpty { appsCard(apps) }
+            if let r = stats.restriction { restrictionCard(r) }
             if let phrase = stats.phrase {
                 Text(phrase).font(.subheadline.weight(.medium)).multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity).padding(14).card()
@@ -86,6 +90,25 @@ struct StatsChartsView: View {
                     ForEach(slices) { slice in legend(slice) }
                     Spacer(minLength: 0)
                 }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card()
+    }
+
+    /// 制限の管理：一時停止と終了の回数。
+    private func restrictionCard(_ r: RestrictionCounts) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(tr("制限の管理")).font(.subheadline.weight(.medium))
+            HStack {
+                Text(tr("一時停止"))
+                Spacer()
+                Text(tr("{0}回", "\(r.pauses)")).monospacedDigit().foregroundStyle(.secondary)
+            }
+            HStack {
+                Text(tr("制限の終了"))
+                Spacer()
+                Text(tr("{0}回", "\(r.ends)")).monospacedDigit().foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
