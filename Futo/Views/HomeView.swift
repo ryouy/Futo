@@ -100,16 +100,7 @@ struct HomeView: View {
     private func scrollContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                HStack(spacing: 8) {
-                    // ひと呼吸の輪を、小さなしるしにする
-                    ZStack {
-                        Circle().fill(Theme.accent.opacity(0.16))
-                        Circle().stroke(Theme.accent, lineWidth: 2.5).padding(5)
-                    }
-                    .frame(width: 28, height: 28)
-                    .accessibilityHidden(true)
-                    Text(tr("ふと")).font(.title3.weight(.semibold)).foregroundStyle(Theme.accent)
-                }
+                Text(tr("ふと")).font(.title2.weight(.bold)).foregroundStyle(Theme.accent)
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
@@ -417,7 +408,7 @@ private struct ShackleShape: Shape {
         path.addLine(to: CGPoint(x: 0, y: r))
         path.addCurve(to: CGPoint(x: r, y: 0), control1: CGPoint(x: 0, y: r - k * r), control2: CGPoint(x: r - k * r, y: 0))
         path.addCurve(to: CGPoint(x: w, y: r), control1: CGPoint(x: r + k * r, y: 0), control2: CGPoint(x: w, y: r - k * r))
-        path.addLine(to: CGPoint(x: w, y: h))
+        path.addLine(to: CGPoint(x: w, y: h - 14))   // 右の脚は短い（開くと本体から抜ける）
         return path
     }
 }
@@ -434,12 +425,12 @@ private struct PadlockDrawing: View, Animatable {
 
     var body: some View {
         let open = 1 - progress
-        // 南京錠。開いているときは、輪が真上に持ち上がって、両方の脚が本体から抜けている。閉じるときは、真上から降りてくる。
+        // 南京錠。開いているときは、輪が少し持ち上がり、左の脚だけが本体に刺さったまま。閉じるときは、そこから真上から降りてくる。
         ZStack(alignment: .top) {
             ShackleShape()
                 .stroke(color, style: StrokeStyle(lineWidth: 11, lineCap: .round))
                 .frame(width: 50, height: 62)
-                .offset(y: -30 * open)
+                .offset(y: -15 * open)
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .fill(color)
                 .frame(width: 84, height: 62)

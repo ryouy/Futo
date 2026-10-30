@@ -26,14 +26,21 @@ struct RestrictionManagementView: View {
         switch model.restriction {
         case .configured: return tr("制限中")
         case .temporarilyUnlocked: return tr("一時的に使えます")
-        case .paused(let until): return tr("一時停止中（{0} に戻ります）", until.formatted(date: .omitted, time: .shortened))
+        case .paused: return tr("一時停止中")
         case .unverifiable: return tr("状態を確認できません")
         case .off: return tr("制限していません")
         }
     }
 
     private var statusSection: some View {
-        CardSection { LabeledContent(tr("いまの状態"), value: statusText) }
+        CardSection {
+            LabeledContent(tr("いまの状態"), value: statusText)
+            // 戻る時刻は、折り返さないよう別の行に
+            if case .paused(let until) = model.restriction {
+                Text(tr("{0} に戻ります", until.formatted(date: .omitted, time: .shortened)))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
     }
 
     // MARK: 一時停止
