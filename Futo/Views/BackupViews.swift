@@ -38,7 +38,7 @@ struct BackupView: View {
     private var explanation: some View {
         CardSection {
             Text(tr("記録と設定を、Google Driveのふと専用の場所に保存します。"))
-            Text(tr("制限の対象・通知の許可は含まれません。ログインと同じGoogleアカウントを選んでください。"))
+            Text(tr("ログインと同じGoogleアカウントを選んでください。"))
                 .font(.footnote).foregroundStyle(.secondary)
         }
     }

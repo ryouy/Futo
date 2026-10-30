@@ -72,13 +72,23 @@ struct HomeView: View {
                     .accessibilityLabel(tr("記録"))
                     Button { sheet = .settings } label: {
                         if sharing.isSignedIn, let name = sharing.profile?.displayName {
-                            // ログイン中は、アカウントのアイコンで分かるようにする
-                            AccountAvatar(name: name, photoURL: sharing.auth.photoURL, size: 28).frame(width: 44, height: 44)
+                            // ログイン中は、アカウントのアイコンで分かるようにする。小さな歯車で、押すと設定を開けると伝える
+                            AccountAvatar(name: name, photoURL: sharing.auth.photoURL, size: 30)
+                                .overlay(alignment: .bottomTrailing) {
+                                    Image(systemName: "gearshape.fill")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(Theme.onAccent)
+                                        .frame(width: 15, height: 15)
+                                        .background(Circle().fill(Theme.accent))
+                                        .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+                                        .offset(x: 4, y: 4)
+                                }
+                                .frame(width: 44, height: 44)
                         } else {
                             Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
                         }
                     }
-                    .accessibilityLabel(tr("設定"))
+                    .accessibilityLabel(tr("設定とアカウント"))
                 }
                 .foregroundStyle(Theme.accent)
                 .tutorialTarget(.header)
@@ -320,7 +330,7 @@ struct HomeView: View {
     }
 
     #if DEBUG
-    /// 開発用：朝夜の振り返りと通知を、時間を待たずに確かめる（Debugビルドにだけ存在する）。
+    /// 開発用：朝夜の振り返り・通知・制限の解除を、時間を待たずに確かめる（Debugビルドにだけ存在する）。1列に並べる。
     private var debugSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tr("開発用（Debugのみ）")).font(.caption).foregroundStyle(.secondary)
@@ -328,16 +338,11 @@ struct HomeView: View {
                 Button(tr("朝の振り返り")) { model.showReflectionNow(.morning) }
                 Button(tr("夜の振り返り")) { model.showReflectionNow(.night) }
                 Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
+                // 待機を省略して、本アプリの制限をすぐ解除する（記録には数えない）。
+                Button("制限解除") { model.debugReleaseRestrictionNow() }
+                    .tint(.orange)
             }
             .buttonStyle(FutoCompactButtonStyle())
-            // 待機を省略して、本アプリの制限をすぐ解除する（Debugビルド限定。記録には数えない）。
-            Button { model.debugReleaseRestrictionNow() } label: {
-                Label("開発用：今すぐ制限解除", systemImage: "wrench.and.screwdriver")
-                    .font(.footnote.weight(.medium))
-                    .frame(maxWidth: .infinity, minHeight: 40)
-            }
-            .buttonStyle(.bordered)
-            .tint(.orange)
         }
         .padding(.top, 4)
     }

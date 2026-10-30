@@ -55,23 +55,10 @@ struct SettingsView: View {
 
     // MARK: 制限
 
+    /// 制限：一時解除のルール → 制限の管理 → 許可。許可が済んでいないときだけ、許可を先頭に出す。
     private var restrictionTab: some View {
         Form {
-            CardSection {
-                if model.intendsRestriction {
-                    LabeledContent(tr("制限"), value: tr("かかっています"))
-                        .frame(minHeight: 44)
-                } else {
-                    Button { model.startRestriction() } label: {
-                        Label(tr("制限をかける"), systemImage: "lock").foregroundStyle(Theme.accent)
-                    }
-                    .frame(minHeight: 44)
-                }
-                Toggle(tr("デモモード"), isOn: Binding(
-                    get: { isDemo },
-                    set: { wantsDemo in model.switchMode(to: wantsDemo ? .demo : .device) }))
-                    .frame(minHeight: 44)
-            }
+            if !isDemo, model.permission != .approved { permissionSection }
 
             CardSection {
                 Picker(tr("待機時間"), selection: Binding(
@@ -90,30 +77,31 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
             }
 
-            if !isDemo {
-                CardSection {
-                    LabeledContent(tr("許可"), value: permissionText)
-                    Button(model.permission == .approved ? tr("再確認") : tr("許可する")) {
-                        if model.permission == .approved {
-                            model.refresh()
-                        } else {
-                            Task { await model.requestPermission() }
-                        }
-                    }
-                    .frame(minHeight: 44)
-                    if let error = model.permissionError { Text(error).font(.footnote) }
-                }
-            }
-
-            // ふだんの操作から離して、いちばん下に置く（隠さない）。
             CardSection {
                 NavigationLink { RestrictionManagementView(model: model) } label: {
                     Label(tr("制限の管理"), systemImage: "lock.shield").foregroundStyle(Theme.accent)
                 }
                 .frame(minHeight: 44)
             }
+
+            if !isDemo, model.permission == .approved { permissionSection }
         }
         .compactForm()
+    }
+
+    private var permissionSection: some View {
+        CardSection {
+            LabeledContent(tr("許可"), value: permissionText)
+            Button(model.permission == .approved ? tr("再確認") : tr("許可する")) {
+                if model.permission == .approved {
+                    model.refresh()
+                } else {
+                    Task { await model.requestPermission() }
+                }
+            }
+            .frame(minHeight: 44)
+            if let error = model.permissionError { Text(error).font(.footnote) }
+        }
     }
 
     // MARK: その他
@@ -138,6 +126,13 @@ struct SettingsView: View {
                     ForEach(AppLanguage.allCases) { Text($0.displayName).tag($0) }
                 }
                 .frame(minHeight: 44)
+            }
+
+            CardSection {
+                Toggle(tr("デモモード"), isOn: Binding(
+                    get: { isDemo },
+                    set: { wantsDemo in model.switchMode(to: wantsDemo ? .demo : .device) }))
+                    .frame(minHeight: 44)
             }
 
             CardSection {

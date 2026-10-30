@@ -15,24 +15,28 @@ struct FriendsView: View {
             codeSection
             if !sharing.friends.incoming.isEmpty { incomingSection }
             if !sharing.friends.outgoing.isEmpty { outgoingSection }
-            friendsSection
             if !sharing.friends.friends.isEmpty {
                 CardSection {
-                    NavigationLink(tr("フレンドに共有")) { CreateShareView(model: model, kind: .friends, recipients: sharing.friends.friends) }.frame(minHeight: 44)
+                    NavigationLink { CreateShareView(model: model, kind: .friends, recipients: sharing.friends.friends) } label: {
+                        Label(tr("フレンドに記録を共有"), systemImage: "paperplane").foregroundStyle(Theme.accent)
+                    }
+                    .frame(minHeight: 44)
                 }
             }
             receivedSection
+            // フレンド一覧は、いちばん下に置く
+            friendsSection
             if let message = sharing.message { CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) } }
         }
         .compactForm()
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await sharing.loadFriends(); await sharing.loadFriendShares() }
-        .confirmationDialog(tr("フレンドをやめますか？ 共有済みの統計も、見えなくなります。"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("フレンドをやめますか？ 共有済みの記録も、見えなくなります。"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
             Button(tr("やめる"), role: .destructive) { if let f = removing { Task { await sharing.removeFriend(f) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("ブロックしますか？ 相手からの申請や、統計は届かなくなります。"), isPresented: Binding(get: { blocking != nil }, set: { if !$0 { blocking = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("ブロックしますか？ 相手からの申請や、記録は届かなくなります。"), isPresented: Binding(get: { blocking != nil }, set: { if !$0 { blocking = nil } }), titleVisibility: .visible) {
             Button(tr("ブロック"), role: .destructive) { if let f = blocking { Task { await sharing.block(uid: f.uid) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -69,8 +73,6 @@ struct FriendsView: View {
                 if showQR {
                     QRImage(text: invitation.url).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                Text(tr("相手が受け入れて、あなたが承認するまで、統計は見えません。"))
-                    .font(.footnote).foregroundStyle(.secondary)
                 Button(role: .destructive) { Task { await sharing.cancelInvitation() } } label: { Label(tr("招待を取り消す"), systemImage: "xmark.circle") }
                     .buttonStyle(ChipButtonStyle())
             } else {
@@ -135,14 +137,23 @@ struct FriendsView: View {
 
     private var friendsSection: some View {
         CardSection {
+            Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
             if sharing.friends.friends.isEmpty { Text(tr("まだフレンドはいません。")).foregroundStyle(.secondary) }
             ForEach(sharing.friends.friends) { friend in
-                Text(friend.displayName)
-                    .frame(minHeight: 44, alignment: .leading)
-                    .contextMenu {
+                HStack(spacing: 12) {
+                    AccountAvatar(name: friend.displayName, size: 32)
+                    Text(friend.displayName).oneLine()
+                    Spacer(minLength: 0)
+                    Menu {
                         Button(tr("フレンドをやめる"), role: .destructive) { removing = friend }
                         Button(tr("ブロック"), role: .destructive) { blocking = friend }
+                    } label: {
+                        Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(Theme.accent)
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
                     }
+                    .accessibilityLabel(tr("操作"))
+                }
+                .frame(minHeight: 44)
             }
         }
     }
@@ -151,7 +162,7 @@ struct FriendsView: View {
     private var receivedSection: some View {
         if !sharing.receivedShares.isEmpty || sharing.sentShares.contains(where: { $0.status != "revoked" }) {
             CardSection {
-                Text(tr("届いた統計")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("届いた記録")).font(.footnote).foregroundStyle(.secondary)
                 ForEach(sharing.receivedShares) { item in
                     NavigationLink { FriendShareDetailView(id: item.id) } label: {
                         VStack(alignment: .leading) {
@@ -163,7 +174,7 @@ struct FriendsView: View {
             }
             if sharing.sentShares.contains(where: { $0.status != "revoked" }) {
                 CardSection {
-                    Text(tr("共有したもの")).font(.footnote).foregroundStyle(.secondary)
+                    Text(tr("共有した記録")).font(.footnote).foregroundStyle(.secondary)
                     ForEach(sharing.sentShares.filter { $0.status != "revoked" }) { item in
                         HStack {
                             VStack(alignment: .leading) {
@@ -221,7 +232,7 @@ struct FriendShareDetailView: View {
             }
         }
         .compactForm()
-        .navigationTitle(tr("届いた統計"))
+        .navigationTitle(tr("届いた記録"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             detail = await sharing.friendShareDetail(id: id)
@@ -256,7 +267,6 @@ struct InviteLandingView: View {
                 } else if let inviter {
                     CardSection {
                         Text(tr("{0} さんからの招待です。", inviter.inviterName))
-                        Text(tr("相手が承認するまで、統計は見えません。")).font(.footnote).foregroundStyle(.secondary)
                         Button(tr("招待を受け入れる")) { Task { sent = await sharing.sendFriendRequest(token: token) } }
                             .buttonStyle(FutoButtonStyle()).disabled(sharing.isWorking)
                     }

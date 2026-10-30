@@ -48,11 +48,8 @@ struct RestrictionManagementView: View {
     private var pauseSection: some View {
         Group {
             CardSection {
-                Text(tr("設定したルール"))
-                    .font(.footnote).foregroundStyle(.secondary)
                 Text(tr("{0}待つと、{1}分間だけ、制限を停止できます。", durationText(seconds: rules.waitSeconds), "\(rules.pauseMinutes)"))
-                Text(tr("待機中も、制限は続きます。停止の時間が終わると、自動で制限に戻ります。"))
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.subheadline)
             }
             if model.isPaused {
                 PrimarySection {
@@ -62,8 +59,6 @@ struct RestrictionManagementView: View {
                     NavigationLink { RestrictionWaitView(model: model, kind: .pause) } label: {
                         Label(tr("停止の時間を延ばす"), systemImage: "clock.arrow.circlepath").foregroundStyle(Theme.accent)
                     }.frame(minHeight: 44)
-                    Text(tr("延ばすときも、{0}の待機があります。", durationText(seconds: rules.waitSeconds)))
-                        .font(.footnote).foregroundStyle(.secondary)
                 }
             } else {
                 CardSection {
@@ -96,15 +91,13 @@ struct RestrictionManagementView: View {
         CardSection {
             if model.intendsRestriction {
                 if isDevice {
-                    Text(tr("{0}待つと、制限を終了できます。もう一度かけるまで、自動では戻りません。", durationText(seconds: rules.endWaitSeconds)))
-                        .font(.footnote).foregroundStyle(.secondary)
+                    Text(tr("{0}待つと、制限を終了できます。", durationText(seconds: rules.endWaitSeconds)))
+                        .font(.subheadline)
                     NavigationLink { RestrictionWaitView(model: model, kind: .end) } label: {
                         Label(tr("制限を終了する"), systemImage: "lock.open").foregroundStyle(.red)
                     }
                     .frame(minHeight: 44)
                 } else {
-                    Text(tr("制限そのものを終了します。もう一度かけるまで、自動では戻りません。"))
-                        .font(.footnote).foregroundStyle(.secondary)
                     Button(role: .destructive) { confirmEnd = true } label: { Label(tr("制限を終了する"), systemImage: "lock.open") }
                         .frame(minHeight: 44)
                 }
@@ -199,9 +192,7 @@ struct RestrictionWaitView: View {
             }
             .frame(width: 200, height: 200)
             .padding(.vertical, 8)
-            Text(kind == .pause
-                 ? tr("待機が終わると、「{0}分間停止する」を押せます。ここを開いている間だけ、時間が進みます。", "\(rules.pauseMinutes)")
-                 : tr("待機が終わると、「制限を終了する」を押せます。ここを開いている間だけ、時間が進みます。"))
+            Text(tr("この画面を開いている間だけ、進みます。"))
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button(tr("やめて、制限を続ける")) {
                 pause.cancelWait()
@@ -217,11 +208,9 @@ struct RestrictionWaitView: View {
             Text(tr("待機が終わりました。"))
                 .font(.title3.weight(.medium))
             Text(kind == .pause
-                 ? tr("押すと、いまから{0}分間、制限を停止します。時間が終わると、自動で制限に戻ります。", "\(rules.pauseMinutes)")
-                 : tr("押すと、制限そのものを終了します。もう一度かけるまで、自動では戻りません。"))
+                 ? tr("いまから{0}分間、制限を停止します。", "\(rules.pauseMinutes)")
+                 : tr("制限そのものを終了します。"))
                 .multilineTextAlignment(.center)
-            Text(tr("{0}分以内に押さないと、待機からやり直しになります。", "\(Int(rules.readyValidSeconds / 60))"))
-                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             if kind == .pause {
                 Button(tr("{0}分間停止する", "\(rules.pauseMinutes)")) {
                     guard !working else { return }
@@ -255,8 +244,6 @@ struct RestrictionWaitView: View {
             Text(tr("制限を停止しました。")).font(.title3.weight(.medium))
             Text(tr("{0} に、自動で制限に戻ります。", until.formatted(date: .omitted, time: .shortened)))
                 .multilineTextAlignment(.center)
-            Text(tr("先に戻したいときは、ホームの「制限を再開する」を押してください。"))
-                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button(tr("閉じる")) { dismiss() }
                 .buttonStyle(FutoButtonStyle())
         }
@@ -266,8 +253,6 @@ struct RestrictionWaitView: View {
         VStack(spacing: 18) {
             Image(systemName: "lock.open").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accent)
             Text(tr("制限を終了しました。")).font(.title3.weight(.medium))
-            Text(tr("もう一度かけるときは、設定の「制限をかける」を押してください。"))
-                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button(tr("閉じる")) { dismiss() }
                 .buttonStyle(FutoButtonStyle())
         }

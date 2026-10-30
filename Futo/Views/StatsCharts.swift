@@ -74,7 +74,7 @@ struct StatsChartsView: View {
             ChartSlice(label: tr("中断"), count: c.interrupted, color: palette[3]),
         ]
         return VStack(alignment: .leading, spacing: 10) {
-            Text(tr("選んだ回数")).font(.subheadline.weight(.medium))
+            Text(tr("ひと呼吸の結果")).font(.subheadline.weight(.medium))
             if slices.allSatisfy({ $0.count == 0 }) {
                 Text(tr("まだ記録がありません。")).font(.footnote).foregroundStyle(.secondary)
             } else {
@@ -84,7 +84,7 @@ struct StatsChartsView: View {
                 }
                 .chartXAxis(.hidden)
                 .frame(height: 26)
-                .accessibilityLabel(tr("選んだ回数"))
+                .accessibilityLabel(tr("ひと呼吸の結果"))
                 .accessibilityValue(slices.map { "\($0.label) \($0.count)" }.joined(separator: " / "))
                 HStack(spacing: 16) {
                     ForEach(slices) { slice in legend(slice) }
@@ -143,7 +143,7 @@ struct StatsChartsView: View {
             ChartSlice(label: tr("調べもの"), count: p.research, color: palette[1]),
             ChartSlice(label: tr("気分転換"), count: p.change, color: palette[2]),
             ChartSlice(label: tr("なんとなく"), count: p.noReason, color: palette[3]),
-        ], note: p.unanswered > 0 ? tr("答えなかった {0} 件は含みません。", "\(p.unanswered)") : nil)
+        ], note: nil)
     }
 
     private func feelingsCard(_ f: (satisfied: Int, neutral: Int, wishedLess: Int)) -> some View {
