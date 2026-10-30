@@ -472,11 +472,11 @@ struct FutoTabPicker<T: Hashable>: View {
                     withAnimation(.spring(duration: 0.4, bounce: 0.22)) { selection = item }
                 } label: {
                     Text(title(item))
-                        .font(.subheadline.weight(selected ? .semibold : .medium))
+                        .font(.system(size: 14, weight: selected ? .semibold : .medium))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.75)
+                        .minimumScaleFactor(0.9)
                         .foregroundStyle(selected ? Theme.onAccent : Theme.text)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 2)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background {
                             // 選んだ印が、タブの間をなめらかに滑って移る
