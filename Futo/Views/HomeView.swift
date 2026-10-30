@@ -190,7 +190,7 @@ struct HomeView: View {
         if model.targetCount == 0 { return tr("アプリやサイトを選びます。") }
         switch model.restriction {
         case .configured: return tr("選んだものは、ふだん使えません。")
-        case .temporarilyUnlocked: return tr("終わったら、制限に戻します。")
+        case .temporarilyUnlocked: return ""
         case .paused(let until): return tr("{0} に、自動で戻ります。", until.formatted(date: .omitted, time: .shortened))
         case .unverifiable: return tr("もう一度、かけ直してください。")
         case .off: return tr("かけておくのがおすすめです。")
@@ -222,7 +222,7 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headline).font(.headline.weight(.medium)).oneLine()
-                    Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
+                    if !subline.isEmpty { Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8) }
                 }
                 Spacer(minLength: 0)
                 if model.targetCount > 0, model.canAddItems {
@@ -469,8 +469,8 @@ private struct LockSealView: View {
 
     var body: some View {
         ZStack {
-            // 後ろをうっすら落ち着かせて、鍵が見分けやすいようにする
-            Theme.background.opacity(0.55).ignoresSafeArea()
+            // 後ろをぼかして、文字が重ならないようにする（鍵と「制限しました」が、はっきり見える）
+            Rectangle().fill(.regularMaterial).ignoresSafeArea()
                 .opacity(shown ? 1 : 0)
             VStack(spacing: 18) {
                 ZStack {
@@ -487,6 +487,9 @@ private struct LockSealView: View {
                 Text(tr("制限しました"))
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 22).padding(.vertical, 9)
+                    .background(Capsule().fill(Theme.card))
+                    .overlay(Capsule().stroke(Theme.accent.opacity(0.25), lineWidth: 1))
                     .opacity(labelShown ? 1 : 0)
                     .offset(y: labelShown || reduceMotion ? 0 : 6)
             }

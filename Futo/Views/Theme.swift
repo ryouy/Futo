@@ -253,6 +253,7 @@ struct CenteredScroll<Content: View>: View {
 struct FixedWidthRow<Leading: View, Trailing: View>: View {
     let height: CGFloat
     let trailingWidth: CGFloat
+    var alignment: Alignment = .leading
     @ViewBuilder var leading: Leading
     @ViewBuilder var trailing: Trailing
 
@@ -260,7 +261,7 @@ struct FixedWidthRow<Leading: View, Trailing: View>: View {
         GeometryReader { proxy in
             HStack(spacing: 0) {
                 leading
-                    .frame(width: max(0, proxy.size.width - trailingWidth), alignment: .leading)
+                    .frame(width: max(0, proxy.size.width - trailingWidth), alignment: alignment)
                     .clipped()
                 trailing
                     .frame(width: trailingWidth, alignment: .trailing)
@@ -281,7 +282,7 @@ struct ChoiceRow<Content: View>: View {
 
     var body: some View {
         Button(action: action) {
-            FixedWidthRow(height: 58, trailingWidth: showsIndicator ? 30 : 0) {
+            FixedWidthRow(height: 58, trailingWidth: showsIndicator ? 30 : 0, alignment: showsIndicator ? .leading : .center) {
                 content
                     .foregroundStyle(.primary)
                     .lineLimit(1)

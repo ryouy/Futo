@@ -7,6 +7,7 @@ struct FutoApp: App {
     @State private var model: AppModel
     @State private var sharing: SharingModel
     @State private var backup: BackupModel
+    @State private var ads = AdsService()
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -33,9 +34,14 @@ struct FutoApp: App {
             RootView(model: model)
                 .environment(sharing)
                 .environment(backup)
+                .environment(ads)
                 .onChange(of: scenePhase) { _, phase in
                     // アプリを開いたとき、継続共有を最新にする（常時同期ではない）
                     if phase == .active { Task { await sharing.loadReceivedShares() }; Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode) } }
+                }
+                .task {
+                    // 広告の同意の確認（必要な地域でだけ、フォームが出る）。広告が出なくても、アプリの動作は変わらない
+                    await ads.gatherConsent()
                 }
                 .task {
                     await sharing.loadProfile()

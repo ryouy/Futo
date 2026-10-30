@@ -147,6 +147,12 @@ struct WaitView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        // 広告は、この待機の画面の最下部だけ。タイマー・問いかけ・ボタンとは、十分に離す。広告の有無で、位置は動かない。
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            WaitBannerSlot()
+                .padding(.top, 40)
+                .padding(.bottom, 8)
+        }
         // scenePhaseが変わるたびにタスクが作り直されるため、タイマーは常に1つだけ。
         .task(id: scenePhase) {
             guard scenePhase == .active else {
