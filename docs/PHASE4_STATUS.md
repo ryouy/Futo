@@ -6,7 +6,23 @@
 
 - サーバー（Vercel Functions + Firestore）は、エミュレーターに対して **97件のテストが通っています**。
 - iOSの純粋なロジック（PKCE・認証の状態遷移・統計の集計・招待リンクの解釈・APIクライアント）は、**Swiftのテストが通っています**。
-- **実際のGoogle・Firebase・Vercel・実機では、まだ何も確認していません。** 設定が空のため、共有機能は「未設定」と表示されます。手順は [PHASE4_SETUP.md](PHASE4_SETUP.md)。
+- Firebase・Vercelは設定済みで、サーバーの疎通は確認しました（下の「実環境で確認できたこと」）。**Googleログインと、共有・フレンドの実機での動作は、まだ確認していません。** 手順は [PHASE4_SETUP.md](PHASE4_SETUP.md)。
+
+## 実環境で確認できたこと
+
+| 日付 | 内容 | 確認した人・方法 |
+|---|---|---|
+| 2026-10-30 | Firebase（Spark）プロジェクト `futo-share`、Firestore（Standard・東京）の作成 | 利用者が実施 |
+| 2026-10-30 | `firebase deploy --only firestore:rules,firestore:indexes` が成功（`released rules` / `deployed indexes`） | 利用者のターミナル出力 |
+| 2026-10-30 | Vercel（Hobby）へのデプロイ。`https://futo-share.vercel.app` が200を返し、`Referrer-Policy: no-referrer` が付いている | `curl` で確認 |
+| 2026-10-30 | 環境変数の設定前は、公開APIが503 `not_configured` を返した（成功を装わない動き） | `curl` で確認 |
+| 2026-10-30 | 環境変数の設定・再デプロイ後、存在しないトークンの公開APIが404 `unavailable`（`Cache-Control: private, no-store`、`X-Robots-Tag: noindex…`）。サーバーからFirestoreに到達できている | `curl` で確認 |
+| 2026-10-30 | ログインなしの `/api/me` が401 | `curl` で確認 |
+
+### まだ実環境で確認していないこと
+- Googleログイン（実機）、表示名、Web共有の作成・閲覧・停止、フレンド、限定共有、アカウント削除。
+- Firestoreの複合インデックスが、実際のクエリで足りているか。
+- Universal Links（`APPLE_TEAM_ID` と Associated Domains が未設定。`/.well-known/apple-app-site-association` は404）。
 
 ## 4A：任意のGoogleログイン
 
