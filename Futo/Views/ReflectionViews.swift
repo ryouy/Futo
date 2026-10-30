@@ -77,13 +77,14 @@ struct ReflectionQuestionOverlay: View {
                     .padding(.bottom, 6)
                 ForEach([Reflection.satisfied, .neutral, .wishedLess], id: \.self) { reflection in
                     Button(reflection.label) { choose(reflection) }
-                        .buttonStyle(FutoButtonStyle(prominent: chosen == reflection))
-                        .opacity(chosen == nil || chosen == reflection ? 1 : 0.35)
+                        .buttonStyle(FutoButtonStyle(prominent: false))
+                        .opacity(chosen == nil || chosen == reflection ? 1 : 0.3)
+                        .scaleEffect(chosen == reflection && !reduceMotion ? 0.97 : 1)
                         .accessibilityAddTraits(chosen == reflection ? .isSelected : [])
                 }
                 Button(tr("答えない")) { choose(.skipped) }
                     .buttonStyle(FutoTextButtonStyle())
-                    .opacity(chosen == nil || chosen == .skipped ? 1 : 0.35)
+                    .opacity(chosen == nil || chosen == .skipped ? 1 : 0.3)
             }
             .padding(28)
             .frame(maxWidth: .infinity)

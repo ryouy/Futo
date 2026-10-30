@@ -81,8 +81,8 @@ struct PurposeView: View {
     var body: some View {
         CenteredScroll {
             VStack(spacing: 14) {
-                FlowTitle(text: tr("今、どんなことに使いたいですか？"))
-                Text(tr("このあと、{0}だけ立ち止まります。", "\(model.waitDurationText)"))
+                FlowTitle(text: tr("これから、何をしますか？"))
+                Text(tr("使う前に、{0}だけ待ちます。", "\(model.waitDurationText)"))
                     .oneLine(0.8)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -132,7 +132,7 @@ struct WaitView: View {
         CenteredScroll {
             VStack(spacing: 24) {
                 FlowTitle(text: tr("少し、立ち止まってみましょう。"))
-                Text(tr("{0}、ゆっくり息をしてみましょう。", "\(model.waitDurationText)"))
+                Text(tr("ゆっくり息をしながら、{0}待ちましょう。", "\(model.waitDurationText)"))
                     .oneLine(0.8)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -210,6 +210,7 @@ struct FinalChoiceView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// 選んだことを少しの間だけ見せてから、次の画面へ（約0.3秒）。連打しても、記録は1回だけ。
+    /// ボタンの色は変えない（選んだ側が「正解」のように色づかないように）。選んだ側はそのまま、もう一方がうすれる。
     private func choose(_ outcome: SessionOutcome) {
         guard chosen == nil else { return }
         withAnimation(.easeInOut(duration: reduceMotion ? 0.15 : 0.2)) { chosen = outcome }
@@ -225,13 +226,14 @@ struct FinalChoiceView: View {
                 FlowTitle(text: tr("今も使いたいですか？"))
                     .padding(.bottom, 12)
                 // 色で区別する。使う側は薄く、やめる側は濃く。どちらも同じ大きさで、押しやすさは変えない。
-                // 選んだものは、色が入れ替わるように濃くなり、もう一方は薄くなる。
                 Button(tr("使いたい")) { choose(.wantsToUse) }
-                    .buttonStyle(FutoButtonStyle(prominent: chosen == .wantsToUse))
-                    .opacity(chosen == nil || chosen == .wantsToUse ? 1 : 0.35)
+                    .buttonStyle(FutoButtonStyle(prominent: false))
+                    .opacity(chosen == nil || chosen == .wantsToUse ? 1 : 0.3)
+                    .scaleEffect(chosen == .wantsToUse && !reduceMotion ? 0.97 : 1)
                 Button(tr("やめておく")) { choose(.deferred) }
-                    .buttonStyle(FutoButtonStyle(prominent: chosen == nil || chosen == .deferred))
-                    .opacity(chosen == nil || chosen == .deferred ? 1 : 0.35)
+                    .buttonStyle(FutoButtonStyle())
+                    .opacity(chosen == nil || chosen == .deferred ? 1 : 0.3)
+                    .scaleEffect(chosen == .deferred && !reduceMotion ? 0.97 : 1)
             }
         }
         .navigationBarTitleDisplayMode(.inline)

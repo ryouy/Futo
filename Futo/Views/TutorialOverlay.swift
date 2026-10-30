@@ -38,20 +38,21 @@ struct TutorialOverlay: View {
     private var steps: [Step] {
         var result = [Step(target: .status, lines: [tr("ここに、いまの状態が出ます。"), tr("ふだんは「制限中」です。")])]
         if anchors[.plus] != nil {
-            result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます。"), tr("外せるのは、制限をはずした間だけ。")]))
+            result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます。"), tr("足すのは、いつでもできます。")]))
         }
         result.append(Step(target: .main, lines: mainLines))
-        result.append(Step(target: .header, lines: [tr("右の時計は記録、"), tr("歯車は設定です。")]))
+        result.append(Step(target: .header, lines: [tr("左の時計は記録、"), tr("右は設定とアカウントです。")]))
+        result.append(Step(target: .header, lines: [tr("制限を止めたいときは、"), tr("設定の「制限の管理」から。"), tr("止める前に、待機があります。")]))
         result.append(Step(target: nil, lines: [tr("準備はできました。")]))
         return result
     }
 
     private var mainLines: [String] {
-        if model.mode == .device, model.permission != .approved { return [tr("まず、ここで"), tr("許可をします。")] }
+        if model.permission != .approved { return [tr("まず、ここで"), tr("許可をします。")] }
         if model.targetCount == 0 { return [tr("まず、ここで"), tr("制限するものを選びます。")] }
         switch model.restriction {
-        case .configured: return [tr("使いたいときは、ここ。"), tr("ひと呼吸おいてから、"), tr("使うかを選べます。")]
-        case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻します。")]
+        case .configured: return [tr("使いたくなったら、ここ。"), tr("少し待ってから、"), tr("使うかどうかを選べます。")]
+        case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻せます。")]
         case .paused: return [tr("止めている間も、"), tr("ここで制限を再開できます。")]
         case .off, .unverifiable: return [tr("ここで制限をかけます。"), tr("かけておくのが"), tr("おすすめです。")]
         }

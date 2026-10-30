@@ -442,7 +442,7 @@ func dateText(_ iso: String) -> String {
     return date.formatted(date: .abbreviated, time: .shortened)
 }
 
-/// アイコン。自分のもの（`isOwn`）は、設定に従う：選んだアイコン（山・海・魚など）、または名前の頭文字。色はテーマの4色から選んだもの。
+/// アイコン。自分のもの（`isOwn`）は、設定に従う：選んだアイコン（山・海・魚など）、または何も描かない無印。色はテーマの4色から選んだもの。
 /// 相手のものは、頭文字だけ（相手のアイコン・色は、受け取らない）。
 struct AccountAvatar: View {
     let name: String
@@ -457,9 +457,12 @@ struct AccountAvatar: View {
             .fill(isOwn ? settings.fill(choices: Self.themeChoices, themeColor: Theme.accent) : Theme.accent)
             .frame(width: size, height: size)
             .overlay {
-                if isOwn, let index = settings.symbolIndex, AvatarSettings.symbols.indices.contains(index) {
-                    Image(systemName: AvatarSettings.symbols[index].name)
-                        .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white)
+                if isOwn {
+                    // 自分のアイコン：選んだ絵。初期は、何も描かない無印
+                    if let index = settings.symbolIndex, AvatarSettings.symbols.indices.contains(index) {
+                        Image(systemName: AvatarSettings.symbols[index].name)
+                            .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white)
+                    }
                 } else {
                     Text(String(name.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased())
                         .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
@@ -568,10 +571,8 @@ struct ProfileView: View {
     private var iconGrid: some View {
         let fill = avatar.fill(choices: AccountAvatar.themeChoices, themeColor: Theme.accent)
         return LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 10)], spacing: 10) {
-            iconCell(selected: avatar.symbolIndex == nil, label: tr("頭文字")) { avatar.selectInitial() } content: {
+            iconCell(selected: avatar.symbolIndex == nil, label: tr("無印")) { avatar.selectPlain() } content: {
                 Circle().fill(fill).frame(width: 40, height: 40)
-                    .overlay(Text(String(displayName.prefix(1)).uppercased())
-                        .font(.system(size: 18, weight: .semibold, design: .rounded)).foregroundStyle(.white))
             }
             ForEach(Array(AvatarSettings.symbols.enumerated()), id: \.offset) { index, symbol in
                 iconCell(selected: avatar.symbolIndex == index, label: symbol.label) { avatar.selectSymbol(index) } content: {

@@ -16,13 +16,13 @@ struct OnboardingView: View {
     private var pages: [Page] {
         [
         Page(symbol: nil, title: tr("使う前に、ひと呼吸。"),
-             text: tr("スマホを、ふと開く前に。\n少し立ち止まる時間を作るアプリです。")),
+             text: tr("スマホを開く前に、\n少し立ち止まる時間をつくるアプリです。")),
         Page(symbol: "lock.fill", title: tr("ふだんは、制限をかけておく"),
              text: tr("選んだアプリやサイトは、\nふだんは使えなくします。")),
         Page(symbol: "hourglass", title: tr("使いたいときは、ひと呼吸"),
              text: tr("使う理由を選んで、少し待ちます。\nそのあと、自分で決めます。")),
         Page(symbol: "moon.stars", title: tr("そっと、振り返る"),
-             text: tr("朝や夜に、短く振り返れます。\n記録は、この端末の中だけにあります。")),
+             text: tr("朝や夜に、短く振り返れます。\n記録は、選ばない限り、\nこの端末の中だけに保存されます。")),
         ]
     }
 

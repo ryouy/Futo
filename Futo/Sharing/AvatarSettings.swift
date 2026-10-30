@@ -3,7 +3,7 @@ import Observation
 import SwiftUI
 
 /// 自分のアイコンの設定。この端末の表示だけに使い、サーバーにも、フレンドにも送らない。
-/// 名前の頭文字か、山・海・魚などの10個から選ぶ。色は、テーマの4色から選ぶ（選ばなければ、いまのテーマ色）。
+/// 何も描かない無印（初期設定）か、山・海・魚などの9個から選ぶ（無印を含めて10個）。色は、テーマの4色から選ぶ（選ばなければ、いまのテーマ色）。
 @MainActor
 @Observable
 final class AvatarSettings {
@@ -12,17 +12,17 @@ final class AvatarSettings {
     /// 色の選択肢の数（テーマ色と同じ4色）
     static let colorCount = 4
 
-    /// 選べるアイコン（山・海・魚など10個）。名前は、読み上げ用。
+    /// 選べるアイコン（山・海・魚など9個。これに、何も描かない無印を加えて10個）。名前は、読み上げ用。
     static let symbols: [(name: String, label: String)] = [
         ("mountain.2.fill", "山"), ("water.waves", "海"), ("fish.fill", "魚"), ("leaf.fill", "葉"), ("tree.fill", "木"),
-        ("sun.max.fill", "太陽"), ("moon.stars.fill", "月"), ("bird.fill", "鳥"), ("tortoise.fill", "亀"), ("sailboat.fill", "ヨット"),
+        ("sun.max.fill", "太陽"), ("moon.stars.fill", "月"), ("bird.fill", "鳥"), ("tortoise.fill", "亀"),
     ]
 
     private static let colorKey = "avatar.colorIndex"
     private static let symbolKey = "avatar.symbolIndex"
     @ObservationIgnored private let defaults: UserDefaults
 
-    /// 選んだアイコン（`symbols` の番号）。nil は、名前の頭文字
+    /// 選んだアイコン（`symbols` の番号）。nil は、何も描かない無印（初期設定）
     var symbolIndex: Int? {
         didSet {
             if let symbolIndex { defaults.set(symbolIndex, forKey: Self.symbolKey) } else { defaults.removeObject(forKey: Self.symbolKey) }
@@ -50,7 +50,7 @@ final class AvatarSettings {
         return themeColor
     }
 
-    func selectInitial() { symbolIndex = nil }
+    func selectPlain() { symbolIndex = nil }
 
     func selectSymbol(_ index: Int) {
         guard Self.symbols.indices.contains(index) else { return }

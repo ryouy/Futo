@@ -407,3 +407,21 @@ struct NewBadge: View {
             .accessibilityLabel(tr("新しい記録があります"))
     }
 }
+
+/// テーマカラーを変えるとき、変わる前の画面を重ねておき、ふわっと溶けるように消す（色が、ぱっと切り替わらない）。
+enum ThemeCrossfade {
+    @MainActor
+    static func run(_ change: () -> Void) {
+        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).first { $0.isKeyWindow }
+        guard let window, let snapshot = window.snapshotView(afterScreenUpdates: false) else { change(); return }
+        snapshot.isUserInteractionEnabled = false
+        window.addSubview(snapshot)
+        change()
+        let duration = UIAccessibility.isReduceMotionEnabled ? 0.3 : 0.75
+        // 新しい色の画面が描かれてから、重ねた画面を溶かす
+        UIView.animate(withDuration: duration, delay: 0.08, options: [.curveEaseInOut, .allowUserInteraction]) {
+            snapshot.alpha = 0
+        } completion: { _ in snapshot.removeFromSuperview() }
+    }
+}

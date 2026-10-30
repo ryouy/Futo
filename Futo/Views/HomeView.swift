@@ -277,11 +277,6 @@ struct HomeView: View {
             } else {
                 appRows(editable: editable)
             }
-            if editable {
-                Text(tr("ゴミ箱は、制限の対象から外すだけです。アプリは削除されません。"))
-                    .font(.caption).foregroundStyle(.secondary)
-                    .padding(.top, 6)
-            }
         }
         .animation(.easeInOut(duration: 0.3), value: editable)
     }

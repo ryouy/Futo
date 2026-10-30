@@ -59,19 +59,30 @@ struct NotificationSettingsView: View {
             minute: minute)
     }
 
-    /// お出かけのおすすめ：オン・オフと、1日の回数だけ。時刻は、ランダムに（できるだけ均等に）決まる。
-    @ViewBuilder
+    /// お出かけのおすすめ：1行に、名前・「n回/日」・オン/オフ（トグルの左に回数）。時刻は、ランダムに（できるだけ均等に）決まる。
     private var outingRow: some View {
-        row(.outing)
-        if model.prefs.notifyOuting {
-            Picker(tr("1日の回数"), selection: Binding(
-                get: { model.prefs.outingPerDay },
-                set: { value in model.updatePreferences { $0.outingPerDay = value } }
-            )) {
-                ForEach(1...6, id: \.self) { Text(tr("{0}回", "\($0)")).tag($0) }
+        HStack(spacing: 10) {
+            Text(title(.outing))
+            Spacer(minLength: 8)
+            if model.prefs.notifyOuting {
+                Picker(tr("1日の回数"), selection: Binding(
+                    get: { model.prefs.outingPerDay },
+                    set: { value in model.updatePreferences { $0.outingPerDay = value } }
+                )) {
+                    ForEach(1...6, id: \.self) { Text(tr("{0}回/日", "\($0)")).tag($0) }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .fixedSize()
             }
-            .frame(minHeight: 44)
+            Toggle(title(.outing), isOn: Binding(
+                get: { model.prefs.isNotificationOn(.outing) },
+                set: { on in
+                    if on { model.requestEnableNotification(.outing) } else { model.disableNotification(.outing) }
+                }))
+                .labelsHidden()
         }
+        .frame(minHeight: 44)
     }
 
     var body: some View {

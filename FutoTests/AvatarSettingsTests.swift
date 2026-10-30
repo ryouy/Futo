@@ -11,7 +11,7 @@ final class AvatarSettingsTests: XCTestCase {
         return d
     }
 
-    func testDefaultsAreTheInitialInTheThemeColor() {
+    func testDefaultIsThePlainIconInTheThemeColor() {
         let s = AvatarSettings(defaults: defaults())
         XCTAssertNil(s.symbolIndex)
         XCTAssertNil(s.colorIndex)
@@ -25,13 +25,13 @@ final class AvatarSettingsTests: XCTestCase {
         XCTAssertEqual(s.fill(choices: [.red, .green, .blue, .orange], themeColor: .purple), .blue)
     }
 
-    func testSymbolsAreTenAndSelectionWorks() {
-        XCTAssertEqual(AvatarSettings.symbols.count, 10)
-        XCTAssertEqual(Set(AvatarSettings.symbols.map(\.name)).count, 10)
+    func testNineSymbolsPlusThePlainOneMakeTen() {
+        XCTAssertEqual(AvatarSettings.symbols.count, 9, "9個＋無印で10個")
+        XCTAssertEqual(Set(AvatarSettings.symbols.map(\.name)).count, 9)
         let s = AvatarSettings(defaults: defaults())
         s.selectSymbol(2)
         XCTAssertEqual(s.symbolIndex, 2)
-        s.selectInitial()
+        s.selectPlain()
         XCTAssertNil(s.symbolIndex)
         s.selectSymbol(99)
         XCTAssertNil(s.symbolIndex, "範囲外は無視する")
