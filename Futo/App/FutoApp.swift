@@ -5,7 +5,8 @@ import SwiftUI
 struct FutoApp: App {
     private let container: ModelContainer
     @State private var model: AppModel
-    @State private var sharing = SharingModel()
+    @State private var sharing: SharingModel
+    @State private var backup: BackupModel
 
     init() {
         LanguageStore.shared.applySystemDefaultIfUnset()
@@ -18,6 +19,9 @@ struct FutoApp: App {
         self.container = container
         let model = AppModel(context: container.mainContext)
         _model = State(initialValue: model)
+        let sharing = SharingModel()
+        _sharing = State(initialValue: sharing)
+        _backup = State(initialValue: BackupModel(sharing: sharing, app: model))
         // 通知のタップを受け取る。起動前に設定して、起動を伴うタップも逃さない。
         NotificationService.shared.attach()
         NotificationService.shared.onRoute = { kind in model.handleNotificationTap(kind) }
@@ -27,6 +31,7 @@ struct FutoApp: App {
         WindowGroup {
             RootView(model: model)
                 .environment(sharing)
+                .environment(backup)
                 .task { await sharing.loadProfile() }
                 .onOpenURL { sharing.handleIncoming(url: $0) }
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in

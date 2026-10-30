@@ -110,6 +110,9 @@ struct SharingTab: View {
             NavigationLink { FriendsView(model: model) } label: {
                 Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accent)
             }.frame(minHeight: 44)
+            NavigationLink { BackupView() } label: {
+                Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accent)
+            }.frame(minHeight: 44)
         }
         CardSection {
             Button { confirmSignOut = true } label: {

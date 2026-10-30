@@ -222,5 +222,9 @@ final class AuthService {
 /// ログアウト・アカウント切り替えのときに、そのアカウントの端末内の共有リンクを除去する窓口。
 /// アプリではKeychainを消す。テストでは、呼ばれたことの記録に差し替えられる。
 enum ShareLinkCleanup {
-    nonisolated(unsafe) static var run: (String) -> Void = { ShareLinkStore.removeAll(uid: $0) }
+    nonisolated(unsafe) static var run: (String) -> Void = {
+        ShareLinkStore.removeAll(uid: $0)
+        // Driveの許可も、端末から除く（Drive上のバックアップは消えない）
+        KeychainDriveTokenStore().clear(uid: $0)
+    }
 }
