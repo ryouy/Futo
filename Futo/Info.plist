@@ -14,9 +14,9 @@
 			</array>
 		</dict>
 	</array>
-	<!-- 広告（Google AdMob）。いまは、Google公式のテスト用アプリID。本番では、AdMobの自分のアプリIDに替える -->
+	<!-- 広告（Google AdMob）。アプリIDは、ビルド設定 ADMOB_APP_ID から入る（Debugはテスト用、Releaseは本番） -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>$(ADMOB_APP_ID)</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

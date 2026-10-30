@@ -3,12 +3,20 @@ import Observation
 import UIKit
 import UserMessagingPlatform
 
-/// 広告の設定。いまは、Google公式のテスト広告IDだけを使う（本番のIDは入れていない）。
+/// 広告の設定。**Debugビルドは、Google公式のテストID**（自分で広告を押しても安全）。**Releaseビルドだけ、本番のID**を使う。
+/// 開発中の端末で、本番の広告を表示・クリックすると、AdMobのポリシー違反になるため、分けている。
 enum AdsConfig {
+    #if DEBUG
     /// Google公式のテスト用アダプティブバナーのユニットID（収益は発生しない）
     static let bannerUnitID = "ca-app-pub-3940256099942544/2435281174"
-    /// Google公式のテスト用アプリID（`Info.plist` の `GADApplicationIdentifier` と同じ値）
-    static let testAppID = "ca-app-pub-3940256099942544~1458002511"
+    /// Google公式のテスト用アプリID（`Info.plist` の `GADApplicationIdentifier` は、Debugでこの値になる）
+    static let appID = "ca-app-pub-3940256099942544~1458002511"
+    #else
+    /// 本番のバナーのユニットID
+    static let bannerUnitID = "ca-app-pub-5121019112887429/1750867148"
+    /// 本番のアプリID（`Info.plist` の `GADApplicationIdentifier` は、Releaseでこの値になる）
+    static let appID = "ca-app-pub-5121019112887429~1939615583"
+    #endif
 }
 
 /// 広告の同意（Google UMP）と、SDKの開始。広告を出すのは、待機の画面のバナー1枠だけ。

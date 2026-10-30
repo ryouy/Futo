@@ -469,9 +469,9 @@ private struct LockSealView: View {
 
     var body: some View {
         ZStack {
-            // 後ろをぼかして、文字が重ならないようにする（鍵と「制限しました」が、はっきり見える）
+            // 後ろを、うっすらぼかす（鍵と「制限しました」が見分けやすく、後ろの画面も、少し見える）
             Rectangle().fill(.regularMaterial).ignoresSafeArea()
-                .opacity(shown ? 1 : 0)
+                .opacity(shown ? 0.5 : 0)
             VStack(spacing: 18) {
                 ZStack {
                     Circle().stroke(Theme.accent.opacity(ripple ? 0 : 0.5), lineWidth: 4)
@@ -487,9 +487,6 @@ private struct LockSealView: View {
                 Text(tr("制限しました"))
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 22).padding(.vertical, 9)
-                    .background(Capsule().fill(Theme.card))
-                    .overlay(Capsule().stroke(Theme.accent.opacity(0.25), lineWidth: 1))
                     .opacity(labelShown ? 1 : 0)
                     .offset(y: labelShown || reduceMotion ? 0 : 6)
             }
