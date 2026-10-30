@@ -4,6 +4,8 @@ import SwiftUI
 enum TutorialTarget: Hashable {
     case status
     case plus
+    /// 状態のカードの中の、はじめの準備のボタン（許可・制限するものを選ぶ）
+    case setup
     case main
     /// 右上の記録・設定のボタン
     case header
@@ -37,6 +39,12 @@ struct TutorialOverlay: View {
     /// 今の状態で見えているものだけを案内する。
     private var steps: [Step] {
         var result = [Step(target: .status, lines: [tr("ここに、いまの状態が出ます。"), tr("ふだんは「制限中」です。")])]
+        if anchors[.setup] != nil {
+            let lines = model.permission != .approved
+                ? [tr("まず、ここで"), tr("許可をします。")]
+                : [tr("まず、ここで"), tr("制限するものを選びます。")]
+            result.append(Step(target: .setup, lines: lines))
+        }
         if anchors[.plus] != nil {
             result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます。"), tr("足すのは、いつでもできます。")]))
         }
@@ -48,8 +56,7 @@ struct TutorialOverlay: View {
     }
 
     private var mainLines: [String] {
-        if model.permission != .approved { return [tr("まず、ここで"), tr("許可をします。")] }
-        if model.targetCount == 0 { return [tr("まず、ここで"), tr("制限するものを選びます。")] }
+        if model.permission != .approved || model.targetCount == 0 { return [tr("準備ができたら、"), tr("ここで制限をかけます。")] }
         switch model.restriction {
         case .configured: return [tr("使いたくなったら、ここ。"), tr("少し待ってから、"), tr("使うかどうかを選べます。")]
         case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻せます。")]

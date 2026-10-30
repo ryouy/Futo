@@ -33,11 +33,13 @@ struct RootView: View {
                     Theme.background.ignoresSafeArea()
                     // ひと呼吸の画面が出る間はホームを先に消し、戻るときは画面が消えてからホームを出す。
                     NavigationStack { HomeView(model: model) }
+                        .readableColumn()
                         .opacity(model.showFlow ? 0 : 1)
                         .animation(.easeInOut(duration: 0.2).delay(model.showFlow ? 0 : 0.2), value: model.showFlow)
                         .accessibilityHidden(model.showFlow)
                     if model.showFlow {
                         FlowView(model: model)
+                            .readableColumn()
                             .background(Theme.background.ignoresSafeArea())
                             .transition(.sequentialFade)
                             .zIndex(1)
@@ -47,6 +49,7 @@ struct RootView: View {
                 .transition(.opacity)
             } else {
                 OnboardingView(model: model)
+                    .readableColumn()
                     .transition(.opacity)
             }
         }

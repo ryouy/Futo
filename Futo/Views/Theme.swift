@@ -163,16 +163,16 @@ struct FutoButtonStyle: ButtonStyle {
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, 16)
-            .foregroundStyle(prominent ? Theme.onAccent : Theme.accentText)
+            .foregroundStyle(!isEnabled ? Color.secondary : (prominent ? Theme.onAccent : Theme.accentText))
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(prominent ? Theme.accent : Theme.accent.opacity(bordered ? 0.24 : 0.14))
+                    .fill(!isEnabled ? Color.gray.opacity(0.22) : (prominent ? Theme.accent : Theme.accent.opacity(bordered ? 0.24 : 0.14)))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(Theme.accent.opacity(bordered && !prominent ? 0.7 : 0), lineWidth: 1.5)
             )
-            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 1)
     }
 }
 
@@ -494,5 +494,12 @@ struct FutoTabPicker<T: Hashable>: View {
         .padding(5)
         .background(Capsule().fill(Theme.softBlue))
         .animation(.spring(duration: 0.4, bounce: 0.22), value: selection)
+    }
+}
+
+extension View {
+    /// 広い画面（iPad）では、中身を読みやすい幅の中央にまとめる。iPhoneの幅では何も変わらない。
+    func readableColumn(_ width: CGFloat = 640) -> some View {
+        frame(maxWidth: width).frame(maxWidth: .infinity)
     }
 }

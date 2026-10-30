@@ -233,6 +233,11 @@ struct HomeView: View {
                 }
             }
 
+            if setupNeeded {
+                setupButton
+                    .padding(.top, 4)
+                    .transition(.opacity)
+            }
             if model.targetCount > 0 {
                 Divider()
                 appsSection(rows: rows)
@@ -248,6 +253,32 @@ struct HomeView: View {
         .tutorialTarget(.status)
         .animation(.easeInOut(duration: 0.3), value: model.restriction)
         .animation(.easeInOut(duration: 0.3), value: model.targetCount)
+    }
+
+    // MARK: はじめの準備（許可 → 制限するものを選ぶ。どちらも、状態のカードの中のボタンで行う）
+
+    private var setupNeeded: Bool {
+        guard model.mode == .device, !model.isPaused, !isUnlocked else { return false }
+        return needsPermission || model.targetCount == 0
+    }
+
+    @ViewBuilder
+    private var setupButton: some View {
+        Group {
+            if needsPermission {
+                if model.permission == .denied {
+                    Button(tr("設定アプリを開く")) {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    }
+                } else {
+                    Button(tr("許可する")) { Task { await model.requestPermission() } }
+                }
+            } else {
+                Button(tr("制限するものを選ぶ")) { sheet = .picker }
+            }
+        }
+        .buttonStyle(FutoButtonStyle())
+        .tutorialTarget(.setup)
     }
 
     // MARK: 制限するもの（状態の行の右端の＋で追加、各行の－で外す）
@@ -344,12 +375,11 @@ struct HomeView: View {
         } else if isUnlocked {
             Button(tr("使い終わる")) { model.relockNow() }
                 .buttonStyle(FutoButtonStyle())
-        } else if needsPermission {
-            Button(tr("許可する")) { Task { await model.requestPermission() } }
+        } else if needsPermission || model.targetCount == 0 {
+            // 準備ができるまでは、押せない。許可や選ぶ操作は、状態のカードの中にある
+            Button(tr("制限をかける")) {}
                 .buttonStyle(FutoButtonStyle())
-        } else if model.targetCount == 0 {
-            Button(tr("制限するものを選ぶ")) { sheet = .picker }
-                .buttonStyle(FutoButtonStyle())
+                .disabled(true)
         } else if model.restriction == .configured {
             Button(tr("ひと呼吸おいて、使う")) { model.beginBreath() }
                 .buttonStyle(FutoButtonStyle(prominent: false, bordered: true))

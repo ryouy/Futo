@@ -189,6 +189,8 @@ enum EnglishStrings {
         "一時解除中": "Temporarily unlocked",
         "使い終わる": "All done",
         "許可する": "Allow",
+        "設定アプリを開く": "Open Settings",
+        "準備ができたら、": "When you're ready,",
         "制限するものを選ぶ": "Pick what to lock",
         "ひと呼吸おいて、使う": "Take a breath, then use",
         "制限をかけ直す": "Lock again",
