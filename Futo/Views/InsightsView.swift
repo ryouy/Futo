@@ -10,12 +10,6 @@ struct RecordsView: View {
     @Query(sort: \RestrictionEvent.at, order: .reverse) private var events: [RestrictionEvent]
 
     var body: some View {
-        let calendar = LogicalCalendar()
-        let now = Date()
-        let insights = PeriodInsights.make(sessions: sessions, mode: mode, period: period, calendar: calendar, now: now)
-        let interval = period.interval(calendar: calendar, now: now)
-        let breakdown = Breakdown.make(sessions: sessions, mode: mode, interval: interval)
-
         VStack(spacing: 0) {
             FutoTabPicker(items: Array(InsightPeriod.allCases), selection: $period, title: { $0.label })
             .padding(.horizontal, 20)
@@ -29,7 +23,27 @@ struct RecordsView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
 
-            ScrollView {
+            // 左右にスワイプして、期間を切り替えられる
+            TabView(selection: $period) {
+                ForEach(InsightPeriod.allCases) { p in
+                    periodPage(p).tag(p)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .navigationTitle(tr("記録"))
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $detail) { DayDetailView(detail: $0).presentationBackground(Theme.background) }
+    }
+
+    private func periodPage(_ period: InsightPeriod) -> some View {
+        let calendar = LogicalCalendar()
+        let now = Date()
+        let insights = PeriodInsights.make(sessions: sessions, mode: mode, period: period, calendar: calendar, now: now)
+        let interval = period.interval(calendar: calendar, now: now)
+        let breakdown = Breakdown.make(sessions: sessions, mode: mode, interval: interval)
+        return ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if insights.total == 0 && RestrictionEventSummary.counts(events, mode: mode, interval: interval).isEmpty {
                         Text(tr("この期間の記録はまだありません。")).foregroundStyle(.secondary).card()
@@ -46,11 +60,6 @@ struct RecordsView: View {
                 .padding(20)
                 .animation(.easeInOut(duration: 0.3), value: period)
             }
-        }
-        .background(Theme.background.ignoresSafeArea())
-        .navigationTitle(tr("記録"))
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $detail) { DayDetailView(detail: $0).presentationBackground(Theme.background) }
     }
 
     // MARK: カード

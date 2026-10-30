@@ -33,16 +33,16 @@ enum ThemeColor: String, CaseIterable, Identifiable {
     var palette: Palette {
         switch self {
         case .wakaba:
-            return Palette(accent: (0x196459, 0x8FD0BD), backgroundTop: (0xFCF8F0, 0x26312E),
+            return Palette(accent: (0x196459, 0x86B5A7), backgroundTop: (0xFCF8F0, 0x26312E),
                            backgroundBottom: (0xE8F1EE, 0x1F2926), card: (0xFFFEFA, 0x2F3B37), soft: (0xDDEBE7, 0x2B3D39))
         case .sora:
-            return Palette(accent: (0x46789A, 0x9CC9E6), backgroundTop: (0xFCF8F0, 0x262D34),
+            return Palette(accent: (0x46789A, 0x8FB2C9), backgroundTop: (0xFCF8F0, 0x262D34),
                            backgroundBottom: (0xEAF1F5, 0x1F262D), card: (0xFFFEFA, 0x2F3841), soft: (0xE1EDF4, 0x2B3945))
         case .sakura:
-            return Palette(accent: (0xA25A72, 0xEAB0C2), backgroundTop: (0xFCF8F0, 0x312B2D),
+            return Palette(accent: (0xA25A72, 0xD2A3B1), backgroundTop: (0xFCF8F0, 0x312B2D),
                            backgroundBottom: (0xF7ECEE, 0x282224), card: (0xFFFEFA, 0x3A3235), soft: (0xF5E3E8, 0x3B3034))
         case .fuji:
-            return Palette(accent: (0x6F5CA3, 0xC4B3EE), backgroundTop: (0xFCF8F0, 0x2C2B34),
+            return Palette(accent: (0x6F5CA3, 0xB1A5D3), backgroundTop: (0xFCF8F0, 0x2C2B34),
                            backgroundBottom: (0xF0ECF6, 0x24232C), card: (0xFFFEFA, 0x35343F), soft: (0xE8E3F3, 0x363448))
         }
     }
@@ -104,9 +104,9 @@ enum Theme {
     /// 時間帯グラフの色。朝は黄、昼は空、夕方は橙、夜はテーマ色。
     static func bandColor(_ band: TimeBand) -> Color {
         switch band {
-        case .morning: return dynamic((0xE0AE4F, 0xE3C07C))
-        case .daytime: return dynamic((0x6FA6C8, 0x8DBAD6))
-        case .evening: return dynamic((0xD98A63, 0xE3A07E))
+        case .morning: return dynamic((0xE0AE4F, 0xD2B887))
+        case .daytime: return dynamic((0x6FA6C8, 0x88A9BF))
+        case .evening: return dynamic((0xD98A63, 0xD09C82))
         case .night: return accent
         }
     }
@@ -448,29 +448,38 @@ struct FutoTabPicker<T: Hashable>: View {
     @Binding var selection: T
     let title: (T) -> String
     var badge: (T) -> Bool = { _ in false }
+    @Namespace private var pill
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             ForEach(items, id: \.self) { item in
                 let selected = item == selection
-                Button { withAnimation(.easeInOut(duration: 0.2)) { selection = item } } label: {
+                Button {
+                    UISelectionFeedbackGenerator().selectionChanged()
+                    withAnimation(.spring(duration: 0.4, bounce: 0.22)) { selection = item }
+                } label: {
                     Text(title(item))
                         .font(.subheadline.weight(selected ? .semibold : .medium))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
                         .foregroundStyle(selected ? Theme.onAccent : Theme.text)
+                        .padding(.horizontal, 8)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(Capsule().fill(selected ? Theme.accent : Color.clear))
+                        .background {
+                            // 選んだ印が、タブの間をなめらかに滑って移る
+                            if selected { Capsule().fill(Theme.accent).matchedGeometryEffect(id: "pill", in: pill) }
+                        }
                         .contentShape(Capsule())
                         .overlay(alignment: .topTrailing) {
-                            if badge(item) { NewBadge(size: 9).offset(x: -6, y: 4) }
+                            if badge(item) { NewBadge(size: 9).offset(x: -3, y: 3) }
                         }
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
-        .padding(4)
+        .padding(5)
         .background(Capsule().fill(Theme.softBlue))
+        .animation(.spring(duration: 0.4, bounce: 0.22), value: selection)
     }
 }

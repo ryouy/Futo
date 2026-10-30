@@ -55,6 +55,20 @@ struct DeviceAppPickerView: View {
 struct UnlockChooserView: View {
     let model: AppModel
     @State private var chosen: Set<RestrictedItem>
+    @State private var decision: Decision?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private enum Decision { case use, decline }
+
+    /// 選んだことを少しの間だけ見せてから進む（もう一方がうすれる）。連打しても、1回だけ。
+    private func decide(_ value: Decision) {
+        guard decision == nil else { return }
+        withAnimation(.easeInOut(duration: reduceMotion ? 0.15 : 0.2)) { decision = value }
+        let picked = chosen
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            if value == .use { model.unlockItems(RestrictedItems(items: Array(picked))) } else { model.declineUnlock() }
+        }
+    }
 
     init(model: AppModel) {
         self.model = model
@@ -94,14 +108,26 @@ struct UnlockChooserView: View {
                     }
                 }
             }
+            // ホームの一覧と同じく、下は、ぼかして見切れさせる（ボタンと接しないように）
+            .mask(
+                VStack(spacing: 0) {
+                    Rectangle()
+                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 32)
+                }
+            )
+            .padding(.bottom, 8)
 
             VStack(spacing: 4) {
                 // 使う側は薄く、やめる側は濃く。
-                Button(tr("選んだものを使う")) { model.unlockItems(RestrictedItems(items: Array(chosen))) }
+                Button(tr("選んだものを使う")) { decide(.use) }
                     .buttonStyle(FutoButtonStyle(prominent: false))
                     .disabled(chosen.isEmpty)
-                Button(tr("やめておく")) { model.declineUnlock() }
+                    .opacity(decision == .decline ? 0.3 : 1)
+                    .scaleEffect(decision == .use && !reduceMotion ? 0.97 : 1)
+                Button(tr("やめておく")) { decide(.decline) }
                     .buttonStyle(FutoButtonStyle())
+                    .opacity(decision == .use ? 0.3 : 1)
+                    .scaleEffect(decision == .decline && !reduceMotion ? 0.97 : 1)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 12)

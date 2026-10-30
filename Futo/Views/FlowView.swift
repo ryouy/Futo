@@ -141,7 +141,7 @@ struct WaitView: View {
                     .opacity(showTimer ? 1 : 0)
                     .padding(.vertical, 12)
 
-                Button(tr("やめてホームへ")) { model.endBreath() }
+                Button(tr("ホームへもどる")) { model.endBreath() }
                     .buttonStyle(FutoTextButtonStyle())
                     .opacity(showTimer ? 1 : 0)
             }

@@ -9,6 +9,7 @@ struct HomeView: View {
     @Environment(SharingModel.self) private var sharing
     @State private var sheet: HomeSheet?
     @State private var lockSeal = false
+    @State private var lockSealUnlocking = false
     @State private var lockSealTask: Task<Void, Never>?
 
     private enum HomeSheet: Identifiable {
@@ -50,7 +51,8 @@ struct HomeView: View {
         }
         .overlay {
             if lockSeal {
-                LockSealView()
+                LockSealView(unlocking: lockSealUnlocking)
+                    .id(model.lockSealToken)
                     .transition(.opacity)
                     .allowsHitTesting(false)
             }
@@ -98,7 +100,16 @@ struct HomeView: View {
     private func scrollContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Text(tr("ふと")).font(.title3.weight(.medium)).foregroundStyle(Theme.accent)
+                HStack(spacing: 8) {
+                    // ひと呼吸の輪を、小さなしるしにする
+                    ZStack {
+                        Circle().fill(Theme.accent.opacity(0.16))
+                        Circle().stroke(Theme.accent, lineWidth: 2.5).padding(5)
+                    }
+                    .frame(width: 28, height: 28)
+                    .accessibilityHidden(true)
+                    Text(tr("ふと")).font(.title3.weight(.semibold)).foregroundStyle(Theme.accent)
+                }
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
@@ -107,20 +118,11 @@ struct HomeView: View {
                     .accessibilityLabel(tr("記録"))
                     Button { sheet = .settings } label: {
                         if sharing.isSignedIn, let name = sharing.profile?.displayName {
-                            // ログイン中は、アカウントのアイコンで分かるようにする。小さな歯車で、押すと設定を開けると伝える
+                            // ログイン中は、アカウントのアイコンで分かるようにする
                             AccountAvatar(name: name, size: 30, isOwn: true)
                                 .overlay(alignment: .topTrailing) {
                                     // フレンドから新しい記録が届いているとき
                                     if sharing.hasUnseenRecords { NewBadge().offset(x: 3, y: -3) }
-                                }
-                                .overlay(alignment: .bottomTrailing) {
-                                    Image(systemName: "gearshape.fill")
-                                        .font(.system(size: 9, weight: .bold))
-                                        .foregroundStyle(Theme.onAccent)
-                                        .frame(width: 15, height: 15)
-                                        .background(Circle().fill(Theme.accent))
-                                        .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
-                                        .offset(x: 4, y: 4)
                                 }
                                 .frame(width: 44, height: 44)
                         } else {
@@ -146,6 +148,7 @@ struct HomeView: View {
     private func showLockSeal() {
         lockSealTask?.cancel()
         model.lockSealActive = true
+        lockSealUnlocking = model.lockSealUnlocking
         withAnimation(.easeOut(duration: 0.25)) { lockSeal = true }
         lockSealTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(2.0))
@@ -414,7 +417,7 @@ private struct ShackleShape: Shape {
         path.addLine(to: CGPoint(x: 0, y: r))
         path.addCurve(to: CGPoint(x: r, y: 0), control1: CGPoint(x: 0, y: r - k * r), control2: CGPoint(x: r - k * r, y: 0))
         path.addCurve(to: CGPoint(x: w, y: r), control1: CGPoint(x: r + k * r, y: 0), control2: CGPoint(x: w, y: r - k * r))
-        path.addLine(to: CGPoint(x: w, y: h - 14))   // 右の脚は短い（開くと本体から抜ける）
+        path.addLine(to: CGPoint(x: w, y: h))
         return path
     }
 }
@@ -431,13 +434,12 @@ private struct PadlockDrawing: View, Animatable {
 
     var body: some View {
         let open = 1 - progress
-        // 南京錠。開いているときは、左の脚だけが本体に刺さったまま、輪が持ち上がって横に振れる。
+        // 南京錠。開いているときは、輪が真上に持ち上がって、両方の脚が本体から抜けている。閉じるときは、真上から降りてくる。
         ZStack(alignment: .top) {
             ShackleShape()
                 .stroke(color, style: StrokeStyle(lineWidth: 11, lineCap: .round))
                 .frame(width: 50, height: 62)
-                .rotationEffect(.degrees(-24 * open), anchor: .bottomLeading)
-                .offset(y: -15 * open)
+                .offset(y: -30 * open)
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .fill(color)
                 .frame(width: 84, height: 62)
@@ -457,12 +459,19 @@ private struct PadlockDrawing: View, Animatable {
 /// 色の円の中で、開いた鍵が「カチッ」と閉まり（軽い振動つき）、輪が広がって、「制限しました」と出る。
 /// 視差効果を減らす設定では、閉じた鍵と文字を、ふわっと出すだけ。
 private struct LockSealView: View {
+    /// true なら、制限が外れたときの、鍵が開くアニメーション
+    var unlocking = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
-    @State private var progress: CGFloat = 0
+    @State private var progress: CGFloat
     @State private var squash = false
     @State private var ripple = false
     @State private var labelShown = false
+
+    init(unlocking: Bool = false) {
+        self.unlocking = unlocking
+        _progress = State(initialValue: unlocking ? 1 : 0)
+    }
 
     var body: some View {
         ZStack {
@@ -481,7 +490,7 @@ private struct LockSealView: View {
                 .frame(width: 176, height: 176)
                 .scaleEffect(reduceMotion ? 1 : (shown ? 1 : 0.78))
 
-                Text(tr("制限しました"))
+                Text(unlocking ? tr("解除しました") : tr("制限しました"))
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.accent)
                     .opacity(labelShown ? 1 : 0)
@@ -490,16 +499,25 @@ private struct LockSealView: View {
             .opacity(shown ? 1 : 0)
         }
         .accessibilityElement()
-        .accessibilityLabel(tr("制限がかかりました"))
+        .accessibilityLabel(unlocking ? tr("制限が解除されました") : tr("制限がかかりました"))
         .task {
             if reduceMotion {
-                progress = 1
+                progress = unlocking ? 0 : 1
                 withAnimation(.easeOut(duration: 0.3)) { shown = true; labelShown = true }
                 return
             }
             // 現れる（開いた鍵）→ 閉まる＋振動 → 輪と文字、を、1つの流れで続ける
             withAnimation(.easeOut(duration: 0.3)) { shown = true }
             try? await Task.sleep(for: .milliseconds(420))
+            if unlocking {
+                // 閉じた鍵が、真上にすっと持ち上がって、開く
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(duration: 0.55, bounce: 0.25)) { progress = 0 }
+                withAnimation(.easeOut(duration: 0.7)) { ripple = true }
+                try? await Task.sleep(for: .milliseconds(350))
+                withAnimation(.easeOut(duration: 0.35)) { labelShown = true }
+                return
+            }
             withAnimation(.spring(duration: 0.5, bounce: 0.35)) { progress = 1 }
             try? await Task.sleep(for: .milliseconds(230))
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()

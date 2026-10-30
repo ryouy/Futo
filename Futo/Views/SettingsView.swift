@@ -31,18 +31,19 @@ struct SettingsView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
 
-            switch tab {
-            case .restriction: restrictionTab
-            case .notification: NotificationSettingsView(model: model)
-            case .account: SharingTab(model: model)
-            case .other: otherTab
+            // 左右にスワイプして、タブを切り替えられる
+            TabView(selection: $tab) {
+                restrictionTab.tag(SettingsTab.restriction)
+                NotificationSettingsView(model: model).tag(SettingsTab.notification)
+                SharingTab(model: model).tag(SettingsTab.account)
+                otherTab.tag(SettingsTab.other)
             }
+            .tabViewStyle(.page(indexDisplayMode: .never))
         }
         .background(Theme.background.ignoresSafeArea())
         // テーマカラーを変えた瞬間に、設定の中の色（言語の選択など）も変わるように
         .tint(Theme.accent)
         .id(ThemeStore.shared.color)
-        .animation(.easeInOut(duration: 0.25), value: tab)
         .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(

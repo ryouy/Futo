@@ -58,6 +58,8 @@ final class AppModel {
     var lockSealActive = false
     /// 鍵のアニメーションを出す合図（値が変わったら、ホームが再生する）
     private(set) var lockSealToken = 0
+    /// 今回の合図が、制限が外れたとき（解錠）のものか
+    private(set) var lockSealUnlocking = false
     /// ホームのシート（設定・記録など）が開いている間は、鍵のアニメーションを出さない
     var homeSheetOpen = false
     @ObservationIgnored private var hasRefreshedOnce = false
@@ -155,13 +157,22 @@ final class AppModel {
         }
     }
 
-    /// 制限がかかったとき（手動・一時解除や一時停止からの復帰）、ホームの鍵のアニメーションを出す合図を出す。
+    /// 制限がかかったとき（手動・一時解除や一時停止からの復帰）と、外れたとき（終了・一時解除・一時停止）に、ホームの鍵のアニメーションを出す合図を出す。
     /// 同じ更新の中で、ほかの全画面の表示（感想など）を待たせるので、重なって見えることがない。
     /// 起動の最初の確認・説明・チュートリアル・ひと呼吸の画面・シート・朝夜のカードが出ているときは、出さない。
     private func requestLockSealIfNeeded(previous: RestrictionState) {
         defer { hasRefreshedOnce = true }
-        guard hasRefreshedOnce, previous != .configured, restriction == .configured else { return }
+        let locked = previous != .configured && restriction == .configured
+        var unlocked = false
+        if previous == .configured {
+            switch restriction {
+            case .off, .temporarilyUnlocked, .paused: unlocked = true
+            default: break
+            }
+        }
+        guard hasRefreshedOnce, locked || unlocked else { return }
         guard onboardingDone, tutorialCompleted, tutorialStep == nil, !showFlow, !homeSheetOpen, visibleCards.isEmpty else { return }
+        lockSealUnlocking = unlocked
         lockSealActive = true
         lockSealToken += 1
         // 万一ホームが再生しなくても、ほかの画面を待たせ続けない
