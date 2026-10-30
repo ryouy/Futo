@@ -8,6 +8,8 @@ struct HomeView: View {
     @Bindable var model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var sheet: HomeSheet?
+    @State private var lockSeal = false
+    @State private var lockSealTask: Task<Void, Never>?
 
     private enum HomeSheet: Identifiable {
         case history, settings, picker
@@ -22,14 +24,14 @@ struct HomeView: View {
                 scrollContent
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 76)
             }
             .scrollBounceBehavior(.basedOnSize)
             // 下の方は、見切れつつ、ぼかすように薄れて消える。下のボタンとの間は、あけて、重ならない。
             .mask(
                 VStack(spacing: 0) {
                     Rectangle()
-                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 40)
+                    LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black.opacity(0.35), location: 0.5), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom).frame(height: 76)
                 }
             )
             VStack(spacing: 12) {
@@ -56,8 +58,18 @@ struct HomeView: View {
                 model.refresh()
             }
         }
-        .onChange(of: model.restriction) { _, _ in model.notice = nil }
-        .sheet(item: $sheet) { item in
+        .onChange(of: model.restriction) { old, new in
+            model.notice = nil
+            // 制限がかかったとき（手動・一時解除や一時停止からの復帰）、鍵のアニメーションを見せる
+            if new == .configured, old != .configured { showLockSeal() }
+        }
+        .overlay {
+            if lockSeal {
+                LockSealView()
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+            }
+        }        .sheet(item: $sheet) { item in
             sheetContent(item)
                 .foregroundStyle(Theme.text)
                 .environment(\.locale, LanguageStore.shared.language.locale)
@@ -108,6 +120,17 @@ struct HomeView: View {
             statusCard
         }
         .animation(.easeInOut(duration: 0.3), value: model.suggestion)
+    }
+
+    /// 鍵が閉まるアニメーションを、少しの間だけ大きく見せる（約2秒）。
+    private func showLockSeal() {
+        lockSealTask?.cancel()
+        withAnimation(.easeOut(duration: 0.25)) { lockSeal = true }
+        lockSealTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.0))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.45)) { lockSeal = false }
+        }
     }
 
     // MARK: 状態
@@ -347,4 +370,38 @@ struct HomeView: View {
         .padding(.top, 4)
     }
     #endif
+}
+
+/// 制限がかかったときの、鍵のアニメーション。開いた鍵が閉まる。視差効果を減らす設定では、閉じた鍵をふわっと出すだけ。
+private struct LockSealView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = false
+    @State private var closed = false
+
+    var body: some View {
+        ZStack {
+            Circle().fill(Theme.accent.opacity(0.14))
+            Circle().stroke(Theme.accent.opacity(0.28), lineWidth: 2)
+            Image(systemName: closed ? "lock.fill" : "lock.open.fill")
+                .font(.system(size: 80, weight: .light))
+                .foregroundStyle(Theme.accent)
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.bounce, options: reduceMotion ? .nonRepeating.speed(0.001) : .nonRepeating, value: closed)
+        }
+        .frame(width: 184, height: 184)
+        .scaleEffect(reduceMotion ? 1 : (shown ? 1 : 0.72))
+        .opacity(shown ? 1 : 0)
+        .accessibilityElement()
+        .accessibilityLabel(tr("制限がかかりました"))
+        .task {
+            if reduceMotion {
+                closed = true
+                withAnimation(.easeOut(duration: 0.3)) { shown = true }
+            } else {
+                withAnimation(.spring(duration: 0.42, bounce: 0.3)) { shown = true }
+                try? await Task.sleep(for: .milliseconds(500))
+                withAnimation(.easeInOut(duration: 0.3)) { closed = true }
+            }
+        }
+    }
 }

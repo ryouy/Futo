@@ -166,16 +166,13 @@ struct SettingsView: View {
         return Button {
             withAnimation(.easeInOut(duration: 0.3)) { ThemeStore.shared.select(option) }
         } label: {
-            VStack(spacing: 6) {
-                Circle()
-                    .fill(swatch)
-                    .frame(width: 44, height: 44)
-                    .overlay(Circle().stroke(.primary.opacity(selected ? 0.7 : 0), lineWidth: 2).padding(-4))
-                    .overlay(Image(systemName: "checkmark").font(.footnote.bold())
-                        .foregroundStyle(.white).opacity(selected ? 1 : 0))
-                Text(option.name).font(.caption).foregroundStyle(.primary).oneLine()
-            }
-            .frame(maxWidth: .infinity, minHeight: 44)
+            Circle()
+                .fill(swatch)
+                .frame(width: 44, height: 44)
+                .overlay(Circle().stroke(.primary.opacity(selected ? 0.7 : 0), lineWidth: 2).padding(-4))
+                .overlay(Image(systemName: "checkmark").font(.footnote.bold())
+                    .foregroundStyle(.white).opacity(selected ? 1 : 0))
+                .frame(maxWidth: .infinity, minHeight: 52)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(option.name)

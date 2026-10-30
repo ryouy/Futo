@@ -480,5 +480,6 @@ enum EnglishStrings {
         "頭文字": "Initial",
         "Driveのバックアップを削除": "Delete Drive backup",
         "Driveの許可を取り消す": "Remove Drive permission",
+        "制限がかかりました": "The lock is on",
     ]
 }

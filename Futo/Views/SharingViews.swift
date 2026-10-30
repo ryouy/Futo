@@ -467,7 +467,7 @@ struct AccountAvatar: View {
     }
 }
 
-/// プロフィール：表示名（上）→ アイコン（頭文字・山や海などの12個）→ 色（テーマの4色）→ 保存（いちばん下）。
+/// プロフィール：表示名（上）→ アイコン（頭文字・山や海などの14個）→ 色（テーマの4色）→ 保存（いちばん下）。
 @MainActor
 struct ProfileView: View {
     @Environment(SharingModel.self) private var sharing

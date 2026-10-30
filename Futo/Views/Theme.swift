@@ -365,3 +365,29 @@ extension ThemeColor {
         })
     }
 }
+
+extension Theme {
+    /// 画面の下地（ホームの後ろ）の色。シートを開いてホームが小さくなったとき、後ろに見える色に使う。
+    static var windowBackgroundUIColor: UIColor {
+        UIColor { trait in
+            let hex = trait.userInterfaceStyle == .dark ? palette.backgroundBottom.1 : palette.backgroundBottom.0
+            return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                           blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        }
+    }
+}
+
+/// ウィンドウの背景を、テーマの色にする（シートを開いたとき、小さくなったホームの後ろが黒くならないように）。
+struct WindowBackgroundSetter: UIViewRepresentable {
+    var color: UIColor
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        DispatchQueue.main.async { view.window?.backgroundColor = color }
+    }
+}
