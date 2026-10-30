@@ -187,7 +187,7 @@ struct HomeView: View {
         case .temporarilyUnlocked: return ""
         case .paused(let until): return tr("{0} に、自動で戻ります。", until.formatted(date: .omitted, time: .shortened))
         case .unverifiable: return tr("もう一度、かけ直してください。")
-        case .off: return tr("かけておくのがおすすめです。")
+        case .off: return ""
         }
     }
 

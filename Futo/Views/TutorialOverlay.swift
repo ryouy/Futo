@@ -61,7 +61,7 @@ struct TutorialOverlay: View {
         case .configured: return [tr("使いたくなったら、ここ。"), tr("少し待ってから、"), tr("使うかどうかを選べます。")]
         case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻せます。")]
         case .paused: return [tr("止めている間も、"), tr("ここで制限を再開できます。")]
-        case .off, .unverifiable: return [tr("ここで制限をかけます。"), tr("かけておくのが"), tr("おすすめです。")]
+        case .off, .unverifiable: return [tr("ここで制限をかけます。")]
         }
     }
 

@@ -261,8 +261,6 @@ enum EnglishStrings {
         "制限するものを選びます。": "you pick what to lock.",
         "使い終わったら、": "When you're done,",
         "ここで制限をかけます。": "Lock things here.",
-        "かけておくのが": "It's best to",
-        "おすすめです。": "keep it on.",
         "はじめる": "Start",
         "先週": "Last week",
         "こんな感じでした。": "Here's how it went.",
