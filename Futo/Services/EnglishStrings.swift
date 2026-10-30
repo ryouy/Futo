@@ -185,7 +185,6 @@ enum EnglishStrings {
         "Screen Timeの許可が必要です。": "Screen Time access is needed.",
         "アプリやサイトを選びます。": "Pick apps and sites.",
         "選んだものは、ふだん使えません。": "These stay off-limits.",
-        "終わったら、制限に戻します。": "Back to locked when done.",
         "もう一度、かけ直してください。": "Please lock it again.",
         "かけておくのがおすすめです。": "Best kept on.",
         "追加": "Add",
