@@ -101,6 +101,16 @@ enum Theme {
         [accent, accent.opacity(0.5), dynamic((0xE2B48C, 0xD9B48F)), dynamic((0xB9B6AE, 0x8F938E)), dynamic((0xA9C4D4, 0x84A9BC))]
     }
 
+    /// 時間帯グラフの色。朝は黄、昼は空、夕方は橙、夜はテーマ色。
+    static func bandColor(_ band: TimeBand) -> Color {
+        switch band {
+        case .morning: return dynamic((0xE0AE4F, 0xE3C07C))
+        case .daytime: return dynamic((0x6FA6C8, 0x8DBAD6))
+        case .evening: return dynamic((0xD98A63, 0xE3A07E))
+        case .night: return accent
+        }
+    }
+
     static var background: LinearGradient {
         LinearGradient(colors: [backgroundTop, backgroundBottom], startPoint: .top, endPoint: .bottom)
     }
@@ -128,6 +138,8 @@ extension View {
 /// 主操作・副操作とも、押しやすくやわらかい形のボタン。
 struct FutoButtonStyle: ButtonStyle {
     var prominent = true
+    /// 淡い面のままでも背景に埋もれないよう、色の濃い面と縁取りで目立たせる。
+    var bordered = false
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
@@ -141,7 +153,11 @@ struct FutoButtonStyle: ButtonStyle {
             .foregroundStyle(prominent ? Theme.onAccent : Theme.accent)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(prominent ? Theme.accent : Theme.accent.opacity(0.14))
+                    .fill(prominent ? Theme.accent : Theme.accent.opacity(bordered ? 0.24 : 0.14))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Theme.accent.opacity(bordered && !prominent ? 0.7 : 0), lineWidth: 1.5)
             )
             .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
     }
@@ -423,5 +439,38 @@ enum ThemeCrossfade {
         UIView.animate(withDuration: duration, delay: 0.08, options: [.curveEaseInOut, .allowUserInteraction]) {
             snapshot.alpha = 0
         } completion: { _ in snapshot.removeFromSuperview() }
+    }
+}
+
+/// 設定・記録の上のタブ。大きく、丸く、押しやすい形。
+struct FutoTabPicker<T: Hashable>: View {
+    let items: [T]
+    @Binding var selection: T
+    let title: (T) -> String
+    var badge: (T) -> Bool = { _ in false }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(items, id: \.self) { item in
+                let selected = item == selection
+                Button { withAnimation(.easeInOut(duration: 0.2)) { selection = item } } label: {
+                    Text(title(item))
+                        .font(.subheadline.weight(selected ? .semibold : .medium))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .foregroundStyle(selected ? Theme.onAccent : Theme.text)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Capsule().fill(selected ? Theme.accent : Color.clear))
+                        .contentShape(Capsule())
+                        .overlay(alignment: .topTrailing) {
+                            if badge(item) { NewBadge(size: 9).offset(x: -6, y: 4) }
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(4)
+        .background(Capsule().fill(Theme.softBlue))
     }
 }

@@ -17,10 +17,7 @@ struct RecordsView: View {
         let breakdown = Breakdown.make(sessions: sessions, mode: mode, interval: interval)
 
         VStack(spacing: 0) {
-            Picker(tr("期間"), selection: $period) {
-                ForEach(InsightPeriod.allCases) { Text($0.label).tag($0) }
-            }
-            .pickerStyle(.segmented)
+            FutoTabPicker(items: Array(InsightPeriod.allCases), selection: $period, title: { $0.label })
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
 
@@ -83,7 +80,7 @@ struct RecordsView: View {
     }
 
     private func bandCard(_ w: PeriodInsights) -> some View {
-        let items = TimeBand.allCases.map { ($0.label, w.bandCounts[$0] ?? 0) }
+        let items = TimeBand.allCases.map { ($0.label, w.bandCounts[$0] ?? 0, Theme.bandColor($0)) }
         let maxValue = max(items.map(\.1).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
             Text(tr("時間帯")).font(.subheadline.weight(.medium))
@@ -92,7 +89,7 @@ struct RecordsView: View {
                     Text(item.0).font(.footnote).frame(width: 44, alignment: .leading)
                     GeometryReader { proxy in
                         Capsule()
-                            .fill(Theme.accent.opacity(item.1 == 0 ? 0.12 : 0.85))
+                            .fill(item.2.opacity(item.1 == 0 ? 0.15 : 0.9))
                             .frame(width: max(8, proxy.size.width * CGFloat(item.1) / CGFloat(maxValue)))
                     }
                     .frame(height: 10)

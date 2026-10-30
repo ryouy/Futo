@@ -26,19 +26,8 @@ struct SettingsView: View {
     /// 記録の画面と同じく、上にタブを出して切り替える。
     var body: some View {
         VStack(spacing: 0) {
-            Picker(tr("設定"), selection: $tab) {
-                ForEach(SettingsTab.allCases, id: \.self) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .overlay(alignment: .topLeading) {
-                // 「アカウント」（3番目）の右上に、新しい記録があるしるし
-                if sharing.hasUnseenRecords {
-                    GeometryReader { geo in
-                        NewBadge(size: 9).position(x: geo.size.width * 0.75 - 6, y: 5)
-                    }
-                    .allowsHitTesting(false)
-                }
-            }
+            FutoTabPicker(items: SettingsTab.allCases, selection: $tab, title: { $0.title },
+                          badge: { $0 == .account && sharing.hasUnseenRecords })
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
 

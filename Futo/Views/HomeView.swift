@@ -358,7 +358,7 @@ struct HomeView: View {
                 .buttonStyle(FutoButtonStyle())
         } else if model.restriction == .configured {
             Button(tr("ひと呼吸おいて、使う")) { model.beginBreath() }
-                .buttonStyle(FutoButtonStyle(prominent: false))
+                .buttonStyle(FutoButtonStyle(prominent: false, bordered: true))
         } else if model.restriction == .unverifiable {
             Button(tr("制限をかけ直す")) { model.startRestriction() }
                 .buttonStyle(FutoButtonStyle())
