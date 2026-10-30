@@ -589,6 +589,7 @@
 				28DC5CDC45C527931886089F /* Frameworks */,
 				E8158E12DB9C0FD458F3D64F /* Resources */,
 				E1D3C8F23EB59C90F45D169A /* Embed Foundation Extensions */,
+				0A74124CADD489821A6059C1 /* Check ad configuration */,
 			);
 			buildRules = (
 			);
@@ -726,6 +727,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0A74124CADD489821A6059C1 /* Check ad configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Check ad configuration";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# 広告の設定の食い違いを、ビルドで止める。公開前は、テスト広告のみ（本番の広告を、うっかり出さない）。\nLIVE_FLAG=0\ncase \" ${SWIFT_ACTIVE_COMPILATION_CONDITIONS} \" in *\" FUTO_LIVE_ADS \"*) LIVE_FLAG=1;; esac\nTEST_APP_ID=0\ncase \"${ADMOB_APP_ID}\" in ca-app-pub-3940256099942544~*) TEST_APP_ID=1;; esac\nif [ \"${CONFIGURATION}\" = \"Debug\" ] && [ \"${LIVE_FLAG}\" = \"1\" ]; then\n  echo \"error: Debugビルドで、本番の広告（FUTO_LIVE_ADS）は使えません。開発中は、テスト広告のみです。\"; exit 1\nfi\nif [ \"${LIVE_FLAG}\" = \"1\" ] && [ \"${TEST_APP_ID}\" = \"1\" ]; then\n  echo \"error: FUTO_LIVE_ADS が有効ですが、ADMOB_APP_ID がテスト用のままです。\"; exit 1\nfi\nif [ \"${LIVE_FLAG}\" = \"0\" ] && [ \"${TEST_APP_ID}\" = \"0\" ]; then\n  echo \"error: ADMOB_APP_ID が本番用ですが、FUTO_LIVE_ADS が無効です（コードはテスト広告のまま）。食い違いを直してください。\"; exit 1\nfi\necho \"広告の設定：$([ \"${LIVE_FLAG}\" = \"1\" ] && echo 本番 || echo テスト)\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1E7533497D73686725DF0790 /* Sources */ = {
@@ -985,7 +1008,7 @@
 		699FCDBED06EC64C8A6B513F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ADMOB_APP_ID = "ca-app-pub-5121019112887429~1939615583";
+				ADMOB_APP_ID = "ca-app-pub-3940256099942544~1458002511";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Futo/Futo.entitlements;

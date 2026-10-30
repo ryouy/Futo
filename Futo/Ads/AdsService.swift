@@ -3,19 +3,22 @@ import Observation
 import UIKit
 import UserMessagingPlatform
 
-/// 広告の設定。**Debugビルドは、Google公式のテストID**（自分で広告を押しても安全）。**Releaseビルドだけ、本番のID**を使う。
-/// 開発中の端末で、本番の広告を表示・クリックすると、AdMobのポリシー違反になるため、分けている。
+/// 広告の設定。**開発中は、すべてのビルド（Debug・Release）で、必ず Google 公式のテスト広告**になる。
+/// 本番の広告は、コンパイル条件 `FUTO_LIVE_ADS` を、公開の直前に、意図して有効にしたときだけ使う（いまは無効）。
+/// 本番のアプリID（Info.plist）と、このコンパイル条件が食い違うと、ビルドが失敗する（ビルドフェーズ「Check ad configuration」）。
 enum AdsConfig {
-    #if DEBUG
-    /// Google公式のテスト用アダプティブバナーのユニットID（収益は発生しない）
-    static let bannerUnitID = "ca-app-pub-3940256099942544/2435281174"
-    /// Google公式のテスト用アプリID（`Info.plist` の `GADApplicationIdentifier` は、Debugでこの値になる）
-    static let appID = "ca-app-pub-3940256099942544~1458002511"
-    #else
-    /// 本番のバナーのユニットID
+    #if FUTO_LIVE_ADS
+    /// 本番のバナーのユニットID（公開前は使わない）
     static let bannerUnitID = "ca-app-pub-5121019112887429/1750867148"
-    /// 本番のアプリID（`Info.plist` の `GADApplicationIdentifier` は、Releaseでこの値になる）
+    /// 本番のアプリID（Info.plist の `ADMOB_APP_ID` も、同時に替える）
     static let appID = "ca-app-pub-5121019112887429~1939615583"
+    static let isLive = true
+    #else
+    /// Google公式のテスト用アダプティブバナーのユニットID（収益は発生しない。自分で押しても安全）
+    static let bannerUnitID = "ca-app-pub-3940256099942544/2435281174"
+    /// Google公式のテスト用アプリID
+    static let appID = "ca-app-pub-3940256099942544~1458002511"
+    static let isLive = false
     #endif
 }
 
