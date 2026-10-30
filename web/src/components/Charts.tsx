@@ -1,4 +1,4 @@
-/** 共有ページ用の、軽いSVGグラフ（外部ライブラリなし）。数値は、隣の文字でも必ず読める。 */
+/** 共有ページ用の、軽いSVGグラフ（外部ライブラリなし）。凡例は名前だけ。数値は、読み上げ用の説明に入れる。 */
 
 export interface Slice {
   label: string;
@@ -8,17 +8,19 @@ export interface Slice {
 
 const TAU = Math.PI * 2;
 
-/** ドーナツ（円グラフ）。合計が0なら、何も描かない。 */
+/** 小さなドーナツ＋凡例（名前だけ）。合計が0なら、何も描かない。 */
 export function Donut({ slices, title }: { slices: Slice[]; title: string }) {
   const total = slices.reduce((sum, s) => sum + s.value, 0);
   if (total === 0) return null;
-  const radius = 42;
+  const radius = 40;
   const circumference = TAU * radius;
   let offset = 0;
+  const description = `${title}：${slices.filter((s) => s.value > 0).map((s) => `${s.label} ${s.value}件`).join("、")}`;
   return (
-    <div className="chart">
-      <svg viewBox="0 0 120 120" role="img" aria-label={title} width="132" height="132">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--soft)" strokeWidth="18" />
+    <div className="mini">
+      <h3>{title}</h3>
+      <svg viewBox="0 0 120 120" role="img" aria-label={description} width="104" height="104">
+        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--soft)" strokeWidth="20" />
         {slices
           .filter((s) => s.value > 0)
           .map((s) => {
@@ -31,7 +33,7 @@ export function Donut({ slices, title }: { slices: Slice[]; title: string }) {
                 r={radius}
                 fill="none"
                 stroke={s.color}
-                strokeWidth="18"
+                strokeWidth="20"
                 strokeDasharray={`${length} ${circumference - length}`}
                 strokeDashoffset={-offset}
                 transform="rotate(-90 60 60)"
@@ -40,16 +42,12 @@ export function Donut({ slices, title }: { slices: Slice[]; title: string }) {
             offset += length;
             return circle;
           })}
-        <text x="60" y="64" textAnchor="middle" fontSize="20" fontWeight="600" fill="var(--green)">
-          {total}
-        </text>
       </svg>
       <ul className="legend">
         {slices.map((s) => (
           <li key={s.label}>
             <span className="dot" style={{ background: s.color }} />
             {s.label}
-            <span className="muted"> {s.value}件</span>
           </li>
         ))}
       </ul>
@@ -57,17 +55,20 @@ export function Donut({ slices, title }: { slices: Slice[]; title: string }) {
   );
 }
 
-/** 横の積み上げバー（回数の比較用）。 */
-export function StackBar({ slices, title }: { slices: Slice[]; title: string }) {
-  const total = slices.reduce((sum, s) => sum + s.value, 0);
-  if (total === 0) return null;
+/** よく解除したアプリ：名前と、横棒。 */
+export function AppBars({ apps, color }: { apps: { name: string; count: number }[]; color: string }) {
+  const max = Math.max(...apps.map((a) => a.count), 1);
   return (
-    <div className="stack" role="img" aria-label={title}>
-      {slices
-        .filter((s) => s.value > 0)
-        .map((s) => (
-          <span key={s.label} style={{ width: `${(s.value / total) * 100}%`, background: s.color }} />
-        ))}
-    </div>
+    <ul className="appbars">
+      {apps.map((a) => (
+        <li key={a.name}>
+          <span className="appname">{a.name}</span>
+          <span className="bar" aria-hidden="true">
+            <span style={{ width: `${Math.max(6, (a.count / max) * 100)}%`, background: color }} />
+          </span>
+          <span className="n">{a.count}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

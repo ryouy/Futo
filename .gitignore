@@ -7,3 +7,6 @@ xcuserdata/
 *.mobileprovision
 *.p12
 *.cer
+
+# 進捗・セットアップなどの非公開メモ（GitHubには置かない）
+/private-docs/

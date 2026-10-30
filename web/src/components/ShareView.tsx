@@ -1,23 +1,8 @@
 import type { PublicShare } from "@/lib/shares";
-import { Donut, type Slice } from "./Charts";
-import { ReportButton } from "./ReportButton";
+import { AppBars, Donut, type Slice } from "./Charts";
 
 // テーマの緑を中心にした、区別しやすい配色
 const PALETTE = ["#196459", "#6fa898", "#e0b84a", "#b9c9c2"];
-
-const PURPOSES: [keyof NonNullable<PublicShare["stats"]["purposes"]>, string][] = [
-  ["contact", "連絡"],
-  ["research", "調べもの"],
-  ["break", "気分転換"],
-  ["noReason", "なんとなく"],
-];
-const FEELINGS: [keyof NonNullable<PublicShare["stats"]["feelings"]>, string][] = [
-  ["satisfied", "満足した"],
-  ["neutral", "どちらでもない"],
-  ["wishedLess", "使いすぎかも"],
-];
-
-const percent = (part: number, whole: number) => `${Math.round((part / whole) * 100)}%`;
 
 function dateRange(start: string, end: string, timeZone: string, withYear = false): string {
   const fmt = new Intl.DateTimeFormat("ja-JP", { ...(withYear ? { year: "numeric" as const } : {}), month: "numeric", day: "numeric", timeZone });
@@ -25,88 +10,79 @@ function dateRange(start: string, end: string, timeZone: string, withYear = fals
 }
 
 /**
- * 共有の表示。表示名は、必ずテキストとして描画する（Reactが自動でエスケープする）。
+ * 共有の表示。表示名・アプリ名は、必ずテキストとして描画する（Reactが自動でエスケープする）。
  * 選ばれていない項目は、データ自体が届かないので、表示もされない。
+ * グラフは凡例だけで読めるようにし、割合や注釈の文は出さない。
  */
-export function ShareView({ share, token }: { share: PublicShare; token?: string }) {
+export function ShareView({ share }: { share: PublicShare }) {
   const { stats } = share;
-  const answeredPurposes = stats.purposes ? PURPOSES.reduce((sum, [key]) => sum + (stats.purposes?.[key] ?? 0), 0) : 0;
+  const slices: { key: string; title: string; slices: Slice[] }[] = [];
+  if (stats.counts) {
+    slices.push({
+      key: "counts",
+      title: "ひと呼吸の結果",
+      slices: [
+        { label: "使いたい", value: stats.counts.wantsToUse, color: PALETTE[2] },
+        { label: "やめておく", value: stats.counts.deferred, color: PALETTE[0] },
+        { label: "途中でやめた", value: stats.counts.interrupted, color: PALETTE[3] },
+      ],
+    });
+  }
+  if (stats.purposes) {
+    const p = stats.purposes;
+    slices.push({
+      key: "purposes",
+      title: "使いたかった目的",
+      slices: [
+        { label: "連絡", value: p.contact, color: PALETTE[0] },
+        { label: "調べもの", value: p.research, color: PALETTE[1] },
+        { label: "気分転換", value: p.break, color: PALETTE[2] },
+        { label: "なんとなく", value: p.noReason, color: PALETTE[3] },
+      ],
+    });
+  }
+  if (stats.feelings) {
+    const f = stats.feelings;
+    slices.push({
+      key: "feelings",
+      title: "使ったあとの感想",
+      slices: [
+        { label: "満足した", value: f.satisfied, color: PALETTE[0] },
+        { label: "どちらでもない", value: f.neutral, color: PALETTE[3] },
+        { label: "使いすぎかも", value: f.wishedLess, color: PALETTE[2] },
+      ],
+    });
+  }
+  const periodLabel = stats.period === "all" ? "全期間" : stats.period === "thisWeek" ? "今週" : "先週";
   return (
     <>
       <div className="card">
         <p className="who">{share.displayName ?? "匿名"}</p>
         <p className="muted">
-          {stats.period === "all" ? "全期間" : stats.period === "thisWeek" ? "今週" : "先週"}（{dateRange(stats.periodStart, stats.periodEnd, stats.timezone, stats.period === "all")}）
+          {periodLabel}（{dateRange(stats.periodStart, stats.periodEnd, stats.timezone, stats.period === "all")}）
         </p>
-        {stats.isPartial && <p className="notice">今週は、共有した時点までの途中経過です。</p>}
       </div>
 
-      {stats.counts && (
-        <div className="card">
-          <h2>選んだ回数</h2>
-          <Donut
-            title="使いたい・やめておく・途中でやめたの割合"
-            slices={[
-              { label: "使いたい", value: stats.counts.wantsToUse, color: PALETTE[2] },
-              { label: "やめておく", value: stats.counts.deferred, color: PALETTE[0] },
-              { label: "途中でやめた", value: stats.counts.interrupted, color: PALETTE[3] },
-            ]}
-          />
-          <div className="row"><span>使いたい</span><span>{stats.counts.wantsToUse}</span></div>
-          <div className="row"><span>やめておく</span><span>{stats.counts.deferred}</span></div>
-          <div className="row"><span>途中でやめた</span><span>{stats.counts.interrupted}</span></div>
-          <p className="muted">「使いたい」は、対象のアプリを開こうとした回数ではありません。</p>
+      {slices.length > 0 && (
+        <div className="card minis">
+          {slices.map((s) => (
+            <Donut key={s.key} title={s.title} slices={s.slices} />
+          ))}
         </div>
       )}
 
-      {stats.purposes && (
+      {stats.apps && stats.apps.length > 0 && (
         <div className="card">
-          <h2>使いたかった目的</h2>
-          {answeredPurposes === 0 ? (
-            <p className="muted">目的を答えた記録はまだありません。</p>
-          ) : (
-            <>
-              <Donut title="使いたかった目的の内訳" slices={PURPOSES.map(([key, label], i): Slice => ({ label, value: stats.purposes?.[key] ?? 0, color: PALETTE[i] }))} />
-              {PURPOSES.map(([key, label]) => (
-              <div className="row" key={key}>
-                <span>{label}</span>
-                <span>{stats.purposes?.[key]}件（{percent(stats.purposes?.[key] ?? 0, answeredPurposes)}）</span>
-              </div>
-              ))}
-            </>
-          )}
-          <p className="muted">目的を答えた{answeredPurposes}件の内訳です。答えなかった{stats.purposes.unanswered}件は含みません。</p>
-        </div>
-      )}
-
-      {stats.feelings && (
-        <div className="card">
-          <h2>使ったあとの感想</h2>
-          {stats.feelings.answered === 0 ? (
-            <p className="muted">回答はまだありません。</p>
-          ) : (
-            <>
-              <Donut title="使ったあとの感想の内訳" slices={FEELINGS.map(([key, label], i): Slice => ({ label, value: stats.feelings?.[key] ?? 0, color: [PALETTE[0], PALETTE[3], PALETTE[2]][i] }))} />
-              {FEELINGS.map(([key, label]) => (
-              <div className="row" key={key}>
-                <span>{label}</span>
-                <span>{stats.feelings?.[key]}件（{percent(stats.feelings?.[key] ?? 0, stats.feelings?.answered ?? 1)}）</span>
-              </div>
-              ))}
-            </>
-          )}
-          <p className="muted">回答 {stats.feelings.answered}件の内訳です。</p>
+          <h2>よく解除したアプリ</h2>
+          <AppBars apps={stats.apps} color={PALETTE[0]} />
         </div>
       )}
 
       {stats.phrase && <p className="phrase">{stats.phrase}</p>}
 
       <p className="muted" style={{ textAlign: "center" }}>
-        共有した日時：{new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: stats.timezone }).format(new Date(share.createdAt))}
-        <br />
-        端末の中の記録から、本人が選んだ項目だけを集計したものです。
+        {new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: stats.timezone }).format(new Date(share.createdAt))} に共有
       </p>
-      {token && <ReportButton token={token} />}
     </>
   );
 }

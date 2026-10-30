@@ -23,6 +23,17 @@ export function newInviteCode(): string {
   return code;
 }
 
+/**
+ * リンクのトークンから導く招待コード（同じ招待のリンクとコードを、招待ページで一緒に見せるため）。
+ * 256ビットのトークンのハッシュなので、トークンを持たない人には推測できない（コードはトークンと同じ強さの鍵）。
+ */
+export function deriveInviteCode(token: string): string {
+  const bytes = createHash("sha256").update(`invite-code:${token}`).digest();
+  let code = "";
+  for (let i = 0; i < 12; i += 1) code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  return code;
+}
+
 /** 入力されたコードを正規化（大文字・区切りの除去）。 */
 export function normalizeCode(input: string): string {
   return input.toUpperCase().replace(/[^A-Z0-9]/g, "");

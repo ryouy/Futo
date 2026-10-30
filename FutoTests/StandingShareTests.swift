@@ -128,3 +128,81 @@ final class AllPeriodStatsTests: XCTestCase {
         XCTAssertEqual(payload.counts?.deferred, 0, "10年より前の記録は、範囲の外")
     }
 }
+
+@MainActor
+final class AppUsageSummaryTests: XCTestCase {
+    private let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func unlock(daysAgo: Double, mode: AppMode = .device, outcome: SessionOutcome = .wantsToUse, unlocked: Bool = true) -> Session {
+        let at = now.addingTimeInterval(-daysAgo * 86_400)
+        let s = Session(mode: mode, startedAt: at.addingTimeInterval(-100), requiredWaitSeconds: 60)
+        s.phase = .completed; s.outcome = outcome
+        if unlocked { s.temporaryUnlockStartedAt = at }
+        return s
+    }
+
+    private func top(_ list: [(Session, [String])], names: [String: String?], interval: DateInterval? = nil) -> [AppCount] {
+        let map = Dictionary(uniqueKeysWithValues: list.map { ($0.0.id, $0.1) })
+        return AppUsageSummary.top(sessions: list.map(\.0), mode: .device, interval: interval, keys: { map[$0.id] ?? [] }, name: { names[$0] ?? nil })
+    }
+
+    func testCountsPerAppSortedAndLimitedToTen() {
+        var list: [(Session, [String])] = []
+        for i in 0..<12 { for _ in 0...(11 - i) { list.append((unlock(daysAgo: 1), ["a\(i)"])) } }
+        let names = Dictionary(uniqueKeysWithValues: (0..<12).map { ("a\($0)", Optional("App\($0)")) })
+        let result = top(list, names: names)
+        XCTAssertEqual(result.count, 10)
+        XCTAssertEqual(result.first, AppCount(name: "App0", count: 12))
+        XCTAssertEqual(result.map(\.count), result.map(\.count).sorted(by: >))
+    }
+
+    func testUnreadableNamesAreLeftOutNeverGuessed() {
+        let list = [(unlock(daysAgo: 1), ["known"]), (unlock(daysAgo: 1), ["secret"])]
+        let result = top(list, names: ["known": "動画", "secret": nil])
+        XCTAssertEqual(result, [AppCount(name: "動画", count: 1)])
+        XCTAssertTrue(top(list, names: ["known": nil, "secret": nil]).isEmpty)
+    }
+
+    func testOnlyRealUnlocksOfTheDeviceInThePeriodCount() {
+        let inRange = unlock(daysAgo: 2)
+        let old = unlock(daysAgo: 40)
+        let deferred = unlock(daysAgo: 1, outcome: .deferred, unlocked: false)
+        let noUnlock = unlock(daysAgo: 1, unlocked: false)
+        let demo = unlock(daysAgo: 1, mode: .demo)
+        let list = [(inRange, ["a"]), (old, ["a"]), (deferred, ["a"]), (noUnlock, ["a"]), (demo, ["a"])]
+        let week = DateInterval(start: now.addingTimeInterval(-7 * 86_400), end: now)
+        XCTAssertEqual(top(list, names: ["a": "SNS"], interval: week), [AppCount(name: "SNS", count: 1)])
+        XCTAssertEqual(top(list, names: ["a": "SNS"], interval: nil).first?.count, 2, "全期間なら、古い解除も数える")
+    }
+
+    func testSameNameIsMergedAndNamesAreCleaned() {
+        let list = [(unlock(daysAgo: 1), ["x"]), (unlock(daysAgo: 1), ["y"])]
+        XCTAssertEqual(top(list, names: ["x": " SNS\n", "y": "SNS"]), [AppCount(name: "SNS", count: 2)])
+        XCTAssertEqual(AppUsageSummary.cleanName(String(repeating: "あ", count: 80))?.count, 40)
+        XCTAssertNil(AppUsageSummary.cleanName("  \n "))
+    }
+
+    func testPayloadIncludesAppsByDefaultAndOnlyWhenNamesWereRead() throws {
+        var selection = ShareSelection()
+        selection.counts = true
+        XCTAssertTrue(selection.apps, "初期は、アプリ名を含める")
+        let with = try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, now: now,
+                                              appCounts: { _ in [AppCount(name: "動画", count: 3)] })
+        XCTAssertEqual(with.apps, [AppCount(name: "動画", count: 3)])
+        XCTAssertEqual(with.updateBody.apps, with.apps)
+        let without = try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, now: now)
+        XCTAssertNil(without.apps, "名前を読み取れなければ、項目ごと付けない")
+        selection.apps = false
+        let off = try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, now: now,
+                                             appCounts: { _ in [AppCount(name: "動画", count: 3)] })
+        XCTAssertNil(off.apps, "オフなら、名前は送らない")
+    }
+
+    func testAppsOnlySelectionWithNoReadableNamesCannotBeShared() {
+        var selection = ShareSelection()
+        selection.apps = true
+        XCTAssertThrowsError(try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, now: now)) {
+            XCTAssertEqual($0 as? ShareStatsBuilder.BuildError, .nothingSelected)
+        }
+    }
+}

@@ -51,7 +51,7 @@ export async function createFriendShare(uid: string, payload: FriendSharePayload
       grants, // 受信者ごとの「関係の世代」。解除・再承認で世代が変わると、古い権限は復活しない
       ownerName: payload.showName ? user.displayName : null,
       stats: snapshotFrom(payload),
-      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), phrase: Boolean(payload.phraseId) },
+      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), apps: Boolean(payload.apps), phrase: Boolean(payload.phraseId) },
       createdAt: Timestamp.fromDate(t),
       updatedAt: Timestamp.fromDate(t),
       expiresAt,
@@ -155,7 +155,7 @@ export async function updateFriendShare(uid: string, shareId: string, payload: z
     tx.update(ref, {
       ownerName: payload.showName ? user.displayName : null,
       stats: snapshotFrom(payload),
-      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), phrase: Boolean(payload.phraseId) },
+      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), apps: Boolean(payload.apps), phrase: Boolean(payload.phraseId) },
       updatedAt: Timestamp.fromDate(t),
       expiresAt,
     });

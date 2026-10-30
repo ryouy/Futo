@@ -44,7 +44,6 @@ describe("アカウント削除", () => {
     const share = await call("POST", "/api/shares", { token: owner.token, body: webPayload() });
     await call("POST", "/api/friend-shares", { token: owner.token, body: friendPayload([friend.uid]) });
     await call("POST", "/api/invitations", { token: owner.token });
-    await call("POST", "/api/reports", { token: owner.token, body: { targetType: "user", targetId: friend.uid, reason: "spam" } });
     await call("POST", `/api/blocks/${friend.uid}`, { token: owner.token });
 
     const { beginAccountDeletion } = await import("@/lib/accountDeletion");
@@ -68,17 +67,6 @@ describe("アカウント削除", () => {
     expect((await call("GET", `/api/public/shares/${share.body.token}`)).status).toBe(404);
     // 友達のアカウントとデータは、そのまま
     expect((await call("GET", "/api/me", { token: friend.token })).status).toBe(200);
-  });
-
-  it("通報は、運営の確認のため残るが、通報者のUIDは匿名化される", async () => {
-    const owner = await newUser();
-    const other = await newUser("他人");
-    await call("POST", "/api/reports", { token: owner.token, body: { targetType: "user", targetId: other.uid, reason: "spam" } });
-    expect((await call("DELETE", "/api/me", { token: owner.token })).body.status).toBe("deleted");
-    const reports = await db().collection("reports").get();
-    expect(reports.size).toBe(1);
-    expect(JSON.stringify(reports.docs[0].data())).not.toContain(owner.uid);
-    expect(reports.docs[0].data().reporterUid).toMatch(/^deleted:/);
   });
 
   it("受け取っていたフレンド共有からは、受信者として外れる", async () => {

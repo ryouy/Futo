@@ -9,7 +9,7 @@ import { sha256 } from "./tokens";
  * IPは、ソルト付きのハッシュにして保存する（生のIPは保存しない）。
  * 1時間あたりの失敗が上限に達したら、その間は429を返す。成功時は書き込まない（無料枠を節約）。
  */
-const LIMITS: Record<string, number> = { lookup: 20, code: 10, report: 5 };
+const LIMITS: Record<string, number> = { lookup: 20, code: 10 };
 
 export function clientKeyFromHeaders(headers: { get(name: string): string | null }): string {
   const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();

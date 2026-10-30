@@ -99,7 +99,8 @@ final class SharingModel {
     // MARK: Web共有
 
     func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased(), allowsMessage: Bool = false) throws -> SharePayload {
-        try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage)
+        try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage,
+                                        appCounts: AppNameResolver.counts(sessions: sessions, mode: mode))
     }
 
     /// 共有リンクを作る。サーバーが成功を返し、リンクを受け取れたときだけ、端末（Keychain）に保存する。
@@ -229,13 +230,6 @@ final class SharingModel {
         } catch { fail(error) }
     }
 
-    func report(targetType: String, targetId: String, reason: String) async -> Bool {
-        do {
-            let _: EmptyResponse = try await api.send("POST", "/api/reports", body: ["targetType": targetType, "targetId": targetId, "reason": reason])
-            return true
-        } catch { fail(error); return false }
-    }
-
     // MARK: フレンド限定共有
 
     /// `standing` が true なら、継続共有にする（アプリを開いたときに更新する設定を、端末に保存する）。
@@ -274,7 +268,8 @@ final class SharingModel {
         var lapsed = 0
         for index in configs.indices.reversed() where force || configs[index].isDue(now: now) {
             let config = configs[index]
-            guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now, allowsMessage: true) else { continue }
+            guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now, allowsMessage: true,
+                                                            appCounts: AppNameResolver.counts(sessions: sessions, mode: mode)) else { continue }
             do {
                 let _: EmptyResponse = try await api.send("PUT", "/api/friend-shares/\(config.shareId)", body: payload.updateBody)
                 configs[index].lastRefreshedAt = now

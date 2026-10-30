@@ -16,14 +16,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body>
         <header className="site">
-          <img src="/logo.png" alt="" width={72} />
+          <img src="/logo.png" alt="" width={36} />
           <h1>ふと</h1>
         </header>
         <main>{children}</main>
         <footer className="site">
-          ふと — 使う前に、ひと呼吸。
-          <br />
-          <a href="/">ふと について（アプリの紹介）</a>
+          <a href="/">ふとの紹介を見る</a>
         </footer>
       </body>
     </html>

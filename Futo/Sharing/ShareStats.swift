@@ -6,11 +6,12 @@ struct ShareSelection: Equatable, Codable {
     var counts = false             // 解除申込数・見送り数・中断数
     var purposes = false           // 利用目的の内訳
     var feelings = false           // 利用後の満足感（回答件数を併記）
+    var apps = true                // よく解除したアプリ名と回数（初期はオン。名前を読み取れないときは、含まれない）
     var phrase: SharePhrase?       // 定型のひとこと（任意。Webリンク用）
     var message = ""              // フレンドへの一言（自由入力。フレンド共有だけ）
 
     /// 統計の項目が1つも選ばれていなければ、公開しない。
-    var hasStats: Bool { counts || purposes || feelings }
+    var hasStats: Bool { counts || purposes || feelings || apps }
 }
 
 enum SharePeriod: String, CaseIterable, Identifiable {
@@ -40,6 +41,7 @@ struct ShareUpdatePayload: Codable, Equatable {
     var counts: SharePayload.Counts?
     var purposes: SharePayload.Purposes?
     var feelings: SharePayload.Feelings?
+    var apps: [AppCount]?
     var phraseId: String?
     var message: String?
 }
@@ -59,6 +61,12 @@ enum SharePhrase: String, CaseIterable, Identifiable, Codable {
 }
 
 /// サーバーへ送る、Web共有・フレンド共有の統計（選んだ項目だけ。選ばなかった項目は、キー自体を送らない）。
+/// アプリ名と、一時解除した回数。
+struct AppCount: Codable, Equatable {
+    var name: String
+    var count: Int
+}
+
 struct SharePayload: Codable, Equatable {
     struct Counts: Codable, Equatable { var wantsToUse: Int; var deferred: Int; var interrupted: Int }
     struct Purposes: Codable, Equatable { var contact: Int; var research: Int; var `break`: Int; var noReason: Int; var unanswered: Int }
@@ -73,6 +81,7 @@ struct SharePayload: Codable, Equatable {
     var counts: Counts?
     var purposes: Purposes?
     var feelings: Feelings?
+    var apps: [AppCount]?
     var phraseId: String?
     /// フレンドへの一言（自由入力）。Webの公開リンクには付けない
     var message: String?
@@ -103,7 +112,8 @@ enum ShareStatsBuilder {
         sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection,
         calendar: LogicalCalendar = LogicalCalendar(), now: Date = Date(),
         expiresInDays: Int? = 7, recipientUids: [String]? = nil, idempotencyKey: String = UUID().uuidString.lowercased(),
-        allowsMessage: Bool = false
+        allowsMessage: Bool = false,
+        appCounts: (DateInterval) -> [AppCount] = { _ in [] }
     ) throws -> SharePayload {
         guard selection.hasStats else { throw BuildError.nothingSelected }
         let interval: DateInterval
@@ -127,7 +137,7 @@ enum ShareStatsBuilder {
             timezone: calendar.calendar.timeZone.identifier,
             isPartial: period == .thisWeek && now < interval.end,
             showName: selection.showName,
-            counts: nil, purposes: nil, feelings: nil,
+            counts: nil, purposes: nil, feelings: nil, apps: nil,
             phraseId: allowsMessage ? nil : selection.phrase?.rawValue,
             message: allowsMessage ? ShareMessage.normalized(selection.message) : nil,
             expiresInDays: expiresInDays,
@@ -156,6 +166,13 @@ enum ShareStatsBuilder {
             let wishedLess: Int = tally(records) { $0.reflection == .wishedLess }
             payload.feelings = SharePayload.Feelings(satisfied: satisfied, neutral: neutral, wishedLess: wishedLess)
         }
+        if selection.apps {
+            // 名前を読み取れたものだけ。1件もなければ、項目ごと付けない（読み取れない名前を、推測しない）
+            let apps = AppUsageSummary.sanitized(appCounts(interval))
+            if !apps.isEmpty { payload.apps = apps }
+        }
+        // 項目を選んでいても、中身が何もなければ、共有しない
+        guard payload.counts != nil || payload.purposes != nil || payload.feelings != nil || payload.apps != nil else { throw BuildError.nothingSelected }
         return payload
     }
 }
@@ -164,7 +181,7 @@ extension SharePayload {
     /// 継続共有の更新用（受信者・冪等キー・期限を除く）
     var updateBody: ShareUpdatePayload {
         ShareUpdatePayload(period: period, periodStart: periodStart, periodEnd: periodEnd, timezone: timezone, isPartial: isPartial,
-                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, phraseId: phraseId, message: message)
+                           showName: showName, counts: counts, purposes: purposes, feelings: feelings, apps: apps, phraseId: phraseId, message: message)
     }
 }
 
@@ -199,5 +216,57 @@ enum ShareMessage {
         let lower = text.lowercased()
         if lower.contains("://") || lower.contains("www.") { return true }
         return lower.range(of: #"\b[a-z0-9-]+\.(com|net|org|jp|io|co|app|me|ly|xyz)\b"#, options: .regularExpression) != nil
+    }
+}
+
+/// よく解除したアプリ（名前と回数）。名前は、解除した対象から読み取れたものだけ。
+enum AppUsageSummary {
+    static let maxItems = 10
+    static let maxNameLength = 40
+
+    /// 一時解除を始めたひと呼吸を、対象ごとに数える（1回の解除で複数の対象なら、それぞれに1回）。
+    /// 名前が読み取れない対象は、含めない。回数の多い順に、最大10件。
+    static func top<Key: Hashable>(
+        sessions: [Session], mode: AppMode, interval: DateInterval?,
+        keys: (Session) -> [Key], name: (Key) -> String?
+    ) -> [AppCount] {
+        var counts: [Key: Int] = [:]
+        var order: [Key] = []
+        for session in sessions {
+            guard session.mode == mode, session.phase == .completed, session.outcome == .wantsToUse,
+                  let unlockedAt = session.temporaryUnlockStartedAt else { continue }
+            if let interval, !interval.contains(unlockedAt) { continue }
+            for key in Set(keys(session)) {
+                if counts[key] == nil { order.append(key) }
+                counts[key, default: 0] += 1
+            }
+        }
+        // 同じ名前（同名の別アプリ・カテゴリなど）は、1行にまとめる
+        var byName: [String: Int] = [:]
+        var names: [String] = []
+        for key in order {
+            guard let raw = name(key), let clean = cleanName(raw) else { continue }
+            if byName[clean] == nil { names.append(clean) }
+            byName[clean, default: 0] += counts[key] ?? 0
+        }
+        return names.map { AppCount(name: $0, count: byName[$0] ?? 0) }
+            .sorted { $0.count > $1.count }
+            .prefix(maxItems).map { $0 }
+    }
+
+    /// 表示用に整える（制御文字を除き、40文字まで。空なら nil）。
+    static func cleanName(_ raw: String) -> String? {
+        let cleaned = raw.precomposedStringWithCanonicalMapping
+            .unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) && $0 != "\u{2028}" && $0 != "\u{2029}" }
+            .map(String.init).joined()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let limited = String(cleaned.prefix(maxNameLength)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return limited.isEmpty ? nil : limited
+    }
+
+    static func sanitized(_ apps: [AppCount]) -> [AppCount] {
+        apps.compactMap { app in cleanName(app.name).map { AppCount(name: $0, count: max(0, app.count)) } }
+            .filter { $0.count > 0 }
+            .prefix(maxItems).map { $0 }
     }
 }

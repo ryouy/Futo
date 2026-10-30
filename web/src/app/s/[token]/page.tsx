@@ -28,5 +28,5 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
     if (error instanceof ApiError || error instanceof ConfigError) return <Unavailable />;
     throw error;
   }
-  return <ShareView share={share} token={token} />;
+  return <ShareView share={share} />;
 }

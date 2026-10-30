@@ -39,6 +39,7 @@
 		378B679AC14F0CC336D756AA /* WaitCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4267030096FD083643FBA49A /* WaitCountdown.swift */; };
 		3A707A65C8E6A1315AB5B690 /* PeriodInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D943536ADE05ED82A6CD9E57 /* PeriodInsights.swift */; };
 		3D03BF77A074BD2E46728FD0 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
+		40D60010D7AE55A236CBB48F /* AppNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14B387E89C10E3530B150F06 /* AppNames.swift */; };
 		43624583AFDC1FD9F7939A27 /* DriveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99A12D1CD44C264F49DA847A /* DriveTests.swift */; };
 		4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */; };
 		4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */; };
@@ -151,6 +152,7 @@
 		0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharingModel.swift; sourceTree = "<group>"; };
 		0C9513AADAE02448E4B8ACAA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		11DD775705D1039AE7E83797 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		14B387E89C10E3530B150F06 /* AppNames.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppNames.swift; sourceTree = "<group>"; };
 		1A7A26A456B3046687D2372C /* APIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		1C07C305FAF1EBCC3773D26A /* LocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		1DD20AE72812E367E3277411 /* Preferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
@@ -362,6 +364,7 @@
 				6D6E702890F1D0A6A89F84AB /* WebAuthRunner.swift */,
 				0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */,
 				C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */,
+				14B387E89C10E3530B150F06 /* AppNames.swift */,
 			);
 			name = Sharing;
 			path = Sharing;
@@ -786,6 +789,7 @@
 				29EE84A2B75D19E9F5E82731 /* RestrictionManagementView.swift in Sources */,
 				1926C3D42807BC57054A3778 /* PauseModel.swift in Sources */,
 				8AB7C7078D389FCB348E72FA /* DailyUnlockSummary.swift in Sources */,
+				40D60010D7AE55A236CBB48F /* AppNames.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

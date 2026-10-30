@@ -12,7 +12,6 @@ const routes: [string, () => Promise<Module>][] = [
   ["/api/shares/:id", () => import("@/app/api/shares/[id]/route") as unknown as Promise<Module>],
   ["/api/shares/:id/rotate", () => import("@/app/api/shares/[id]/rotate/route") as unknown as Promise<Module>],
   ["/api/public/shares/:token", () => import("@/app/api/public/shares/[token]/route") as unknown as Promise<Module>],
-  ["/api/public/reports", () => import("@/app/api/public/reports/route") as unknown as Promise<Module>],
   ["/api/invitations", () => import("@/app/api/invitations/route") as unknown as Promise<Module>],
   ["/api/invitations/:id", () => import("@/app/api/invitations/[id]/route") as unknown as Promise<Module>],
   ["/api/public/invitations/:token", () => import("@/app/api/public/invitations/[token]/route") as unknown as Promise<Module>],
@@ -25,7 +24,6 @@ const routes: [string, () => Promise<Module>][] = [
   ["/api/blocks/:id", () => import("@/app/api/blocks/[id]/route") as unknown as Promise<Module>],
   ["/api/friend-shares", () => import("@/app/api/friend-shares/route") as unknown as Promise<Module>],
   ["/api/friend-shares/:id", () => import("@/app/api/friend-shares/[id]/route") as unknown as Promise<Module>],
-  ["/api/reports", () => import("@/app/api/reports/route") as unknown as Promise<Module>],
 ];
 
 export interface CallOptions {

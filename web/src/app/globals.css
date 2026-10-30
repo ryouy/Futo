@@ -6,7 +6,6 @@
   --cream: #fcf8f0;
   --ink: #1d2b27;
   --muted: #5d6d68;
-  --lemon: #ffe38a;
 }
 * { box-sizing: border-box; }
 body {
@@ -16,11 +15,13 @@ body {
   color: var(--ink);
   line-height: 1.8;
 }
-header.site { background: var(--green); color: var(--cream); text-align: center; padding: 28px 16px 36px; }
-header.site img { width: 72px; height: auto; display: block; margin: 0 auto 6px; }
-header.site h1 { margin: 0; font-size: 22px; letter-spacing: .08em; font-weight: 600; }
-main { width: min(640px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; }
-.card { background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 22px; padding: 22px; margin-bottom: 16px; }
+header.site { background: var(--green); color: var(--cream); text-align: center; padding: 12px 16px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+header.site img { width: 36px; height: auto; display: block; }
+header.site h1 { margin: 0; font-size: 20px; letter-spacing: .08em; font-weight: 600; }
+main { width: min(640px, 100% - 32px); margin: 0 auto; padding: 16px 0 24px; }
+.card { background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 20px; padding: 18px; margin-bottom: 12px; }
+.card p { margin: 6px 0; }
+.btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .card h2 { margin: 0 0 10px; font-size: 17px; color: var(--green); }
 .muted { color: var(--muted); font-size: 14px; }
 .who { font-size: 20px; font-weight: 600; color: var(--green); margin: 0; }
@@ -28,18 +29,25 @@ main { width: min(640px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; }
 .row:last-child { border-bottom: 0; }
 .phrase { text-align: center; background: var(--soft); border-radius: 18px; padding: 16px; font-weight: 600; color: var(--green); }
 .notice { background: #f8eadf; border-radius: 16px; padding: 12px 16px; font-size: 14px; }
-.unavailable { text-align: center; padding: 56px 0; }
-footer.site { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 40px; }
-button.report, summary.report { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; }
-details.report { margin-top: 8px; text-align: center; }
-details.report label { display: block; padding: 4px 0; }
-details.report button { margin-top: 8px; background: var(--green); color: var(--cream); border: 0; border-radius: 999px; padding: 8px 22px; font: inherit; cursor: pointer; }
+.unavailable { text-align: center; padding: 32px 18px; }
+footer.site { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 24px; line-height: 1.6; }
 
-.chart { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 6px 0 12px; }
-.legend { list-style: none; margin: 0; padding: 0; font-size: 14px; }
-.legend li { margin: 4px 0; }
-.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
-.stack { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--soft); margin: 4px 0 12px; }
 footer.site a { color: var(--green); font-weight: 600; }
 .btn { display: inline-block; padding: 12px 26px; border-radius: 999px; background: var(--green); color: var(--cream); font-weight: 700; text-decoration: none; }
 .btn.ghost { background: var(--soft); color: var(--green); }
+
+/* グラフ：小さなドーナツを並べる（凡例は名前だけ） */
+.minis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 18px 12px; }
+.mini { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.mini h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--green); }
+.legend { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; color: var(--ink); text-align: left; }
+.legend li { margin: 3px 0; white-space: nowrap; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.appbars { list-style: none; margin: 0; padding: 0; }
+.appbars li { display: grid; grid-template-columns: minmax(70px, 38%) 1fr 28px; align-items: center; gap: 10px; margin: 8px 0; font-size: 14px; }
+.appname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appbars .bar { display: block; height: 10px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.appbars .bar span { display: block; height: 100%; border-radius: 999px; }
+.appbars .n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.codebox { margin: 10px 0 0; padding: 10px 14px; background: var(--soft); border-radius: 14px; font-size: 14px; }
+.codebox strong { font-family: ui-monospace, Menlo, monospace; font-size: 17px; letter-spacing: .08em; color: var(--green); margin-left: 6px; }

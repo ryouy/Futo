@@ -98,11 +98,20 @@
     .gallery img { width: 100%; height: auto; border-radius: 28px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); display: block; background: var(--cream); }
     .gallery figcaption { margin-top: 12px; font-size: 14px; color: rgba(252, 248, 240, .86); }
 
-    /* 特長 */
-    .features { display: grid; gap: 16px; grid-template-columns: 1fr; }
-    .feature { background: var(--green-soft); border-radius: 24px; padding: 22px; }
-    .feature h3 { margin: 0 0 4px; font-size: 17px; color: var(--green); }
-    .feature p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.75; }
+    /* 特長：アイコン＋短い説明のカード */
+    .features { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    .feature {
+      display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: start;
+      background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 20px; padding: 16px 18px;
+    }
+    .feature .ico {
+      width: 48px; height: 48px; border-radius: 15px; background: var(--green-soft);
+      display: grid; place-items: center;
+    }
+    .feature .ico svg { width: 24px; height: 24px; stroke: var(--green); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .feature h3 { margin: 2px 0 2px; font-size: 16px; color: var(--ink); }
+    .feature h3 small { font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-soft); border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
+    .feature p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
     .privacy {
       margin-top: 28px; text-align: center; color: var(--green); font-weight: 600;
     }
@@ -161,7 +170,7 @@
       .start { grid-template-columns: repeat(2, 1fr); }
       .features { grid-template-columns: repeat(2, 1fr); }
     }
-    @media (min-width: 960px) { .features { grid-template-columns: repeat(4, 1fr); } }
+    @media (min-width: 960px) { .features { gap: 14px; } }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .lang button { transition: none; } }
   </style>
 </head>
@@ -294,44 +303,60 @@
     <h2><span class="ja">できること</span><span class="en">What it does</span></h2>
     <div class="features">
       <div class="feature">
-        <h3><span class="ja">制限</span><span class="en">Lock</span></h3>
-        <p><span class="ja">アプリ・カテゴリ・ウェブサイトを、Screen Time で制限します。追加はいつでも。外せるのは、制限をはずした間だけです。</span><span class="en">Lock apps, categories and websites with Screen Time. Add anytime; remove only while the lock is off.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+        <div>
+          <h3><span class="ja">制限</span><span class="en">Lock</span></h3>
+          <p><span class="ja">アプリ・カテゴリ・サイトを、Screen Time で制限します。</span><span class="en">Lock apps, categories and sites with Screen Time.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">一時解除</span><span class="en">Temporary unlock</span></h3>
-        <p><span class="ja">選んだものだけを、1〜30分。時間になると自動で戻ります。「使い終わる」でいつでも戻せます。</span><span class="en">Unlock only what you picked, for 1–30 minutes. It locks itself again — or tap “All done” anytime.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M9.5 3h5"/></svg></div>
+        <div>
+          <h3><span class="ja">一時解除</span><span class="en">Temporary unlock</span></h3>
+          <p><span class="ja">選んだものだけを1〜30分。時間になると、自動で戻ります。</span><span class="en">Unlock only what you pick for 1–30 minutes. It locks itself again.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">記録</span><span class="en">Records</span></h3>
-        <p><span class="ja">今週・今月・すべて。目的や感想を円グラフで、時間帯も見られます。</span><span class="en">This week, this month, all time. Purposes and feelings in pie charts, plus when you tend to reach for your phone.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+        <div>
+          <h3><span class="ja">記録</span><span class="en">Records</span></h3>
+          <p><span class="ja">日ごと・アプリごとに、一時解除の回数。目的や感想も、グラフで。</span><span class="en">Unlocks by day and app, with purposes and feelings in charts.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">朝夜の振り返り</span><span class="en">Daily check-ins</span></h3>
-        <p><span class="ja">開くと、やわらかいカードで。短い言葉だけで、評価や点数はつけません。作るのは端末の中で、AI は使いません。</span><span class="en">A soft card when you open the app. Short words only — no scores. Made on your device, no AI.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></div>
+        <div>
+          <h3><span class="ja">朝夜の振り返り</span><span class="en">Daily check-ins</span></h3>
+          <p><span class="ja">やわらかいカードで、ひとこと。点数や評価はつけません。</span><span class="en">A soft card with a few words. No scores or judging.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">やさしい提案</span><span class="en">Gentle suggestions</span></h3>
-        <p><span class="ja">記録が5件以上たまったとき、週に1回まで、小さな工夫を提案。設定は、あなたが決めるまで変わりません。</span><span class="en">Once you have 5+ records, at most one small idea a week. Nothing changes until you say so.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg></div>
+        <div>
+          <h3><span class="ja">やさしい通知</span><span class="en">Gentle alerts</span></h3>
+          <p><span class="ja">初期はオフ。1日4件まで、静かな時間は送りません。</span><span class="en">Off by default. At most 4 a day, never in quiet hours.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">やさしい通知</span><span class="en">Gentle alerts</span></h3>
-        <p><span class="ja">任意で、初期はオフ。1日4件まで、3時間以上あけて、静かな時間は送りません。</span><span class="en">Optional, off by default. Up to 4 a day, at least 3 hours apart, and never in quiet hours.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg></div>
+        <div>
+          <h3><span class="ja">共有<small>任意</small></span><span class="en">Sharing<small>optional</small></span></h3>
+          <p><span class="ja">選んだ項目だけを、グラフでリンクやフレンドに。全期間も選べます。</span><span class="en">Share only what you pick, as charts, by link or with friends — all time too.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">共有（任意）</span><span class="en">Sharing (optional)</span></h3>
-        <p><span class="ja">Google でログインすると、選んだ項目だけを、グラフでリンクやフレンドに共有できます。期間は今週・先週・全期間。フレンドには、アプリを開いたときに最新にして見せ続けることもできます。ログインしなくても、ほかの機能は使えます。</span><span class="en">Sign in with Google to share only the items you pick — as charts, by link or with friends. Choose this week, last week or all time. With friends, it can stay up to date whenever you open the app. Everything else works without signing in.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5z"/></svg></div>
+        <div>
+          <h3><span class="ja">バックアップ<small>任意</small></span><span class="en">Backup<small>optional</small></span></h3>
+          <p><span class="ja">記録と設定を、自分の Google Drive の専用の場所へ。</span><span class="en">Records and settings, saved to a private spot in your own Google Drive.</span></p>
+        </div>
       </div>
       <div class="feature">
-        <h3><span class="ja">バックアップ（任意）</span><span class="en">Backup (optional)</span></h3>
-        <p><span class="ja">記録と設定を、あなたの Google Drive の、ふと専用の場所に保存できます。ほかの Drive のファイルは見えません。機種変更のときに、戻せます。</span><span class="en">Save your records and settings to a private Futo area of your own Google Drive. Your other Drive files stay out of reach, and you can restore on a new phone.</span></p>
-      </div>
-      <div class="feature">
-        <h3><span class="ja">見た目</span><span class="en">Look &amp; feel</span></h3>
-        <p><span class="ja">テーマカラーは4色。ダークモードも、夜にやさしい色合いです。日本語と English を切り替えられます。</span><span class="en">Four theme colors and a soft dark mode for the evening. Switch between Japanese and English anytime.</span></p>
-      </div>
-      <div class="feature">
-        <h3><span class="ja">デモモード</span><span class="en">Demo mode</span></h3>
-        <p><span class="ja">Screen Time を使わずに、流れを試せます。実際のアプリは制限しません。</span><span class="en">Try the whole flow without Screen Time. No real apps get locked.</span></p>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></div>
+        <div>
+          <h3><span class="ja">デモと見た目</span><span class="en">Demo & looks</span></h3>
+          <p><span class="ja">署名なしで試せます。テーマは4色、ダークモードと日英にも対応。</span><span class="en">Try it without signing. Four themes, dark mode, Japanese and English.</span></p>
+        </div>
       </div>
     </div>
   </div>

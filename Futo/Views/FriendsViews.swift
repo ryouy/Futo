@@ -8,7 +8,6 @@ struct FriendsView: View {
     @State private var code = ""
     @State private var removing: FriendsResponse.Friend?
     @State private var blocking: FriendsResponse.Friend?
-    @State private var reporting: FriendsResponse.Friend?
 
     var body: some View {
         Form {
@@ -37,29 +36,40 @@ struct FriendsView: View {
             Button(tr("ブロック"), role: .destructive) { if let f = blocking { Task { await sharing.block(uid: f.uid) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("報告の理由"), isPresented: Binding(get: { reporting != nil }, set: { if !$0 { reporting = nil } }), titleVisibility: .visible) {
-            Button(tr("不適切な内容")) { send(report: "inappropriate") }
-            Button(tr("嫌がらせ")) { send(report: "harassment") }
-            Button(tr("迷惑行為")) { send(report: "spam") }
-            Button(tr("その他")) { send(report: "other") }
-            Button(tr("キャンセル"), role: .cancel) {}
-        }
     }
 
-    private func send(report reason: String) {
-        guard let f = reporting else { return }
-        Task { _ = await sharing.report(targetType: "user", targetId: f.uid, reason: reason) }
+    @State private var showQR = false
+
+    private func formatted(_ code: String) -> String {
+        stride(from: 0, to: code.count, by: 4).map { start in
+            String(code.dropFirst(start).prefix(4))
+        }.joined(separator: "-")
     }
 
     private var inviteSection: some View {
         CardSection {
             if let invitation = sharing.invitation, let url = URL(string: invitation.url) {
-                Text(tr("招待コード：{0}", invitation.code)).font(.body.monospaced()).textSelection(.enabled)
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(tr("招待コード")).font(.caption).foregroundStyle(.secondary)
+                        Text(formatted(invitation.code)).font(.title3.monospaced().weight(.medium)).textSelection(.enabled)
+                    }
+                    Spacer(minLength: 0)
+                    CopyIconButton(text: invitation.code)
+                }
                 Text(tr("期限：{0}", dateText(invitation.expiresAt))).font(.footnote).foregroundStyle(.secondary)
-                ShareLink(item: url, message: Text(tr("ふとのフレンド招待です。タップすると、アプリが開きます。"))) { Label(tr("招待リンクを送る"), systemImage: "square.and.arrow.up") }
+                ShareLink(item: url, message: Text(tr("ふとのフレンド招待です。招待コード：{0}", formatted(invitation.code)))) { Label(tr("招待リンクを送る"), systemImage: "square.and.arrow.up") }
                     .buttonStyle(FutoButtonStyle())
-                QRImage(text: invitation.url).frame(maxWidth: .infinity).padding(.vertical, 6)
-                Text(tr("招待リンクは、統計の共有リンクとは別です。相手が申請し、あなたが承認するまで、統計は見えません。"))
+                HStack(spacing: 8) {
+                    Label(tr("リンクをコピー"), systemImage: "link").font(.subheadline)
+                    Spacer(minLength: 0)
+                    CopyIconButton(text: invitation.url)
+                }
+                Toggle(tr("QRコードを表示"), isOn: $showQR.animation())
+                if showQR {
+                    QRImage(text: invitation.url).frame(maxWidth: .infinity).padding(.vertical, 6)
+                }
+                Text(tr("相手が申請し、あなたが承認するまで、統計は見えません。"))
                     .font(.footnote).foregroundStyle(.secondary)
                 Button(role: .destructive) { Task { await sharing.cancelInvitation() } } label: { Label(tr("招待を取り消す"), systemImage: "xmark.circle") }
                     .buttonStyle(ChipButtonStyle())
@@ -72,8 +82,17 @@ struct FriendsView: View {
 
     private var codeSection: some View {
         CardSection {
-            TextField(tr("招待コードを入力"), text: $code)
-                .textInputAutocapitalization(.characters).autocorrectionDisabled()
+            HStack(spacing: 8) {
+                TextField(tr("招待コードを入力"), text: $code)
+                    .textInputAutocapitalization(.characters).autocorrectionDisabled()
+                // 貼り付けは、システムのボタンで（クリップボードの許可の確認が出ない）
+                PasteButton(payloadType: String.self) { strings in
+                    if let first = strings.first { code = String(first.prefix(40)) }
+                }
+                .labelStyle(.iconOnly)
+                .buttonBorderShape(.circle)
+                .accessibilityLabel(tr("貼り付け"))
+            }
             Button(tr("申請する")) {
                 if let normalized = InviteLink.normalizedCode(code) {
                     Task { if await sharing.sendFriendRequest(code: normalized) { code = "" } }
@@ -123,7 +142,6 @@ struct FriendsView: View {
                     .contextMenu {
                         Button(tr("フレンドをやめる"), role: .destructive) { removing = friend }
                         Button(tr("ブロック"), role: .destructive) { blocking = friend }
-                        Button(tr("報告")) { reporting = friend }
                     }
             }
         }

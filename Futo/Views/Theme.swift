@@ -167,6 +167,31 @@ struct ChipButtonStyle: ButtonStyle {
     }
 }
 
+/// 文字列をコピーするアイコン。押すと、少しの間チェックに変わる。
+struct CopyIconButton: View {
+    let text: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.string = text
+            copied = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.6))
+                copied = false
+            }
+        } label: {
+            Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                .font(.body.weight(.medium))
+                .foregroundStyle(Theme.accent)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(copied ? tr("コピーしました") : tr("コピー"))
+    }
+}
+
 /// フォームの中で、主な操作を1つだけ大きなボタンにする（背景は透明）。
 struct PrimarySection<Content: View>: View {
     @ViewBuilder var content: Content

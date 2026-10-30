@@ -5,7 +5,7 @@
  *   npx tsx scripts/cleanup.ts --apply   実際に削除する
  *
  * 対象は、期限（expiresAt）が「猶予日数」より前に切れたドキュメントだけ。有効なデータには触れない。
- * 本番に対して実行するときは、FIREBASE_* の環境変数が必要（docs/PHASE4_SETUP.md）。
+ * 本番に対して実行するときは、FIREBASE_* の環境変数が必要。
  */
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "../src/lib/firebase";

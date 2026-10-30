@@ -368,30 +368,6 @@ describe("解除・ブロック・フレンド限定共有", () => {
   });
 });
 
-describe("通報", () => {
-  it("定型の理由だけを受け付け、通報は誰からも読み取れない", async () => {
-    const alice = await newUser("アリス");
-    const bob = await newUser("ボブ");
-    expect((await call("POST", "/api/reports", { token: alice.token, body: { targetType: "user", targetId: bob.uid, reason: "spam" } })).status).toBe(201);
-    expect((await call("POST", "/api/reports", { token: alice.token, body: { targetType: "user", targetId: bob.uid, reason: "free text here" } })).status).toBe(400);
-    expect((await call("POST", "/api/reports", { token: alice.token, body: { targetType: "user", targetId: bob.uid, reason: "spam", comment: "x" } })).status).toBe(400);
-    expect((await call("GET", "/api/reports", { token: bob.token }).catch((e: Error) => ({ status: 0, error: e.message }))).status).toBe(0); // 読み取りのAPIが存在しない
-  });
-
-  it("匿名のWeb通報は、IPごとの持続する制限つき（1時間5件）", async () => {
-    const alice = await newUser("アリス");
-    const share = await call("POST", "/api/shares", { token: alice.token, body: (await import("./helpers")).webPayload() });
-    const statuses: number[] = [];
-    for (let i = 0; i < 7; i += 1) {
-      statuses.push((await call("POST", "/api/public/reports", { body: { token: share.body.token, reason: "spam" }, ip: "198.51.100.7" })).status);
-    }
-    expect(statuses.slice(0, 5)).toEqual([201, 201, 201, 201, 201]);
-    expect(statuses.slice(5)).toEqual([429, 429]);
-    // 別のIPからは、まだ送れる
-    expect((await call("POST", "/api/public/reports", { body: { token: share.body.token, reason: "spam" }, ip: "198.51.100.8" })).status).toBe(201);
-  });
-});
-
 describe("継続共有（更新）と全期間", () => {
   const stats = (overrides: Record<string, unknown> = {}) => {
     const { recipientUids: _r, idempotencyKey: _k, ...rest } = friendPayload([]);
@@ -547,5 +523,54 @@ function webPayloadWithMessage() {
   return {
     period: "thisWeek", periodStart: "2027-01-10T19:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z", timezone: "Asia/Tokyo", isPartial: true,
     showName: true, counts: { wantsToUse: 1, deferred: 1, interrupted: 0 }, expiresInDays: 7, idempotencyKey: crypto.randomUUID(), message: "こんにちは",
+  };
+}
+
+describe("アプリ名の共有・招待ページのコード", () => {
+  it("アプリ名は、選んだときだけ保存され、10件まで・40文字まで。制御文字は拒否", async () => {
+    const alice = await newUser("アリス");
+    const ok = await call("POST", "/api/shares", { token: alice.token, body: webPayloadApps([{ name: "動画アプリ", count: 7 }, { name: "SNS", count: 3 }]) });
+    expect(ok.status).toBe(201);
+    const page = await call("GET", `/api/public/shares/${ok.body.token}`);
+    expect(page.body.stats.apps).toEqual([{ name: "動画アプリ", count: 7 }, { name: "SNS", count: 3 }]);
+    for (const bad of [Array.from({ length: 11 }, (_, i) => ({ name: `A${i}`, count: 1 })), [{ name: "a".repeat(41), count: 1 }], [{ name: "x\u0000y", count: 1 }], [{ name: "ok", count: 1, extra: 1 }], []]) {
+      expect((await call("POST", "/api/shares", { token: alice.token, body: webPayloadApps(bad as never) })).status).toBe(400);
+    }
+  });
+
+  it("アプリ名だけを選んだ共有も作れる。何も選ばなければ作れない", async () => {
+    const alice = await newUser("アリス");
+    const onlyApps = { ...webPayloadApps([{ name: "動画", count: 2 }]), counts: undefined };
+    expect((await call("POST", "/api/shares", { token: alice.token, body: onlyApps })).status).toBe(201);
+    const nothing = { ...webPayloadApps([{ name: "動画", count: 2 }]), counts: undefined, apps: undefined, idempotencyKey: crypto.randomUUID() };
+    expect((await call("POST", "/api/shares", { token: alice.token, body: nothing })).status).toBe(400);
+  });
+
+  it("招待ページには、リンクと同じ招待のコードを出せる。別の人には、コードは推測できない", async () => {
+    const alice = await newUser("アリス");
+    const created = await invite(alice);
+    const info = await call("GET", `/api/public/invitations/${created.token}`);
+    expect(info.status).toBe(200);
+    expect(info.body.code).toBe(created.code);
+    // そのコードで、申請もできる
+    const bob = await newUser("ボブ");
+    expect((await request(bob, { code: info.body.code })).status).toBe(201);
+  });
+
+  it("以前の方式で作られた招待（コードがトークンから導けない）では、コードを出さない", async () => {
+    const alice = await newUser("アリス");
+    const created = await invite(alice);
+    const snap = await db().collection("invitations").doc(created.inviteId).get();
+    await snap.ref.update({ codeHash: "0".repeat(64) });
+    const info = await call("GET", `/api/public/invitations/${created.token}`);
+    expect(info.status).toBe(200);
+    expect(info.body.code).toBeNull();
+  });
+});
+
+function webPayloadApps(apps: { name: string; count: number }[]) {
+  return {
+    period: "thisWeek", periodStart: "2027-01-10T19:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z", timezone: "Asia/Tokyo", isPartial: true,
+    showName: true, counts: { wantsToUse: 1, deferred: 1, interrupted: 0 }, apps, expiresInDays: 7, idempotencyKey: crypto.randomUUID(),
   };
 }

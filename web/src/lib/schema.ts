@@ -29,6 +29,16 @@ export const messageSchema = z
   .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control")
   .refine((value) => !/:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|jp|io|co|app|me|ly|xyz)\b/i.test(value), "url");
 
+/** アプリ名（解除した対象の表示名）。1〜40文字、制御文字なし。 */
+const appNameSchema = z
+  .string()
+  .transform((value) => value.normalize("NFC").trim())
+  .refine((value) => value.length >= 1 && [...value].length <= 40, "length")
+  .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control");
+
+export const MAX_APPS = 10;
+const appsSchema = z.array(z.object({ name: appNameSchema, count }).strict()).min(1).max(MAX_APPS);
+
 /** 共有する統計。選んだ項目だけを送り、選ばなかった項目はキー自体を付けない。 */
 const statsShape = {
   period: z.enum(["thisWeek", "lastWeek", "all"]),
@@ -44,12 +54,14 @@ const statsShape = {
     .optional(),
   feelings: z.object({ satisfied: count, neutral: count, wishedLess: count }).strict().optional(),
   phraseId: z.enum(["p1", "p2", "p3"]).optional(),
+  /** よく解除したアプリ名と回数（任意）。選んだときだけ送る */
+  apps: appsSchema.optional(),
 };
 
 /** 週は最大8日。「全期間」は、最大10年。 */
 const MAX_SPAN_DAYS = { week: 8, all: 3650 };
 
-function checkStats(value: { period: string; periodStart: string; periodEnd: string; counts?: unknown; purposes?: unknown; feelings?: unknown; phraseId?: unknown }, ctx: z.RefinementCtx) {
+function checkStats(value: { period: string; periodStart: string; periodEnd: string; counts?: unknown; purposes?: unknown; feelings?: unknown; apps?: unknown; phraseId?: unknown }, ctx: z.RefinementCtx) {
   const start = Date.parse(value.periodStart);
   const end = Date.parse(value.periodEnd);
   const maxDays = value.period === "all" ? MAX_SPAN_DAYS.all : MAX_SPAN_DAYS.week;
@@ -57,7 +69,7 @@ function checkStats(value: { period: string; periodStart: string; periodEnd: str
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "period" });
   }
   // 全項目が未選択なら公開しない（ひとことだけの共有も作らない）
-  if (!value.counts && !value.purposes && !value.feelings) {
+  if (!value.counts && !value.purposes && !value.feelings && !value.apps) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "nothing_selected" });
   }
 }
@@ -97,6 +109,7 @@ export interface StatsSnapshot {
   counts?: { wantsToUse: number; deferred: number; interrupted: number };
   purposes?: { contact: number; research: number; break: number; noReason: number; unanswered: number };
   feelings?: { satisfied: number; neutral: number; wishedLess: number; answered: number };
+  apps?: { name: string; count: number }[];
   phrase?: string;
   /** フレンドへの一言（自由入力）。フレンド共有だけ */
   message?: string;
@@ -112,6 +125,7 @@ export function snapshotFrom(payload: WebSharePayload | FriendSharePayload | z.i
   };
   if (payload.counts) snapshot.counts = { ...payload.counts };
   if (payload.purposes) snapshot.purposes = { ...payload.purposes };
+  if (payload.apps) snapshot.apps = payload.apps.map((a) => ({ name: a.name, count: a.count }));
   if (payload.feelings) {
     // 満足感は、回答済み件数を分母とする。未回答の補完はしない。
     const { satisfied, neutral, wishedLess } = payload.feelings;
@@ -121,17 +135,3 @@ export function snapshotFrom(payload: WebSharePayload | FriendSharePayload | z.i
   if ("message" in payload && payload.message) snapshot.message = payload.message;
   return snapshot;
 }
-
-export const REPORT_REASONS = ["inappropriate", "harassment", "spam", "other"] as const;
-
-export const reportPayload = z
-  .object({
-    targetType: z.enum(["share", "friendShare", "user", "invitation"]),
-    targetId: z.string().min(1).max(200),
-    reason: z.enum(REPORT_REASONS),
-  })
-  .strict();
-
-export const publicReportPayload = z
-  .object({ token: z.string().length(43), reason: z.enum(REPORT_REASONS) })
-  .strict();

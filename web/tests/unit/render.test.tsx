@@ -25,53 +25,50 @@ describe("Web共有ページの表示", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 
-  it("匿名の表示と、途中経過の注記", () => {
-    const html = renderToStaticMarkup(<ShareView share={{ ...base, displayName: null }} />);
+  it("匿名の表示。途中経過・割合・件数の文章は出さない（凡例だけ）", () => {
+    const html = renderToStaticMarkup(<ShareView share={{ ...base, displayName: null, stats: { ...base.stats, purposes: { contact: 13, research: 14, break: 10, noReason: 8, unanswered: 2 } } }} />);
     expect(html).toContain("匿名");
-    expect(html).toContain("途中経過");
+    expect(html).not.toContain("途中経過");
+    expect(html).not.toContain("%");
+    expect(html).not.toContain("件（");
+    expect(html).not.toContain("含みません");
+    expect(html).not.toContain("内訳です");
+    expect(html).toContain("調べもの"); // 凡例には名前が出る
   });
 
-  it("選ばれなかった項目の見出しは出ない", () => {
+  it("選ばれなかった項目の見出しは出ない。見出しは短い言葉", () => {
     const html = renderToStaticMarkup(<ShareView share={base} />);
-    expect(html).toContain("選んだ回数");
+    expect(html).toContain("ひと呼吸の結果");
+    expect(html).not.toContain("選んだ回数");
     expect(html).not.toContain("使いたかった目的");
     expect(html).not.toContain("使ったあとの感想");
+    expect(html).not.toContain("よく解除したアプリ");
   });
 
-  it("目的は、答えた件数を分母にし、答えなかった件数は含めない。分母0なら割合を出さない", () => {
-    const withPurposes = { ...base, stats: { ...base.stats, purposes: { contact: 3, research: 1, break: 0, noReason: 0, unanswered: 6 } } };
-    const html = renderToStaticMarkup(<ShareView share={withPurposes} />);
-    expect(html).toContain("75%");
-    expect(html).toContain("答えた4件");
-    expect(html).toContain("答えなかった6件は含みません");
-    const none = { ...base, stats: { ...base.stats, purposes: { contact: 0, research: 0, break: 0, noReason: 0, unanswered: 4 } } };
-    const emptyHtml = renderToStaticMarkup(<ShareView share={none} />);
-    expect(emptyHtml).not.toContain("NaN");
-    // グラフの幅（style属性）は除き、表示される文字に割合が出ていないことを確認する
-    expect(emptyHtml.replace(/ style="[^"]*"/g, "")).not.toContain("%");
-    expect(emptyHtml).toContain("目的を答えた記録はまだありません");
+  it("選んだ3つのグラフは、1枚のカードにまとまる", () => {
+    const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, purposes: { contact: 3, research: 1, break: 0, noReason: 0, unanswered: 6 }, feelings: { satisfied: 1, neutral: 1, wishedLess: 0, answered: 2 } } }} />);
+    expect(html.match(/class="card minis"/g)?.length).toBe(1);
+    expect(html.match(/<svg/g)?.length).toBe(3);
+    expect(html).toContain("使いたかった目的");
+    expect(html).toContain("使ったあとの感想");
+    // 数値は、グラフの読み上げ用の説明にだけ入る
+    expect(html).toContain("連絡 3件");
   });
 
-  it("満足感は、回答件数を併記する。回答0なら割合を出さない", () => {
-    const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, feelings: { satisfied: 1, neutral: 1, wishedLess: 0, answered: 2 } } }} />);
-    expect(html).toContain("回答 2件");
-    expect(html).toContain("50%");
-    const empty = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, feelings: { satisfied: 0, neutral: 0, wishedLess: 0, answered: 0 } } }} />);
-    expect(empty).not.toContain("NaN");
-    expect(empty).toContain("回答はまだありません");
+  it("アプリ名：選んだときだけ出る。名前はエスケープされる", () => {
+    const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, apps: [{ name: "<b>SNS</b>", count: 7 }, { name: "動画", count: 3 }] } }} />);
+    expect(html).toContain("よく解除したアプリ");
+    expect(html).toContain("&lt;b&gt;SNS&lt;/b&gt;");
+    expect(html).not.toContain("<b>SNS</b>");
+    expect(html).toContain("動画");
   });
 
   it("実測していない使用時間や節約時間は、どこにも出ない", () => {
-    const html = renderToStaticMarkup(<ShareView share={base} />);
-    expect(html).not.toMatch(/使用時間|節約|連続|ランキング/);
+    const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, purposes: { contact: 1, research: 1, break: 1, noReason: 1, unanswered: 0 }, feelings: { satisfied: 1, neutral: 1, wishedLess: 1, answered: 3 } } }} />);
+    expect(html).not.toMatch(/使用時間|節約|スクリーンタイム/);
   });
 
-  it("グラフ：答えた目的があればドーナツを描き、数値も文字で読める。答えがなければ描かない", () => {
-    const withPurposes = { ...base, stats: { ...base.stats, purposes: { contact: 3, research: 1, break: 0, noReason: 0, unanswered: 6 } } };
-    const html = renderToStaticMarkup(<ShareView share={withPurposes} />);
-    expect(html).toContain("<svg");
-    expect(html).toContain("連絡");
-    expect(html).toContain("3件");
+  it("答えのない項目は、グラフを描かない", () => {
     const none = { ...base, stats: { ...base.stats, counts: undefined, purposes: { contact: 0, research: 0, break: 0, noReason: 0, unanswered: 4 } } };
     expect(renderToStaticMarkup(<ShareView share={none} />)).not.toContain("<svg");
   });

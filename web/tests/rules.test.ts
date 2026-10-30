@@ -13,7 +13,6 @@ beforeAll(async () => {
   });
   await env.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), "shares/s1"), { ownerUid: "alice" });
-    await setDoc(doc(context.firestore(), "reports/r1"), { reporterUid: "alice" });
     await setDoc(doc(context.firestore(), "friendships/a_b"), { members: ["a", "b"] });
   });
 });
@@ -28,9 +27,6 @@ describe("Firestoreルール：クライアントからの直接アクセスは�
     await assertFails(getDoc(doc(alice, "shares/s1")));
     await assertFails(setDoc(doc(alice, "shares/s1"), { ownerUid: "alice", extra: true }));
     await assertFails(setDoc(doc(alice, "shares/new"), { ownerUid: "alice" }));
-  });
-  it("通報は、通報した本人でも、クライアントからは読めない", async () => {
-    await assertFails(getDoc(doc(env.authenticatedContext("alice").firestore(), "reports/r1")));
   });
   it("フレンド関係も、当事者でも、クライアントからは読み書きできない", async () => {
     const a = env.authenticatedContext("a").firestore();

@@ -141,6 +141,7 @@ struct CreateShareView: View {
     @State private var created: URL?
     @State private var done = false
     @State private var standing = true
+    @State private var showQR = false
 
     private var isFriends: Bool { kind == .friends }
 
@@ -237,10 +238,20 @@ struct CreateShareView: View {
             Toggle(isOn: $selection.counts) { toggleLabel(tr("回数"), tr("使いたい・やめておく・中断の数")) }
             Toggle(isOn: $selection.purposes) { toggleLabel(tr("目的"), tr("使いたかった理由の内訳")) }
             Toggle(isOn: $selection.feelings) { toggleLabel(tr("気持ち"), tr("使ったあとの感想の内訳")) }
+            Toggle(isOn: $selection.apps) { toggleLabel(tr("アプリ名"), appsDetail) }
         } header: {
             header(isFriends ? tr("② 何を見せる？") : tr("① 何を見せる？"), tr("選んだ項目だけが共有されます。記録の一覧や、アプリの名前は含まれません。"))
         }
         .listRowBackground(Theme.card)
+    }
+
+    /// アプリ名の説明。名前を読み取れない・解除の記録がないときは、その理由を正直に出す。
+    private var appsDetail: String {
+        guard selection.apps else { return tr("含めません") }
+        let availability = AppNameResolver.availability(sessions: allSessions, mode: model.mode, interval: nil)
+        if availability.total == 0 { return tr("解除した記録がまだありません") }
+        if availability.named == 0 { return tr("名前を読み取れませんでした（含まれません）") }
+        return tr("よく解除したアプリの名前と回数（最大10件）")
     }
 
     private func toggleLabel(_ title: String, _ detail: String) -> some View {
@@ -370,12 +381,19 @@ struct CreateShareView: View {
     private var footer: some View {
         if let created {
             CardSection {
-                Text(created.absoluteString).font(.footnote).textSelection(.enabled)
+                HStack(spacing: 8) {
+                    Label(tr("リンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+                    Spacer(minLength: 0)
+                    CopyIconButton(text: created.absoluteString)
+                }
                 HStack(spacing: 8) {
                     ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
                     Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
                 }
-                QRImage(text: created.absoluteString).frame(maxWidth: .infinity).padding(.vertical, 6)
+                Toggle(tr("QRコードを表示"), isOn: $showQR.animation())
+                if showQR {
+                    QRImage(text: created.absoluteString).frame(maxWidth: .infinity).padding(.vertical, 6)
+                }
                 Text(tr("リンクを知っている人は、期限まで見られます。転送されることもあります。やめたいときは「共有中のリンク」から止めてください。"))
                     .font(.footnote).foregroundStyle(.secondary)
             }

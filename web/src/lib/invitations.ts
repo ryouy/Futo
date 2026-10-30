@@ -4,7 +4,7 @@ import { db } from "./firebase";
 import { ApiError } from "./http";
 import { consumeDaily, readDaily } from "./limits";
 import { assertNotLimited, recordFailure } from "./rateLimit";
-import { hashToken, looksLikeToken, newInviteCode, newToken, normalizeCode } from "./tokens";
+import { deriveInviteCode, hashToken, looksLikeToken, newToken, normalizeCode } from "./tokens";
 import { loadActiveUser, userRef } from "./users";
 
 export const INVITE_TTL_HOURS = 24;
@@ -24,7 +24,7 @@ export async function createInvitation(uid: string) {
   const expiresAt = Timestamp.fromDate(addHours(t, INVITE_TTL_HOURS));
   const ref = invitations().doc();
   const token = newToken();
-  const code = newInviteCode();
+  const code = deriveInviteCode(token);
   const tokenHash = hashToken(token);
   const codeHashValue = codeHash(code);
 
@@ -70,5 +70,8 @@ export async function getPublicInvitation(token: string, clientKeyValue: string)
   if (data.status !== "open" || (data.expiresAt as Timestamp).toMillis() <= now().getTime()) throw await unavailable();
   const inviter = await userRef(data.inviterUid as string).get();
   if (!inviter.exists || inviter.data()?.status !== "active") throw await unavailable();
-  return { inviterName: inviter.data()?.displayName as string, expiresAt: iso(data.expiresAt) };
+  // 招待ページには、同じ招待のコードも見せる。トークンから導いたコードが、保存したものと一致するときだけ（古い招待は出さない）
+  const derived = deriveInviteCode(token);
+  const code = data.codeHash === codeHash(derived) ? derived : null;
+  return { inviterName: inviter.data()?.displayName as string, expiresAt: iso(data.expiresAt), code };
 }
