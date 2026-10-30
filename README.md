@@ -4,7 +4,7 @@
 
 スマホを開く前に、ひと呼吸。使うかどうかを、自分で選ぶ iPhone アプリです。
 
-**[紹介サイト → futo-share.vercel.app](https://futo-share.vercel.app/)**
+**[紹介サイト](https://futo-share.vercel.app/)**
 
 <table>
   <tr>

@@ -50,9 +50,9 @@ struct BackupView: View {
     private var notConnected: some View {
         CardSection {
             Button { Task { await backup.connect() } } label: {
-                Label(tr("バックアップを有効にする"), systemImage: "icloud.and.arrow.up").foregroundStyle(Theme.accent)
+                Label(tr("バックアップを有効にする"), systemImage: "icloud.and.arrow.up")
             }
-            .frame(minHeight: 44).disabled(backup.isWorking)
+            .buttonStyle(FutoButtonStyle()).disabled(backup.isWorking)
         }
     }
 
@@ -65,16 +65,16 @@ struct BackupView: View {
                 Text(tr("まだバックアップはありません。")).foregroundStyle(.secondary)
             }
             Button { Task { await backup.backupNow() } } label: {
-                Label(tr("今すぐバックアップ"), systemImage: "icloud.and.arrow.up").foregroundStyle(Theme.accent)
+                Label(tr("今すぐバックアップ"), systemImage: "icloud.and.arrow.up")
             }
-            .frame(minHeight: 44).disabled(backup.isWorking || !backup.canBackup)
+            .buttonStyle(FutoButtonStyle()).disabled(backup.isWorking || !backup.canBackup)
             if backup.isWorking { ProgressView() }
         }
         CardSection {
             Button { Task { await backup.prepareRestore() } } label: {
-                Label(tr("バックアップから戻す"), systemImage: "icloud.and.arrow.down").foregroundStyle(Theme.accent)
+                Label(tr("バックアップから戻す"), systemImage: "icloud.and.arrow.down")
             }
-            .frame(minHeight: 44).disabled(backup.isWorking || backup.remote == nil)
+            .buttonStyle(FutoButtonStyle(prominent: false)).disabled(backup.isWorking || backup.remote == nil)
         }
         CardSection {
             Button(role: .destructive) { confirmDeleteRemote = true } label: { Label(tr("Driveのバックアップを削除"), systemImage: "trash") }
@@ -102,7 +102,7 @@ struct BackupView: View {
                     }
                     CardSection {
                         Button(tr("戻す")) { backup.confirmRestore(includeSettings: includeSettings) }
-                            .frame(minHeight: 44)
+                            .buttonStyle(FutoButtonStyle())
                     }
                 }
             }

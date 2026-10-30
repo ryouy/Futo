@@ -63,21 +63,23 @@ struct SharingTab: View {
                 Text(tr("ログインしなくても、ほかの機能はすべて使えます。履歴や設定は、アップロードされません。"))
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            CardSection {
+            PrimarySection {
                 Button { Task { await sharing.signIn() } } label: {
                     Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark")
                 }
-                .frame(minHeight: 44)
-                    .disabled(sharing.isWorking)
+                .disabled(sharing.isWorking)
             }
         }
     }
 
     private var needsReauth: some View {
-        CardSection {
-            Text(tr("ログインの確認が必要です。"))
-            Button(tr("もう一度ログイン")) { Task { await sharing.signIn() } }.frame(minHeight: 44)
-            Button(tr("ログアウト"), role: .destructive) { sharing.signOut() }.frame(minHeight: 44)
+        Group {
+            CardSection { Text(tr("ログインの確認が必要です。")) }
+            PrimarySection {
+                Button(tr("もう一度ログイン")) { Task { await sharing.signIn() } }
+                Button(tr("ログアウト"), role: .destructive) { sharing.signOut() }
+                    .buttonStyle(FutoButtonStyle(prominent: false))
+            }
         }
     }
 
@@ -200,7 +202,10 @@ struct CreateShareView: View {
             if let created {
                 CardSection {
                     Text(created.absoluteString).font(.footnote).textSelection(.enabled)
-                    ShareLink(item: created) { Text(tr("リンクを送る")) }.frame(minHeight: 44)
+                    HStack(spacing: 8) {
+                        ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
+                        Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
+                    }
                     QRImage(text: created.absoluteString).frame(maxWidth: .infinity).padding(.vertical, 6)
                     Text(tr("リンクを知っている人は、期限まで見られます。転送されることもあります。やめたいときは「共有中のリンク」から止めてください。"))
                         .font(.footnote).foregroundStyle(.secondary)
@@ -208,12 +213,11 @@ struct CreateShareView: View {
             } else if done {
                 CardSection { Text(tr("共有しました。")) }
             } else {
-                CardSection {
+                PrimarySection {
                     Button(kind == .web ? tr("リンクを作る") : tr("フレンドに共有")) { Task { await create() } }
-                        .frame(minHeight: 44)
                         .disabled(!canCreate)
-                    if let message = sharing.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
                 }
+                if let message = sharing.message { CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) } }
             }
         }
         .compactForm()
@@ -290,26 +294,40 @@ struct SharedLinksView: View {
                     Label(tr("新しいリンクを作る"), systemImage: "plus.circle").foregroundStyle(Theme.accent)
                 }.frame(minHeight: 44)
             }
-            if sharing.shares.isEmpty {
+            if sharing.shares.allSatisfy({ $0.status == "revoked" }) {
                 CardSection { Text(tr("共有中のリンクはありません。")).foregroundStyle(.secondary) }
             }
-            ForEach(sharing.shares) { item in
+            ForEach(sharing.shares.filter { $0.status != "revoked" }) { item in
                 CardSection {
-                    LabeledContent(periodLabel(item.period), value: statusText(item.status))
+                    HStack {
+                        Text(periodLabel(item.period)).font(.headline)
+                        Spacer()
+                        Text(statusText(item.status)).font(.footnote.weight(.medium))
+                            .foregroundStyle(item.status == "active" ? Theme.accent : .secondary)
+                    }
                     Text(tr("期限：{0}", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                     if item.status == "active" {
-                        if let url = sharing.localURL(for: item) {
-                            ShareLink(item: url) { Text(tr("リンクを送る")) }.frame(minHeight: 44)
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                            if let url = sharing.localURL(for: item) {
+                                Link(destination: url) { Label(tr("開く"), systemImage: "safari") }
+                                ShareLink(item: url) { Label(tr("送る"), systemImage: "square.and.arrow.up") }
+                            }
+                            Button { Task { rotated = await sharing.rotateShare(item) } } label: { Label(tr("作り直す"), systemImage: "arrow.triangle.2.circlepath") }
+                            Button(role: .destructive) { confirmRevoke = item } label: { Label(tr("停止"), systemImage: "stop.circle") }
                         }
-                        Button(tr("リンクを作り直す")) { Task { rotated = await sharing.rotateShare(item) } }.frame(minHeight: 44)
-                        Button(tr("共有をやめる"), role: .destructive) { confirmRevoke = item }.frame(minHeight: 44)
+                        .buttonStyle(ChipButtonStyle())
+                        .padding(.vertical, 2)
                     }
                 }
             }
             if let rotated {
                 CardSection {
                     Text(tr("新しいリンクです。古いリンクは、使えなくなりました。")).font(.footnote)
-                    ShareLink(item: rotated) { Text(tr("新しいリンクを送る")) }.frame(minHeight: 44)
+                    HStack(spacing: 8) {
+                        ShareLink(item: rotated) { Label(tr("送る"), systemImage: "square.and.arrow.up") }
+                        Link(destination: rotated) { Label(tr("開く"), systemImage: "safari") }
+                    }
+                    .buttonStyle(ChipButtonStyle())
                 }
             }
             if let message = sharing.message { CardSection { Text(message).font(.footnote) } }

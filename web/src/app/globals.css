@@ -41,3 +41,5 @@ details.report button { margin-top: 8px; background: var(--green); color: var(--
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
 .stack { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--soft); margin: 4px 0 12px; }
 footer.site a { color: var(--green); font-weight: 600; }
+.btn { display: inline-block; padding: 12px 26px; border-radius: 999px; background: var(--green); color: var(--cream); font-weight: 700; text-decoration: none; }
+.btn.ghost { background: var(--soft); color: var(--green); }

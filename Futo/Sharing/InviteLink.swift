@@ -3,7 +3,15 @@ import Foundation
 /// フレンド招待のリンク（`https://<共有ドメイン>/i/<token>`）の解釈。
 /// 許可したホストとパスだけを処理する。統計共有のリンク（`/s/…`）は、アプリでは処理しない（Web閲覧のまま）。
 enum InviteLink {
+    /// アプリを開くための独自のURL（`futo://invite/<token>`）。LINEなどのアプリ内ブラウザで、Universal Linksが働かないときの手段。
+    static let customScheme = "futo"
+
     static func token(from url: URL, allowedHost: String?) -> String? {
+        if url.scheme?.lowercased() == customScheme {
+            let parts = url.pathComponents.filter { $0 != "/" }
+            guard url.host?.lowercased() == "invite", parts.count == 1, isToken(parts[0]) else { return nil }
+            return parts[0]
+        }
         guard let allowedHost, url.scheme == "https", url.host?.lowercased() == allowedHost.lowercased(),
               url.user == nil, url.password == nil, url.port == nil || url.port == 443 else { return nil }
         let parts = url.pathComponents.filter { $0 != "/" }

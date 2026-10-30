@@ -5,6 +5,16 @@ import XCTest
 // MARK: - PKCE・招待リンク・設定
 
 final class SharingBasicsTests: XCTestCase {
+    func testCustomSchemeInviteOpensOnlyTheInviteAndNeverOtherPaths() {
+        let token = String(repeating: "a", count: 43)
+        XCTAssertEqual(InviteLink.token(from: URL(string: "futo://invite/\(token)")!, allowedHost: nil), token)
+        XCTAssertEqual(InviteLink.token(from: URL(string: "FUTO://invite/\(token)")!, allowedHost: "share.example.test"), token)
+        XCTAssertNil(InviteLink.token(from: URL(string: "futo://share/\(token)")!, allowedHost: nil), "招待以外は処理しない")
+        XCTAssertNil(InviteLink.token(from: URL(string: "futo://invite/short")!, allowedHost: nil))
+        XCTAssertNil(InviteLink.token(from: URL(string: "futo://invite/\(token)/extra")!, allowedHost: nil))
+        XCTAssertNil(InviteLink.token(from: URL(string: "futo://evil.example/invite/\(token)")!, allowedHost: nil))
+    }
+
     func testPKCEMatchesTheRFC7636TestVector() {
         // RFC 7636 付録B のテストベクタ
         XCTAssertEqual(PKCE.challenge(for: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM")

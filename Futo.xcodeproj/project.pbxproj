@@ -138,6 +138,7 @@
 		57186D513F893809C415EC62 /* AppModel+Phase3.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AppModel+Phase3.swift"; sourceTree = "<group>"; };
 		5A6C85F6C90FCE546C929F5F /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		5E006691B7C4A665A59C1EB2 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatsCharts.swift; sourceTree = "<group>"; };
 		645EC79F22BEC5EFE970061D /* Futo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Futo.entitlements; sourceTree = "<group>"; };
 		67A8F8585F9F7584FC510770 /* StandingShareTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingShareTests.swift; sourceTree = "<group>"; };
@@ -229,6 +230,7 @@
 				645EC79F22BEC5EFE970061D /* Futo.entitlements */,
 				3A2B1C7B72C851BA234DB779 /* Sharing */,
 				82FAFB96CDB438566A831520 /* Backup */,
+				5E006691B7C4A665A59C1EB2 /* Info.plist */,
 			);
 			path = Futo;
 			sourceTree = "<group>";
@@ -707,6 +709,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U2J3MULMS3;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Futo/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ふと";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -774,6 +777,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U2J3MULMS3;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Futo/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ふと";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;

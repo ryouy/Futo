@@ -147,6 +147,37 @@ struct FutoButtonStyle: ButtonStyle {
     }
 }
 
+/// 行の中に並べる、小さな操作ボタン。押せることが分かるよう、色つきの丸い形にする（削除などは赤）。
+struct ChipButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let destructive = configuration.role == .destructive
+        let tint: Color = destructive ? .red : Theme.accent
+        configuration.label
+            .font(.subheadline.weight(.medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .padding(.horizontal, 10)
+            .foregroundStyle(tint)
+            .background(Capsule().fill(tint.opacity(0.14)))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
+            .contentShape(Capsule())
+    }
+}
+
+/// フォームの中で、主な操作を1つだけ大きなボタンにする（背景は透明）。
+struct PrimarySection<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Section { content.buttonStyle(FutoButtonStyle()) }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+    }
+}
+
 extension AnyTransition {
     /// 古い画面が先に消え、そのあとに新しい画面が現れる。2つが重なって文字が二重に見えるのを避ける。
     static var sequentialFade: AnyTransition {

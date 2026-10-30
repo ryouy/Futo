@@ -35,10 +35,17 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
       </div>
       <div className="card">
         <h2>アプリで開く</h2>
-        <p>「ふと」アプリが入っている iPhone では、このリンクを開くと、アプリで招待が開きます。</p>
-        <p className="muted">
-          アプリがまだ入っていない場合は、テスト版の導入のあとで、このリンクをもう一度開いてください（インストール後に、自動で復元されるとは限りません）。
-          リンクが開けないときは、招待した人から教わったコードを、アプリの「コードを入力」に入力してください。
+        <p>「ふと」アプリが入っている iPhone では、下のボタンでアプリが開き、招待の内容が表示されます。</p>
+        <p>
+          <a className="btn" href={`futo://invite/${encodeURIComponent(token)}`}>ふとアプリで開く</a>
+        </p>
+        <p className="muted">LINE などのアプリ内ブラウザでは、このボタンを使ってください。うまく開かないときは、招待した人から教わったコードを、アプリの「招待コードを入力」に入力できます。</p>
+      </div>
+      <div className="card">
+        <h2>アプリがまだの方へ</h2>
+        <p className="muted">「ふと」は、スマホを開く前にひと呼吸おくための iPhone アプリです。どんなアプリか、紹介ページで見られます。</p>
+        <p>
+          <a className="btn ghost" href="/">ふとの紹介を見る</a>
         </p>
       </div>
       <p className="muted" style={{ textAlign: "center" }}>承認されるまで、フレンドにはなりません。心当たりがなければ、開かなくて大丈夫です。</p>

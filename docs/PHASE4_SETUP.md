@@ -57,13 +57,17 @@
 
 3つがそろうと、共有タブが「Googleでログイン」に変わります。
 
-## 5. 招待リンクをアプリで開く（Universal Links・任意）
+## 5. 招待リンクをアプリで開く
+招待リンク（`https://futo-share.vercel.app/i/…`）は、次の2つの方法でアプリを開きます。
 
-Universal Links は、**自分のドメイン**と Apple Developer の有料アカウント（Team ID）が必要です。なくても、招待は「リンクをブラウザで開いて招待ページを見る」「招待コードをアプリに入力する」で使えます。
+1. **招待ページの「ふとアプリで開く」ボタン**（独自URL `futo://invite/…`）。LINE などのアプリ内ブラウザでも使えます。追加の設定は要りません（`Futo/Info.plist` に URL スキームを登録済み）。
+2. **Universal Links**（リンクをタップすると、ページを経由せず、直接アプリが開く）。次の設定が必要です。
+   - Vercel の環境変数 `APPLE_TEAM_ID` に、Apple Developer の Team ID を設定する（このプロジェクトの `DEVELOPMENT_TEAM` と同じ値）。`IOS_BUNDLE_ID` は `com.ryouy.futo`。設定後に Redeploy する。
+   - `https://futo-share.vercel.app/.well-known/apple-app-site-association` が JSON を返すことを確認する（未設定だと 404）。
+   - アプリの Associated Domains（`applinks:futo-share.vercel.app`）は、`Futo.entitlements` に追加済み。**無料の個人チームでは Associated Domains を使えず、Xcode の署名でエラーになります**。その場合は、entitlements からその項目を削除してください（独自URLの方法だけで使えます）。
+   - iOS は、AASA を端末にキャッシュします。反映されないときは、アプリを入れ直してください。
 
-1. 手順3で `APPLE_TEAM_ID` と `IOS_BUNDLE_ID` を設定する → `/.well-known/apple-app-site-association` が配信される（`/i/*` だけが対象。統計の共有リンク `/s/*` はアプリで開かない）。
-2. Xcode の Signing & Capabilities → **Associated Domains** に `applinks:<ドメイン>` を追加する（このリポジトリには、ドメインが決まっていないため入れていません）。
-3. 実機で、招待リンクをメモなどからタップして確認する（シミュレーターでは確認していません）。
+アプリが入っていない人は、招待ページの「ふとの紹介を見る」から、紹介ページ（`/`）へ進めます。
 
 ## 6. 動作確認の手順（実機）
 

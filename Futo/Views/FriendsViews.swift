@@ -56,14 +56,16 @@ struct FriendsView: View {
             if let invitation = sharing.invitation, let url = URL(string: invitation.url) {
                 Text(tr("招待コード：{0}", invitation.code)).font(.body.monospaced()).textSelection(.enabled)
                 Text(tr("期限：{0}", dateText(invitation.expiresAt))).font(.footnote).foregroundStyle(.secondary)
-                ShareLink(item: url) { Text(tr("招待リンクを送る")) }.frame(minHeight: 44)
+                ShareLink(item: url, message: Text(tr("ふとのフレンド招待です。タップすると、アプリが開きます。"))) { Label(tr("招待リンクを送る"), systemImage: "square.and.arrow.up") }
+                    .buttonStyle(FutoButtonStyle())
                 QRImage(text: invitation.url).frame(maxWidth: .infinity).padding(.vertical, 6)
                 Text(tr("招待リンクは、統計の共有リンクとは別です。相手が申請し、あなたが承認するまで、統計は見えません。"))
                     .font(.footnote).foregroundStyle(.secondary)
-                Button(tr("招待を取り消す"), role: .destructive) { Task { await sharing.cancelInvitation() } }.frame(minHeight: 44)
+                Button(role: .destructive) { Task { await sharing.cancelInvitation() } } label: { Label(tr("招待を取り消す"), systemImage: "xmark.circle") }
+                    .buttonStyle(ChipButtonStyle())
             } else {
-                Button(tr("フレンドを招待")) { Task { await sharing.createInvitation() } }
-                    .frame(minHeight: 44).disabled(sharing.isWorking)
+                Button { Task { await sharing.createInvitation() } } label: { Label(tr("フレンドを招待"), systemImage: "person.badge.plus") }
+                    .buttonStyle(FutoButtonStyle()).disabled(sharing.isWorking)
             }
         }
     }
@@ -77,7 +79,7 @@ struct FriendsView: View {
                     Task { if await sharing.sendFriendRequest(code: normalized) { code = "" } }
                 }
             }
-            .frame(minHeight: 44)
+            .buttonStyle(FutoButtonStyle(prominent: false))
             .disabled(InviteLink.normalizedCode(code) == nil || sharing.isWorking)
         }
     }
@@ -88,12 +90,11 @@ struct FriendsView: View {
             ForEach(sharing.friends.incoming) { request in
                 VStack(alignment: .leading, spacing: 8) {
                     Text(request.displayName)
-                    HStack {
-                        Button(tr("承認")) { Task { await sharing.respond(to: request, accept: true) } }
-                        Spacer()
-                        Button(tr("見送る"), role: .destructive) { Task { await sharing.respond(to: request, accept: false) } }
+                    HStack(spacing: 8) {
+                        Button { Task { await sharing.respond(to: request, accept: true) } } label: { Label(tr("承認"), systemImage: "checkmark") }
+                        Button(role: .destructive) { Task { await sharing.respond(to: request, accept: false) } } label: { Label(tr("見送る"), systemImage: "xmark") }
                     }
-                    .buttonStyle(.borderless)
+                    .buttonStyle(ChipButtonStyle())
                 }
             }
         }
@@ -106,7 +107,8 @@ struct FriendsView: View {
                 HStack {
                     Text(request.displayName)
                     Spacer()
-                    Button(tr("取り消す"), role: .destructive) { Task { await sharing.cancelRequest(request) } }.buttonStyle(.borderless)
+                    Button(tr("取り消す"), role: .destructive) { Task { await sharing.cancelRequest(request) } }
+                        .buttonStyle(ChipButtonStyle()).fixedSize()
                 }
             }
         }
@@ -129,7 +131,7 @@ struct FriendsView: View {
 
     @ViewBuilder
     private var receivedSection: some View {
-        if !sharing.receivedShares.isEmpty || !sharing.sentShares.isEmpty {
+        if !sharing.receivedShares.isEmpty || sharing.sentShares.contains(where: { $0.status != "revoked" }) {
             CardSection {
                 Text(tr("届いた統計")).font(.footnote).foregroundStyle(.secondary)
                 ForEach(sharing.receivedShares) { item in
@@ -141,10 +143,10 @@ struct FriendsView: View {
                     }
                 }
             }
-            if !sharing.sentShares.isEmpty {
+            if sharing.sentShares.contains(where: { $0.status != "revoked" }) {
                 CardSection {
                     Text(tr("共有したもの")).font(.footnote).foregroundStyle(.secondary)
-                    ForEach(sharing.sentShares) { item in
+                    ForEach(sharing.sentShares.filter { $0.status != "revoked" }) { item in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(periodLabel(item.period) + (sharing.isStanding(item.id) != nil ? " · " + tr("継続中") : ""))
@@ -154,9 +156,10 @@ struct FriendsView: View {
                             if item.status == "active" {
                                 if sharing.isStanding(item.id) != nil {
                                     Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), mode: model.mode, force: true) } }
-                                        .buttonStyle(.borderless).disabled(sharing.isWorking)
+                                        .buttonStyle(ChipButtonStyle()).fixedSize().disabled(sharing.isWorking)
                                 }
-                                Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }.buttonStyle(.borderless)
+                                Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }
+                                    .buttonStyle(ChipButtonStyle()).fixedSize()
                             }
                         }
                     }
@@ -226,7 +229,8 @@ struct InviteLandingView: View {
                     CardSection {
                         Text(sharing.isConfigured ? tr("フレンドの申請には、ログインが必要です。") : tr("共有の設定がまだ終わっていません。"))
                         if sharing.isConfigured {
-                            Button { Task { await sharing.signIn() } } label: { Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark") }.frame(minHeight: 44)
+                            Button { Task { await sharing.signIn() } } label: { Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark") }
+                                .buttonStyle(FutoButtonStyle())
                         }
                     }
                 } else if sent {
@@ -236,7 +240,7 @@ struct InviteLandingView: View {
                         Text(tr("{0} さんからの招待です。", inviter.inviterName))
                         Text(tr("申請して、相手が承認するまで、統計は見えません。")).font(.footnote).foregroundStyle(.secondary)
                         Button(tr("フレンドに申請する")) { Task { sent = await sharing.sendFriendRequest(token: token) } }
-                            .frame(minHeight: 44).disabled(sharing.isWorking)
+                            .buttonStyle(FutoButtonStyle()).disabled(sharing.isWorking)
                     }
                 } else if loaded {
                     CardSection { Text(sharing.message ?? tr("この招待は、使えません。")) }
