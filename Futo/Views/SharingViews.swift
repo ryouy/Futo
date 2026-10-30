@@ -292,7 +292,7 @@ struct CreateShareView: View {
             HStack {
                 header(tr("共有される内容"))
                 Spacer()
-                Text(selection.showName ? (sharing.profile?.displayName ?? "") : tr("匿名")).font(.caption).foregroundStyle(.secondary).textCase(nil)
+                Text(selection.showName ? (sharing.profile?.displayName ?? "") : tr("匿名")).lineLimit(1).truncationMode(.tail).font(.caption).foregroundStyle(.secondary).textCase(nil)
             }
         }
     }

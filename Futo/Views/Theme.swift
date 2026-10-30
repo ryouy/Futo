@@ -375,7 +375,7 @@ struct LeafMark: View {
 extension View {
     /// 1行に収める。入りきらないときは少しだけ縮める（折り返さない）。
     func oneLine(_ minimumScale: CGFloat = 0.7) -> some View {
-        lineLimit(1).minimumScaleFactor(minimumScale)
+        lineLimit(1).minimumScaleFactor(minimumScale).truncationMode(.tail)
     }
 }
 

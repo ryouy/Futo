@@ -106,7 +106,7 @@ struct FriendsView: View {
             Text(tr("承認待ち")).font(.footnote).foregroundStyle(.secondary)
             ForEach(sharing.friends.incoming) { request in
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(request.displayName)
+                    Text(request.displayName).lineLimit(1).truncationMode(.tail)
                     HStack(spacing: 8) {
                         Button { Task { await sharing.respond(to: request, accept: true) } } label: { Label(tr("承認"), systemImage: "checkmark") }
                         Button(role: .destructive) { Task { await sharing.respond(to: request, accept: false) } } label: { Label(tr("見送る"), systemImage: "xmark") }
@@ -122,7 +122,7 @@ struct FriendsView: View {
             Text(tr("返事待ち")).font(.footnote).foregroundStyle(.secondary)
             ForEach(sharing.friends.outgoing) { request in
                 HStack {
-                    Text(request.displayName)
+                    Text(request.displayName).lineLimit(1).truncationMode(.tail)
                     Spacer()
                     Button(tr("取り消す"), role: .destructive) { Task { await sharing.cancelRequest(request) } }
                         .buttonStyle(ChipButtonStyle()).fixedSize()
