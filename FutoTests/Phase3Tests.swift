@@ -466,4 +466,15 @@ final class Phase3Tests: XCTestCase {
         let week = (10...20).map { OutingMessages.pick(seed: "futo.outing.2027-01-\($0)") }
         XCTAssertGreaterThan(Set(week).count, 3, "日が変わると、いろいろな文言が出る")
     }
+
+    func testCountdownStartsFromTheFullNumberOfSeconds() {
+        XCTAssertEqual(countdownText(10), "10", "10秒なら、10から始まる")
+        XCTAssertEqual(countdownText(9.2), "10", "切り上げ")
+        XCTAssertEqual(countdownText(1), "1")
+        XCTAssertEqual(countdownText(0), "0")
+        XCTAssertEqual(countdownText(59.01), "1:00")
+        XCTAssertEqual(countdownText(60), "1:00")
+        XCTAssertEqual(countdownText(90), "1:30")
+        XCTAssertEqual(countdownText(1_800), "30:00")
+    }
 }

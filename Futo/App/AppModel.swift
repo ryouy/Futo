@@ -54,6 +54,13 @@ final class AppModel {
     private(set) var isUnlocking = false
     @ObservationIgnored private var finishedSession: Session?
     var showFlow = false
+    /// ホームの鍵のアニメーションを出している間。ほかの全画面の表示（振り返りなど）は、これが終わるまで待つ
+    var lockSealActive = false
+    /// 鍵のアニメーションを出す合図（値が変わったら、ホームが再生する）
+    private(set) var lockSealToken = 0
+    /// ホームのシート（設定・記録など）が開いている間は、鍵のアニメーションを出さない
+    var homeSheetOpen = false
+    @ObservationIgnored private var hasRefreshedOnce = false
     var permissionError: String?
     var notice: String?
     var errorMessage: String?
@@ -106,6 +113,8 @@ final class AppModel {
 
     /// 起動時・前面復帰時・操作後に、OSと保存済みSessionから状態を取り直す。
     func refresh() {
+        let previousRestriction = restriction
+        defer { requestLockSealIfNeeded(previous: previousRestriction) }
         if mode == .device { pause.reconcile() }
         service.refreshPermission()
         permission = service.permission
@@ -143,6 +152,23 @@ final class AppModel {
             activeSession = nil
             showFlow = false
             notice = tr("許可を確認できなかったため、ひと呼吸を中断しました。")
+        }
+    }
+
+    /// 制限がかかったとき（手動・一時解除や一時停止からの復帰）、ホームの鍵のアニメーションを出す合図を出す。
+    /// 同じ更新の中で、ほかの全画面の表示（感想など）を待たせるので、重なって見えることがない。
+    /// 起動の最初の確認・説明・チュートリアル・ひと呼吸の画面・シート・朝夜のカードが出ているときは、出さない。
+    private func requestLockSealIfNeeded(previous: RestrictionState) {
+        defer { hasRefreshedOnce = true }
+        guard hasRefreshedOnce, previous != .configured, restriction == .configured else { return }
+        guard onboardingDone, tutorialCompleted, tutorialStep == nil, !showFlow, !homeSheetOpen, visibleCards.isEmpty else { return }
+        lockSealActive = true
+        lockSealToken += 1
+        // 万一ホームが再生しなくても、ほかの画面を待たせ続けない
+        let token = lockSealToken
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            if let self, self.lockSealToken == token { self.lockSealActive = false }
         }
     }
 

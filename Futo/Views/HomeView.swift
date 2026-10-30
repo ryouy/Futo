@@ -16,28 +16,14 @@ struct HomeView: View {
         var id: Self { self }
     }
 
-    /// 上は、状態と制限するものの一覧（多いときは自然に上下へスクロール）。
-    /// 操作ボタンは下に固定して、一覧が長くても、いつでも押せる。
+    /// ホームは、画面全体をスクロールさせない。制限するものが多いときは、一覧の欄の中だけでスクロールする。
+    /// 文字を大きくするなどで、どうしても収まらないときだけ、全体をスクロールできるようにする。
     var body: some View {
         GeometryReader { geo in
             let rows = visibleRows(forHeight: geo.size.height)
-            VStack(spacing: 0) {
-                ScrollView {
-                    scrollContent(rows: rows)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
-                        .padding(.bottom, 16)
-                }
-                .scrollBounceBehavior(.basedOnSize)
-                VStack(spacing: 12) {
-                    actions
-                    #if DEBUG
-                    debugSection
-                    #endif
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 14)
-                .padding(.bottom, 12)
+            ViewThatFits(in: .vertical) {
+                page(rows: rows)
+                ScrollView { page(rows: rows) }
             }
         }
         .background(Theme.background.ignoresSafeArea())
@@ -54,10 +40,13 @@ struct HomeView: View {
                 model.refresh()
             }
         }
-        .onChange(of: model.restriction) { old, new in
-            model.notice = nil
-            // 制限がかかったとき（手動・一時解除や一時停止からの復帰）、鍵のアニメーションを見せる
-            if new == .configured, old != .configured { showLockSeal() }
+        .onChange(of: model.restriction) { _, _ in model.notice = nil }
+        // 制限がかかったとき（手動・一時解除や一時停止からの復帰）、鍵のアニメーションを見せる（合図は、AppModelが出す）
+        .onChange(of: model.lockSealToken) { _, _ in showLockSeal() }
+        .onChange(of: sheet) { _, value in model.homeSheetOpen = value != nil }
+        .onDisappear {
+            lockSealTask?.cancel()
+            model.lockSealActive = false
         }
         .overlay {
             if lockSeal {
@@ -81,11 +70,30 @@ struct HomeView: View {
         #if DEBUG
         reserved += 50
         #endif
-        if model.suggestion != nil { return 3 }
-        return max(3, min(8, Int((height - reserved) / Self.rowHeight)))
+        // 提案のカードが出ているときは、その分、一覧を短くする
+        if model.suggestion != nil { reserved += 210 }
+        return max(2, min(8, Int((height - reserved) / Self.rowHeight)))
     }
 
     private static let rowHeight: CGFloat = 48
+
+    private func page(rows: Int) -> some View {
+        VStack(spacing: 0) {
+            scrollContent(rows: rows)
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+            Spacer(minLength: 12)
+            VStack(spacing: 12) {
+                actions
+                #if DEBUG
+                debugSection
+                #endif
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 14)
+            .padding(.bottom, 12)
+        }
+    }
 
     private func scrollContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -137,11 +145,15 @@ struct HomeView: View {
     /// 鍵が閉まるアニメーションを、少しの間だけ大きく見せる（約2秒）。
     private func showLockSeal() {
         lockSealTask?.cancel()
+        model.lockSealActive = true
         withAnimation(.easeOut(duration: 0.25)) { lockSeal = true }
         lockSealTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(2.0))
             guard !Task.isCancelled else { return }
             withAnimation(.easeInOut(duration: 0.45)) { lockSeal = false }
+            // 消えきってから、待たせていた画面（感想など）を出す
+            try? await Task.sleep(for: .milliseconds(450))
+            model.lockSealActive = false
         }
     }
 

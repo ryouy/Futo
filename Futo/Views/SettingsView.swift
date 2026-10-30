@@ -49,6 +49,9 @@ struct SettingsView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
+        // テーマカラーを変えた瞬間に、設定の中の色（言語の選択など）も変わるように
+        .tint(Theme.accent)
+        .id(ThemeStore.shared.color)
         .animation(.easeInOut(duration: 0.25), value: tab)
         .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)

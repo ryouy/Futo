@@ -274,19 +274,23 @@ struct FixedWidthRow<Leading: View, Trailing: View>: View {
 /// 単一・複数選択の1行。目的選択とアプリ選択で共通に使う。
 struct ChoiceRow<Content: View>: View {
     let isOn: Bool
+    /// 右端のチェックの丸を出すか。1つだけ選ぶ画面では出さず、選んだものの枠だけで示す。
+    var showsIndicator = true
     let action: () -> Void
     @ViewBuilder var content: Content
 
     var body: some View {
         Button(action: action) {
-            FixedWidthRow(height: 58, trailingWidth: 30) {
+            FixedWidthRow(height: 58, trailingWidth: showsIndicator ? 30 : 0) {
                 content
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.tail)
             } trailing: {
-                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(Theme.accent)
+                if showsIndicator {
+                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(Theme.accent)
+                }
             }
             .padding(.horizontal, 20)
             .contentShape(Rectangle())

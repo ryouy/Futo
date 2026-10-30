@@ -88,7 +88,7 @@ struct PurposeView: View {
                     .foregroundStyle(.secondary)
                     .padding(.bottom, 10)
                 ForEach(Purpose.allCases) { item in
-                    ChoiceRow(isOn: selected == item) { selected = item } content: {
+                    ChoiceRow(isOn: selected == item, showsIndicator: false) { selected = item } content: {
                         Text(item.label).oneLine()
                     }
                 }
@@ -126,10 +126,7 @@ struct WaitView: View {
         _controller = State(initialValue: WaitController(session: session, store: model.sessions))
     }
 
-    private func timeText(_ remaining: TimeInterval) -> String {
-        let total = Int(remaining.rounded(.up))
-        return String(format: "%d:%02d", total / 60, total % 60)
-    }
+    private func timeText(_ remaining: TimeInterval) -> String { countdownText(remaining) }
 
     var body: some View {
         CenteredScroll {
@@ -156,6 +153,9 @@ struct WaitView: View {
                 controller.deactivate()
                 return
             }
+            // タイマーが現れてから数え始める（10秒なら、10から始まる）
+            while !showTimer, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(30)) }
+            guard !Task.isCancelled else { return }
             controller.activate()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(250))

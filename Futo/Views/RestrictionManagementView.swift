@@ -119,10 +119,7 @@ struct RestrictionWaitView: View {
         return isCurrentKind ? "waiting" : "loading"
     }
 
-    private func timeText(_ remaining: TimeInterval) -> String {
-        let total = Int(remaining.rounded(.up))
-        return String(format: "%d:%02d", total / 60, total % 60)
-    }
+    private func timeText(_ remaining: TimeInterval) -> String { countdownText(remaining) }
 
     var body: some View {
         CenteredScroll {

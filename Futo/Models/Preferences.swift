@@ -114,3 +114,10 @@ func durationText(seconds: Double) -> String {
 func clockText(minute: Int) -> String {
     String(format: "%d:%02d", (minute / 60) % 24, minute % 60)
 }
+
+/// 待機のカウントダウンの表示。1分未満は、秒の数だけ（10秒なら「10」から始まる）。1分以上は「1:30」の形。
+func countdownText(_ remaining: TimeInterval) -> String {
+    let total = max(0, Int(remaining.rounded(.up)))
+    if total < 60 { return "\(total)" }
+    return String(format: "%d:%02d", total / 60, total % 60)
+}

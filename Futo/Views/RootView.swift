@@ -11,6 +11,7 @@ struct RootView: View {
 
     private var canShowOverlays: Bool {
         model.onboardingDone && model.tutorialCompleted && model.tutorialStep == nil && !showSplash && !model.showFlow
+            && !model.lockSealActive
     }
 
     /// 開いたときに出す振り返り。スプラッシュ・説明・チュートリアル・ひと呼吸の最中は出さない。
