@@ -15,7 +15,14 @@ final class DeviceRestrictionService: RestrictionService {
 
     init() {
         SharedState.migrateFromStandardIfNeeded()
-        self.selection = SharedState.loadSelection() ?? FamilyActivitySelection()
+        var loaded = SharedState.loadSelection() ?? FamilyActivitySelection()
+        // 以前に保存された選択に「ふと」自身が入っていたら、一覧に出ないよう取り除く
+        var stored = RestrictedItems(selection: loaded)
+        if stored.removeOwnApp() {
+            loaded = stored.selection
+            SharedState.saveSelection(loaded)
+        }
+        self.selection = loaded
         refreshPermission()
     }
 
