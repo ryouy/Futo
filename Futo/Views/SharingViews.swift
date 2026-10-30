@@ -94,13 +94,16 @@ struct SharingTab: View {
                 Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accent)
             }.frame(minHeight: 44)
         }
-        CardSection {
-            Button { confirmSignOut = true } label: {
-                Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right")
-            }.frame(minHeight: 44)
-            Button(role: .destructive) { confirmDelete = true } label: {
-                Label(tr("アカウントを削除"), systemImage: "trash")
-            }.frame(minHeight: 44)
+        PrimarySection {
+            HStack(spacing: 10) {
+                Button { confirmSignOut = true } label: {
+                    Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right")
+                }
+                Button(role: .destructive) { confirmDelete = true } label: {
+                    Label(tr("アカウントを削除"), systemImage: "trash")
+                }
+            }
+            .buttonStyle(ChipButtonStyle())
         }
     }
 }
@@ -195,7 +198,7 @@ struct CreateShareView: View {
                     Button(chosen.count == recipients.count ? tr("すべて外す") : tr("全員を選ぶ")) {
                         chosen = chosen.count == recipients.count ? [] : Set(recipients.map(\.uid))
                     }
-                    .font(.footnote.weight(.medium)).textCase(nil)
+                    .buttonStyle(ChipButtonStyle()).fixedSize().textCase(nil)
                 }
             }
         }
@@ -386,25 +389,28 @@ struct SharedLinksView: View {
                     }
                     Text(tr("期限：{0}", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                     if item.status == "active" {
-                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                        HStack(spacing: 8) {
                             if let url = sharing.localURL(for: item) {
-                                Link(destination: url) { Label(tr("開く"), systemImage: "safari") }
-                                ShareLink(item: url) { Label(tr("送る"), systemImage: "square.and.arrow.up") }
+                                Link(destination: url) { Image(systemName: "safari") }.accessibilityLabel(tr("開く"))
+                                ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }.accessibilityLabel(tr("送る"))
+                                CopyChip(text: url.absoluteString)
                             }
-                            Button { Task { rotated = await sharing.rotateShare(item) } } label: { Label(tr("作り直す"), systemImage: "arrow.triangle.2.circlepath") }
-                            Button(role: .destructive) { confirmRevoke = item } label: { Label(tr("停止"), systemImage: "stop.circle") }
+                            Button { Task { rotated = await sharing.rotateShare(item) } } label: { Image(systemName: "arrow.triangle.2.circlepath") }
+                                .accessibilityLabel(tr("作り直す"))
+                            Button(role: .destructive) { confirmRevoke = item } label: { Image(systemName: "stop.circle") }
+                                .accessibilityLabel(tr("停止"))
                         }
                         .buttonStyle(ChipButtonStyle())
-                        .padding(.vertical, 2)
                     }
                 }
             }
             if let rotated {
                 CardSection {
-                    Text(tr("新しいリンクです。古いリンクは、使えなくなりました。")).font(.footnote)
+                    Label(tr("新しいリンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
                     HStack(spacing: 8) {
-                        ShareLink(item: rotated) { Label(tr("送る"), systemImage: "square.and.arrow.up") }
-                        Link(destination: rotated) { Label(tr("開く"), systemImage: "safari") }
+                        ShareLink(item: rotated) { Image(systemName: "square.and.arrow.up") }.accessibilityLabel(tr("送る"))
+                        Link(destination: rotated) { Image(systemName: "safari") }.accessibilityLabel(tr("開く"))
+                        CopyChip(text: rotated.absoluteString)
                     }
                     .buttonStyle(ChipButtonStyle())
                 }
@@ -449,7 +455,13 @@ struct AccountAvatar: View {
 
     var body: some View {
         ZStack {
-            initial
+            if isOwn, let index = settings.symbolIndex, AvatarSettings.symbols.indices.contains(index) {
+                Circle().fill(settings.fill(themeColor: Theme.accent))
+                    .overlay(Image(systemName: AvatarSettings.symbols[index].name)
+                        .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white))
+            } else {
+                initial
+            }
             if isOwn, settings.showsPhoto(available: photoURL != nil), let photoURL {
                 AsyncImage(url: photoURL) { phase in
                     if case .success(let image) = phase { image.resizable().scaledToFill() }
@@ -472,7 +484,7 @@ struct AccountAvatar: View {
     }
 }
 
-/// プロフィール：表示名と、アイコン（Googleの写真を使うか、頭文字の色）。
+/// プロフィール：アイコン（Googleの写真・頭文字・山や海などの12個）と色、表示名。保存は、いちばん下。
 @MainActor
 struct ProfileView: View {
     @Environment(SharingModel.self) private var sharing
@@ -482,10 +494,10 @@ struct ProfileView: View {
 
     private var displayName: String { sharing.profile?.displayName ?? "" }
     private var hasPhoto: Bool { sharing.auth.photoURL != nil }
-    private var canSave: Bool {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmed.isEmpty && trimmed.count <= 20 && trimmed != displayName && !sharing.isWorking
-    }
+    private var usesPhoto: Bool { avatar.showsPhoto(available: hasPhoto) }
+    private var usesInitial: Bool { !usesPhoto && avatar.symbolIndex == nil }
+    private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var canSave: Bool { !trimmed.isEmpty && trimmed.count <= 20 && trimmed != displayName && !sharing.isWorking }
 
     var body: some View {
         Form {
@@ -498,28 +510,79 @@ struct ProfileView: View {
                 .listRowBackground(Color.clear)
             }
 
-            CardSection {
-                TextField(tr("表示名（1〜20文字）"), text: $name)
-                Button(saved ? tr("保存しました") : tr("保存")) {
-                    Task { saved = await sharing.saveDisplayName(name.trimmingCharacters(in: .whitespacesAndNewlines)) }
-                }
-                .disabled(!canSave)
-                .frame(minHeight: 40)
-            }
+            CardSection { iconGrid }
+
+            if !usesPhoto { CardSection { colorPicker } }
 
             CardSection {
-                Toggle(tr("Googleの写真を使う"), isOn: Binding(get: { avatar.usesPhoto && hasPhoto }, set: { avatar.usesPhoto = $0 }))
-                    .disabled(!hasPhoto)
-                if !hasPhoto { Text(tr("写真を取得できていません")).font(.caption).foregroundStyle(.secondary) }
-                if !(avatar.usesPhoto && hasPhoto) { colorPicker }
+                TextField(tr("表示名（1〜20文字）"), text: $name)
+            }
+
+            PrimarySection {
+                Button {
+                    Task { saved = await sharing.saveDisplayName(trimmed) }
+                } label: {
+                    Label(saved ? tr("保存しました") : tr("保存"), systemImage: saved ? "checkmark.circle.fill" : "square.and.arrow.down")
+                }
+                .disabled(!canSave && !saved)
             }
         }
         .compactForm()
-        .animation(.easeInOut(duration: 0.3), value: avatar.usesPhoto)
+        .animation(.easeInOut(duration: 0.3), value: usesPhoto)
         .navigationTitle(tr("プロフィール"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { name = displayName }
-        .onChange(of: name) { _, _ in saved = false }
+        .onChange(of: name) { _, new in if new != displayName { saved = false } }
+    }
+
+    // MARK: アイコン
+
+    private var iconGrid: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 10)], spacing: 10) {
+            if hasPhoto {
+                iconCell(selected: usesPhoto, label: tr("Googleの写真")) { avatar.selectPhoto() } content: {
+                    AccountAvatar(name: displayName, photoURL: sharing.auth.photoURL, size: 40, isOwn: true)
+                        .opacity(1)
+                        .overlay(Circle().fill(.clear))
+                        .background(photoPreview)
+                }
+            }
+            iconCell(selected: usesInitial, label: tr("頭文字")) { avatar.selectInitial() } content: {
+                Circle().fill(avatar.fill(themeColor: Theme.accent)).frame(width: 40, height: 40)
+                    .overlay(Text(String(displayName.prefix(1)).uppercased()).font(.system(size: 18, weight: .semibold, design: .rounded)).foregroundStyle(.white))
+            }
+            ForEach(Array(AvatarSettings.symbols.enumerated()), id: \.offset) { index, symbol in
+                iconCell(selected: avatar.symbolIndex == index && !usesPhoto, label: symbol.label) { avatar.selectSymbol(index) } content: {
+                    Circle().fill(avatar.fill(themeColor: Theme.accent)).frame(width: 40, height: 40)
+                        .overlay(Image(systemName: symbol.name).font(.system(size: 19, weight: .medium)).foregroundStyle(.white))
+                }
+            }
+        }
+    }
+
+    /// 写真のセルは、写真そのものを丸く出す（設定の色や記号に左右されない）。
+    private var photoPreview: some View {
+        AsyncImage(url: sharing.auth.photoURL) { phase in
+            if case .success(let image) = phase { image.resizable().scaledToFill() }
+        }
+        .frame(width: 40, height: 40)
+        .clipShape(Circle())
+    }
+
+    private func iconCell<Content: View>(selected: Bool, label: String, action: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.25)) { action() }
+            saved = false
+        } label: {
+            content()
+                .frame(width: 48, height: 48)
+                .overlay(Circle().stroke(Theme.accent.opacity(selected ? 1 : 0), lineWidth: 2.5).padding(-2))
+                .frame(width: 52, height: 52)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var colorPicker: some View {

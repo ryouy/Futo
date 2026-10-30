@@ -4,15 +4,13 @@ import SwiftUI
 @MainActor
 struct RestrictionManagementView: View {
     @Bindable var model: AppModel
-    @State private var confirmEnd = false
 
     private var rules: PauseRules { model.pause.rules }
-    private var isDevice: Bool { model.mode == .device }
 
     var body: some View {
         Form {
             statusSection
-            if isDevice { pauseSection }
+            pauseSection
             endSection
         }
         .compactForm()
@@ -20,13 +18,6 @@ struct RestrictionManagementView: View {
         .animation(.easeInOut(duration: 0.3), value: model.intendsRestriction)
         .navigationTitle(tr("制限の管理"))
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog(
-            tr("制限を終了しますか？ 自動ではかけ直されません。"),
-            isPresented: $confirmEnd, titleVisibility: .visible
-        ) {
-            Button(tr("制限を終了する"), role: .destructive) { model.endDemoRestriction() }
-            Button(tr("キャンセル"), role: .cancel) {}
-        }
     }
 
     // MARK: 状態
@@ -92,17 +83,12 @@ struct RestrictionManagementView: View {
     private var endSection: some View {
         CardSection {
             if model.intendsRestriction {
-                if isDevice {
-                    Text(tr("{0}待つと、制限を終了できます。", durationText(seconds: rules.endWaitSeconds)))
-                        .font(.subheadline)
-                    NavigationLink { RestrictionWaitView(model: model, kind: .end) } label: {
-                        Label(tr("制限を終了する"), systemImage: "lock.open").foregroundStyle(.red)
-                    }
-                    .frame(minHeight: 44)
-                } else {
-                    Button(role: .destructive) { confirmEnd = true } label: { Label(tr("制限を終了する"), systemImage: "lock.open") }
-                        .frame(minHeight: 44)
+                Text(tr("{0}待つと、制限を終了できます。", durationText(seconds: rules.endWaitSeconds)))
+                    .font(.subheadline)
+                NavigationLink { RestrictionWaitView(model: model, kind: .end) } label: {
+                    Label(tr("制限を終了する"), systemImage: "lock.open").foregroundStyle(.red)
                 }
+                .frame(minHeight: 44)
             } else {
                 Text(tr("制限は、かかっていません。")).foregroundStyle(.secondary)
             }

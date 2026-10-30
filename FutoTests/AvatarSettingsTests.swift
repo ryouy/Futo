@@ -43,4 +43,39 @@ final class AvatarSettingsTests: XCTestCase {
         XCTAssertTrue(s.usesPhoto)
         XCTAssertNil(s.colorIndex)
     }
+
+    func testSymbolsAreTwelveAndSelectingOneStopsUsingThePhoto() {
+        XCTAssertEqual(AvatarSettings.symbols.count, 12)
+        XCTAssertEqual(Set(AvatarSettings.symbols.map(\.name)).count, 12)
+        let s = AvatarSettings(defaults: defaults())
+        s.selectSymbol(2)
+        XCTAssertEqual(s.symbolIndex, 2)
+        XCTAssertFalse(s.showsPhoto(available: true))
+        s.selectPhoto()
+        XCTAssertNil(s.symbolIndex)
+        XCTAssertTrue(s.showsPhoto(available: true))
+        s.selectInitial()
+        XCTAssertFalse(s.showsPhoto(available: true))
+        XCTAssertNil(s.symbolIndex)
+        s.selectSymbol(99)
+        XCTAssertNil(s.symbolIndex, "範囲外は無視する")
+    }
+
+    func testSymbolChoicePersistsAndBadStoredValuesAreIgnored() {
+        let d = defaults()
+        AvatarSettings(defaults: d).selectSymbol(5)
+        XCTAssertEqual(AvatarSettings(defaults: d).symbolIndex, 5)
+        d.set(77, forKey: "avatar.symbolIndex")
+        XCTAssertNil(AvatarSettings(defaults: d).symbolIndex)
+    }
+
+    func testProfileCacheKeepsTheLastNamePerAccount() {
+        let d = defaults()
+        XCTAssertNil(ProfileCache.name(uid: "A", defaults: d))
+        ProfileCache.save(name: "山田", uid: "A", defaults: d)
+        XCTAssertEqual(ProfileCache.name(uid: "A", defaults: d), "山田")
+        XCTAssertNil(ProfileCache.name(uid: "B", defaults: d), "別のアカウントには見えない")
+        ProfileCache.clear(uid: "A", defaults: d)
+        XCTAssertNil(ProfileCache.name(uid: "A", defaults: d))
+    }
 }

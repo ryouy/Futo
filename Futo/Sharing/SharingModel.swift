@@ -36,6 +36,14 @@ final class SharingModel {
         self.api = APIClient(baseURL: config.apiBaseURL, session: urlSession) { [weak service] force in
             try await service?.validIDToken(forceRefresh: force)
         }
+        // 開いた直後から、自分のアイコンを出す（サーバーの応答を待たない）
+        if let uid = service.uid, service.isSignedIn, let name = ProfileCache.name(uid: uid) {
+            profile = MeResponse(uid: uid, displayName: name, status: "active")
+        }
+    }
+
+    private func cacheProfile() {
+        if let profile { ProfileCache.save(name: profile.displayName, uid: profile.uid) }
     }
 
     var isConfigured: Bool { config.isConfigured }
@@ -62,6 +70,7 @@ final class SharingModel {
     }
 
     func signOut() {
+        if let uid { ProfileCache.clear(uid: uid) }
         auth.signOut()
         reset()
     }
@@ -77,6 +86,7 @@ final class SharingModel {
         await auth.refreshPhotoIfNeeded()
         do {
             profile = try await api.send("GET", "/api/me")
+            cacheProfile()
         } catch let error as APIError where error.kind == .notFound {
             // 初めてのログイン：Googleの名前を表示名の初期値にする（あとから変えられる）
             await createProfile()
@@ -85,7 +95,7 @@ final class SharingModel {
 
     private func createProfile() async {
         let name = DisplayName.initial(from: auth.providerDisplayName)
-        do { profile = try await api.send("PUT", "/api/me", body: ["displayName": name]) } catch { fail(error) }
+        do { profile = try await api.send("PUT", "/api/me", body: ["displayName": name]); cacheProfile() } catch { fail(error) }
     }
 
     func saveDisplayName(_ name: String) async -> Bool {
@@ -93,6 +103,7 @@ final class SharingModel {
         defer { phase = .idle }
         do {
             profile = try await api.send("PUT", "/api/me", body: ["displayName": name])
+            cacheProfile()
             message = nil
             return true
         } catch { fail(error); return false }
@@ -338,6 +349,7 @@ final class SharingModel {
             for _ in 0..<5 {
                 let result: DeletionResponse = try await api.send("DELETE", "/api/me")
                 if result.status == "deleted" {
+                    ProfileCache.clear(uid: current)
                     auth.signOut()
                     reset()
                     return true

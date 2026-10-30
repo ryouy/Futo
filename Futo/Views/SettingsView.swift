@@ -21,8 +21,6 @@ struct SettingsView: View {
     }
     @State private var tab: SettingsTab = .restriction
 
-    private var isDemo: Bool { model.mode == .demo }
-
     /// 記録の画面と同じく、上にタブを出して切り替える。
     var body: some View {
         VStack(spacing: 0) {
@@ -58,7 +56,7 @@ struct SettingsView: View {
     /// 制限：一時解除のルール → 制限の管理 → 許可。許可が済んでいないときだけ、許可を先頭に出す。
     private var restrictionTab: some View {
         Form {
-            if !isDemo, model.permission != .approved { permissionSection }
+            if model.permission != .approved { permissionSection }
 
             CardSection {
                 Picker(tr("待機時間"), selection: Binding(
@@ -84,7 +82,7 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
             }
 
-            if !isDemo, model.permission == .approved { permissionSection }
+            if model.permission == .approved { permissionSection }
         }
         .compactForm()
     }
@@ -99,7 +97,7 @@ struct SettingsView: View {
                     Task { await model.requestPermission() }
                 }
             }
-            .frame(minHeight: 44)
+            .buttonStyle(ChipButtonStyle())
             if let error = model.permissionError { Text(error).font(.footnote) }
         }
     }
@@ -128,19 +126,11 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
             }
 
-            // デモで始めた人が、実機の利用へ移れる入口（デモの切り替えスイッチは置かない）
-            if isDemo {
-                CardSection {
-                    Button { model.switchMode(to: .device) } label: {
-                        Label(tr("実機で使う"), systemImage: "iphone").foregroundStyle(Theme.accent)
-                    }
-                    .frame(minHeight: 44)
+            PrimarySection {
+                Button(role: .destructive) { confirmDelete = true } label: {
+                    Label(tr("すべての記録を削除"), systemImage: "trash")
                 }
-            }
-
-            CardSection {
-                Button(tr("すべての記録を削除"), role: .destructive) { confirmDelete = true }
-                    .frame(minHeight: 44)
+                .buttonStyle(ChipButtonStyle())
             }
 
             #if DEBUG
@@ -153,15 +143,13 @@ struct SettingsView: View {
                         model.replayOnboardingForDebug()
                     }
                 }
-                .frame(minHeight: 44)
+                .buttonStyle(ChipButtonStyle())
             }
-            if !isDemo {
-                CardSection {
-                    Text(SharedState.lastEvent ?? tr("拡張の記録はまだありません"))
-                        .font(.subheadline)
-                    Text(SharedState.isAvailable ? tr("App Group：利用できます") : tr("App Group：利用できません"))
-                        .font(.subheadline)
-                }
+            CardSection {
+                Text(SharedState.lastEvent ?? tr("拡張の記録はまだありません"))
+                    .font(.subheadline)
+                Text(SharedState.isAvailable ? tr("App Group：利用できます") : tr("App Group：利用できません"))
+                    .font(.subheadline)
             }
             #endif
         }

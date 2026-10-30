@@ -69,6 +69,8 @@ final class AppModel {
         self.demo = DemoRestrictionService(defaults: defaults)
         self.device = DeviceRestrictionService()
         self.pause = PauseFlow(store: DevicePauseStore(), scheduler: DevicePauseScheduler(), shield: DevicePauseShield())
+        // デモモードは廃止。以前にデモを選んでいた場合は、実機の利用に切り替える
+        if settings.mode == .demo { settings.mode = .device }
         self.mode = settings.mode
         self.onboardingDone = settings.onboardingDone
         self.tutorialCompleted = settings.tutorialDone
@@ -313,13 +315,6 @@ final class AppModel {
         events.record(.end, mode: .device)
         stopRestriction()
         return !intendsRestriction
-    }
-
-    /// デモ：待機なしで終了する（デモでは、実際の制限は変わらない）。実機の終了は `confirmEnd()` を通る。
-    func endDemoRestriction() {
-        guard mode == .demo else { return }
-        events.record(.end, mode: .demo)
-        stopRestriction()
     }
 
     /// 制限全体を終了する（恒久）。一時停止の状態も消す。画面からは、待機を通る `confirmEnd()` を使う。

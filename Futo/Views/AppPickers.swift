@@ -119,8 +119,8 @@ struct UnlockChooserView: View {
                             Button(chosen.count == all.count ? tr("選択を外す") : tr("すべて選ぶ")) {
                                 chosen = chosen.count == all.count ? [] : Set(all)
                             }
-                            .font(.subheadline.weight(.medium))
-                            .frame(minHeight: 44)
+                            .buttonStyle(ChipButtonStyle())
+                            .fixedSize()
                         }
                     }
                     ForEach(all) { item in

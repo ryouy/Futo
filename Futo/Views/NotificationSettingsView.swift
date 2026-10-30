@@ -59,15 +59,13 @@ struct NotificationSettingsView: View {
             minute: minute)
     }
 
-    @State private var diagnostics: (status: String, pending: [String])?
-
     var body: some View {
         Form {
             CardSection {
                 row(.night, minute: bind(\.nightMinute))
                 row(.morning, minute: bind(\.morningMinute))
-                row(.postUse)
                 row(.outing, minute: bind(\.outingMinute))
+                row(.postUse)
             }
 
             CardSection {
@@ -109,18 +107,6 @@ struct NotificationSettingsView: View {
                 }
             }
 
-            #if DEBUG
-            CardSection {
-                LabeledContent(tr("許可"), value: diagnostics?.status ?? tr("…"))
-                if let pending = diagnostics?.pending {
-                    Text(pending.isEmpty ? tr("予約中の通知はありません") : pending.joined(separator: "\n"))
-                        .font(.subheadline)
-                }
-                Button(tr("更新")) { Task { diagnostics = await model.notifications.diagnostics() } }
-                    .frame(minHeight: 44)
-            }
-            .task { diagnostics = await model.notifications.diagnostics() }
-            #endif
         }
         .compactForm()
         .alert(tr("通知を許可しますか？"), isPresented: Binding(

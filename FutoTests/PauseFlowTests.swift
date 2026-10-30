@@ -394,10 +394,8 @@ final class PauseFlowTests: XCTestCase {
     }
 
     func testStandardRulesMatchTheSpec() {
-        #if !DEBUG
         XCTAssertEqual(PauseRules.standard.waitSeconds, 60)
-        XCTAssertEqual(PauseRules.standard.endWaitSeconds, 1_800)
-        #endif
+        XCTAssertEqual(PauseRules.standard.endWaitSeconds, 1_800, "制限の終了は30分（Debugでも同じ）")
         XCTAssertEqual(PauseRules.standard.pauseMinutes, 30)
     }
 }

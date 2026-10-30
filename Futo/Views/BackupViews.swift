@@ -72,11 +72,14 @@ struct BackupView: View {
             }
             .buttonStyle(FutoButtonStyle(prominent: false)).disabled(backup.isWorking || backup.remote == nil)
         }
-        CardSection {
-            Button(role: .destructive) { confirmDeleteRemote = true } label: { Label(tr("Driveのバックアップを削除"), systemImage: "trash") }
-                .frame(minHeight: 44).disabled(backup.isWorking || backup.remote == nil)
-            Button { confirmDisconnect = true } label: { Label(tr("Driveの許可を取り消す"), systemImage: "xmark.circle") }
-                .frame(minHeight: 44).disabled(backup.isWorking)
+        PrimarySection {
+            HStack(spacing: 10) {
+                Button(role: .destructive) { confirmDeleteRemote = true } label: { Label(tr("バックアップを削除"), systemImage: "trash") }
+                    .disabled(backup.isWorking || backup.remote == nil)
+                Button { confirmDisconnect = true } label: { Label(tr("許可を取り消す"), systemImage: "xmark.circle") }
+                    .disabled(backup.isWorking)
+            }
+            .buttonStyle(ChipButtonStyle())
         }
     }
 

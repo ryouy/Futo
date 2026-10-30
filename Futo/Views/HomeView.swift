@@ -20,18 +20,12 @@ struct HomeView: View {
         VStack(spacing: 0) {
             ScrollView {
                 scrollContent
-                    .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, 36)
             }
             .scrollBounceBehavior(.basedOnSize)
-            // 下端は、ぼかすように薄れて消える（途中で急に切れて見えないように）。下のボタンとは重ならない。
-            .mask(
-                VStack(spacing: 0) {
-                    Rectangle()
-                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 32)
-                }
-            )
+            // 一覧の下端は、カードの角に合わせて丸く切る（急に切れて見えないように）。下のボタンとの間は、あける。
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 26, bottomTrailingRadius: 26, topTrailingRadius: 0, style: .continuous))
+            .padding(.horizontal, 20)
             VStack(spacing: 12) {
                 actions
                 #if DEBUG
@@ -39,6 +33,7 @@ struct HomeView: View {
                 #endif
             }
             .padding(.horizontal, 20)
+            .padding(.top, 18)
             .padding(.bottom, 12)
         }
         .background(Theme.background.ignoresSafeArea())

@@ -192,6 +192,26 @@ struct CopyIconButton: View {
     }
 }
 
+/// 行の中に並べる、コピーのボタン（ChipButtonStyleと並べる用）。押すと、少しの間チェックに変わる。
+struct CopyChip: View {
+    let text: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.string = text
+            copied = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.6))
+                copied = false
+            }
+        } label: {
+            Image(systemName: copied ? "checkmark" : "doc.on.doc")
+        }
+        .accessibilityLabel(copied ? tr("コピーしました") : tr("コピー"))
+    }
+}
+
 /// フォームの中で、主な操作を1つだけ大きなボタンにする（背景は透明）。
 struct PrimarySection<Content: View>: View {
     @ViewBuilder var content: Content

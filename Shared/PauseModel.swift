@@ -22,12 +22,8 @@ struct PauseRules: Equatable {
     /// 待機が途中で止まったまま、この時間（秒）が過ぎたら、待機をやり直す。
     var idleResetSeconds: TimeInterval = 3600
 
-    #if DEBUG
-    /// 開発中は、確かめやすいよう待機だけ短くする（Releaseには入らない）。
-    static let standard = PauseRules(waitSeconds: 10, pauseMinutes: 30, endWaitSeconds: 20)
-    #else
+    /// 一時停止まで1分、制限の終了まで30分（Debugでも同じ。すぐ解除したいときは、Debugの「制限解除」を使う）。
     static let standard = PauseRules(waitSeconds: 60, pauseMinutes: 30, endWaitSeconds: 1_800)
-    #endif
 
     var pauseSeconds: TimeInterval { TimeInterval(pauseMinutes) * 60 }
 

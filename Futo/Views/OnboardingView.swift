@@ -107,7 +107,7 @@ struct OnboardingView: View {
             Text(tr("はじめましょう"))
                 .font(.title2.weight(.medium))
                 .foregroundStyle(Self.cream)
-            Text(model.isOnboardingReplay ? tr("説明は以上です。") : tr("どちらで始めますか？"))
+            Text(model.isOnboardingReplay ? tr("説明は以上です。") : tr("準備はできました。"))
                 .foregroundStyle(Self.cream.opacity(0.85))
             Spacer(minLength: 0)
         }
@@ -260,11 +260,7 @@ struct OnboardingView: View {
                     // 開発用の見直し：モードも制限も変えず、閉じるだけ。
                     pill(tr("閉じる"), filled: true) { model.finishOnboardingReplay() }
                 } else {
-                    pill(tr("実機で設定する"), filled: true) { model.completeOnboarding(mode: .device) }
-                    pill(tr("デモで試す"), filled: false) { model.completeOnboarding(mode: .demo) }
-                    Text(tr("デモでは、実際のアプリは制限されません。"))
-                        .font(.footnote)
-                        .foregroundStyle(Self.cream.opacity(0.7))
+                    pill(tr("はじめる"), filled: true) { model.completeOnboarding(mode: .device) }
                 }
             }
             .transition(.opacity)
