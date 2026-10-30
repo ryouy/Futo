@@ -74,7 +74,9 @@ struct TutorialOverlay: View {
             let rect = spotlight(for: step, in: proxy)
 
             ZStack {
-                dim(rect: rect)
+                dim(rect: rect) {
+                    if isLast { model.finishTutorial() } else { model.tutorialStep = index + 1 }
+                }
                 if isLast {
                     endView
                 } else {
@@ -94,7 +96,8 @@ struct TutorialOverlay: View {
         return proxy[anchor]
     }
 
-    private func dim(rect: CGRect?) -> some View {
+    /// 画面のどこをタッチしても、次へ進む（最後は、案内を終える）。
+    private func dim(rect: CGRect?, onTap: @escaping () -> Void) -> some View {
         Rectangle()
             .fill(Color.black.opacity(0.6))
             .mask {
@@ -111,7 +114,10 @@ struct TutorialOverlay: View {
             }
             .animation(.easeInOut(duration: 0.4), value: rect)
             .contentShape(Rectangle())     // 案内の間は、下の画面を押せない
-            .onTapGesture {}
+            .onTapGesture(perform: onTap)
+            .accessibilityElement()
+            .accessibilityLabel(tr("つぎへ"))
+            .accessibilityAddTraits(.isButton)
     }
 
     // MARK: 吹き出し（文だけ。ボタンは入れない）
@@ -163,46 +169,15 @@ struct TutorialOverlay: View {
                     .foregroundStyle(.white.opacity(0.85))
                     .frame(minHeight: 48)
                 Spacer()
-                pill(tr("つぎへ")) { model.tutorialStep = index + 1 }
             }
             .padding(.horizontal, 28)
             .padding(.bottom, max(bottomInset, 16) + 8)
         }
     }
 
-    /// 最後は、一言のあとに「はじめる」を置く。
+    /// 最後は、一言だけ。タッチすると、案内を終える。
     private var endView: some View {
-        VStack(spacing: 22) {
-            messageCard([tr("準備はできました。")])
-            startButton
-        }
-        .frame(maxHeight: .infinity)
-    }
-
-    /// 「はじめる」：テーマカラー。暗い案内画面の上でも見えるよう、細い縁とやわらかい光を添える。
-    private var startButton: some View {
-        Button { model.finishTutorial() } label: {
-            Text(tr("はじめる"))
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(Theme.onAccent)
-                .padding(.horizontal, 56)
-                .frame(minHeight: 56)
-            .background(Capsule().fill(Theme.accent))
-            .overlay(Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1.5))
-            .shadow(color: Theme.accent.opacity(0.5), radius: 18)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func pill(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline.weight(.medium))
-                .foregroundStyle(Color.black.opacity(0.85))
-                .padding(.horizontal, 32)
-                .frame(minHeight: 50)
-                .background(Capsule().fill(Color.white))
-        }
-        .buttonStyle(.plain)
+        messageCard([tr("準備はできました。")])
+            .frame(maxHeight: .infinity)
     }
 }

@@ -257,8 +257,8 @@ struct OnboardingView: View {
         if isLast {
             VStack(spacing: 12) {
                 if model.isOnboardingReplay {
-                    // 開発用の見直し：モードも制限も変えず、閉じるだけ。
-                    pill(tr("閉じる"), filled: true) { model.finishOnboardingReplay() }
+                    // 開発用の見直し：モードも制限も変えず、閉じるだけ（文言は「はじめる」）。
+                    pill(tr("はじめる"), filled: true) { model.finishOnboardingReplay() }
                 } else {
                     pill(tr("はじめる"), filled: true) { model.completeOnboarding(mode: .device) }
                 }
@@ -280,7 +280,7 @@ struct OnboardingView: View {
         Button(action: action) {
             Text(title)
                 .font(.headline.weight(.medium))
-                .frame(maxWidth: .infinity, minHeight: 54)
+                .frame(maxWidth: 360, minHeight: 54)   // 広い画面（iPad）でも、横に長くしない
                 .foregroundStyle(filled ? Self.background : Self.cream)
                 .background(Capsule().fill(filled ? Self.cream : Color.clear))
                 .overlay(Capsule().stroke(Self.cream.opacity(filled ? 0 : 0.6), lineWidth: 1.5))
