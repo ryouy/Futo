@@ -420,5 +420,6 @@ enum EnglishStrings {
         "この招待は、使えません。": "This invitation can't be used.",
         "フレンドの招待": "Friend invitation",
         "共有": "Share",
+        "Googleでログイン中": "Signed in with Google",
     ]
 }

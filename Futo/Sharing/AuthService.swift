@@ -14,7 +14,7 @@ enum AuthError: Error, Equatable {
 }
 
 /// 任意のGoogleログイン。Google（OAuth 2.0 + PKCE）で得たIDトークンを、Firebase Authenticationへ渡す。
-/// アプリの内部IDは、Firebase UID。Googleのメール・実名・写真は、取得も、保存も、相手への公開もしない。
+/// アプリの内部IDは、Firebase UID。Googleから受け取るのは名前だけで、表示名の初期値に使う（本人が変更できる）。メール・写真は取得しない。
 @MainActor
 @Observable
 final class AuthService {
@@ -27,6 +27,8 @@ final class AuthService {
     }
 
     private(set) var state: State = .signedOut
+    /// 直近のログインで、Googleから受け取った名前。表示名の初期値にだけ使う（保存しない・写真やメールは受け取らない）
+    private(set) var providerDisplayName: String?
 
     @ObservationIgnored private let config: Phase4Config
     @ObservationIgnored private let urlSession: URLSession
@@ -73,8 +75,8 @@ final class AuthService {
                 .init(name: "client_id", value: config.googleClientID),
                 .init(name: "redirect_uri", value: redirect),
                 .init(name: "response_type", value: "code"),
-                // ログインに必要な最小限。Driveなどの権限は求めない。メール・実名・写真も求めない
-                .init(name: "scope", value: "openid"),
+                // ログインと、表示名の初期値（Googleの名前）に必要な最小限。Drive・メール・写真は求めない
+                .init(name: "scope", value: "openid profile"),
                 .init(name: "code_challenge", value: PKCE.challenge(for: verifier)),
                 .init(name: "code_challenge_method", value: "S256"),
                 .init(name: "state", value: expectedState),
@@ -89,6 +91,7 @@ final class AuthService {
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
             refreshToken = firebase.refreshToken
+            providerDisplayName = firebase.displayName
             // 別のアカウントに切り替わったら、前のアカウントの端末内の共有情報を除去する
             if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
             store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken))
@@ -141,7 +144,7 @@ final class AuthService {
 
     private enum RefreshFailure: Error { case rejected }
 
-    private struct FirebaseTokens { var uid: String; var idToken: String; var refreshToken: String; var expiresIn: TimeInterval }
+    private struct FirebaseTokens { var uid: String; var idToken: String; var refreshToken: String; var expiresIn: TimeInterval; var displayName: String? = nil }
 
     private func formRequest(_ url: URL, _ fields: [String: String]) -> URLRequest {
         var request = URLRequest(url: url, timeoutInterval: 15)
@@ -188,7 +191,8 @@ final class AuthService {
         let (status, body) = try await decode(request)
         guard status == 200, let uid = body["localId"] as? String, let idToken = body["idToken"] as? String,
               let refresh = body["refreshToken"] as? String else { throw AuthError.failed }
-        return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600)
+        let name = (body["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600, displayName: name?.isEmpty == false ? name : nil)
     }
 
     private func refresh(_ refreshToken: String) async throws -> FirebaseTokens {

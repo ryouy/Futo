@@ -47,7 +47,8 @@ describe("Web共有ページの表示", () => {
     const none = { ...base, stats: { ...base.stats, purposes: { contact: 0, research: 0, break: 0, noReason: 0, unanswered: 4 } } };
     const emptyHtml = renderToStaticMarkup(<ShareView share={none} />);
     expect(emptyHtml).not.toContain("NaN");
-    expect(emptyHtml).not.toContain("%");
+    // グラフの幅（style属性）は除き、表示される文字に割合が出ていないことを確認する
+    expect(emptyHtml.replace(/ style="[^"]*"/g, "")).not.toContain("%");
     expect(emptyHtml).toContain("目的を答えた記録はまだありません");
   });
 
@@ -63,5 +64,15 @@ describe("Web共有ページの表示", () => {
   it("実測していない使用時間や節約時間は、どこにも出ない", () => {
     const html = renderToStaticMarkup(<ShareView share={base} />);
     expect(html).not.toMatch(/使用時間|節約|連続|ランキング/);
+  });
+
+  it("グラフ：答えた目的があればドーナツを描き、数値も文字で読める。答えがなければ描かない", () => {
+    const withPurposes = { ...base, stats: { ...base.stats, purposes: { contact: 3, research: 1, break: 0, noReason: 0, unanswered: 6 } } };
+    const html = renderToStaticMarkup(<ShareView share={withPurposes} />);
+    expect(html).toContain("<svg");
+    expect(html).toContain("連絡");
+    expect(html).toContain("3件");
+    const none = { ...base, stats: { ...base.stats, purposes: { contact: 0, research: 0, break: 0, noReason: 0, unanswered: 4 } } };
+    expect(renderToStaticMarkup(<ShareView share={none} />)).not.toContain("<svg");
   });
 });

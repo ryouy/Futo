@@ -70,7 +70,17 @@ final class SharingModel {
 
     func loadProfile() async {
         guard isSignedIn else { return }
-        do { profile = try await api.send("GET", "/api/me") } catch { fail(error) }
+        do {
+            profile = try await api.send("GET", "/api/me")
+        } catch let error as APIError where error.kind == .notFound {
+            // 初めてのログイン：Googleの名前を表示名の初期値にする（あとから変えられる）
+            await createProfile()
+        } catch { fail(error) }
+    }
+
+    private func createProfile() async {
+        let name = DisplayName.initial(from: auth.providerDisplayName)
+        do { profile = try await api.send("PUT", "/api/me", body: ["displayName": name]) } catch { fail(error) }
     }
 
     func saveDisplayName(_ name: String) async -> Bool {

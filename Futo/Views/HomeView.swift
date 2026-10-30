@@ -6,6 +6,7 @@ import SwiftUI
 @MainActor
 struct HomeView: View {
     @Bindable var model: AppModel
+    @Environment(SharingModel.self) private var sharing
     @State private var sheet: HomeSheet?
 
     private enum HomeSheet: Identifiable {
@@ -66,7 +67,12 @@ struct HomeView: View {
                     }
                     .accessibilityLabel(tr("記録"))
                     Button { sheet = .settings } label: {
-                        Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
+                        if sharing.isSignedIn, let name = sharing.profile?.displayName {
+                            // ログイン中は、アカウントのアイコンで分かるようにする
+                            AccountAvatar(name: name, size: 28).frame(width: 44, height: 44)
+                        } else {
+                            Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
+                        }
                     }
                     .accessibilityLabel(tr("設定"))
                 }

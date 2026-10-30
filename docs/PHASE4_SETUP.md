@@ -24,7 +24,7 @@
 ## 2. Google OAuth（iOS用クライアントID）
 
 1. <https://console.cloud.google.com> で、手順1と同じプロジェクトを開く → **APIとサービス → 認証情報**。
-2. **OAuth 同意画面**を設定する（スコープは追加不要。アプリは `openid` だけを要求します）。公開前は「テスト」状態で、テストユーザーに自分を追加する。
+2. **OAuth 同意画面**を設定する（スコープの追加は不要です。アプリは `openid profile` を要求し、Googleの名前だけを表示名の初期値に使います。メール・写真は取得しません）。公開前は「テスト」状態で、テストユーザーに自分を追加する。
 3. **認証情報を作成 → OAuth クライアントID → iOS**。バンドルIDは `com.ryouy.futo`。
 4. 表示された**クライアントID**（`123-abc.apps.googleusercontent.com`）を控える。
    - リダイレクト用のURLスキームは、アプリがクライアントIDから自動で作ります（`com.googleusercontent.apps.123-abc`）。Info.plist への登録は不要です（ASWebAuthenticationSession を使うため）。

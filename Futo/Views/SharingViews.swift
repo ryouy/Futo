@@ -64,8 +64,10 @@ struct SharingTab: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             CardSection {
-                Button(tr("Googleでログイン")) { Task { await sharing.signIn() } }
-                    .frame(minHeight: 44)
+                Button { Task { await sharing.signIn() } } label: {
+                    Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark")
+                }
+                .frame(minHeight: 44)
                     .disabled(sharing.isWorking)
             }
         }
@@ -82,20 +84,40 @@ struct SharingTab: View {
     @ViewBuilder
     private var signedIn: some View {
         CardSection {
-            LabeledContent(tr("表示名"), value: sharing.profile?.displayName ?? "…")
-            Button(tr("表示名を変える")) { nameDraft = sharing.profile?.displayName ?? ""; editingName = true }
-                .frame(minHeight: 44)
+            HStack(spacing: 14) {
+                AccountAvatar(name: sharing.profile?.displayName ?? "", size: 48)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(sharing.profile?.displayName ?? "…").font(.headline).oneLine()
+                    Text(tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
+            Button { nameDraft = sharing.profile?.displayName ?? ""; editingName = true } label: {
+                Label(tr("表示名を変える"), systemImage: "pencil").tint(Theme.accent)
+            }
+            .frame(minHeight: 44)
         }
         CardSection {
-            NavigationLink(tr("統計をリンクで共有")) { CreateShareView(model: model, kind: .web) }.frame(minHeight: 44)
-            NavigationLink(tr("共有中のリンク")) { SharedLinksView() }.frame(minHeight: 44)
+            NavigationLink { CreateShareView(model: model, kind: .web) } label: {
+                Label(tr("統計をリンクで共有"), systemImage: "link").foregroundStyle(Theme.accent)
+            }.frame(minHeight: 44)
+            NavigationLink { SharedLinksView() } label: {
+                Label(tr("共有中のリンク"), systemImage: "list.bullet").foregroundStyle(Theme.accent)
+            }.frame(minHeight: 44)
         }
         CardSection {
-            NavigationLink(tr("フレンド")) { FriendsView(model: model) }.frame(minHeight: 44)
+            NavigationLink { FriendsView(model: model) } label: {
+                Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accent)
+            }.frame(minHeight: 44)
         }
         CardSection {
-            Button(tr("ログアウト")) { confirmSignOut = true }.frame(minHeight: 44)
-            Button(tr("アカウントを削除"), role: .destructive) { confirmDelete = true }.frame(minHeight: 44)
+            Button { confirmSignOut = true } label: {
+                Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right")
+            }.frame(minHeight: 44)
+            Button(role: .destructive) { confirmDelete = true } label: {
+                Label(tr("アカウントを削除"), systemImage: "trash")
+            }.frame(minHeight: 44)
         }
     }
 }
@@ -305,4 +327,22 @@ func dateText(_ iso: String) -> String {
     let plain = ISO8601DateFormatter()
     guard let date = parser.date(from: iso) ?? plain.date(from: iso) else { return iso }
     return date.formatted(date: .abbreviated, time: .shortened)
+}
+
+/// ログイン中のしるし。名前の頭文字を、テーマ色の丸に載せる（Googleの写真は取得しない）。
+struct AccountAvatar: View {
+    let name: String
+    var size: CGFloat = 32
+
+    var body: some View {
+        Circle()
+            .fill(Theme.accent)
+            .frame(width: size, height: size)
+            .overlay(
+                Text(String(name.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased())
+                    .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+            )
+            .accessibilityHidden(true)
+    }
 }

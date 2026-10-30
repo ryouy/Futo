@@ -27,6 +27,7 @@ struct FutoApp: App {
         WindowGroup {
             RootView(model: model)
                 .environment(sharing)
+                .task { await sharing.loadProfile() }
                 .onOpenURL { sharing.handleIncoming(url: $0) }
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
                     if let url = activity.webpageURL { sharing.handleIncoming(url: url) }

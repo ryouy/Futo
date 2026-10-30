@@ -120,3 +120,15 @@ enum ShareStatsBuilder {
         return payload
     }
 }
+
+enum DisplayName {
+    /// Googleから受け取った名前を、1〜20文字・制御文字なしに整える。取れなければ「ふと」
+    static func initial(from raw: String?) -> String {
+        let cleaned = (raw ?? "").precomposedStringWithCanonicalMapping
+            .unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) && $0 != "\u{2028}" && $0 != "\u{2029}" }
+            .map(String.init).joined()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let limited = String(cleaned.prefix(20)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return limited.isEmpty ? tr("ふと") : limited
+    }
+}

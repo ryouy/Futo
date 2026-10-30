@@ -1,5 +1,9 @@
 import type { PublicShare } from "@/lib/shares";
+import { Donut, StackBar, type Slice } from "./Charts";
 import { ReportButton } from "./ReportButton";
+
+// テーマの緑を中心にした、区別しやすい配色
+const PALETTE = ["#196459", "#6fa898", "#e0b84a", "#b9c9c2"];
 
 const PURPOSES: [keyof NonNullable<PublicShare["stats"]["purposes"]>, string][] = [
   ["contact", "連絡"],
@@ -40,6 +44,14 @@ export function ShareView({ share, token }: { share: PublicShare; token?: string
       {stats.counts && (
         <div className="card">
           <h2>選んだ回数</h2>
+          <StackBar
+            title="使いたい・やめておく・途中でやめたの割合"
+            slices={[
+              { label: "使いたい", value: stats.counts.wantsToUse, color: PALETTE[2] },
+              { label: "やめておく", value: stats.counts.deferred, color: PALETTE[0] },
+              { label: "途中でやめた", value: stats.counts.interrupted, color: PALETTE[3] },
+            ]}
+          />
           <div className="row"><span>使いたい</span><span>{stats.counts.wantsToUse}</span></div>
           <div className="row"><span>やめておく</span><span>{stats.counts.deferred}</span></div>
           <div className="row"><span>途中でやめた</span><span>{stats.counts.interrupted}</span></div>
@@ -53,12 +65,15 @@ export function ShareView({ share, token }: { share: PublicShare; token?: string
           {answeredPurposes === 0 ? (
             <p className="muted">目的を答えた記録はまだありません。</p>
           ) : (
-            PURPOSES.map(([key, label]) => (
+            <>
+              <Donut title="使いたかった目的の内訳" slices={PURPOSES.map(([key, label], i): Slice => ({ label, value: stats.purposes?.[key] ?? 0, color: PALETTE[i] }))} />
+              {PURPOSES.map(([key, label]) => (
               <div className="row" key={key}>
                 <span>{label}</span>
                 <span>{stats.purposes?.[key]}件（{percent(stats.purposes?.[key] ?? 0, answeredPurposes)}）</span>
               </div>
-            ))
+              ))}
+            </>
           )}
           <p className="muted">目的を答えた{answeredPurposes}件の内訳です。答えなかった{stats.purposes.unanswered}件は含みません。</p>
         </div>
@@ -70,12 +85,15 @@ export function ShareView({ share, token }: { share: PublicShare; token?: string
           {stats.feelings.answered === 0 ? (
             <p className="muted">回答はまだありません。</p>
           ) : (
-            FEELINGS.map(([key, label]) => (
+            <>
+              <Donut title="使ったあとの感想の内訳" slices={FEELINGS.map(([key, label], i): Slice => ({ label, value: stats.feelings?.[key] ?? 0, color: [PALETTE[0], PALETTE[3], PALETTE[2]][i] }))} />
+              {FEELINGS.map(([key, label]) => (
               <div className="row" key={key}>
                 <span>{label}</span>
                 <span>{stats.feelings?.[key]}件（{percent(stats.feelings?.[key] ?? 0, stats.feelings?.answered ?? 1)}）</span>
               </div>
-            ))
+              ))}
+            </>
           )}
           <p className="muted">回答 {stats.feelings.answered}件の内訳です。</p>
         </div>

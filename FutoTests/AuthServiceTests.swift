@@ -62,7 +62,7 @@ final class AuthServiceTests: XCTestCase {
             self.bodies.append(self.body(of: request))
             let url = request.url!.absoluteString
             if url.contains("oauth2.googleapis.com/token") { return (200, self.json(["id_token": "GOOGLE-ID-TOKEN"])) }
-            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID-\(self.requests.count)", "refreshToken": "REFRESH-1", "expiresIn": expiresIn])) }
+            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID-\(self.requests.count)", "refreshToken": "REFRESH-1", "expiresIn": expiresIn, "displayName": "山田 太郎"])) }
             if url.contains("securetoken.googleapis.com") { return (200, self.json(["id_token": "FB-REFRESHED", "refresh_token": "REFRESH-2", "user_id": uid, "expires_in": "3600"])) }
             return (404, Data())
         }
@@ -84,10 +84,11 @@ final class AuthServiceTests: XCTestCase {
         let uid = try await service.signInWithGoogle()
         XCTAssertEqual(uid, "uid-A")
         XCTAssertEqual(service.state, .signedIn(uid: "uid-A"))
+        XCTAssertEqual(service.providerDisplayName, "山田 太郎")
         XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1"))
 
         let items = Dictionary(uniqueKeysWithValues: URLComponents(url: authURL!, resolvingAgainstBaseURL: false)!.queryItems!.map { ($0.name, $0.value ?? "") })
-        XCTAssertEqual(items["scope"], "openid", "ログインに必要な最小限だけ。Drive・メール・実名・写真は求めない")
+        XCTAssertEqual(items["scope"], "openid profile", "名前（表示名の初期値）までで、Drive・メール・写真は求めない")
         XCTAssertEqual(items["code_challenge_method"], "S256")
         XCTAssertEqual(items["client_id"], "123-abc.apps.googleusercontent.com")
         XCTAssertEqual(items["response_type"], "code")

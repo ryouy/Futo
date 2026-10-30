@@ -328,4 +328,12 @@ final class APIClientTests: XCTestCase {
         let _: MeResponse = try await client.send("PUT", "/api/me", body: Name(displayName: "なまえ"))
         XCTAssertEqual(body?["displayName"] as? String, "なまえ")
     }
+
+    func testInitialDisplayNameIsTrimmedLimitedAndFallsBack() {
+        XCTAssertEqual(DisplayName.initial(from: "  山田 太郎 "), "山田 太郎")
+        XCTAssertEqual(DisplayName.initial(from: String(repeating: "あ", count: 30)).count, 20)
+        XCTAssertEqual(DisplayName.initial(from: "a\nb\u{0}"), "ab")
+        XCTAssertEqual(DisplayName.initial(from: nil), "ふと")
+        XCTAssertEqual(DisplayName.initial(from: "   "), "ふと")
+    }
 }
