@@ -173,7 +173,37 @@ extension AppModel {
         rescheduleNotifications()
     }
 
+    func refreshNotificationStatus() {
+        Task { @MainActor in notificationStatus = await notifications.authorizationStatus() }
+    }
+
+    /// 最初の案内を終えたあと、まだ許可を決めていなければ、通知の説明を出す。
+    func offerNotificationPrimer() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
+            notificationStatus = await notifications.authorizationStatus()
+            if notificationStatus == .notDetermined { showNotificationPrimer = true }
+        }
+    }
+
+    /// 通知の許可を求める。最初の案内からのときは、許可されたら朝と夜の振り返りをオンにする。
+    func requestNotificationPermission(enableDefaults: Bool) {
+        showNotificationPrimer = false
+        Task { @MainActor in
+            let granted = await notifications.requestAuthorization()
+            notificationStatus = await notifications.authorizationStatus()
+            if granted, enableDefaults {
+                updatePreferences {
+                    $0.setNotification(.morning, true)
+                    $0.setNotification(.night, true)
+                }
+            }
+            rescheduleNotifications()
+        }
+    }
+
     func didBecomeActive() {
+        refreshNotificationStatus()
         refresh()
         rescheduleNotifications()
     }

@@ -94,6 +94,22 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         Form {
+            // 通知が未許可のとき、ここから許可できる（決めていなければ許可を求め、断っていれば設定アプリへ）
+            if model.notificationStatus == .denied {
+                CardSection {
+                    Text(tr("通知がオフです。設定アプリで許可できます。")).font(.subheadline)
+                    Button(tr("設定アプリを開く")) {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    }
+                    .buttonStyle(FutoButtonStyle())
+                }
+            } else if model.notificationStatus == .notDetermined {
+                CardSection {
+                    Text(tr("通知はまだ許可されていません。")).font(.subheadline)
+                    Button(tr("通知を許可する")) { model.requestNotificationPermission(enableDefaults: false) }
+                        .buttonStyle(FutoButtonStyle())
+                }
+            }
             CardSection {
                 row(.night, minute: bind(\.nightMinute))
                 row(.morning, minute: bind(\.morningMinute))
@@ -110,6 +126,7 @@ struct NotificationSettingsView: View {
 
         }
         .compactForm()
+        .task { model.refreshNotificationStatus() }
         .alert(tr("通知を許可しますか？"), isPresented: Binding(
             get: { model.pendingNotificationEnable != nil },
             set: { if !$0 { model.pendingNotificationEnable = nil } }

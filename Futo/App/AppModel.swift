@@ -3,6 +3,7 @@ import Foundation
 import ManagedSettings
 import Observation
 import SwiftData
+import UserNotifications
 
 /// 画面から使う窓口。OS権限・制限・Sessionの操作はここを通し、Viewには持たせない。
 @MainActor
@@ -40,6 +41,10 @@ final class AppModel {
     /// 今表示する設定改善の提案（週1回まで）
     var suggestion: Suggestion?
     var notificationMessage: String?
+    /// 通知の許可の状況（設定の通知タブで、未許可のときに案内するため）
+    var notificationStatus: UNAuthorizationStatus = .notDetermined
+    /// 最初の案内のあとに、通知の許可を尋ねる前の説明を出している間だけ true
+    var showNotificationPrimer = false
     /// 通知を有効にする前の説明を出している間だけ値が入る
     var pendingNotificationEnable: NotificationKind?
     @ObservationIgnored var scheduleTask: Task<Void, Never>?
@@ -229,6 +234,7 @@ final class AppModel {
         tutorialStep = nil
         tutorialCompleted = true
         settings.tutorialDone = true
+        offerNotificationPrimer()
     }
 
     // MARK: 権限・対象・制限

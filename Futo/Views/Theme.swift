@@ -499,7 +499,12 @@ struct FutoTabPicker<T: Hashable>: View {
 
 extension View {
     /// 広い画面（iPad）では、中身を読みやすい幅の中央にまとめる。iPhoneの幅では何も変わらない。
-    func readableColumn(_ width: CGFloat = 640) -> some View {
+    func readableColumn(_ width: CGFloat = Layout.columnWidth) -> some View {
         frame(maxWidth: width).frame(maxWidth: .infinity)
     }
+}
+
+enum Layout {
+    /// 広い画面（iPad）で、中身をまとめる最大の幅。広告の幅も、これを超えない。
+    static let columnWidth: CGFloat = 880
 }

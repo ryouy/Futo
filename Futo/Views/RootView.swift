@@ -104,6 +104,12 @@ struct RootView: View {
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。
             if phase == .active { model.didBecomeActive() }
         }
+        .alert(tr("通知を受け取りますか？"), isPresented: $model.showNotificationPrimer) {
+            Button(tr("許可する")) { model.requestNotificationPermission(enableDefaults: true) }
+            Button(tr("今はしない"), role: .cancel) {}
+        } message: {
+            Text(tr("朝と夜の振り返りをお知らせします。あとから、設定でいつでも変えられます。許可しなくても、ほかの機能は使えます。"))
+        }
         .alert(tr("お知らせ"), isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
