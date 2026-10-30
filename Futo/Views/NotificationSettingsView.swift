@@ -68,9 +68,8 @@ struct NotificationSettingsView: View {
                 get: { model.prefs.outingPerDay },
                 set: { value in model.updatePreferences { $0.outingPerDay = value } }
             )) {
-                ForEach(1...3, id: \.self) { Text(tr("{0}回", "\($0)")).tag($0) }
+                ForEach(1...6, id: \.self) { Text(tr("{0}回", "\($0)")).tag($0) }
             }
-            .pickerStyle(.segmented)
             .frame(minHeight: 44)
         }
     }

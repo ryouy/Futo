@@ -236,14 +236,14 @@ final class Phase3Tests: XCTestCase {
 
     func testSuggestionNeedsFiveRecordsAndIsOncePerWeek() throws {
         fill(5, outcome: .wantsToUse)
-        var prefs = Preferences(); prefs.waitSeconds = 180
+        var prefs = Preferences(); prefs.waitSeconds = 60
         var state = SuggestionState()
         let now = jst("2027-01-13 20:00")
         let s = try XCTUnwrap(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo,
                                                        preferences: prefs, calendar: cal, now: now))
         XCTAssertEqual(s.kind, .waitLonger)
         XCTAssertEqual(s.change, .waitSeconds(300))
-        XCTAssertTrue(s.currentText.contains("3分") && s.proposedText.contains("5分"))
+        XCTAssertTrue(s.currentText.contains("1分") && s.proposedText.contains("5分"))
         // 回答するまで同じ提案を返し、回答後はその週は出さない
         XCTAssertEqual(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now), s)
         SuggestionEngine.resolve(state: &state, status: .skipped, now: now, calendar: cal.calendar)
@@ -252,7 +252,7 @@ final class Phase3Tests: XCTestCase {
 
     func testKeepingSuppressesSameSuggestionForAWhile() {
         fill(5, outcome: .wantsToUse)
-        var prefs = Preferences(); prefs.waitSeconds = 180
+        var prefs = Preferences(); prefs.waitSeconds = 60
         var state = SuggestionState()
         let now = jst("2027-01-13 20:00")
         _ = SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now)
@@ -273,7 +273,7 @@ final class Phase3Tests: XCTestCase {
 
     func testNoSuggestionAtLargestWaitOption() {
         fill(6, outcome: .wantsToUse)
-        var prefs = Preferences(); prefs.waitSeconds = 600
+        var prefs = Preferences(); prefs.waitSeconds = Preferences.waitOptions.last
         var state = SuggestionState()
         XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: jst("2027-01-13 20:00")))
     }
@@ -307,10 +307,19 @@ final class Phase3Tests: XCTestCase {
     }
 
     func testDailyLimitOfFour() {
-        let items = ["09:00", "10:00", "11:00", "12:00", "13:00"].map { c(.outing, "2027-01-13 \($0)") }
+        let items = ["09:00", "11:00", "13:00", "15:00", "17:00"].map { c(.outing, "2027-01-13 \($0)") }
         let r = NotificationPlanner.select(items, policy: policy(quiet: false, gapHours: 0))
         XCTAssertEqual(r.accepted.count, 4)
         XCTAssertEqual(r.dropped.first?.reason, .dailyLimit)
+    }
+
+    func testOutingsMayBeCloserToEachOtherThanToOtherNotifications() {
+        let outings = NotificationPlanner.select([c(.outing, "2027-01-13 12:00"), c(.outing, "2027-01-13 13:30")], policy: policy(quiet: false))
+        XCTAssertEqual(outings.accepted.count, 2, "お出かけどうしは、1時間半あければよい")
+        let tooClose = NotificationPlanner.select([c(.outing, "2027-01-13 12:00"), c(.outing, "2027-01-13 12:45")], policy: policy(quiet: false))
+        XCTAssertEqual(tooClose.accepted.count, 1)
+        let withNight = NotificationPlanner.select([c(.night, "2027-01-13 21:00"), c(.outing, "2027-01-13 19:00")], policy: policy(quiet: false))
+        XCTAssertEqual(withNight.accepted.map(\.kind), [.night], "朝夜の通知とは、3時間あける")
     }
 
     func testPostUseIsLowestPriorityAndOncePerDay() {
@@ -360,20 +369,20 @@ final class Phase3Tests: XCTestCase {
         let window = (start: 9 * 60, end: 20 * 60)
         for day in 1...60 {
             let key = "2027-02-\(day)"
-            for count in 1...3 {
+            for count in 1...6 {
                 let times = OutingSchedule.minutes(count: count, dayKey: key, window: window)
                 XCTAssertEqual(times.count, count)
                 XCTAssertTrue(times.allSatisfy { $0 >= window.start && $0 <= window.end }, "\(key) \(times)")
                 for pair in zip(times, times.dropFirst()) {
-                    XCTAssertGreaterThanOrEqual(pair.1 - pair.0, OutingSchedule.gapMinutes, "3時間以上あける \(times)")
+                    XCTAssertGreaterThanOrEqual(pair.1 - pair.0, OutingSchedule.gapMinutes, "お出かけどうしは1時間半以上あける \(times)")
                 }
             }
         }
     }
 
     func testOutingCountIsReducedWhenTheWindowIsTooSmallForTheGap() {
-        let tight = OutingSchedule.minutes(count: 3, dayKey: "2027-03-01", window: (start: 11 * 60, end: 17 * 60))
-        XCTAssertEqual(tight.count, 2, "6時間の枠には、3時間あけて2回まで")
+        let tight = OutingSchedule.minutes(count: 6, dayKey: "2027-03-01", window: (start: 11 * 60, end: 17 * 60))
+        XCTAssertEqual(tight.count, 4, "6時間の枠には、1時間半あけて4回まで")
         XCTAssertEqual(OutingSchedule.minutes(count: 3, dayKey: "2027-03-01", window: (start: 12 * 60, end: 13 * 60)).count, 1)
     }
 
@@ -394,7 +403,7 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(today.filter { $0.kind == .outing }.count, 2)
         XCTAssertEqual(Set(list.map(\.id)).count, list.count, "識別子は重ならない")
         let clamped = try JSONDecoder().decode(Preferences.self, from: Data(#"{"outingPerDay":9}"#.utf8))
-        XCTAssertEqual(clamped.outingPerDay, 3)
+        XCTAssertEqual(clamped.outingPerDay, 6)
         XCTAssertEqual(try JSONDecoder().decode(Preferences.self, from: Data("{}".utf8)).outingPerDay, 1)
     }
 
@@ -444,13 +453,24 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 1), 16 * 60, "最短15分を下回らない")
         XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 15), 16 * 60)
         XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 30), 31 * 60, "長い設定は、使わなくても約その分で戻る")
-        XCTAssertEqual(Preferences.unlockMinuteOptions.first, 1)
-        XCTAssertEqual(Preferences.unlockMinuteOptions.last, 30)
+        XCTAssertEqual(Preferences.unlockMinuteOptions, [1, 5, 10, 30], "解除する時間は、この4つだけ")
         var p = Preferences(); p.unlockMinutes = 99
-        XCTAssertEqual(p.effectiveUnlockMinutes, 30, "範囲外は30分に丸める")
+        XCTAssertEqual(p.effectiveUnlockMinutes, 30, "選択肢にない値は、いちばん近いものに寄せる")
         p.unlockMinutes = 0
         XCTAssertEqual(p.effectiveUnlockMinutes, 1)
+        p.unlockMinutes = 7
+        XCTAssertEqual(p.effectiveUnlockMinutes, 5)
         XCTAssertEqual(Preferences().effectiveUnlockMinutes, Preferences.defaultUnlockMinutes)
+        XCTAssertTrue(Preferences.unlockMinuteOptions.contains(Preferences.defaultUnlockMinutes))
+
+        XCTAssertEqual(Preferences.waitOptions, [10, 30, 60, 300, 600, 1800], "待機時間は、10秒・30秒に加えて、この4つ")
+        var w = Preferences(); w.waitSeconds = 180
+        XCTAssertEqual(w.effectiveWaitSeconds, 60, "以前の3分は、近い選択肢に寄せる（180は、60と300の間で、60に近い）")
+        w.waitSeconds = 120
+        XCTAssertEqual(w.effectiveWaitSeconds, 60)
+        w.waitSeconds = 20
+        XCTAssertTrue([10.0, 30.0].contains(w.effectiveWaitSeconds))
+        XCTAssertTrue(Preferences.waitOptions.contains(Preferences.defaultWaitSeconds))
     }
 
     func testOutingMessagesAreGentleAndVaried() {

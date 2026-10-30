@@ -131,11 +131,7 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 6)
             } header: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(tr("テーマカラー")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent)
-                    Text(tr("アプリ全体の色を変えます")).font(.caption).foregroundStyle(.secondary)
-                }
-                .textCase(nil)
+                Text(tr("テーマカラー")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent).textCase(nil)
             }
             .listRowBackground(Theme.card)
 

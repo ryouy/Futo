@@ -41,8 +41,13 @@ struct RestrictionManagementView: View {
     private var pauseSection: some View {
         Group {
             CardSection {
-                Text(tr("{0}待つと、{1}分間だけ、制限を停止できます。", durationText(seconds: rules.waitSeconds), "\(rules.pauseMinutes)"))
-                    .font(.subheadline)
+                // 文の区切りで改行する（途中で、不自然に折り返さない）
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(tr("{0}待つと、", durationText(seconds: rules.waitSeconds)))
+                    Text(tr("{0}分間だけ制限を停止できます。", "\(rules.pauseMinutes)"))
+                }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             if model.isPaused {
                 PrimarySection {
@@ -83,8 +88,12 @@ struct RestrictionManagementView: View {
     private var endSection: some View {
         CardSection {
             if model.intendsRestriction {
-                Text(tr("{0}待つと、制限を終了できます。", durationText(seconds: rules.endWaitSeconds)))
-                    .font(.subheadline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(tr("{0}待つと、", durationText(seconds: rules.endWaitSeconds)))
+                    Text(tr("制限を終了できます。"))
+                }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 NavigationLink { RestrictionWaitView(model: model, kind: .end) } label: {
                     Label(tr("制限を終了する"), systemImage: "lock.open").foregroundStyle(.red)
                 }

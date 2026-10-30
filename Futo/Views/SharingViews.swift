@@ -470,40 +470,67 @@ struct AccountAvatar: View {
     }
 }
 
+/// 入力中のニックネーム（参照型。入力のたびに、親の画面を組み直さないため）。
+final class NameDraft { var text = "" }
+
+/// ニックネームの入力欄。入力の状態は、この欄の中だけで持つ（フォーカスしてからキーボードが出るまでを速くする）。
+struct NicknameField: View {
+    let initial: String
+    let placeholder: String
+    let onChange: (String) -> Void
+    @State private var text = ""
+
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .submitLabel(.done)
+            .onAppear { text = initial }
+            .onChange(of: text) { _, new in
+                if new.count > 20 { text = String(new.prefix(20)) } else { onChange(new) }
+            }
+    }
+}
+
 /// プロフィール：表示名（上）→ アイコン（頭文字・山や海などの10個）→ 色（テーマの4色）→ 保存（いちばん下）。
 @MainActor
 struct ProfileView: View {
     @Environment(SharingModel.self) private var sharing
-    @State private var name = ""
+    /// 入力中の文字。1文字ごとに画面全体を組み直さないよう、参照で持つ（入力欄の中だけが更新される）。
+    @State private var draft = NameDraft()
+    @State private var hasValidDraft = false
     @State private var saved = false
     private var avatar: AvatarSettings { .shared }
 
     private var displayName: String { sharing.profile?.displayName ?? "" }
-    private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var canSave: Bool { !trimmed.isEmpty && trimmed.count <= 20 && trimmed != displayName && !sharing.isWorking }
+    private var trimmed: String { String(draft.text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(20)) }
+    private var canSave: Bool { hasValidDraft && trimmed != displayName && !sharing.isWorking }
 
     var body: some View {
         Form {
             Section {
                 HStack {
                     Spacer()
-                    AccountAvatar(name: name.isEmpty ? displayName : name, size: 84, isOwn: true)
+                    AccountAvatar(name: displayName, size: 84, isOwn: true)
                     Spacer()
                 }
                 .listRowBackground(Color.clear)
             }
 
             Section {
-                TextField(tr("例：ふとさん"), text: $name)
+                NicknameField(initial: displayName, placeholder: tr("例：ふとさん")) { text in
+                    draft.text = text
+                    let valid = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    if valid != hasValidDraft { hasValidDraft = valid }
+                    saved = false
+                }
             } header: {
-                formHeader(tr("ニックネーム"), tr("フレンドや共有ページに表示されます（1〜20文字）"))
+                formHeader(tr("ニックネーム"))
             }
             .listRowBackground(Theme.card)
 
             Section { iconGrid } header: { formHeader(tr("アイコン")) }
                 .listRowBackground(Theme.card)
 
-            Section { colorPicker } header: { formHeader(tr("アイコンの色"), tr("テーマの4色から選べます")) }
+            Section { colorPicker } header: { formHeader(tr("アイコンの色")) }
                 .listRowBackground(Theme.card)
 
             PrimarySection {
@@ -518,16 +545,14 @@ struct ProfileView: View {
         .compactForm()
         .navigationTitle(tr("プロフィール"))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { name = displayName }
-        .onChange(of: name) { _, new in if new != displayName { saved = false } }
+        .onAppear {
+            draft.text = displayName
+            hasValidDraft = !displayName.isEmpty
+        }
     }
 
-    private func formHeader(_ title: String, _ detail: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent)
-            if let detail { Text(detail).font(.caption).foregroundStyle(.secondary) }
-        }
-        .textCase(nil)
+    private func formHeader(_ title: String) -> some View {
+        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent).textCase(nil)
     }
 
     // MARK: アイコン
@@ -537,7 +562,7 @@ struct ProfileView: View {
         return LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 10)], spacing: 10) {
             iconCell(selected: avatar.symbolIndex == nil, label: tr("頭文字")) { avatar.selectInitial() } content: {
                 Circle().fill(fill).frame(width: 40, height: 40)
-                    .overlay(Text(String((name.isEmpty ? displayName : name).prefix(1)).uppercased())
+                    .overlay(Text(String(displayName.prefix(1)).uppercased())
                         .font(.system(size: 18, weight: .semibold, design: .rounded)).foregroundStyle(.white))
             }
             ForEach(Array(AvatarSettings.symbols.enumerated()), id: \.offset) { index, symbol in

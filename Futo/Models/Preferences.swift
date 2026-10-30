@@ -37,25 +37,28 @@ struct Preferences: Codable, Equatable {
 
     init() {}
 
+    /// 待機時間の選択肢（10秒・30秒・1分・5分・10分・30分）。
+    static let waitOptions: [Double] = [10, 30, 60, 300, 600, 1800]
+    /// 解除する時間の選択肢（分）。
+    static let unlockMinuteOptions: [Int] = [1, 5, 10, 30]
+
     #if DEBUG
     static let defaultWaitSeconds: Double = 10
-    static let waitOptions: [Double] = [10, 60, 120, 180, 300, 600]
-    #else
-    static let defaultWaitSeconds: Double = 180
-    static let waitOptions: [Double] = [60, 120, 180, 300, 600]
-    #endif
-
-    var effectiveWaitSeconds: Double { waitSeconds ?? Self.defaultWaitSeconds }
-
-    #if DEBUG
     static let defaultUnlockMinutes = 1
     #else
+    static let defaultWaitSeconds: Double = 60
     static let defaultUnlockMinutes = 5
     #endif
-    static let unlockMinuteOptions = Array(1...30)
+
+    /// 以前の版で保存した、選択肢にない値は、いちばん近い選択肢に寄せる。
+    private static func nearest<T: BinaryFloatingPoint>(_ value: T, in options: [T]) -> T {
+        options.min { abs($0 - value) < abs($1 - value) } ?? value
+    }
+
+    var effectiveWaitSeconds: Double { Self.nearest(waitSeconds ?? Self.defaultWaitSeconds, in: Self.waitOptions) }
 
     var effectiveUnlockMinutes: Int {
-        min(max(unlockMinutes ?? Self.defaultUnlockMinutes, 1), 30)
+        Int(Self.nearest(Double(unlockMinutes ?? Self.defaultUnlockMinutes), in: Self.unlockMinuteOptions.map(Double.init)))
     }
 
     /// Device Activityの監視区間の長さ。Appleの最短は15分なので、短い設定でも16分を下回らない。
@@ -96,7 +99,7 @@ struct Preferences: Codable, Equatable {
         notifyPostUse = try c.decodeIfPresent(Bool.self, forKey: .notifyPostUse) ?? false
         notifyOuting = try c.decodeIfPresent(Bool.self, forKey: .notifyOuting) ?? false
         outingMinute = try c.decodeIfPresent(Int.self, forKey: .outingMinute) ?? 15 * 60
-        outingPerDay = min(max(try c.decodeIfPresent(Int.self, forKey: .outingPerDay) ?? 1, 1), 3)
+        outingPerDay = min(max(try c.decodeIfPresent(Int.self, forKey: .outingPerDay) ?? 1, 1), 6)
         quietStartMinute = try c.decodeIfPresent(Int.self, forKey: .quietStartMinute) ?? 22 * 60
         quietEndMinute = try c.decodeIfPresent(Int.self, forKey: .quietEndMinute) ?? 8 * 60
     }

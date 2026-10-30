@@ -205,7 +205,8 @@ extension AppModel {
                 }
             }
             // 静かな時間は設けない（開始と終了を同じにして、無効にする）
-            let policy = NotificationPolicy(quietStartMinute: 0, quietEndMinute: 0, calendar: .current)
+            var policy = NotificationPolicy(quietStartMinute: 0, quietEndMinute: 0, calendar: .current)
+            policy.maxPerDay = 8   // お出かけを最大6回＋朝・夜
             guard !Task.isCancelled else { return }
             await notifications.replaceAll(with: NotificationPlanner.select(candidates, policy: policy).accepted)
         }

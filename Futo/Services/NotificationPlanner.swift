@@ -11,6 +11,8 @@ struct NotificationCandidate: Equatable {
 struct NotificationPolicy {
     var maxPerDay = 4
     var minimumGap: TimeInterval = 3 * 3600
+    /// お出かけどうしの間隔（朝夜などほかの通知とは、`minimumGap` をあける）
+    var outingGap: TimeInterval = 90 * 60
     var quietStartMinute = 22 * 60
     var quietEndMinute = 8 * 60
     var perKindDailyMax: [NotificationKind: Int] = [.postUse: 1]
@@ -67,7 +69,7 @@ enum NotificationPlanner {
             if sameDay.count >= policy.maxPerDay {
                 dropped.append((candidate, .dailyLimit)); continue
             }
-            if accepted.contains(where: { abs($0.fireDate.timeIntervalSince(candidate.fireDate)) < policy.minimumGap }) {
+            if accepted.contains(where: { abs($0.fireDate.timeIntervalSince(candidate.fireDate)) < (($0.kind == .outing && candidate.kind == .outing) ? policy.outingGap : policy.minimumGap) }) {
                 dropped.append((candidate, .tooCloseToAnother)); continue
             }
             accepted.append(candidate)
@@ -120,20 +122,23 @@ enum NotificationPlanner {
 enum OutingSchedule {
     static let earliestMinute = 9 * 60
     static let latestMinute = 20 * 60
-    static let gapMinutes = 180
+    /// お出かけどうしの最短の間隔
+    static let gapMinutes = 90
+    /// 朝・夜の通知との間隔
+    static let marginMinutes = 180
     static let maxJitterMinutes = 60
 
     /// 使える時間帯。朝・夜の通知がオンなら、その前後3時間をあける。
     static func window(preferences: Preferences) -> (start: Int, end: Int) {
         var start = earliestMinute
         var end = latestMinute
-        if preferences.notifyMorning { start = max(start, preferences.morningMinute + gapMinutes) }
-        if preferences.notifyNight { end = min(end, preferences.nightMinute - gapMinutes) }
+        if preferences.notifyMorning { start = max(start, preferences.morningMinute + marginMinutes) }
+        if preferences.notifyNight { end = min(end, preferences.nightMinute - marginMinutes) }
         if end <= start { return (earliestMinute, latestMinute) }
         return (start, end)
     }
 
-    /// その日の時刻（0時からの分）。回数は、時間帯に収まる最大数に抑える（3時間あけるため）。
+    /// その日の時刻（0時からの分）。回数は、時間帯に収まる最大数に抑える（お出かけどうし、1時間半あけるため）。
     static func minutes(count: Int, dayKey: String, window: (start: Int, end: Int)) -> [Int] {
         let length = window.end - window.start
         let n = max(1, min(count, max(1, length / gapMinutes)))
