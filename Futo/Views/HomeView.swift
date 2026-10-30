@@ -427,6 +427,8 @@ private struct ShackleShape: Shape {
 /// 描いた錠前。`progress` が 0 で開き、1 で閉じる。値を連続して動かすので、開いた鍵が、途切れずに閉じる。
 private struct PadlockDrawing: View, Animatable {
     var progress: CGFloat
+    var color: Color
+    var keyColor: Color
     var animatableData: CGFloat {
         get { progress }
         set { progress = newValue }
@@ -436,59 +438,79 @@ private struct PadlockDrawing: View, Animatable {
         let open = 1 - progress
         VStack(spacing: -6) {
             ShackleShape()
-                .stroke(Theme.accent, style: StrokeStyle(lineWidth: 11, lineCap: .round))
+                .stroke(color, style: StrokeStyle(lineWidth: 11, lineCap: .round))
                 .frame(width: 50, height: 46)
                 // 開いているときは、持ち上がり、左の脚を軸に傾く
                 .rotationEffect(.degrees(-28 * open), anchor: .bottomLeading)
                 .offset(y: -12 * open)
             RoundedRectangle(cornerRadius: 17, style: .continuous)
-                .fill(Theme.accent)
+                .fill(color)
                 .frame(width: 84, height: 62)
                 .overlay {
                     VStack(spacing: 0) {
-                        Circle().fill(Theme.onAccent).frame(width: 12, height: 12)
-                        Capsule().fill(Theme.onAccent).frame(width: 5, height: 14).offset(y: -2)
+                        Circle().fill(keyColor).frame(width: 12, height: 12)
+                        Capsule().fill(keyColor).frame(width: 5, height: 14).offset(y: -2)
                     }
-                    .opacity(0.9)
                 }
         }
     }
 }
 
-/// 制限がかかったときの、鍵のアニメーション。開いた鍵が閉まり、小さな輪が広がる。
-/// 視差効果を減らす設定では、閉じた鍵を、ふわっと出すだけ。
+/// 制限がかかったときの、鍵のアニメーション。
+/// 色の円の中で、開いた鍵が「カチッ」と閉まり（軽い振動つき）、輪が広がって、「制限しました」と出る。
+/// 視差効果を減らす設定では、閉じた鍵と文字を、ふわっと出すだけ。
 private struct LockSealView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
     @State private var progress: CGFloat = 0
+    @State private var squash = false
     @State private var ripple = false
+    @State private var labelShown = false
 
     var body: some View {
         ZStack {
-            Circle().fill(Theme.accent.opacity(0.14))
-            Circle().stroke(Theme.accent.opacity(0.28), lineWidth: 2)
-            Circle().stroke(Theme.accent.opacity(ripple ? 0 : 0.45), lineWidth: 3)
-                .scaleEffect(ripple ? 1.45 : 1)
-            PadlockDrawing(progress: progress)
-                .scaleEffect(0.95)
+            // 後ろをうっすら落ち着かせて、鍵が見分けやすいようにする
+            Theme.background.opacity(0.55).ignoresSafeArea()
+                .opacity(shown ? 1 : 0)
+            VStack(spacing: 18) {
+                ZStack {
+                    Circle().stroke(Theme.accent.opacity(ripple ? 0 : 0.5), lineWidth: 4)
+                        .scaleEffect(ripple ? 1.5 : 1)
+                    Circle().fill(Theme.accent)
+                    PadlockDrawing(progress: progress, color: Theme.onAccent, keyColor: Theme.accent)
+                        .scaleEffect(x: 1, y: squash ? 0.94 : 1, anchor: .bottom)
+                        .scaleEffect(0.95)
+                }
+                .frame(width: 176, height: 176)
+                .scaleEffect(reduceMotion ? 1 : (shown ? 1 : 0.78))
+
+                Text(tr("制限しました"))
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .opacity(labelShown ? 1 : 0)
+                    .offset(y: labelShown || reduceMotion ? 0 : 6)
+            }
+            .opacity(shown ? 1 : 0)
         }
-        .frame(width: 190, height: 190)
-        .scaleEffect(reduceMotion ? 1 : (shown ? 1 : 0.8))
-        .opacity(shown ? 1 : 0)
         .accessibilityElement()
         .accessibilityLabel(tr("制限がかかりました"))
         .task {
             if reduceMotion {
                 progress = 1
-                withAnimation(.easeOut(duration: 0.3)) { shown = true }
+                withAnimation(.easeOut(duration: 0.3)) { shown = true; labelShown = true }
                 return
             }
-            // 現れる → 閉まる → 輪が広がる、を、1つの流れで続ける
+            // 現れる（開いた鍵）→ 閉まる＋振動 → 輪と文字、を、1つの流れで続ける
             withAnimation(.easeOut(duration: 0.3)) { shown = true }
-            try? await Task.sleep(for: .milliseconds(320))
-            withAnimation(.spring(duration: 0.55, bounce: 0.3)) { progress = 1 }
-            try? await Task.sleep(for: .milliseconds(380))
+            try? await Task.sleep(for: .milliseconds(420))
+            withAnimation(.spring(duration: 0.5, bounce: 0.35)) { progress = 1 }
+            try? await Task.sleep(for: .milliseconds(230))
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            withAnimation(.easeOut(duration: 0.12)) { squash = true }
             withAnimation(.easeOut(duration: 0.7)) { ripple = true }
+            try? await Task.sleep(for: .milliseconds(120))
+            withAnimation(.spring(duration: 0.3, bounce: 0.4)) { squash = false }
+            withAnimation(.easeOut(duration: 0.35)) { labelShown = true }
         }
     }
 }

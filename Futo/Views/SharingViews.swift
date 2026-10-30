@@ -496,13 +496,28 @@ struct ProfileView: View {
     @Environment(SharingModel.self) private var sharing
     /// 入力中の文字。1文字ごとに画面全体を組み直さないよう、参照で持つ（入力欄の中だけが更新される）。
     @State private var draft = NameDraft()
-    @State private var hasValidDraft = false
-    @State private var saved = false
+    @State private var saveTask: Task<Void, Never>?
     private var avatar: AvatarSettings { .shared }
 
     private var displayName: String { sharing.profile?.displayName ?? "" }
     private var trimmed: String { String(draft.text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(20)) }
-    private var canSave: Bool { hasValidDraft && trimmed != displayName && !sharing.isWorking }
+
+    /// 入力が止まって少したったら、自動で保存する（保存ボタンは置かない）。空・変わっていないときは保存しない。
+    private func scheduleSave() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !Task.isCancelled else { return }
+            await commit()
+        }
+    }
+
+    @MainActor
+    private func commit() async {
+        let text = trimmed
+        guard !text.isEmpty, text != displayName else { return }
+        _ = await sharing.saveDisplayName(text)
+    }
 
     var body: some View {
         Form {
@@ -518,9 +533,7 @@ struct ProfileView: View {
             Section {
                 NicknameField(initial: displayName, placeholder: tr("例：ふとさん")) { text in
                     draft.text = text
-                    let valid = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    if valid != hasValidDraft { hasValidDraft = valid }
-                    saved = false
+                    scheduleSave()
                 }
             } header: {
                 formHeader(tr("ニックネーム"))
@@ -533,21 +546,16 @@ struct ProfileView: View {
             Section { colorPicker } header: { formHeader(tr("アイコンの色")) }
                 .listRowBackground(Theme.card)
 
-            PrimarySection {
-                Button {
-                    Task { saved = await sharing.saveDisplayName(trimmed) }
-                } label: {
-                    Label(saved ? tr("保存しました") : tr("保存"), systemImage: saved ? "checkmark.circle.fill" : "square.and.arrow.down")
-                }
-                .disabled(!canSave && !saved)
-            }
         }
         .compactForm()
         .navigationTitle(tr("プロフィール"))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            draft.text = displayName
-            hasValidDraft = !displayName.isEmpty
+        .onAppear { draft.text = displayName }
+        .onDisappear {
+            // 画面を閉じるときにも、入力中の分を保存する
+            saveTask?.cancel()
+            let text = trimmed
+            if !text.isEmpty, text != displayName { Task { _ = await sharing.saveDisplayName(text) } }
         }
     }
 

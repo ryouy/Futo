@@ -61,32 +61,50 @@ struct BackupView: View {
     private var connected: some View {
         CardSection {
             if let remote = backup.remote, let date = remote.modifiedTime {
-                LabeledContent(tr("最後のバックアップ"), value: date.formatted(date: .abbreviated, time: .shortened))
+                HStack {
+                    Text(tr("最後のバックアップ"))
+                    Spacer(minLength: 8)
+                    Text(BackupView.dateText(date)).monospacedDigit().foregroundStyle(.secondary)
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             } else if backup.checkedRemote {
                 Text(tr("まだバックアップはありません。")).foregroundStyle(.secondary)
             }
-            Button { Task { await backup.backupNow() } } label: {
-                Label(tr("今すぐバックアップ"), systemImage: "icloud.and.arrow.up")
-            }
-            .buttonStyle(FutoButtonStyle()).disabled(backup.isWorking)
-            if backup.isWorking { ProgressView() }
         }
+        PrimarySection {
+            Button { Task { await backup.backupNow() } } label: {
+                if backup.isWorking {
+                    ProgressView()
+                } else {
+                    Label(tr("今すぐバックアップ"), systemImage: "icloud.and.arrow.up")
+                }
+            }
+            .disabled(backup.isWorking)
+        }
+        // 戻す・削除・許可の取り消しは、目立たせず、小さく並べる
         CardSection {
             Button { Task { await backup.prepareRestore() } } label: {
-                Label(tr("バックアップから戻す"), systemImage: "icloud.and.arrow.down")
+                Label(tr("バックアップから戻す"), systemImage: "icloud.and.arrow.down").font(.subheadline).foregroundStyle(Theme.accent)
             }
-            .buttonStyle(FutoButtonStyle(prominent: false)).disabled(backup.isWorking || backup.remote == nil)
-        }
-        CardSection {
+            .frame(minHeight: 38).disabled(backup.isWorking || backup.remote == nil)
             Button(role: .destructive) { confirmDeleteRemote = true } label: {
-                Label(tr("Driveのバックアップを削除"), systemImage: "trash").foregroundStyle(.red)
+                Label(tr("Driveのバックアップを削除"), systemImage: "trash").font(.subheadline).foregroundStyle(.red)
             }
-            .frame(minHeight: 44).disabled(backup.isWorking || backup.remote == nil)
+            .frame(minHeight: 38).disabled(backup.isWorking || backup.remote == nil)
             Button { confirmDisconnect = true } label: {
-                Label(tr("Driveの許可を取り消す"), systemImage: "xmark.circle").foregroundStyle(Theme.accent)
+                Label(tr("Driveの許可を取り消す"), systemImage: "xmark.circle").font(.subheadline).foregroundStyle(Theme.accent)
             }
-            .frame(minHeight: 44).disabled(backup.isWorking)
+            .frame(minHeight: 38).disabled(backup.isWorking)
         }
+    }
+
+    /// 日時は「2026-10-31 18:20」の形（ハイフン区切り）。
+    static func dateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        return formatter.string(from: date)
     }
 
     private var restoreSheet: some View {
@@ -94,7 +112,7 @@ struct BackupView: View {
             Form {
                 if let p = backup.preview {
                     CardSection {
-                        LabeledContent(tr("バックアップの日時"), value: p.createdAt.formatted(date: .abbreviated, time: .shortened))
+                        LabeledContent(tr("バックアップの日時"), value: BackupView.dateText(p.createdAt))
                         LabeledContent(tr("記録の件数"), value: "\(p.totalSessions)")
                         LabeledContent(tr("追加される記録"), value: "\(p.newSessions)")
                         if p.skippedSessions > 0 { LabeledContent(tr("すでにある記録"), value: "\(p.skippedSessions)") }

@@ -458,7 +458,6 @@ enum EnglishStrings {
         "制限そのものを終了します。": "This ends the lock itself.",
         "まだフレンドがいません。": "No friends yet.",
         "項目を選ぶと、ここに表示されます。": "Pick items and they'll show up here.",
-        "保存しました": "Saved",
         "プロフィール": "Profile",
         "プロフィールを変える": "Edit profile",
         "新しいリンクを作りました": "New link created",
@@ -482,5 +481,6 @@ enum EnglishStrings {
         "Google Driveへ保存します。": "in Google Drive.",
         "ログインと同じ": "Please pick the same",
         "Googleアカウントを選んでください。": "Google account you signed in with.",
+        "制限しました": "Locked",
     ]
 }
