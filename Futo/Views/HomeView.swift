@@ -102,7 +102,7 @@ struct HomeView: View {
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
-                        Image(systemName: "clock").font(.title3).frame(width: 44, height: 44)
+                        Image(systemName: "note.text").font(.title3).frame(width: 44, height: 44)
                     }
                     .accessibilityLabel(tr("記録"))
                     Button { sheet = .settings } label: {
@@ -435,9 +435,8 @@ private struct PadlockDrawing: View, Animatable {
             ShackleShape()
                 .stroke(color, style: StrokeStyle(lineWidth: 11, lineCap: .round))
                 .frame(width: 50, height: 46)
-                // 開いているときは、持ち上がり、左の脚を軸に傾く
-                .rotationEffect(.degrees(-28 * open), anchor: .bottomLeading)
-                .offset(y: -12 * open)
+                // 開いているときは、まっすぐ上に持ち上がっている。閉じるときは、上から、真下に降りてかかる
+                .offset(y: -22 * open)
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .fill(color)
                 .frame(width: 84, height: 62)
@@ -466,7 +465,7 @@ private struct LockSealView: View {
         ZStack {
             // 後ろを、うっすらぼかす（鍵と「制限しました」が見分けやすく、後ろの画面も、少し見える）
             Rectangle().fill(.regularMaterial).ignoresSafeArea()
-                .opacity(shown ? 0.5 : 0)
+                .opacity(shown ? 0.8 : 0)
             VStack(spacing: 18) {
                 ZStack {
                     Circle().stroke(Theme.accent.opacity(ripple ? 0 : 0.5), lineWidth: 4)

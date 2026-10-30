@@ -125,7 +125,6 @@ struct CreateShareView: View {
     @State private var created: URL?
     @State private var done = false
     @State private var standing = true
-    @State private var showQR = false
 
     private var isFriends: Bool { kind == .friends }
 
@@ -311,10 +310,7 @@ struct CreateShareView: View {
                     ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
                     Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
                 }
-                Toggle(tr("QRコードを表示"), isOn: $showQR.animation())
-                if showQR {
-                    QRImage(text: created.absoluteString).frame(maxWidth: .infinity).padding(.vertical, 6)
-                }
+                QRSection(text: created.absoluteString)
             }
         } else if done {
             CardSection {
@@ -339,6 +335,61 @@ struct CreateShareView: View {
 }
 
 /// 文字列をQRコードで表示する。
+/// QRコード：押すと作る（切り替えのトグルではなく、ボタン）。作っている間は、QRのアイコンが動いて、作成中だと分かるようにする。
+struct QRSection: View {
+    let text: String
+    private enum Phase { case idle, making, shown }
+    @State private var phase: Phase = .idle
+    @State private var image: UIImage?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        VStack(spacing: 8) {
+            switch phase {
+            case .idle:
+                Button { make() } label: {
+                    Label(tr("QRコードを作る"), systemImage: "qrcode").foregroundStyle(Theme.accent)
+                }
+                .buttonStyle(ChipButtonStyle())
+            case .making:
+                HStack(spacing: 8) {
+                    Image(systemName: "qrcode")
+                        .symbolEffect(.variableColor.iterative.reversing, isActive: !reduceMotion)
+                    Text(tr("作成中…"))
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.accent)
+                .frame(maxWidth: .infinity, minHeight: 40)
+                .accessibilityLabel(tr("QRコードを作成中"))
+            case .shown:
+                if let image {
+                    Image(uiImage: image).interpolation(.none).resizable().scaledToFit().frame(width: 180, height: 180)
+                        .accessibilityLabel(tr("QRコード"))
+                        .transition(.opacity)
+                }
+                Button { withAnimation(.easeInOut(duration: 0.25)) { phase = .idle; image = nil } } label: {
+                    Label(tr("閉じる"), systemImage: "xmark")
+                }
+                .buttonStyle(ChipButtonStyle())
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .animation(.easeInOut(duration: 0.25), value: phase)
+    }
+
+    private func make() {
+        phase = .making
+        let value = text
+        Task { @MainActor in
+            // 作成の様子が伝わるよう、少しだけ間を置く
+            async let made = Task.detached(priority: .userInitiated) { QRImage.make(value) }.value
+            try? await Task.sleep(for: .milliseconds(900))
+            image = await made
+            phase = image == nil ? .idle : .shown
+        }
+    }
+}
+
 struct QRImage: View {
     let text: String
     var body: some View {

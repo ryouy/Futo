@@ -34,17 +34,9 @@ struct BackupView: View {
 
     private var explanation: some View {
         CardSection {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(tr("記録と設定を、ふと専用の場所に"))
-                Text(tr("Google Driveへ保存します。"))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(tr("ログインと同じ"))
-                Text(tr("Googleアカウントを選んでください。"))
-            }
-            .font(.footnote).foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(tr("記録と設定を、Driveに保存します。"))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
     }
 

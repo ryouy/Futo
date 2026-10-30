@@ -44,7 +44,7 @@ struct NotificationSettingsView: View {
         case .morning: return tr("朝の振り返り")
         case .night: return tr("夜の振り返り")
         case .postUse: return tr("使ったあとの確認")
-        case .outing: return tr("お出かけのおすすめ")
+        case .outing: return tr("お出かけの誘い")
         }
     }
 
@@ -62,7 +62,14 @@ struct NotificationSettingsView: View {
     /// お出かけのおすすめ：1行に、名前・「n回/日」・オン/オフ（トグルの左に回数）。時刻は、ランダムに（できるだけ均等に）決まる。
     private var outingRow: some View {
         HStack(spacing: 10) {
-            Text(title(.outing))
+            // 1行に収まらないときは、「お出かけの」の次の行に「誘い」を置く（途中で、不自然に折れない）
+            ViewThatFits(in: .horizontal) {
+                Text(title(.outing)).lineLimit(1).fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(tr("お出かけの"))
+                    Text(tr("誘い"))
+                }
+            }
             Spacer(minLength: 8)
             if model.prefs.notifyOuting {
                 Picker(tr("1日の回数"), selection: Binding(

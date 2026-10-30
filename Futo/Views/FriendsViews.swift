@@ -42,7 +42,6 @@ struct FriendsView: View {
         }
     }
 
-    @State private var showQR = false
 
     private func formatted(_ code: String) -> String {
         stride(from: 0, to: code.count, by: 4).map { start in
@@ -69,10 +68,7 @@ struct FriendsView: View {
                     Spacer(minLength: 0)
                     CopyIconButton(text: invitation.url)
                 }
-                Toggle(tr("QRコードを表示"), isOn: $showQR.animation())
-                if showQR {
-                    QRImage(text: invitation.url).frame(maxWidth: .infinity).padding(.vertical, 6)
-                }
+                QRSection(text: invitation.url)
                 Button(role: .destructive) { Task { await sharing.cancelInvitation() } } label: { Label(tr("招待を取り消す"), systemImage: "xmark.circle") }
                     .buttonStyle(ChipButtonStyle())
             } else {

@@ -148,6 +148,10 @@ struct DayDetailView: View {
                         if let item = detail.key { ItemLabel(item: item) } else { Text(tr("対象の記録なし")) }
                     }
                     .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(detail.sessions) { session in
                             SessionRow(session: session, showsDate: false)
@@ -197,15 +201,19 @@ private struct DayRow: View {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(day.rows) { row in
                         Button { onSelect(row) } label: {
-                            HStack(spacing: 8) {
+                            // 名前やURLが長くても、画面の幅を広げない。収まらない分は、「…」で省略する
+                            FixedWidthRow(height: 44, trailingWidth: 76) {
                                 Group {
-                                    if let item = row.key { ItemLabel(item: item).lineLimit(1) } else { Text(tr("対象の記録なし")) }
+                                    if let item = row.key { ItemLabel(item: item) } else { Text(tr("対象の記録なし")) }
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text(tr("{0}回", "\(row.count)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
-                                Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            } trailing: {
+                                HStack(spacing: 6) {
+                                    Text(tr("{0}回", "\(row.count)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                                }
                             }
-                            .frame(minHeight: 44)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
