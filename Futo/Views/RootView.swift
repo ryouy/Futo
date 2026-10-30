@@ -90,7 +90,7 @@ struct RootView: View {
             try? await Task.sleep(for: .milliseconds(1000))
             withAnimation(.easeInOut(duration: 0.8)) { showSplash = false }
         }
-        .tint(Theme.accent)
+        .tint(Theme.accentText)
         // シートを開いて、ホームが小さくなったとき、後ろがテーマ色になるように（黒くしない）
         .background(WindowBackgroundSetter(color: Theme.windowBackgroundUIColor))
         .environment(\.locale, LanguageStore.shared.language.locale)

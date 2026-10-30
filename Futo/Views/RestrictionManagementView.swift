@@ -62,14 +62,14 @@ struct RestrictionManagementView: View {
                 }
                 CardSection {
                     NavigationLink { RestrictionWaitView(model: model, kind: .pause) } label: {
-                        Label(tr("停止の時間を延ばす"), systemImage: "clock.arrow.circlepath").foregroundStyle(Theme.accent)
+                        Label(tr("停止の時間を延ばす"), systemImage: "clock.arrow.circlepath").foregroundStyle(Theme.accentText)
                     }.frame(minHeight: 44)
                 }
             } else {
                 CardSection {
                     if canPause {
                         NavigationLink { RestrictionWaitView(model: model, kind: .pause) } label: {
-                            Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(Theme.accent)
+                            Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(Theme.accentText)
                         }.frame(minHeight: 44)
                     } else {
                         Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(.secondary).frame(minHeight: 44)
@@ -184,7 +184,7 @@ struct RestrictionWaitView: View {
 
     private func stage(_ number: Int, _ title: String) -> some View {
         Text(tr("{0}/2　{1}", "\(number)", title))
-            .font(.footnote.weight(.medium)).foregroundStyle(Theme.accent)
+            .font(.footnote.weight(.medium)).foregroundStyle(Theme.accentText)
     }
 
     private var waiting: some View {
@@ -255,7 +255,7 @@ struct RestrictionWaitView: View {
 
     private func done(until: Date) -> some View {
         VStack(spacing: 18) {
-            Image(systemName: "pause.circle").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accent)
+            Image(systemName: "pause.circle").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accentText)
             Text(tr("制限を停止しました。")).font(.title3.weight(.medium))
             Text(tr("{0} に、自動で制限に戻ります。", until.formatted(date: .omitted, time: .shortened)))
                 .multilineTextAlignment(.center)
@@ -266,7 +266,7 @@ struct RestrictionWaitView: View {
 
     private var endedView: some View {
         VStack(spacing: 18) {
-            Image(systemName: "lock.open").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accent)
+            Image(systemName: "lock.open").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accentText)
             Text(tr("制限を終了しました。")).font(.title3.weight(.medium))
             Button(tr("閉じる")) { dismiss() }
                 .buttonStyle(FutoButtonStyle())

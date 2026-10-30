@@ -18,7 +18,7 @@ struct FriendsView: View {
             if !sharing.friends.friends.isEmpty {
                 CardSection {
                     NavigationLink { CreateShareView(model: model, kind: .friends, recipients: sharing.friends.friends) } label: {
-                        Label(tr("フレンドに記録を共有"), systemImage: "paperplane").foregroundStyle(Theme.accent)
+                        Label(tr("フレンドに記録を共有"), systemImage: "paperplane").foregroundStyle(Theme.accentText)
                     }
                     .frame(minHeight: 44)
                 }
@@ -144,7 +144,7 @@ struct FriendsView: View {
                         Button(tr("フレンドをやめる"), role: .destructive) { removing = friend }
                         Button(tr("ブロック"), role: .destructive) { blocking = friend }
                     } label: {
-                        Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(Theme.accent)
+                        Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(Theme.accentText)
                             .frame(width: 44, height: 44).contentShape(Rectangle())
                     }
                     .accessibilityLabel(tr("操作"))

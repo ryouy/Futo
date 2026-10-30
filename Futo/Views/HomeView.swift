@@ -100,7 +100,7 @@ struct HomeView: View {
     private func scrollContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Text(tr("ふと")).font(.title2.weight(.bold)).foregroundStyle(Theme.accent)
+                Text(tr("ふと")).font(.title2.weight(.bold)).foregroundStyle(Theme.accentText)
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
@@ -122,7 +122,7 @@ struct HomeView: View {
                     }
                     .accessibilityLabel(tr("設定とアカウント"))
                 }
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.accentText)
                 .tutorialTarget(.header)
             }
 
@@ -183,7 +183,7 @@ struct HomeView: View {
         }
         if model.targetCount == 0 { return tr("アプリやサイトを選びます。") }
         switch model.restriction {
-        case .configured: return tr("選んだものは、ふだん使えません。")
+        case .configured: return tr("")
         case .temporarilyUnlocked: return ""
         case .paused(let until): return tr("{0} に、自動で戻ります。", until.formatted(date: .omitted, time: .shortened))
         case .unverifiable: return tr("もう一度、かけ直してください。")
@@ -211,7 +211,7 @@ struct HomeView: View {
                     Circle().fill(Theme.accent.opacity(0.14)).frame(width: 40, height: 40)
                     Image(systemName: statusIcon)
                         .font(.system(size: 18, weight: .regular))
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.accentText)
                 }
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
@@ -223,7 +223,7 @@ struct HomeView: View {
                     Button(action: addApps) {
                         Image(systemName: "plus")
                             .font(.body.weight(.medium))
-                            .foregroundStyle(Theme.accent)
+                            .foregroundStyle(Theme.accentText)
                             .frame(width: 40, height: 40)
                             .background(Circle().fill(Theme.accent.opacity(0.14)))
                     }
@@ -299,7 +299,7 @@ struct HomeView: View {
             HStack(spacing: 4) {
                 if unlocked {
                     Image(systemName: "lock.open.fill")
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.accentText)
                         .frame(width: 24)
                         .accessibilityLabel(tr("一時解除中"))
                 }
@@ -483,7 +483,7 @@ private struct LockSealView: View {
 
                 Text(unlocking ? tr("解除しました") : tr("制限しました"))
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.accentText)
                     .opacity(labelShown ? 1 : 0)
                     .offset(y: labelShown || reduceMotion ? 0 : 6)
             }

@@ -42,7 +42,7 @@ struct SettingsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         // テーマカラーを変えた瞬間に、設定の中の色（言語の選択など）も変わるように
-        .tint(Theme.accent)
+        .tint(Theme.accentText)
         .id(ThemeStore.shared.color)
         .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)
@@ -81,7 +81,7 @@ struct SettingsView: View {
 
             CardSection {
                 NavigationLink { RestrictionManagementView(model: model) } label: {
-                    Label(tr("制限の管理"), systemImage: "lock.shield").foregroundStyle(Theme.accent)
+                    Label(tr("制限の管理"), systemImage: "lock.shield").foregroundStyle(Theme.accentText)
                 }
                 .frame(minHeight: 44)
             }
@@ -103,7 +103,7 @@ struct SettingsView: View {
             } label: {
                 Label(model.permission == .approved ? tr("再確認") : tr("許可する"),
                       systemImage: model.permission == .approved ? "arrow.clockwise" : "hand.raised")
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.accentText)
             }
             .frame(minHeight: 44)
             if let error = model.permissionError { Text(error).font(.footnote) }
@@ -122,7 +122,7 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 6)
             } header: {
-                Text(tr("テーマカラー")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent).textCase(nil)
+                Text(tr("テーマカラー")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accentText).textCase(nil)
             }
             .listRowBackground(Theme.card)
 
@@ -141,7 +141,7 @@ struct SettingsView: View {
             if ads.privacyOptionsRequired {
                 CardSection {
                     Button { Task { await ads.presentPrivacyOptions() } } label: {
-                        Label(tr("広告のプライバシー設定"), systemImage: "hand.raised").foregroundStyle(Theme.accent)
+                        Label(tr("広告のプライバシー設定"), systemImage: "hand.raised").foregroundStyle(Theme.accentText)
                     }
                     .frame(minHeight: 44)
                 }
@@ -164,7 +164,7 @@ struct SettingsView: View {
                         model.replayOnboardingForDebug()
                     }
                 } label: {
-                    Label(tr("初回説明をもう一度表示"), systemImage: "arrow.counterclockwise").foregroundStyle(Theme.accent)
+                    Label(tr("初回説明をもう一度表示"), systemImage: "arrow.counterclockwise").foregroundStyle(Theme.accentText)
                 }
                 .frame(minHeight: 44)
             }

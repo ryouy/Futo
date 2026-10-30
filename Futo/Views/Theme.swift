@@ -30,19 +30,30 @@ enum ThemeColor: String, CaseIterable, Identifiable {
         var soft: (UInt32, UInt32)
     }
 
+    /// 文字や細い線に使うアクセント色。ライトは本体と同じ。ダークは、同じ色相のまま、くすませて明るくした色
+    /// （濃い本体の色のままだと、暗い地の上で文字が読めない。蛍光っぽくならないよう、彩度は低く保つ）。
+    var textAccent: (UInt32, UInt32) {
+        switch self {
+        case .wakaba: return (0x196459, 0x86B5A7)
+        case .sora: return (0x46789A, 0x8FB2C9)
+        case .sakura: return (0xA25A72, 0xD2A3B1)
+        case .fuji: return (0x6F5CA3, 0xB1A5D3)
+        }
+    }
+
     var palette: Palette {
         switch self {
         case .wakaba:
-            return Palette(accent: (0x196459, 0x86B5A7), backgroundTop: (0xFCF8F0, 0x26312E),
+            return Palette(accent: (0x196459, 0x196459), backgroundTop: (0xFCF8F0, 0x26312E),
                            backgroundBottom: (0xE8F1EE, 0x1F2926), card: (0xFFFEFA, 0x2F3B37), soft: (0xDDEBE7, 0x2B3D39))
         case .sora:
-            return Palette(accent: (0x46789A, 0x8FB2C9), backgroundTop: (0xFCF8F0, 0x262D34),
+            return Palette(accent: (0x46789A, 0x46789A), backgroundTop: (0xFCF8F0, 0x262D34),
                            backgroundBottom: (0xEAF1F5, 0x1F262D), card: (0xFFFEFA, 0x2F3841), soft: (0xE1EDF4, 0x2B3945))
         case .sakura:
-            return Palette(accent: (0xA25A72, 0xD2A3B1), backgroundTop: (0xFCF8F0, 0x312B2D),
+            return Palette(accent: (0xA25A72, 0xA25A72), backgroundTop: (0xFCF8F0, 0x312B2D),
                            backgroundBottom: (0xF7ECEE, 0x282224), card: (0xFFFEFA, 0x3A3235), soft: (0xF5E3E8, 0x3B3034))
         case .fuji:
-            return Palette(accent: (0x6F5CA3, 0xB1A5D3), backgroundTop: (0xFCF8F0, 0x2C2B34),
+            return Palette(accent: (0x6F5CA3, 0x6F5CA3), backgroundTop: (0xFCF8F0, 0x2C2B34),
                            backgroundBottom: (0xF0ECF6, 0x24232C), card: (0xFFFEFA, 0x35343F), soft: (0xE8E3F3, 0x363448))
         }
     }
@@ -84,8 +95,10 @@ enum Theme {
     static var backgroundBottom: Color { dynamic(palette.backgroundBottom) }
     static var card: Color { dynamic(palette.card) }
     static var accent: Color { dynamic(palette.accent) }
+    /// 文字・アイコン・細い線のアクセント色（ダークでは、読めるよう少し明るい）
+    static var accentText: Color { dynamic(ThemeStore.shared.color.textAccent) }
     /// アクセント色の上に置く文字色
-    static var onAccent: Color { dynamic(((0xFFFEFA), 0x151816)) }
+    static var onAccent: Color { dynamic((0xFFFEFA, 0xEEE9DF)) }
     /// 補足や案内に使う、テーマ色の淡い面。
     static var softBlue: Color { dynamic(palette.soft) }
     /// ほんのり暖かい色。お知らせ用。赤い警告色は使わない。
@@ -98,7 +111,7 @@ enum Theme {
 
     /// 円グラフの色。テーマ色を軸に、見分けやすい控えめな色を並べる。
     static var chartColors: [Color] {
-        [accent, accent.opacity(0.5), dynamic((0xE2B48C, 0xD9B48F)), dynamic((0xB9B6AE, 0x8F938E)), dynamic((0xA9C4D4, 0x84A9BC))]
+        [accentText, accentText.opacity(0.5), dynamic((0xE2B48C, 0xD9B48F)), dynamic((0xB9B6AE, 0x8F938E)), dynamic((0xA9C4D4, 0x84A9BC))]
     }
 
     /// 時間帯グラフの色。朝は黄、昼は空、夕方は橙、夜はテーマ色。
@@ -107,7 +120,7 @@ enum Theme {
         case .morning: return dynamic((0xE0AE4F, 0xD2B887))
         case .daytime: return dynamic((0x6FA6C8, 0x88A9BF))
         case .evening: return dynamic((0xD98A63, 0xD09C82))
-        case .night: return accent
+        case .night: return accentText
         }
     }
 
@@ -150,7 +163,7 @@ struct FutoButtonStyle: ButtonStyle {
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, 16)
-            .foregroundStyle(prominent ? Theme.onAccent : Theme.accent)
+            .foregroundStyle(prominent ? Theme.onAccent : Theme.accentText)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .fill(prominent ? Theme.accent : Theme.accent.opacity(bordered ? 0.24 : 0.14))
@@ -169,7 +182,7 @@ struct ChipButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let destructive = configuration.role == .destructive
-        let tint: Color = destructive ? .red : Theme.accent
+        let tint: Color = destructive ? .red : Theme.accentText
         configuration.label
             .font(.subheadline.weight(.medium))
             .lineLimit(1)
@@ -199,7 +212,7 @@ struct CopyIconButton: View {
         } label: {
             Image(systemName: copied ? "checkmark" : "doc.on.doc")
                 .font(.body.weight(.medium))
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.accentText)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -306,7 +319,7 @@ struct ChoiceRow<Content: View>: View {
             } trailing: {
                 if showsIndicator {
                     Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.accentText)
                 }
             }
             .padding(.horizontal, 20)
@@ -329,7 +342,7 @@ struct FutoCompactButtonStyle: ButtonStyle {
             .font(.footnote.weight(.medium))
             .lineLimit(1)
             .minimumScaleFactor(0.7)
-            .foregroundStyle(Theme.accent)
+            .foregroundStyle(Theme.accentText)
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: 34)
             .background(Capsule().fill(Theme.accent.opacity(0.12)))
@@ -342,7 +355,7 @@ struct FutoTextButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.medium))
-            .foregroundStyle(Theme.accent)
+            .foregroundStyle(Theme.accentText)
             .frame(maxWidth: .infinity, minHeight: 44)
             .opacity(configuration.isPressed ? 0.6 : 1)
     }
@@ -354,7 +367,7 @@ struct LeafMark: View {
     var body: some View {
         Image(systemName: "leaf")
             .font(.system(size: size, weight: .regular))
-            .foregroundStyle(Theme.accent)
+            .foregroundStyle(Theme.accentText)
             .accessibilityHidden(true)
     }
 }

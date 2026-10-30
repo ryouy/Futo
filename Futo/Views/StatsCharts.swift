@@ -47,7 +47,7 @@ struct StatsChartsView: View {
         VStack(spacing: 12) {
             if let message = stats.message {
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "quote.opening").foregroundStyle(Theme.accent).font(.footnote)
+                    Image(systemName: "quote.opening").foregroundStyle(Theme.accentText).font(.footnote)
                     Text(message).font(.body).frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(14).card()

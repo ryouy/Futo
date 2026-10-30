@@ -81,21 +81,21 @@ struct SharingTab: View {
         }
         CardSection {
             NavigationLink { SharedLinksView(model: model) } label: {
-                Label(tr("記録をリンクで共有"), systemImage: "link").foregroundStyle(Theme.accent)
+                Label(tr("記録をリンクで共有"), systemImage: "link").foregroundStyle(Theme.accentText)
             }.frame(minHeight: 44)
             NavigationLink { FriendsView(model: model) } label: {
                 HStack {
-                    Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accent)
+                    Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accentText)
                     if sharing.hasUnseenRecords { NewBadge() }
                 }
             }.frame(minHeight: 44)
             NavigationLink { BackupView() } label: {
-                Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accent)
+                Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accentText)
             }.frame(minHeight: 44)
         }
         CardSection {
             Button { confirmSignOut = true } label: {
-                Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right").foregroundStyle(Theme.accent)
+                Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right").foregroundStyle(Theme.accentText)
             }
             .frame(minHeight: 44)
             Button(role: .destructive) { confirmDelete = true } label: {
@@ -161,7 +161,7 @@ struct CreateShareView: View {
     // MARK: 入力
 
     private func header(_ title: String) -> some View {
-        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent).textCase(nil)
+        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accentText).textCase(nil)
     }
 
     private var whoSection: some View {
@@ -178,7 +178,7 @@ struct CreateShareView: View {
                             Text(friend.displayName).foregroundStyle(.primary).oneLine()
                             Spacer(minLength: 0)
                             Image(systemName: chosen.contains(friend.uid) ? "checkmark.circle.fill" : "circle")
-                                .font(.title3).foregroundStyle(chosen.contains(friend.uid) ? Theme.accent : .secondary)
+                                .font(.title3).foregroundStyle(chosen.contains(friend.uid) ? Theme.accentText : .secondary)
                         }
                         .frame(minHeight: 40)
                         .contentShape(Rectangle())
@@ -195,7 +195,7 @@ struct CreateShareView: View {
                     Button(chosen.count == recipients.count ? tr("すべて外す") : tr("全員を選ぶ")) {
                         chosen = chosen.count == recipients.count ? [] : Set(recipients.map(\.uid))
                     }
-                    .font(.footnote.weight(.medium)).foregroundStyle(Theme.accent).textCase(nil)
+                    .font(.footnote.weight(.medium)).foregroundStyle(Theme.accentText).textCase(nil)
                 }
             }
         }
@@ -245,7 +245,7 @@ struct CreateShareView: View {
                         ForEach(SharePhrase.allCases) { phrase in Button(phrase.text) { selection.message = phrase.text } }
                         if !selection.message.isEmpty { Button(tr("消す"), role: .destructive) { selection.message = "" } }
                     } label: {
-                        Image(systemName: "text.quote").foregroundStyle(Theme.accent).frame(width: 36, height: 36)
+                        Image(systemName: "text.quote").foregroundStyle(Theme.accentText).frame(width: 36, height: 36)
                     }
                     .accessibilityLabel(tr("定型文から選ぶ"))
                 }
@@ -302,7 +302,7 @@ struct CreateShareView: View {
         if let created {
             CardSection {
                 HStack(spacing: 8) {
-                    Label(tr("リンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+                    Label(tr("リンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
                     Spacer(minLength: 0)
                     CopyIconButton(text: created.absoluteString)
                 }
@@ -314,7 +314,7 @@ struct CreateShareView: View {
             }
         } else if done {
             CardSection {
-                Label(tr("共有しました。"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+                Label(tr("共有しました。"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
             }
         } else {
             PrimarySection {
@@ -348,7 +348,7 @@ struct QRSection: View {
             switch phase {
             case .idle:
                 Button { make() } label: {
-                    Label(tr("QRコードを作る"), systemImage: "qrcode").foregroundStyle(Theme.accent)
+                    Label(tr("QRコードを作る"), systemImage: "qrcode").foregroundStyle(Theme.accentText)
                 }
                 .buttonStyle(ChipButtonStyle())
             case .making:
@@ -358,7 +358,7 @@ struct QRSection: View {
                     Text(tr("作成中…"))
                 }
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.accentText)
                 .frame(maxWidth: .infinity, minHeight: 40)
                 .accessibilityLabel(tr("QRコードを作成中"))
             case .shown:
@@ -368,7 +368,7 @@ struct QRSection: View {
                         .transition(.opacity)
                 }
                 Button { withAnimation(.easeInOut(duration: 0.25)) { phase = .idle; image = nil } } label: {
-                    Text(tr("閉じる")).font(.subheadline).foregroundStyle(Theme.accent)
+                    Text(tr("閉じる")).font(.subheadline).foregroundStyle(Theme.accentText)
                         .frame(minHeight: 36).padding(.horizontal, 12)
                 }
                 .buttonStyle(.plain)
@@ -423,7 +423,7 @@ struct SharedLinksView: View {
         Form {
             CardSection {
                 NavigationLink { CreateShareView(model: model, kind: .web) } label: {
-                    Label(tr("新しいリンクを作る"), systemImage: "plus.circle").foregroundStyle(Theme.accent)
+                    Label(tr("新しいリンクを作る"), systemImage: "plus.circle").foregroundStyle(Theme.accentText)
                 }.frame(minHeight: 44)
             }
             if sharing.shares.allSatisfy({ $0.status == "revoked" }) {
@@ -435,7 +435,7 @@ struct SharedLinksView: View {
                         Text(periodLabel(item.period)).font(.headline)
                         Spacer()
                         Text(statusText(item.status)).font(.footnote.weight(.medium))
-                            .foregroundStyle(item.status == "active" ? Theme.accent : .secondary)
+                            .foregroundStyle(item.status == "active" ? Theme.accentText : .secondary)
                     }
                     Text(tr("期限：{0}", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                     if item.status == "active" {
@@ -456,7 +456,7 @@ struct SharedLinksView: View {
             }
             if let rotated {
                 CardSection {
-                    Label(tr("新しいリンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accent)
+                    Label(tr("新しいリンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
                     HStack(spacing: 8) {
                         ShareLink(item: rotated) { Image(systemName: "square.and.arrow.up") }.accessibilityLabel(tr("送る"))
                         Link(destination: rotated) { Image(systemName: "safari") }.accessibilityLabel(tr("開く"))
@@ -615,7 +615,7 @@ struct ProfileView: View {
     }
 
     private func formHeader(_ title: String) -> some View {
-        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent).textCase(nil)
+        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accentText).textCase(nil)
     }
 
     // MARK: アイコン

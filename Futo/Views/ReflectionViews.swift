@@ -23,7 +23,7 @@ struct ReflectionOverlay: View {
             VStack(spacing: 20) {
                 Image(systemName: card.kind == .morning ? "sunrise" : "moon.stars")
                     .font(.system(size: 34, weight: .light))
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.accentText)
                     .accessibilityHidden(true)
                 Text(card.kind.title).font(.title3.weight(.medium))
                 VStack(spacing: 10) {
@@ -69,7 +69,7 @@ struct ReflectionQuestionOverlay: View {
             VStack(spacing: 14) {
                 Image(systemName: "leaf")
                     .font(.system(size: 30, weight: .light))
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.accentText)
                     .accessibilityHidden(true)
                 Text(tr("さっきの時間は、どうでしたか？"))
                     .font(.title3.weight(.medium))

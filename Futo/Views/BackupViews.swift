@@ -13,7 +13,7 @@ struct BackupView: View {
             explanation
             if backup.isConnected { connected } else { notConnected }
             if let text = backup.message, !text.isEmpty { CardSection { Text(text).font(.footnote).foregroundStyle(.secondary) } }
-            if let text = backup.resultMessage { CardSection { Label(text, systemImage: "checkmark.circle").foregroundStyle(Theme.accent) } }
+            if let text = backup.resultMessage { CardSection { Label(text, systemImage: "checkmark.circle").foregroundStyle(Theme.accentText) } }
         }
         .compactForm()
         .navigationTitle(tr("バックアップ"))
@@ -81,7 +81,7 @@ struct BackupView: View {
         // 戻す・削除・許可の取り消しは、目立たせず、小さく並べる
         CardSection {
             Button { Task { await backup.prepareRestore() } } label: {
-                Label(tr("バックアップから戻す"), systemImage: "icloud.and.arrow.down").font(.subheadline).foregroundStyle(Theme.accent)
+                Label(tr("バックアップから戻す"), systemImage: "icloud.and.arrow.down").font(.subheadline).foregroundStyle(Theme.accentText)
             }
             .frame(minHeight: 38).disabled(backup.isWorking || backup.remote == nil)
             Button(role: .destructive) { confirmDeleteRemote = true } label: {
@@ -89,7 +89,7 @@ struct BackupView: View {
             }
             .frame(minHeight: 38).disabled(backup.isWorking || backup.remote == nil)
             Button { confirmDisconnect = true } label: {
-                Label(tr("Driveの許可を取り消す"), systemImage: "xmark.circle").font(.subheadline).foregroundStyle(Theme.accent)
+                Label(tr("Driveの許可を取り消す"), systemImage: "xmark.circle").font(.subheadline).foregroundStyle(Theme.accentText)
             }
             .frame(minHeight: 38).disabled(backup.isWorking)
         }
