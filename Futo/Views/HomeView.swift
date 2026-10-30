@@ -22,9 +22,16 @@ struct HomeView: View {
                 scrollContent
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 36)
             }
             .scrollBounceBehavior(.basedOnSize)
+            // 下端は、ぼかすように薄れて消える（途中で急に切れて見えないように）。下のボタンとは重ならない。
+            .mask(
+                VStack(spacing: 0) {
+                    Rectangle()
+                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 32)
+                }
+            )
             VStack(spacing: 12) {
                 actions
                 #if DEBUG
@@ -73,7 +80,7 @@ struct HomeView: View {
                     Button { sheet = .settings } label: {
                         if sharing.isSignedIn, let name = sharing.profile?.displayName {
                             // ログイン中は、アカウントのアイコンで分かるようにする。小さな歯車で、押すと設定を開けると伝える
-                            AccountAvatar(name: name, photoURL: sharing.auth.photoURL, size: 30)
+                            AccountAvatar(name: name, photoURL: sharing.auth.photoURL, size: 30, isOwn: true)
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "gearshape.fill")
                                         .font(.system(size: 9, weight: .bold))

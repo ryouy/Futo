@@ -67,12 +67,14 @@ final class SharingModel {
     }
 
     private func reset() {
+        AvatarSettings.shared.reset()
         profile = nil; shares = []; friends = FriendsResponse(friends: [], incoming: [], outgoing: [])
         receivedShares = []; sentShares = []; invitation = nil; lastCreatedURL = nil; message = nil; standingConfigs = []
     }
 
     func loadProfile() async {
         guard isSignedIn else { return }
+        await auth.refreshPhotoIfNeeded()
         do {
             profile = try await api.send("GET", "/api/me")
         } catch let error as APIError where error.kind == .notFound {

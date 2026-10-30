@@ -128,11 +128,14 @@ struct SettingsView: View {
                 .frame(minHeight: 44)
             }
 
-            CardSection {
-                Toggle(tr("デモモード"), isOn: Binding(
-                    get: { isDemo },
-                    set: { wantsDemo in model.switchMode(to: wantsDemo ? .demo : .device) }))
+            // デモで始めた人が、実機の利用へ移れる入口（デモの切り替えスイッチは置かない）
+            if isDemo {
+                CardSection {
+                    Button { model.switchMode(to: .device) } label: {
+                        Label(tr("実機で使う"), systemImage: "iphone").foregroundStyle(Theme.accent)
+                    }
                     .frame(minHeight: 44)
+                }
             }
 
             CardSection {

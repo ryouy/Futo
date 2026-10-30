@@ -229,4 +229,56 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertNil(service.photoURL)
         XCTAssertNil(service.providerDisplayName)
     }
+
+    private func fakeJWT(_ claims: [String: Any]) -> String {
+        func b64(_ data: Data) -> String { data.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "") }
+        return b64(Data("{}".utf8)) + "." + b64(try! JSONSerialization.data(withJSONObject: claims)) + ".sig"
+    }
+
+    func testGooglePhotoAndNameAreReadFromTheIDTokenWhenFirebaseOmitsThem() async throws {
+        let jwt = fakeJWT(["name": "山田 太郎", "picture": "https://lh3.googleusercontent.com/a/from-claims=s96-c"])
+        StubProtocol.handler = { [unowned self] request in
+            let url = request.url!.absoluteString
+            if url.contains("oauth2.googleapis.com/token") { return (200, self.json(["id_token": jwt])) }
+            if url.contains("signInWithIdp") { return (200, self.json(["localId": "uid-A", "idToken": "FB", "refreshToken": "R", "expiresIn": "3600"])) }
+            return (404, Data())
+        }
+        let store = MemoryStore()
+        let service = make(store: store)
+        _ = try await service.signInWithGoogle()
+        XCTAssertEqual(service.providerDisplayName, "山田 太郎")
+        XCTAssertEqual(service.photoURL?.path, "/a/from-claims=s96-c")
+        XCTAssertEqual(store.saved?.photoURL, service.photoURL?.absoluteString, "再起動しても、写真のURLが残る")
+    }
+
+    func testClaimsFromATokenWithoutThemAreEmptyAndMalformedTokensAreIgnored() {
+        XCTAssertNil(GoogleIDToken.profile(from: fakeJWT(["sub": "1"])).picture)
+        XCTAssertNil(GoogleIDToken.profile(from: "not-a-jwt").name)
+        XCTAssertNil(GoogleIDToken.profile(from: "a.%%%.c").name)
+    }
+
+    func testPhotoIsLookedUpForAnExistingSessionAndUntrustedHostsAreRefused() async throws {
+        installHappyNetwork()
+        let store = MemoryStore()
+        store.saved = StoredAuthSession(uid: "uid-A", refreshToken: "R")            // 写真に対応する前のログイン
+        let service = make(store: store)
+        StubProtocol.handler = { [unowned self] request in
+            let url = request.url!.absoluteString
+            if url.contains("securetoken") { return (200, self.json(["id_token": "FB", "refresh_token": "R2", "user_id": "uid-A", "expires_in": "3600"])) }
+            if url.contains("accounts:lookup") { return (200, self.json(["users": [["providerUserInfo": [["photoUrl": "https://lh3.googleusercontent.com/a/lookup"]]]]])) }
+            return (404, Data())
+        }
+        await service.refreshPhotoIfNeeded()
+        XCTAssertEqual(service.photoURL?.host, "lh3.googleusercontent.com")
+        XCTAssertEqual(store.saved?.photoURL, "https://lh3.googleusercontent.com/a/lookup")
+
+        let other = make(store: { let s = MemoryStore(); s.saved = StoredAuthSession(uid: "uid-B", refreshToken: "R"); return s }())
+        StubProtocol.handler = { [unowned self] request in
+            let url = request.url!.absoluteString
+            if url.contains("securetoken") { return (200, self.json(["id_token": "FB", "refresh_token": "R2", "user_id": "uid-B", "expires_in": "3600"])) }
+            return (200, self.json(["users": [["photoUrl": "https://evil.example/x.png"]]]))
+        }
+        await other.refreshPhotoIfNeeded()
+        XCTAssertNil(other.photoURL, "Google以外の画像URLは使わない")
+    }
 }

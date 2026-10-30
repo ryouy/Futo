@@ -16,6 +16,8 @@ struct RestrictionManagementView: View {
             endSection
         }
         .compactForm()
+        .animation(.easeInOut(duration: 0.3), value: model.restriction)
+        .animation(.easeInOut(duration: 0.3), value: model.intendsRestriction)
         .navigationTitle(tr("制限の管理"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
@@ -123,6 +125,14 @@ struct RestrictionWaitView: View {
     private var rules: PauseRules { pause.rules }
     private var isCurrentKind: Bool { pause.waitKind == kind }
 
+    /// いまの段階（切り替えのアニメーションの目印）
+    private var stage: String {
+        if ended { return "ended" }
+        if started != nil { return "done" }
+        if isCurrentKind, pause.isReady { return "ready" }
+        return isCurrentKind ? "waiting" : "loading"
+    }
+
     private func timeText(_ remaining: TimeInterval) -> String {
         let total = Int(remaining.rounded(.up))
         return String(format: "%d:%02d", total / 60, total % 60)
@@ -130,19 +140,25 @@ struct RestrictionWaitView: View {
 
     var body: some View {
         CenteredScroll {
-            VStack(spacing: 20) {
-                if ended {
-                    endedView
-                } else if let started {
-                    done(until: started)
-                } else if isCurrentKind, pause.isReady {
-                    ready
-                } else if isCurrentKind {
-                    waiting
-                } else {
-                    ProgressView()
+            // 段階が変わるときは、古い画面が先に薄れてから、新しい画面が現れる（ほかの画面と同じ、ゆるやかな切り替え）。
+            ZStack {
+                VStack(spacing: 20) {
+                    if ended {
+                        endedView
+                    } else if let started {
+                        done(until: started)
+                    } else if isCurrentKind, pause.isReady {
+                        ready
+                    } else if isCurrentKind {
+                        waiting
+                    } else {
+                        ProgressView()
+                    }
                 }
+                .id(stage)
+                .transition(.sequentialFade)
             }
+            .animation(.easeInOut(duration: 0.3), value: stage)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isCurrentKind && started == nil && !ended)

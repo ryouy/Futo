@@ -47,7 +47,7 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
 
     static var buttonTitle: String { isJapanese ? "ホームに戻る" : "Back to Home" }
 
-    /// ロゴは、背景の明暗に関わらず見えるよう、生成りの角丸の台に載せる（ダークの深い緑でも、埋もれない）。
+    /// ロゴは生成り色なので、ブランドの緑の角丸の台に載せて描く（ライトの生成り地でも、ダークの暗い地でも見える）。
     private static let icon: UIImage? = {
         guard let logo = UIImage(named: "ShieldIcon") else { return nil }
         let side: CGFloat = 112
@@ -55,11 +55,8 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
         return renderer.image { context in
             let rect = CGRect(x: 0, y: 0, width: side, height: side)
             let tile = UIBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: 28)
-            UIColor(red: 0xFC / 255, green: 0xF8 / 255, blue: 0xF0 / 255, alpha: 1).setFill()
+            UIColor(red: 0x19 / 255, green: 0x64 / 255, blue: 0x59 / 255, alpha: 1).setFill()
             tile.fill()
-            UIColor(red: 0x19 / 255, green: 0x64 / 255, blue: 0x59 / 255, alpha: 0.18).setStroke()
-            tile.lineWidth = 1
-            tile.stroke()
             let inset: CGFloat = 18
             let target = rect.insetBy(dx: inset, dy: inset)
             let scale = min(target.width / logo.size.width, target.height / logo.size.height)

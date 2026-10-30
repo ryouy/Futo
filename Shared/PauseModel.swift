@@ -26,7 +26,7 @@ struct PauseRules: Equatable {
     /// 開発中は、確かめやすいよう待機だけ短くする（Releaseには入らない）。
     static let standard = PauseRules(waitSeconds: 10, pauseMinutes: 30, endWaitSeconds: 20)
     #else
-    static let standard = PauseRules(waitSeconds: 30, pauseMinutes: 30, endWaitSeconds: 1_800)
+    static let standard = PauseRules(waitSeconds: 60, pauseMinutes: 30, endWaitSeconds: 1_800)
     #endif
 
     var pauseSeconds: TimeInterval { TimeInterval(pauseMinutes) * 60 }

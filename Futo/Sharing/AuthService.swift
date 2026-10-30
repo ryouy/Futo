@@ -98,11 +98,13 @@ final class AuthService {
 
             let googleIDToken = try await exchangeCode(code, verifier: verifier, redirect: redirect)
             let firebase = try await signInToFirebase(googleIDToken: googleIDToken)
+            // Firebaseの応答に名前・写真が無いときは、GoogleのIDトークンの申告（name / picture）から補う
+            let claims = GoogleIDToken.profile(from: googleIDToken)
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
             refreshToken = firebase.refreshToken
-            providerDisplayName = firebase.displayName
-            photoURL = Self.trustedPhotoURL(firebase.photoURL)
+            providerDisplayName = firebase.displayName ?? claims.name
+            photoURL = Self.trustedPhotoURL(firebase.photoURL) ?? Self.trustedPhotoURL(claims.picture)
             // 別のアカウントに切り替わったら、前のアカウントの端末内の共有情報を除去する
             if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
             store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, photoURL: photoURL?.absoluteString))
@@ -112,6 +114,25 @@ final class AuthService {
             state = previous == .signingIn ? .signedOut : previous
             throw error as? AuthError ?? AuthError.failed
         }
+    }
+
+    /// ログイン済みで写真がまだ無いとき（写真に対応する前のログインなど）、Firebaseのユーザー情報から取り直す。
+    /// 取れなくても、何も変えない。
+    func refreshPhotoIfNeeded() async {
+        guard photoURL == nil, case .signedIn(let uid) = state, let token = try? await validIDToken() else { return }
+        var components = URLComponents(string: "https://identitytoolkit.googleapis.com/v1/accounts:lookup")!
+        components.queryItems = [.init(name: "key", value: config.firebaseAPIKey)]
+        var request = URLRequest(url: components.url!, timeoutInterval: 15)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["idToken": token])
+        guard let (status, body) = try? await decode(request), status == 200,
+              let user = (body["users"] as? [[String: Any]])?.first else { return }
+        let providers = (user["providerUserInfo"] as? [[String: Any]]) ?? []
+        let raw = (user["photoUrl"] as? String) ?? providers.compactMap { $0["photoUrl"] as? String }.first
+        guard let url = Self.trustedPhotoURL(raw) else { return }
+        photoURL = url
+        if let refresh = refreshToken { store.save(StoredAuthSession(uid: uid, refreshToken: refresh, photoURL: url.absoluteString)) }
     }
 
     // MARK: IDトークン
@@ -227,5 +248,20 @@ enum ShareLinkCleanup {
         UserDefaultsStandingStore().save([], uid: $0)
         // Driveの許可も、端末から除く（Drive上のバックアップは消えない）
         KeychainDriveTokenStore().clear(uid: $0)
+    }
+}
+
+
+/// GoogleのIDトークン（JWT）の申告から、名前と写真のURLを読む。署名の検証はしない（表示の補助にだけ使い、認証には使わない）。
+enum GoogleIDToken {
+    static func profile(from jwt: String) -> (name: String?, picture: String?) {
+        let parts = jwt.split(separator: ".")
+        guard parts.count >= 2 else { return (nil, nil) }
+        var base64 = String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64 += "=" }
+        guard let data = Data(base64Encoded: base64),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return (nil, nil) }
+        let name = (object["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (name?.isEmpty == false ? name : nil, object["picture"] as? String)
     }
 }
