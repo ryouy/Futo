@@ -408,7 +408,7 @@ private struct ShackleShape: Shape {
         path.addLine(to: CGPoint(x: 0, y: r))
         path.addCurve(to: CGPoint(x: r, y: 0), control1: CGPoint(x: 0, y: r - k * r), control2: CGPoint(x: r - k * r, y: 0))
         path.addCurve(to: CGPoint(x: w, y: r), control1: CGPoint(x: r + k * r, y: 0), control2: CGPoint(x: w, y: r - k * r))
-        path.addLine(to: CGPoint(x: w, y: h - 14))   // 右の脚は短い（開くと本体から抜ける）
+        path.addLine(to: CGPoint(x: w, y: h - 24))   // 右の脚は短い（開くと本体から抜ける）
         return path
     }
 }
@@ -429,8 +429,8 @@ private struct PadlockDrawing: View, Animatable {
         ZStack(alignment: .top) {
             ShackleShape()
                 .stroke(color, style: StrokeStyle(lineWidth: 11, lineCap: .round))
-                .frame(width: 50, height: 62)
-                .offset(y: -15 * open)
+                .frame(width: 50, height: 80)   // 閉じたときは、脚が本体の奥まで入る
+                .offset(y: -30 * open)
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .fill(color)
                 .frame(width: 84, height: 62)
