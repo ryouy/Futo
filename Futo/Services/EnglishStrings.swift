@@ -482,5 +482,6 @@ enum EnglishStrings {
         "Googleアカウントを選んでください。": "Google account you signed in with.",
         "制限しました": "Locked",
         "広告": "Ad",
+        "広告のプライバシー設定": "Ad privacy options",
     ]
 }

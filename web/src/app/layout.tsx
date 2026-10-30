@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main>{children}</main>
         <footer className="site">
-          <a href="/">ふとの紹介を見る</a>
+          <a href="/">ふとの紹介を見る</a> ・ <a href="/privacy">プライバシーポリシー</a>
         </footer>
       </body>
     </html>

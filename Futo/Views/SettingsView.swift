@@ -5,6 +5,7 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var model: AppModel
     @Environment(SharingModel.self) private var sharing
+    @Environment(AdsService.self) private var ads
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
 
@@ -144,6 +145,16 @@ struct SettingsView: View {
                     ForEach(AppLanguage.allCases) { Text($0.displayName).tag($0) }
                 }
                 .frame(minHeight: 44)
+            }
+
+            // 広告の同意が必要な地域（EEA・英国など）だけ、選択をやり直す入口を出す
+            if ads.privacyOptionsRequired {
+                CardSection {
+                    Button { Task { await ads.presentPrivacyOptions() } } label: {
+                        Label(tr("広告のプライバシー設定"), systemImage: "hand.raised").foregroundStyle(Theme.accent)
+                    }
+                    .frame(minHeight: 44)
+                }
             }
 
             CardSection {
