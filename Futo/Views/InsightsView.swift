@@ -5,6 +5,7 @@ import SwiftUI
 struct RecordsView: View {
     let mode: AppMode
     @State private var period: InsightPeriod = .week
+    @State private var detail: DayDetail?
     @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
 
     var body: some View {
@@ -12,7 +13,6 @@ struct RecordsView: View {
         let now = Date()
         let insights = PeriodInsights.make(sessions: sessions, mode: mode, period: period, calendar: calendar, now: now)
         let interval = period.interval(calendar: calendar, now: now)
-        let finished = PeriodInsights.records(sessions: sessions, mode: mode, interval: interval).filter { !$0.phase.isOpen }
         let breakdown = Breakdown.make(sessions: sessions, mode: mode, interval: interval)
 
         VStack(spacing: 0) {
@@ -42,7 +42,7 @@ struct RecordsView: View {
                             PieCard(title: tr("感想"), slices: breakdown.reflections)
                         }
                         bandCard(insights)
-                        recordsCard(finished)
+                        dailyCard(interval: interval)
                     }
                 }
                 .padding(20)
@@ -52,6 +52,7 @@ struct RecordsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(tr("記録"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $detail) { DayDetailView(detail: $0).presentationBackground(Theme.background) }
     }
 
     // MARK: カード
@@ -100,14 +101,85 @@ struct RecordsView: View {
         .card()
     }
 
-    private func recordsCard(_ records: [Session]) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(tr("記録")).font(.subheadline.weight(.medium)).padding(.bottom, 6)
-            ForEach(records) { session in
-                SessionRow(session: session)
-                if session.id != records.last?.id { Divider() }
+    /// 日ごと・アプリごとの「一時解除」の回数。時刻などは、行を開いたときに見られる。
+    private func dailyCard(interval: DateInterval?) -> some View {
+        let days = DailyUnlockSummary.make(sessions: sessions, mode: mode, interval: interval) { session in
+            RestrictedItems.decode(session.temporaryUnlockedApps).sortedItems
+        }
+        return VStack(alignment: .leading, spacing: 14) {
+            Text(tr("一時解除（日ごと）")).font(.subheadline.weight(.medium))
+            if days.isEmpty {
+                Text(tr("この期間に、一時解除した記録はありません。")).font(.footnote).foregroundStyle(.secondary)
+            }
+            ForEach(days) { day in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(day.day.formatted(Date.FormatStyle().month().day().weekday(.abbreviated).locale(LanguageStore.shared.language.locale)))
+                            .font(.footnote.weight(.semibold))
+                        Spacer()
+                        Text(tr("一時解除 {0}回", "\(day.unlockCount)")).font(.footnote.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                    ForEach(day.rows) { row in
+                        Button { detail = DayDetail(day: day.day, key: row.key, sessions: row.sessions) } label: {
+                            HStack(spacing: 8) {
+                                Group {
+                                    if let item = row.key { ItemLabel(item: item).lineLimit(1) } else { Text(tr("対象の記録なし")) }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(tr("{0}回", "\(row.count)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                                Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                            }
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint(tr("時刻などの詳細を開きます"))
+                    }
+                }
+                if day.id != days.last?.id { Divider() }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .card()
+    }
+}
+
+/// 日ごとの行を開いたときの詳細。1回ごとの時刻・目的・解除していた時間・感想を見せる。
+struct DayDetail: Identifiable {
+    var day: Date
+    var key: RestrictedItem?
+    var sessions: [Session]
+    var id: String { "\(day.timeIntervalSince1970)-\(key.map { "\($0)" } ?? "unknown")" }
+}
+
+struct DayDetailView: View {
+    let detail: DayDetail
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(detail.day.formatted(Date.FormatStyle().year().month().day().weekday(.wide).locale(LanguageStore.shared.language.locale)))
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Group {
+                        if let item = detail.key { ItemLabel(item: item) } else { Text(tr("対象の記録なし")) }
+                    }
+                    .font(.headline)
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(detail.sessions) { session in
+                            SessionRow(session: session, showsDate: false)
+                            if session.id != detail.sessions.last?.id { Divider() }
+                        }
+                    }
+                    .card()
+                }
+                .padding(20)
+            }
+            .background(Theme.background.ignoresSafeArea())
+            .navigationTitle(tr("一時解除の詳細"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { dismiss() } } }
+        }
     }
 }

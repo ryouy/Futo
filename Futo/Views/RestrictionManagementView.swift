@@ -1,0 +1,234 @@
+import SwiftUI
+
+/// 制限の管理。制限全体の一時停止と、制限の終了（恒久）を、ふだんの操作から分けて置く。
+@MainActor
+struct RestrictionManagementView: View {
+    @Bindable var model: AppModel
+    @State private var confirmEnd = false
+
+    private var rules: PauseRules { model.pause.rules }
+    private var isDevice: Bool { model.mode == .device }
+
+    var body: some View {
+        Form {
+            statusSection
+            if isDevice { pauseSection }
+            endSection
+            CardSection {
+                Text(tr("iPhoneの設定アプリで、Screen Timeの許可を取り消すこともできます。ふとは、それを防ぐことはできません。"))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        .compactForm()
+        .navigationTitle(tr("制限の管理"))
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            tr("制限を終了しますか？ 自動ではかけ直されません。"),
+            isPresented: $confirmEnd, titleVisibility: .visible
+        ) {
+            Button(tr("制限を終了する"), role: .destructive) { model.stopRestriction() }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
+    }
+
+    // MARK: 状態
+
+    private var statusText: String {
+        switch model.restriction {
+        case .configured: return tr("制限中")
+        case .temporarilyUnlocked: return tr("一時的に使えます")
+        case .paused(let until): return tr("一時停止中（{0} に戻ります）", until.formatted(date: .omitted, time: .shortened))
+        case .unverifiable: return tr("状態を確認できません")
+        case .off: return tr("制限していません")
+        }
+    }
+
+    private var statusSection: some View {
+        CardSection { LabeledContent(tr("いまの状態"), value: statusText) }
+    }
+
+    // MARK: 一時停止
+
+    private var pauseSection: some View {
+        Group {
+            CardSection {
+                Text(tr("設定したルール"))
+                    .font(.footnote).foregroundStyle(.secondary)
+                Text(tr("{0}待ってから、{1}分間だけ、制限を停止できます。", durationText(seconds: rules.waitSeconds), "\(rules.pauseMinutes)"))
+                Text(tr("待機中も、制限は続きます。停止の時間が終わると、自動で制限に戻ります。"))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            if model.isPaused {
+                PrimarySection {
+                    Button { model.resumeRestriction() } label: { Label(tr("制限を再開する"), systemImage: "lock.fill") }
+                }
+                CardSection {
+                    NavigationLink { PauseWaitView(model: model) } label: {
+                        Label(tr("停止の時間を延ばす"), systemImage: "clock.arrow.circlepath").foregroundStyle(Theme.accent)
+                    }.frame(minHeight: 44)
+                    Text(tr("延ばすときも、{0}の待機があります。", durationText(seconds: rules.waitSeconds)))
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            } else {
+                CardSection {
+                    if canPause {
+                        NavigationLink { PauseWaitView(model: model) } label: {
+                            Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(Theme.accent)
+                        }.frame(minHeight: 44)
+                    } else {
+                        Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(.secondary).frame(minHeight: 44)
+                        Text(pauseUnavailableText).font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private var canPause: Bool {
+        model.permission == .approved && model.restriction == .configured && model.device.supportsTemporaryUnlock
+    }
+
+    private var pauseUnavailableText: String {
+        if !model.device.supportsTemporaryUnlock { return tr("この環境では、一時停止を使えません。") }
+        if model.permission != .approved { return tr("Screen Timeの許可が必要です。") }
+        return tr("制限がかかっているときに、使えます。")
+    }
+
+    // MARK: 終了（恒久）
+
+    private var endSection: some View {
+        CardSection {
+            if model.intendsRestriction {
+                Text(tr("制限そのものを終了します。もう一度かけるまで、自動では戻りません。"))
+                    .font(.footnote).foregroundStyle(.secondary)
+                Button(role: .destructive) { confirmEnd = true } label: { Label(tr("制限を終了する"), systemImage: "lock.open") }
+                    .frame(minHeight: 44)
+            } else {
+                Text(tr("制限は、かかっていません。")).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// 一時停止の待機。前面で表示している間だけ進む。待機中も、制限は外れない。
+@MainActor
+struct PauseWaitView: View {
+    let model: AppModel
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
+    @State private var started: Date?
+    @State private var working = false
+
+    private var pause: PauseFlow { model.pause }
+    private var rules: PauseRules { pause.rules }
+
+    private func timeText(_ remaining: TimeInterval) -> String {
+        let total = Int(remaining.rounded(.up))
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+
+    var body: some View {
+        CenteredScroll {
+            VStack(spacing: 20) {
+                if let started {
+                    done(until: started)
+                } else if pause.isReady {
+                    ready
+                } else if pause.isWaiting {
+                    waiting
+                } else {
+                    ProgressView()
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(pause.isWaiting && started == nil)
+        .task { if started == nil, !pause.isWaiting { model.startPauseWait() } }
+        .task(id: scenePhase) {
+            // 前面にいる間だけ進む。バックグラウンド・画面ロックでは止まる。
+            guard scenePhase == .active else { pause.deactivate(); return }
+            pause.activate()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(250))
+                pause.tick()
+            }
+            pause.deactivate()
+        }
+        .onDisappear { pause.deactivate() }
+    }
+
+    // MARK: 段階
+
+    private func stage(_ number: Int, _ title: String) -> some View {
+        Text(tr("{0}/2　{1}", "\(number)", title))
+            .font(.footnote.weight(.medium)).foregroundStyle(Theme.accent)
+    }
+
+    private var waiting: some View {
+        VStack(spacing: 18) {
+            stage(1, tr("待機中"))
+            Text(tr("制限は、続いています。"))
+                .font(.title3.weight(.medium))
+            TimelineView(.animation(paused: scenePhase != .active)) { _ in
+                let remaining = pause.liveRemaining()
+                ZStack {
+                    Circle().stroke(Theme.softBlue, lineWidth: 12)
+                    Circle()
+                        .trim(from: 0, to: pause.liveProgress())
+                        .stroke(Theme.accent, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    Text(timeText(remaining))
+                        .font(.system(size: 44, weight: .light, design: .rounded).monospacedDigit())
+                        .accessibilityLabel(tr("残り {0} 秒", "\(Int(remaining.rounded(.up)))"))
+                }
+            }
+            .frame(width: 200, height: 200)
+            .padding(.vertical, 8)
+            Text(tr("待機が終わると、「{0}分間停止する」を押せます。ここを開いている間だけ、時間が進みます。", "\(rules.pauseMinutes)"))
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Button(tr("やめて、制限を続ける")) {
+                pause.cancelWait()
+                dismiss()
+            }
+            .buttonStyle(FutoButtonStyle(prominent: false))
+        }
+    }
+
+    private var ready: some View {
+        VStack(spacing: 18) {
+            stage(2, tr("停止の確認"))
+            Text(tr("待機が終わりました。"))
+                .font(.title3.weight(.medium))
+            Text(tr("押すと、いまから{0}分間、制限を停止します。時間が終わると、自動で制限に戻ります。", "\(rules.pauseMinutes)"))
+                .multilineTextAlignment(.center)
+            Text(tr("{0}分以内に押さないと、待機からやり直しになります。", "\(Int(rules.readyValidSeconds / 60))"))
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Button(tr("{0}分間停止する", "\(rules.pauseMinutes)")) {
+                guard !working else { return }
+                working = true
+                if case .started(let until) = model.confirmPause() { started = until }
+                working = false
+            }
+            .buttonStyle(FutoButtonStyle())
+            .disabled(working)
+            Button(tr("制限を続ける")) {
+                pause.cancelWait()
+                dismiss()
+            }
+            .buttonStyle(FutoButtonStyle(prominent: false))
+        }
+    }
+
+    private func done(until: Date) -> some View {
+        VStack(spacing: 18) {
+            Image(systemName: "pause.circle").font(.system(size: 44, weight: .light)).foregroundStyle(Theme.accent)
+            Text(tr("制限を停止しました。")).font(.title3.weight(.medium))
+            Text(tr("{0} に、自動で制限に戻ります。", until.formatted(date: .omitted, time: .shortened)))
+                .multilineTextAlignment(.center)
+            Text(tr("先に戻したいときは、ホームの「制限を再開する」を押してください。"))
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Button(tr("閉じる")) { dismiss() }
+                .buttonStyle(FutoButtonStyle())
+        }
+    }
+}

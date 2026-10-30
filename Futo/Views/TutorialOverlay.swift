@@ -52,6 +52,7 @@ struct TutorialOverlay: View {
         switch model.restriction {
         case .configured: return [tr("使いたいときは、ここ。"), tr("ひと呼吸おいてから、"), tr("使うかを選べます。")]
         case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻します。")]
+        case .paused: return [tr("止めている間も、"), tr("ここで制限を再開できます。")]
         case .off, .unverifiable: return [tr("ここで制限をかけます。"), tr("かけておくのが"), tr("おすすめです。")]
         }
     }
@@ -73,7 +74,7 @@ struct TutorialOverlay: View {
                     bottomBar(index: index, bottomInset: proxy.safeAreaInsets.bottom)
                 }
             }
-            .animation(.easeInOut(duration: 0.4), value: index)
+            .animation(.easeInOut(duration: 0.45), value: index)
         }
         .ignoresSafeArea()
     }
@@ -173,14 +174,11 @@ struct TutorialOverlay: View {
     /// 「はじめる」：テーマカラー。暗い案内画面の上でも見えるよう、細い縁とやわらかい光を添える。
     private var startButton: some View {
         Button { model.finishTutorial() } label: {
-            HStack(spacing: 8) {
-                Text(tr("はじめる"))
-                Image(systemName: "arrow.right")
-            }
-            .font(.headline.weight(.semibold))
-            .foregroundStyle(Theme.onAccent)
-            .padding(.horizontal, 40)
-            .frame(minHeight: 56)
+            Text(tr("はじめる"))
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(Theme.onAccent)
+                .padding(.horizontal, 56)
+                .frame(minHeight: 56)
             .background(Capsule().fill(Theme.accent))
             .overlay(Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1.5))
             .shadow(color: Theme.accent.opacity(0.5), radius: 18)

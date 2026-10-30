@@ -13,6 +13,8 @@ final class AppModel {
     let demo: DemoRestrictionService
     let device: DeviceRestrictionService
     let cards: ReflectionCardStore
+    /// 制限全体の一時停止（待機→停止→自動で再制限）。実機のみ
+    let pause: PauseFlow
     let notifications = NotificationService.shared
 
     private(set) var mode: AppMode
@@ -64,6 +66,7 @@ final class AppModel {
         self.prefs = settings.preferences
         self.demo = DemoRestrictionService(defaults: defaults)
         self.device = DeviceRestrictionService()
+        self.pause = PauseFlow(store: DevicePauseStore(), scheduler: DevicePauseScheduler(), shield: DevicePauseShield())
         self.mode = settings.mode
         self.onboardingDone = settings.onboardingDone
         self.tutorialCompleted = settings.tutorialDone
@@ -77,20 +80,28 @@ final class AppModel {
     var intendsRestriction: Bool { service.intendsRestriction }
 
     /// 追加はいつでもできる（実機）。デモは対象が1つだけなので、未選択か、制限していない間だけ。
+    /// 一時停止中は、停止前の設定へ確実に戻すため、追加もできない。
     var canAddItems: Bool {
-        mode == .device || targetCount == 0 || !isTargetEditLocked
+        if isPaused { return false }
+        return mode == .device || targetCount == 0 || !isTargetEditLocked
     }
 
-    /// 外せるのは、制限がかかっていない間だけ（制限オフ、または一時解除中）。
+    /// 対象を外せるのは、制限そのものをオフにしている間だけ。
+    /// 一時解除中・一時停止中も外せない（待機を通らずに、対象を外す抜け道にならないように）。
     var isTargetEditLocked: Bool {
-        if case .temporarilyUnlocked = restriction { return false }
-        return service.intendsRestriction
+        service.intendsRestriction
+    }
+
+    var isPaused: Bool {
+        if case .paused = restriction { return true }
+        return false
     }
 
     // MARK: 状態の再確認
 
     /// 起動時・前面復帰時・操作後に、OSと保存済みSessionから状態を取り直す。
     func refresh() {
+        if mode == .device { pause.reconcile() }
         service.refreshPermission()
         permission = service.permission
         if permission == .approved { permissionError = nil }
@@ -104,6 +115,8 @@ final class AppModel {
         activeSession = sessions.openSession(mode: mode)
         applyUnlockEnds()
         if case .temporarilyUnlocked = restriction {
+            pendingReflection = nil
+        } else if isPaused {
             pendingReflection = nil
         } else {
             pendingReflection = sessions.all().first {
@@ -182,12 +195,10 @@ final class AppModel {
     @discardableResult
     func switchMode(to newMode: AppMode) -> Bool {
         guard newMode != mode else { return true }
+        // 実際の制限がかかっている間は、デモへ切り替えない（切り替えで、待機なしに制限全体が外れてしまうため）。
         if mode == .device, device.intendsRestriction {
-            guard device.stop() else {
-                errorMessage = tr("実際の制限を終了できたか確認できないため、切り替えを保留しました。設定の「いつも制限する」をはずしてお試しください。")
-                refresh()
-                return false
-            }
+            errorMessage = tr("実際の制限がかかっている間は、デモに切り替えられません。「制限の管理」で制限を終了してから、切り替えてください。")
+            return false
         }
         mode = newMode
         settings.mode = newMode
@@ -245,7 +256,48 @@ final class AppModel {
         }
     }
 
+    // MARK: 制限全体の一時停止
+
+    /// 待機を始める。ここでは何も解除しない。制限がかかっているとき（または一時停止の延長）だけ始められる。
+    @discardableResult
+    func startPauseWait() -> Bool {
+        guard mode == .device, permission == .approved else { return false }
+        guard restriction == .configured || isPaused else {
+            notice = tr("制限がかかっているときに、使えます。")
+            return false
+        }
+        guard device.supportsTemporaryUnlock else {
+            errorMessage = tr("この環境では、一時停止を使えません。")
+            return false
+        }
+        return pause.beginWait()
+    }
+
+    /// 本人が「停止する」を押したとき。再制限の監視と状態を保存できた場合だけ、解除する。
+    func confirmPause() -> PauseStartResult {
+        let result = pause.confirmPause()
+        switch result {
+        case .started, .notReady: break
+        case .failed(.scheduling):
+            errorMessage = tr("自動で制限に戻す準備ができなかったため、停止しませんでした。制限は続いています。もう一度お試しください。")
+        case .failed(.shield):
+            errorMessage = tr("制限を外せなかったため、停止しませんでした。制限は続いています。もう一度お試しください。")
+        case .failed(.notRestricted):
+            errorMessage = tr("制限がかかっていないため、停止できません。")
+        }
+        refresh()
+        return result
+    }
+
+    /// 停止を、いま終えて制限に戻す（強める操作なので、待機なしでできる）。
+    func resumeRestriction() {
+        pause.resumeRestrictionNow()
+        refresh()
+    }
+
+    /// 制限全体を終了する（恒久）。一時停止の状態も消す。
     func stopRestriction() {
+        pause.clearAll()
         if !service.stop() {
             errorMessage = tr("制限を外せたか確認できませんでした。もう一度お試しください")
         }
@@ -353,6 +405,17 @@ final class AppModel {
             finishedSession = nil
         }
     }
+
+    #if DEBUG
+    /// 開発用：待機を省略して、本アプリの制限をすぐ解除する。Debugビルドにだけ存在する。
+    /// 進行中の一時解除・一時停止の監視と状態も消し、古いイベントで再制限されないようにする。
+    /// 記録（Session）は作らないので、見送り・利用実績には数えない。
+    func debugReleaseRestrictionNow() {
+        pause.clearAll()
+        _ = service.stop()
+        refresh()
+    }
+    #endif
 
     func deleteAllRecords() {
         sessions.deleteAll()

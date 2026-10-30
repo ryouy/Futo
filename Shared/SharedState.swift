@@ -34,6 +34,7 @@ enum SharedState {
         static let unlock = "device.unlock"
         static let lastEvent = "device.lastEvent"
         static let unlockEnds = "device.unlockEnds"
+        static let pause = "device.pause"
     }
 
     /// 本体は "group.<bundle id>"、拡張は ".monitor" を除いた同じ値。entitlementsの値と一致させる。
@@ -78,6 +79,21 @@ enum SharedState {
                 defaults.set(data, forKey: Key.unlock)
             } else {
                 defaults.removeObject(forKey: Key.unlock)
+            }
+        }
+    }
+
+    /// 制限の一時停止（待機と、停止中の区間）。本体と拡張で共有する
+    static var pauseState: PauseState? {
+        get {
+            guard let data = defaults.data(forKey: Key.pause) else { return nil }
+            return try? JSONDecoder().decode(PauseState.self, from: data)
+        }
+        set {
+            if let newValue, !newValue.isEmpty, let data = try? JSONEncoder().encode(newValue) {
+                defaults.set(data, forKey: Key.pause)
+            } else {
+                defaults.removeObject(forKey: Key.pause)
             }
         }
     }
@@ -172,6 +188,11 @@ enum SharedState {
     /// 保存済みの対象を本アプリ専用ストアへ再適用し、一時解除の記録を消す。
     @discardableResult
     static func relock(reason: String) -> Bool {
+        // 全体の一時停止中は、一時解除の古いイベントで、停止の状態を上書きしない
+        if pauseState?.window != nil {
+            log("一時停止中のため、一時解除の再制限は行いませんでした: \(reason)")
+            return false
+        }
         guard intendsRestriction,
               let selection = loadSelection(), !RestrictedItems(selection: selection).isEmpty else {
             clearUnlock()
@@ -181,6 +202,35 @@ enum SharedState {
         applyShield(items: RestrictedItems(selection: selection))
         clearUnlock()
         log("再制限しました: \(reason)")
+        return true
+    }
+}
+
+// MARK: 制限の一時停止からの再制限
+
+extension SharedState {
+    /// 一時停止の区間を終え、停止前の制限へ戻す。拡張（Device Activity）と本体の両方から呼ぶ。
+    /// 現在の区間に対応する名前のときだけ動く（延長で置き換えられた古い区間のイベントは無視する）。
+    @discardableResult
+    static func relockFromPause(activityName: String?, reason: String) -> Bool {
+        guard var state = pauseState, let window = state.window else { return false }
+        if let activityName, !state.isCurrentWindow(activityName) {
+            log("古い一時停止のイベントを無視しました: \(reason)")
+            return false
+        }
+        let items = (try? JSONDecoder().decode(RestrictedItems.self, from: window.itemsData))
+            ?? loadSelection().map { RestrictedItems(selection: $0) }
+            ?? RestrictedItems()
+        guard intendsRestriction, !items.isEmpty else {
+            state.window = nil
+            pauseState = state
+            log("一時停止を終えましたが、再制限する対象または意図がありません: \(reason)")
+            return false
+        }
+        applyShield(items: items)
+        state.window = nil
+        pauseState = state
+        log("一時停止を終え、再制限しました: \(reason)")
         return true
     }
 }

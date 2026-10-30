@@ -15,6 +15,8 @@ enum RestrictionState: Equatable {
     case unverifiable
     /// 一時解除中（実機のみ）。しきい値到達または監視区間の終了で再制限される
     case temporarilyUnlocked(until: Date)
+    /// 制限全体を一時停止中（実機のみ）。区間が終わると、拡張が停止前の制限へ戻す
+    case paused(until: Date)
 }
 
 enum UnlockStartResult: Equatable {

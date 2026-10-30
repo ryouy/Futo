@@ -78,6 +78,8 @@ final class DeviceRestrictionService: RestrictionService {
     @discardableResult
     func stop() -> Bool {
         stopUnlockMonitoring()
+        stopPauseMonitoring()
+        SharedState.pauseState = nil
         SharedState.clearUnlock()
         SharedState.clearShield()
         SharedState.intendsRestriction = false
@@ -88,6 +90,8 @@ final class DeviceRestrictionService: RestrictionService {
     /// 変更できるのは制限オフまたは一時解除中だけ（呼び出し側で止める）。
     private func syncShield() {
         guard intendsRestriction, permission == .approved else { return }
+        // 一時停止中は、対象を変えない・シールドも触らない（停止前の設定へ確実に戻すため）
+        guard SharedState.pauseState?.window == nil else { return }
         let current = items
         if current.isEmpty {
             stopUnlockMonitoring()
@@ -116,6 +120,8 @@ final class DeviceRestrictionService: RestrictionService {
     /// 選ばれなかったものは制限されたまま。
     func temporaryUnlock(items unlockItems: RestrictedItems, sessionID: UUID? = nil, minutes: Int) -> UnlockStartResult {
         guard SharedState.isAvailable else { return .unsupported }
+        // 制限全体の一時停止中は、通常の一時解除を始めない（停止が優先）
+        guard SharedState.pauseState?.window == nil else { return .failed }
         guard permission == .approved, intendsRestriction,
               !unlockItems.isEmpty, unlockItems.isSubset(of: items) else {
             return .failed
@@ -160,6 +166,11 @@ final class DeviceRestrictionService: RestrictionService {
         SharedState.relock(reason: tr("アプリから制限に戻しました"))
     }
 
+    private func stopPauseMonitoring() {
+        let names = center.activities.filter { $0.rawValue.hasPrefix(PauseState.activityPrefix) }
+        if !names.isEmpty { center.stopMonitoring(names) }
+    }
+
     private func stopUnlockMonitoring() {
         let names = center.activities.filter { $0.rawValue.hasPrefix(SharedState.unlockActivityPrefix) }
         if !names.isEmpty { center.stopMonitoring(names) }
@@ -169,6 +180,11 @@ final class DeviceRestrictionService: RestrictionService {
     func verify() -> RestrictionState {
         guard intendsRestriction else { return .off }
         guard permission == .approved, !items.isEmpty else { return .unverifiable }
+
+        // 制限全体の一時停止中（区間の終わりと監視は、PauseFlow.reconcile() が確認・補正する）
+        if let window = SharedState.pauseState?.window {
+            return .paused(until: window.endsAt)
+        }
 
         if let record = SharedState.unlock {
             let monitoring = center.activities.contains { $0.rawValue == record.activityName }

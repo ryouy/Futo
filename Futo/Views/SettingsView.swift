@@ -6,8 +6,6 @@ struct SettingsView: View {
     @Bindable var model: AppModel
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
-    @State private var confirmOff = false
-    @State private var confirmLeaveDevice = false
 
     private enum SettingsTab: Int, CaseIterable {
         case restriction, notification, account, other
@@ -53,20 +51,6 @@ struct SettingsView: View {
             Button(tr("削除"), role: .destructive) { model.deleteAllRecords() }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(
-            tr("制限をはずしますか？ 自動ではかけ直されません。"),
-            isPresented: $confirmOff, titleVisibility: .visible
-        ) {
-            Button(tr("はずす"), role: .destructive) { model.stopRestriction() }
-            Button(tr("キャンセル"), role: .cancel) {}
-        }
-        .confirmationDialog(
-            tr("実際の制限をはずして、デモに切り替えますか？"),
-            isPresented: $confirmLeaveDevice, titleVisibility: .visible
-        ) {
-            Button(tr("はずして切り替える"), role: .destructive) { model.switchMode(to: .demo) }
-            Button(tr("キャンセル"), role: .cancel) {}
-        }
     }
 
     // MARK: 制限
@@ -74,21 +58,18 @@ struct SettingsView: View {
     private var restrictionTab: some View {
         Form {
             CardSection {
-                Toggle(tr("いつも制限する"), isOn: Binding(
-                    get: { model.intendsRestriction },
-                    set: { on in
-                        if on { model.startRestriction() } else { confirmOff = true }
-                    }))
+                if model.intendsRestriction {
+                    LabeledContent(tr("制限"), value: tr("かかっています"))
+                        .frame(minHeight: 44)
+                } else {
+                    Button { model.startRestriction() } label: {
+                        Label(tr("制限をかける"), systemImage: "lock").foregroundStyle(Theme.accent)
+                    }
                     .frame(minHeight: 44)
+                }
                 Toggle(tr("デモモード"), isOn: Binding(
                     get: { isDemo },
-                    set: { wantsDemo in
-                        if wantsDemo, model.mode == .device, model.device.intendsRestriction {
-                            confirmLeaveDevice = true
-                        } else {
-                            model.switchMode(to: wantsDemo ? .demo : .device)
-                        }
-                    }))
+                    set: { wantsDemo in model.switchMode(to: wantsDemo ? .demo : .device) }))
                     .frame(minHeight: 44)
             }
 
@@ -122,6 +103,14 @@ struct SettingsView: View {
                     .frame(minHeight: 44)
                     if let error = model.permissionError { Text(error).font(.footnote) }
                 }
+            }
+
+            // ふだんの操作から離して、いちばん下に置く（隠さない）。
+            CardSection {
+                NavigationLink { RestrictionManagementView(model: model) } label: {
+                    Label(tr("制限の管理"), systemImage: "lock.shield").foregroundStyle(Theme.accent)
+                }
+                .frame(minHeight: 44)
             }
         }
         .compactForm()

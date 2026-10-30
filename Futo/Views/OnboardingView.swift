@@ -28,6 +28,9 @@ struct OnboardingView: View {
 
     @Namespace private var languageNamespace
     @State private var page = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// ページ移動中は、次の操作を受け付けない（連続操作でアニメーションが重ならないように）。
+    @State private var isSliding = false
     /// 指で動かしている間のずれ
     @State private var drag: CGFloat = 0
     /// スプラッシュが消えるのに合わせて、ゆっくり現れる（見直しのときは、すぐ）。
@@ -148,27 +151,57 @@ struct OnboardingView: View {
     // MARK: ページの横スライド
 
     private var pageCount: Int { pages.count + 1 }   // 説明のページ＋最後の「はじめましょう」
-    private let slide = Animation.easeInOut(duration: 0.65)
+    /// ページの横移動。急に加速・停止しない、なだらかなease-in-out（約0.45秒）。
+    private var slide: Animation { .timingCurve(0.4, 0.0, 0.2, 1.0, duration: slideDuration) }
+
+    /// ページ移動の長さ（視差効果を減らす設定では、移動せずに溶けるように切り替える）。
+    private var slideDuration: Double { reduceMotion ? 0.3 : 0.45 }
+
+    /// ページを移る。移動中の操作は無視する。
+    private func go(to target: Int) {
+        let clamped = min(max(target, 0), pageCount - 1)
+        guard clamped != page, !isSliding else { return }
+        isSliding = true
+        withAnimation(slide) { page = clamped }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(slideDuration))
+            isSliding = false
+        }
+    }
 
     /// ページを横に並べて動かす。ボタンでもスワイプでも、前のページが左へゆるっと流れる。
+    /// 「視差効果を減らす」設定では、横に動かさず、ページを重ねて、ふわっと切り替える。
     private var pager: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            HStack(spacing: 0) {
-                ForEach(0..<pageCount, id: \.self) { index in
-                    Group {
-                        if index < pages.count { pageView(pages[index], index: index) } else { startView }
+            Group {
+                if reduceMotion {
+                    ZStack {
+                        ForEach(0..<pageCount, id: \.self) { index in
+                            pageContent(index)
+                                .frame(width: width)
+                                .opacity(index == page ? 1 : 0)
+                                .accessibilityHidden(index != page)
+                        }
                     }
-                    .frame(width: width)
-                    .accessibilityHidden(index != page)
+                    .animation(slide, value: page)
+                } else {
+                    HStack(spacing: 0) {
+                        ForEach(0..<pageCount, id: \.self) { index in
+                            pageContent(index)
+                                .frame(width: width)
+                                .accessibilityHidden(index != page)
+                        }
+                    }
+                    .offset(x: -CGFloat(page) * width + drag)
+                    .animation(slide, value: page)
                 }
             }
-            .offset(x: -CGFloat(page) * width + drag)
-            .animation(slide, value: page)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 12)
                     .onChanged { value in
+                        guard !reduceMotion, !isSliding else { return }
                         // 端では、抵抗をつけて少ししか動かさない。
                         let atStart = page == 0 && value.translation.width > 0
                         let atEnd = page == pageCount - 1 && value.translation.width < 0
@@ -182,14 +215,27 @@ struct OnboardingView: View {
                         } else if value.translation.width > threshold || value.predictedEndTranslation.width > width * 0.5 {
                             next = max(page - 1, 0)
                         }
-                        withAnimation(slide) {
-                            drag = 0
-                            page = next
+                        if isSliding {
+                            withAnimation(slide) { drag = 0 }
+                        } else if next != page {
+                            isSliding = true
+                            withAnimation(slide) { drag = 0; page = next }
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(slideDuration))
+                                isSliding = false
+                            }
+                        } else {
+                            withAnimation(slide) { drag = 0 }
                         }
                     }
             )
         }
         .clipped()
+    }
+
+    @ViewBuilder
+    private func pageContent(_ index: Int) -> some View {
+        if index < pages.count { pageView(pages[index], index: index) } else { startView }
     }
 
     // MARK: インジケータと操作
@@ -224,8 +270,8 @@ struct OnboardingView: View {
             .transition(.opacity)
         } else {
             VStack(spacing: 4) {
-                pill(tr("つぎへ"), filled: true) { withAnimation(slide) { page += 1 } }
-                Button(tr("スキップ")) { withAnimation(slide) { page = pages.count } }
+                pill(tr("つぎへ"), filled: true) { go(to: page + 1) }
+                Button(tr("スキップ")) { go(to: pages.count) }
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Self.cream.opacity(0.75))
                     .frame(minHeight: 44)

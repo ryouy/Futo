@@ -45,8 +45,23 @@ struct ReflectionOverlay: View {
 }
 
 /// 「さっきの時間は、どうでしたか？」。一時解除のあと、戻ってきたときに、画面全体を覆うカードで尋ねる。
+/// 選んだ答えを、少しの間だけ選択状態で見せてから閉じる（突然切り替わらないように）。連打しても、記録は1回だけ。
 struct ReflectionQuestionOverlay: View {
     let onAnswer: (Reflection) -> Void
+    @State private var chosen: Reflection?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// 選んでから閉じるまでの間（約0.3秒）。
+    static let confirmDelay: Duration = .milliseconds(300)
+
+    private func choose(_ reflection: Reflection) {
+        guard chosen == nil else { return }
+        withAnimation(.easeInOut(duration: reduceMotion ? 0.15 : 0.2)) { chosen = reflection }
+        Task { @MainActor in
+            try? await Task.sleep(for: Self.confirmDelay)
+            onAnswer(reflection)
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -61,11 +76,14 @@ struct ReflectionQuestionOverlay: View {
                     .oneLine(0.8)
                     .padding(.bottom, 6)
                 ForEach([Reflection.satisfied, .neutral, .wishedLess], id: \.self) { reflection in
-                    Button(reflection.label) { onAnswer(reflection) }
-                        .buttonStyle(FutoButtonStyle(prominent: false))
+                    Button(reflection.label) { choose(reflection) }
+                        .buttonStyle(FutoButtonStyle(prominent: chosen == reflection))
+                        .opacity(chosen == nil || chosen == reflection ? 1 : 0.35)
+                        .accessibilityAddTraits(chosen == reflection ? .isSelected : [])
                 }
-                Button(tr("答えない")) { onAnswer(.skipped) }
+                Button(tr("答えない")) { choose(.skipped) }
                     .buttonStyle(FutoTextButtonStyle())
+                    .opacity(chosen == nil || chosen == .skipped ? 1 : 0.35)
             }
             .padding(28)
             .frame(maxWidth: .infinity)

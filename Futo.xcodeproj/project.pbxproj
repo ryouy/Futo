@@ -11,18 +11,25 @@
 		0419D0985165832C72CD9336 /* Phase4Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1F074481297D230F696E4A /* Phase4Config.swift */; };
 		04F06092D2BCFACB08B35A97 /* LogicalCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4042D91A1DA44E257692BC28 /* LogicalCalendar.swift */; };
 		05178064FF2F7311B6C01F36 /* WebAuthRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E702890F1D0A6A89F84AB /* WebAuthRunner.swift */; };
+		065A921ED23EB237FF7EFC2F /* FutoShieldConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D531D20B8BF3515274EA19B0 /* FutoShieldConfiguration.swift */; };
 		065FBE4BB0116D3661A59A7D /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77ED42928EB0A4E0FA5BF9E /* APIModels.swift */; };
 		074DB794CB80AB347EC6C144 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE5A750D94E24C9C5B9CB7C3 /* OnboardingView.swift */; };
 		07C27F3A6EFFB00AF62F8527 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F628C366DFB1684C45D06A /* HomeView.swift */; };
 		0AD4B04D8720107077F2D34A /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3ABA836A347ACB128D09C74 /* AppModel.swift */; };
 		0E95F7E4CF3BD195ACC83FB2 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED8F394DA3FFC4EAC9D8A20 /* Theme.swift */; };
 		10CF3548B80AA996B51ED23F /* EnglishStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 961AFC0FF65B423AF1F560BA /* EnglishStrings.swift */; };
+		13A4C4504210B9C5537A88FB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E040EA0EF6230253E2A2146C /* Foundation.framework */; };
 		1632E4A58BAB3D1F934503F6 /* FlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FD0CD07E4D79EC27C92915 /* FlowView.swift */; };
+		189AD045DDD2945DBDC8F83C /* PauseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C48F409E24D98499D5E75FF /* PauseModel.swift */; };
 		18A9F4B0BFEF76BFEAA33DAB /* FutoMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B055470C5F5029EA491ECB /* FutoMonitor.swift */; };
+		1926C3D42807BC57054A3778 /* PauseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C48F409E24D98499D5E75FF /* PauseModel.swift */; };
+		1D1BC0AAB9E2674E6A01E29C /* DailyUnlockSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F1205ABDB91847DB8948188 /* DailyUnlockSummaryTests.swift */; };
 		1DF62AEB84E46E962BAF210B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E040EA0EF6230253E2A2146C /* Foundation.framework */; };
 		1FEE66558600DAA92886798D /* AppPickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96FD2843A43E4EF9A3C159E /* AppPickers.swift */; };
 		20EA90C7CC747D4D21C26A0B /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF093F77E0ECBB37A7693291 /* SessionStore.swift */; };
 		22C505E61C337ED9F4D1B6E6 /* BackupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5AB94950F0760F7FCF9AF18 /* BackupViews.swift */; };
+		24C5F617E52A4F99481E3A27 /* ShieldIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = B6051214DE403B48EBD6213D /* ShieldIcon.png */; };
+		29EE84A2B75D19E9F5E82731 /* RestrictionManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2571E719603AC1B29FD0A578 /* RestrictionManagementView.swift */; };
 		2AF650B58BEFB4B318603675 /* FutoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55D3E8121D07DD1E3765C988 /* FutoApp.swift */; };
 		2B0C7A9170E3AF67BEE6060C /* TutorialOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AD1E8986C150CEE36B6FB25 /* TutorialOverlay.swift */; };
 		2B1C83B829E9CEC237DDF810 /* FriendsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991EEDC925EAC3F1447C11D7 /* FriendsViews.swift */; };
@@ -36,16 +43,19 @@
 		4552D55E21AA30B3EA6E4FF1 /* DeviceRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */; };
 		4C2054EC9D0947364F73411A /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */; };
 		4DA8EE1818439D1E2FF3F6AF /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */; };
+		4FC9D13A7B099C01DBB7DE7E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E040EA0EF6230253E2A2146C /* Foundation.framework */; };
 		50385D5EF115309ACFEF6079 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */; };
 		5070FBDEC949AEF0E9A02901 /* ReflectionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC033647C6060CD293D5535 /* ReflectionViews.swift */; };
 		50E53F79005F1DBD1B3DB8C6 /* SessionFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B768EB594A2A04EC20521A /* SessionFlowTests.swift */; };
 		52D1EC68E1EAAF7D866D6B7C /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE9D28B9FE75AEDE83AC6C4 /* Keychain.swift */; };
+		55E8A401941C243E50A2E61C /* FutoShield.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		56269CD9A8AA67F43BD50711 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */; };
 		5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D183B067D9C20E8E848405 /* InsightsView.swift */; };
 		5C0345F5EA81CAE5EC7D4015 /* DemoRestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */; };
 		5FF5104A86D141EF2D4DA87D /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = E640CE9BAC5D46E1D1FB0617 /* PKCE.swift */; };
 		6004556B9472BDBA86337E6D /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		6701903BE9BD43EF8CDD200A /* WaitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95DEA83570D048231C077F6 /* WaitController.swift */; };
+		6C137678CE802BEF81A0ACB4 /* FutoShieldAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55097CD4104E29FEF9C9CD2 /* FutoShieldAction.swift */; };
 		70B2D233425DEE826ECB6616 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDB877B03A1742CC4E16B704 /* Localization.swift */; };
 		7136B081775651874C279773 /* BackupDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = B561B8915898FF11685A4CEA /* BackupDocument.swift */; };
 		732354A587D117751BB65A98 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4FEB320F54297D02F1B5B9 /* SplashView.swift */; };
@@ -58,14 +68,18 @@
 		8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57186D513F893809C415EC62 /* AppModel+Phase3.swift */; };
 		89A4BD8B8EBBA8935A01C635 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD20AE72812E367E3277411 /* Preferences.swift */; };
 		8A92752BBED311CF09D4AECA /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
+		8AB7C7078D389FCB348E72FA /* DailyUnlockSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FD3A37B003E8634652895D /* DailyUnlockSummary.swift */; };
 		8C03781D30A6220B1604A7DE /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE4BA309E788D84B95854AD /* AppSettings.swift */; };
 		8C0A1EDFF95440EA18FB9168 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF89A44A3244DEF110D2FD5 /* AuthServiceTests.swift */; };
+		8CD7D43DD1DA895F872DA3A2 /* FutoShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9EEA987CC439D17FDC5CA5D9 /* FutoShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		91B2ECE1C38EB051A1989FE6 /* StandingShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */; };
+		927395FF03FF6B70690437CB /* DevicePause.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B71A7F74A54CCF315FF9184 /* DevicePause.swift */; };
 		95DDC63148329F84382E3A65 /* StandingShareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67A8F8585F9F7584FC510770 /* StandingShareTests.swift */; };
 		A792D9702B0A5ECF567404C3 /* SharingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */; };
 		B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0604FAD36D34A141ED936C80 /* SessionSummary.swift */; };
 		B35EE4150B6ED67BC21646EC /* SharingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F135E43B0E027CEB7C5623E3 /* SharingTests.swift */; };
 		B8BB5DE9D67E635126881316 /* Phase4Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9F9AF641B9C85775FA877F36 /* Phase4Config.plist */; };
+		B98D4980CCA9E95A2BDFA74F /* PauseFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9379B6BE4BDC9B8743095F81 /* PauseFlow.swift */; };
 		B9ADBE7840BCB17E993A8148 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7D6F2D068E20BC2CB84D11 /* AuthService.swift */; };
 		C362185EE1AF8F06BE892F74 /* StatsCharts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */; };
 		C97999953E09EDCC3B90042A /* DriveAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126548157E958BD21500124 /* DriveAuth.swift */; };
@@ -80,9 +94,17 @@
 		EFA2B2010F96E63ECA2E533D /* SharingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB23ABB578D87C290E440A7 /* SharingViews.swift */; };
 		F397E7B2FE82AA8EC2EC269A /* BackupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE7744A612187441CC771BE2 /* BackupTests.swift */; };
 		F4DDD9494C2F58276CEFF243 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
+		FB091407F84BD6470B5A6E0A /* PauseFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7654A63B964559C5355DEA /* PauseFlowTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0BADAF2AACF00AA233174216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4DC844ABCCFC0D132D087C1C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A7A0F5E0FCBF9FF1B86D549E;
+			remoteInfo = FutoShield;
+		};
 		24235C1E0F58C842B1EE8FCF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4DC844ABCCFC0D132D087C1C /* Project object */;
@@ -97,6 +119,13 @@
 			remoteGlobalIDString = 6E4779557EA7C76341DEBBE7;
 			remoteInfo = Futo;
 		};
+		741579F5A5B1E0F83B3E5470 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4DC844ABCCFC0D132D087C1C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 38AD75774B4A3C2940369F10;
+			remoteInfo = FutoShieldAction;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -107,6 +136,8 @@
 			dstSubfolderSpec = 13;
 			files = (
 				EA7E5B92B9D41E40AC4C8F54 /* FutoMonitor.appex in Embed Foundation Extensions */,
+				55E8A401941C243E50A2E61C /* FutoShield.appex in Embed Foundation Extensions */,
+				8CD7D43DD1DA895F872DA3A2 /* FutoShieldAction.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -119,10 +150,13 @@
 		0B2DB6C1570F469DB3B9453F /* FutoMonitor.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = FutoMonitor.entitlements; sourceTree = "<group>"; };
 		0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharingModel.swift; sourceTree = "<group>"; };
 		0C9513AADAE02448E4B8ACAA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		11DD775705D1039AE7E83797 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1A7A26A456B3046687D2372C /* APIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		1C07C305FAF1EBCC3773D26A /* LocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		1DD20AE72812E367E3277411 /* Preferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		2192B7E73C3E53FB0EBA0BB4 /* SuggestionEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SuggestionEngine.swift; sourceTree = "<group>"; };
+		24FD3A37B003E8634652895D /* DailyUnlockSummary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DailyUnlockSummary.swift; sourceTree = "<group>"; };
+		2571E719603AC1B29FD0A578 /* RestrictionManagementView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestrictionManagementView.swift; sourceTree = "<group>"; };
 		26BD24262F4051951F996334 /* PieChart.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PieChart.swift; sourceTree = "<group>"; };
 		272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionBuilder.swift; sourceTree = "<group>"; };
 		2BE4BA309E788D84B95854AD /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -132,6 +166,7 @@
 		4042D91A1DA44E257692BC28 /* LogicalCalendar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogicalCalendar.swift; sourceTree = "<group>"; };
 		4267030096FD083643FBA49A /* WaitCountdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitCountdown.swift; sourceTree = "<group>"; };
 		42DC2CE93889F66F68CEA1BD /* DriveClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriveClient.swift; sourceTree = "<group>"; };
+		42FF5261272D18F89028C63A /* FutoShieldAction.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = FutoShieldAction.entitlements; sourceTree = "<group>"; };
 		48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationPlanner.swift; sourceTree = "<group>"; };
 		55D3E8121D07DD1E3765C988 /* FutoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FutoApp.swift; sourceTree = "<group>"; };
@@ -142,17 +177,22 @@
 		61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatsCharts.swift; sourceTree = "<group>"; };
 		645EC79F22BEC5EFE970061D /* Futo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Futo.entitlements; sourceTree = "<group>"; };
 		67A8F8585F9F7584FC510770 /* StandingShareTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingShareTests.swift; sourceTree = "<group>"; };
+		6C48F409E24D98499D5E75FF /* PauseModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PauseModel.swift; sourceTree = "<group>"; };
+		6C7654A63B964559C5355DEA /* PauseFlowTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PauseFlowTests.swift; sourceTree = "<group>"; };
 		6D1F074481297D230F696E4A /* Phase4Config.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase4Config.swift; sourceTree = "<group>"; };
 		6D6E702890F1D0A6A89F84AB /* WebAuthRunner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebAuthRunner.swift; sourceTree = "<group>"; };
 		6E4FEB320F54297D02F1B5B9 /* SplashView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		7374470A04DEE6A31639424D /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7B579FCEEFCA7C029BB7DAB6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		7CF89A44A3244DEF110D2FD5 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		8126548157E958BD21500124 /* DriveAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriveAuth.swift; sourceTree = "<group>"; };
 		84F628C366DFB1684C45D06A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		8AD1E8986C150CEE36B6FB25 /* TutorialOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TutorialOverlay.swift; sourceTree = "<group>"; };
+		8B71A7F74A54CCF315FF9184 /* DevicePause.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DevicePause.swift; sourceTree = "<group>"; };
 		8CB23ABB578D87C290E440A7 /* SharingViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharingViews.swift; sourceTree = "<group>"; };
 		8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestrictedItems.swift; sourceTree = "<group>"; };
 		8F6CE73B90F4BF7BFB780C9F /* ShareStats.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareStats.swift; sourceTree = "<group>"; };
+		9379B6BE4BDC9B8743095F81 /* PauseFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PauseFlow.swift; sourceTree = "<group>"; };
 		961AFC0FF65B423AF1F560BA /* EnglishStrings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnglishStrings.swift; sourceTree = "<group>"; };
 		991EEDC925EAC3F1447C11D7 /* FriendsViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FriendsViews.swift; sourceTree = "<group>"; };
 		99A12D1CD44C264F49DA847A /* DriveTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriveTests.swift; sourceTree = "<group>"; };
@@ -160,20 +200,26 @@
 		9AE9D28B9FE75AEDE83AC6C4 /* Keychain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		9D7D8876509532823B515AC5 /* FutoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FutoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E9AE22A2DD42A5BA4FF900D /* InviteLink.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InviteLink.swift; sourceTree = "<group>"; };
+		9EEA987CC439D17FDC5CA5D9 /* FutoShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9F1205ABDB91847DB8948188 /* DailyUnlockSummaryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DailyUnlockSummaryTests.swift; sourceTree = "<group>"; };
 		9F9AF641B9C85775FA877F36 /* Phase4Config.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Phase4Config.plist; sourceTree = "<group>"; };
+		A3698FA716626DB9AABE91F7 /* FutoShield.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = FutoShield.entitlements; sourceTree = "<group>"; };
 		A95DEA83570D048231C077F6 /* WaitController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitController.swift; sourceTree = "<group>"; };
 		ADC165D09E61DE84B5AF5692 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
 		AE7744A612187441CC771BE2 /* BackupTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupTests.swift; sourceTree = "<group>"; };
 		AF093F77E0ECBB37A7693291 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		B561B8915898FF11685A4CEA /* BackupDocument.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupDocument.swift; sourceTree = "<group>"; };
+		B6051214DE403B48EBD6213D /* ShieldIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = ShieldIcon.png; sourceTree = "<group>"; };
 		BDB877B03A1742CC4E16B704 /* Localization.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		C0DDA3FF21AD954111BD488A /* DemoRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRestrictionService.swift; sourceTree = "<group>"; };
 		C26B0FC1E1229764718CF683 /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		C5E844173F72B2D3E5C3A7E4 /* DeviceRestrictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceRestrictionService.swift; sourceTree = "<group>"; };
+		C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingShare.swift; sourceTree = "<group>"; };
 		CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase3Tests.swift; sourceTree = "<group>"; };
 		CFC033647C6060CD293D5535 /* ReflectionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionViews.swift; sourceTree = "<group>"; };
 		D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionCard.swift; sourceTree = "<group>"; };
+		D531D20B8BF3515274EA19B0 /* FutoShieldConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FutoShieldConfiguration.swift; sourceTree = "<group>"; };
 		D589FAE9A2A49328F644588A /* BackupModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupModel.swift; sourceTree = "<group>"; };
 		D5AB94950F0760F7FCF9AF18 /* BackupViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupViews.swift; sourceTree = "<group>"; };
 		D77ED42928EB0A4E0FA5BF9E /* APIModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
@@ -185,6 +231,7 @@
 		E640CE9BAC5D46E1D1FB0617 /* PKCE.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PKCE.swift; sourceTree = "<group>"; };
 		F135E43B0E027CEB7C5623E3 /* SharingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharingTests.swift; sourceTree = "<group>"; };
 		F3ABA836A347ACB128D09C74 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		F55097CD4104E29FEF9C9CD2 /* FutoShieldAction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FutoShieldAction.swift; sourceTree = "<group>"; };
 		F7D183B067D9C20E8E848405 /* InsightsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		FDB1C846DC4122660C2FFF45 /* SharedState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedState.swift; sourceTree = "<group>"; };
 		FE5A750D94E24C9C5B9CB7C3 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -194,6 +241,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		184381EDF75234A4AEDBD293 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4FC9D13A7B099C01DBB7DE7E /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		28DC5CDC45C527931886089F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -208,6 +263,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D000F7FC18923729BDD331D9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13A4C4504210B9C5537A88FB /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ECF46C3B22DF595542FF6181 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -219,6 +282,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0A88985D2AD32EC7EA5CD8AE /* FutoShield */ = {
+			isa = PBXGroup;
+			children = (
+				D531D20B8BF3515274EA19B0 /* FutoShieldConfiguration.swift */,
+				11DD775705D1039AE7E83797 /* Info.plist */,
+				A3698FA716626DB9AABE91F7 /* FutoShield.entitlements */,
+				B6051214DE403B48EBD6213D /* ShieldIcon.png */,
+			);
+			name = FutoShield;
+			path = FutoShield;
+			sourceTree = "<group>";
+		};
+		109D03712F16C9C8EC98D9ED /* FutoShieldAction */ = {
+			isa = PBXGroup;
+			children = (
+				F55097CD4104E29FEF9C9CD2 /* FutoShieldAction.swift */,
+				7374470A04DEE6A31639424D /* Info.plist */,
+				42FF5261272D18F89028C63A /* FutoShieldAction.entitlements */,
+			);
+			name = FutoShieldAction;
+			path = FutoShieldAction;
+			sourceTree = "<group>";
+		};
 		2009B4940E5E16F10DB15B98 /* Futo */ = {
 			isa = PBXGroup;
 			children = (
@@ -256,6 +342,8 @@
 				AE7744A612187441CC771BE2 /* BackupTests.swift */,
 				99A12D1CD44C264F49DA847A /* DriveTests.swift */,
 				67A8F8585F9F7584FC510770 /* StandingShareTests.swift */,
+				6C7654A63B964559C5355DEA /* PauseFlowTests.swift */,
+				9F1205ABDB91847DB8948188 /* DailyUnlockSummaryTests.swift */,
 			);
 			path = FutoTests;
 			sourceTree = "<group>";
@@ -308,6 +396,7 @@
 				991EEDC925EAC3F1447C11D7 /* FriendsViews.swift */,
 				D5AB94950F0760F7FCF9AF18 /* BackupViews.swift */,
 				61FB58D47FEE19DB86C66B22 /* StatsCharts.swift */,
+				2571E719603AC1B29FD0A578 /* RestrictionManagementView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -358,6 +447,7 @@
 			children = (
 				FDB1C846DC4122660C2FFF45 /* SharedState.swift */,
 				8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */,
+				6C48F409E24D98499D5E75FF /* PauseModel.swift */,
 			);
 			name = Shared;
 			path = Shared;
@@ -372,6 +462,8 @@
 				A0DADCA9DB147565602D3A1B /* Shared */,
 				7755900618734E2FAA8D099C /* FutoMonitor */,
 				87C80E306D744907486331E2 /* Frameworks */,
+				0A88985D2AD32EC7EA5CD8AE /* FutoShield */,
+				109D03712F16C9C8EC98D9ED /* FutoShieldAction */,
 			);
 			sourceTree = "<group>";
 		};
@@ -394,6 +486,9 @@
 				0604FAD36D34A141ED936C80 /* SessionSummary.swift */,
 				BDB877B03A1742CC4E16B704 /* Localization.swift */,
 				961AFC0FF65B423AF1F560BA /* EnglishStrings.swift */,
+				9379B6BE4BDC9B8743095F81 /* PauseFlow.swift */,
+				8B71A7F74A54CCF315FF9184 /* DevicePause.swift */,
+				24FD3A37B003E8634652895D /* DailyUnlockSummary.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -414,6 +509,8 @@
 				FF92CDD913101E67D00AF0D4 /* Futo.app */,
 				9D7D8876509532823B515AC5 /* FutoTests.xctest */,
 				48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */,
+				C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */,
+				9EEA987CC439D17FDC5CA5D9 /* FutoShieldAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -438,6 +535,23 @@
 			productReference = 48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		38AD75774B4A3C2940369F10 /* FutoShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49A07257D5859DDE714328F1 /* Build configuration list for PBXNativeTarget "FutoShieldAction" */;
+			buildPhases = (
+				1E7533497D73686725DF0790 /* Sources */,
+				D000F7FC18923729BDD331D9 /* Frameworks */,
+				34CE1DDF2D6D41592ACD611E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FutoShieldAction;
+			productName = FutoShieldAction;
+			productReference = 9EEA987CC439D17FDC5CA5D9 /* FutoShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		6E4779557EA7C76341DEBBE7 /* Futo */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A3916763AE9CB67624F00ECC /* Build configuration list for PBXNativeTarget "Futo" */;
@@ -451,6 +565,8 @@
 			);
 			dependencies = (
 				AD1F51DA218C95DF7E61BB48 /* PBXTargetDependency */,
+				3E7157AA664F2231579A4EF5 /* PBXTargetDependency */,
+				6153537D78EC44684FBD9635 /* PBXTargetDependency */,
 			);
 			name = Futo;
 			productName = Futo;
@@ -474,6 +590,23 @@
 			productName = FutoTests;
 			productReference = 9D7D8876509532823B515AC5 /* FutoTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A7A0F5E0FCBF9FF1B86D549E /* FutoShield */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB339C72F1CE2F3C1FC3BC6A /* Build configuration list for PBXNativeTarget "FutoShield" */;
+			buildPhases = (
+				ADFF237E7C20690A53294D38 /* Sources */,
+				184381EDF75234A4AEDBD293 /* Frameworks */,
+				AC047DB83B3896B6AC22E831 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FutoShield;
+			productName = FutoShield;
+			productReference = C747B481C2D9D6F74C81FBD1 /* FutoShield.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -511,6 +644,8 @@
 				6E4779557EA7C76341DEBBE7 /* Futo */,
 				91F70994DC0126828B25BD25 /* FutoTests */,
 				33D4185300F3C14A856FC784 /* FutoMonitor */,
+				A7A0F5E0FCBF9FF1B86D549E /* FutoShield */,
+				38AD75774B4A3C2940369F10 /* FutoShieldAction */,
 			);
 		};
 /* End PBXProject section */
@@ -523,10 +658,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		34CE1DDF2D6D41592ACD611E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8FC1EDD05F51734B573C6926 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC047DB83B3896B6AC22E831 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				24C5F617E52A4F99481E3A27 /* ShieldIcon.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -543,6 +693,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1E7533497D73686725DF0790 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6C137678CE802BEF81A0ACB4 /* FutoShieldAction.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3F62C97C91C080E4B1FA030F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -550,6 +708,15 @@
 				18A9F4B0BFEF76BFEAA33DAB /* FutoMonitor.swift in Sources */,
 				6004556B9472BDBA86337E6D /* SharedState.swift in Sources */,
 				3D03BF77A074BD2E46728FD0 /* RestrictedItems.swift in Sources */,
+				189AD045DDD2945DBDC8F83C /* PauseModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ADFF237E7C20690A53294D38 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				065A921ED23EB237FF7EFC2F /* FutoShieldConfiguration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -614,6 +781,11 @@
 				22C505E61C337ED9F4D1B6E6 /* BackupViews.swift in Sources */,
 				91B2ECE1C38EB051A1989FE6 /* StandingShare.swift in Sources */,
 				C362185EE1AF8F06BE892F74 /* StatsCharts.swift in Sources */,
+				B98D4980CCA9E95A2BDFA74F /* PauseFlow.swift in Sources */,
+				927395FF03FF6B70690437CB /* DevicePause.swift in Sources */,
+				29EE84A2B75D19E9F5E82731 /* RestrictionManagementView.swift in Sources */,
+				1926C3D42807BC57054A3778 /* PauseModel.swift in Sources */,
+				8AB7C7078D389FCB348E72FA /* DailyUnlockSummary.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -629,6 +801,8 @@
 				F397E7B2FE82AA8EC2EC269A /* BackupTests.swift in Sources */,
 				43624583AFDC1FD9F7939A27 /* DriveTests.swift in Sources */,
 				95DDC63148329F84382E3A65 /* StandingShareTests.swift in Sources */,
+				FB091407F84BD6470B5A6E0A /* PauseFlowTests.swift in Sources */,
+				1D1BC0AAB9E2674E6A01E29C /* DailyUnlockSummaryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -639,6 +813,18 @@
 			isa = PBXTargetDependency;
 			target = 6E4779557EA7C76341DEBBE7 /* Futo */;
 			targetProxy = 3D7AEA8F552C33E987EB82ED /* PBXContainerItemProxy */;
+		};
+		3E7157AA664F2231579A4EF5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = FutoShield;
+			target = A7A0F5E0FCBF9FF1B86D549E /* FutoShield */;
+			targetProxy = 0BADAF2AACF00AA233174216 /* PBXContainerItemProxy */;
+		};
+		6153537D78EC44684FBD9635 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = FutoShieldAction;
+			target = 38AD75774B4A3C2940369F10 /* FutoShieldAction */;
+			targetProxy = 741579F5A5B1E0F83B3E5470 /* PBXContainerItemProxy */;
 		};
 		AD1F51DA218C95DF7E61BB48 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -671,6 +857,34 @@
 			};
 			name = Debug;
 		};
+		14EC3DDB891781716D1A9BC4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = FutoShield/FutoShield.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U2J3MULMS3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FutoShield/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shield;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		378C9DD0BC846E4D4BC23370 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -689,6 +903,34 @@
 				);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.monitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		47DE5FF8E4D627CA12200F5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = FutoShieldAction/FutoShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U2J3MULMS3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FutoShieldAction/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shieldaction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -724,6 +966,62 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		8F23403F9594D95B8259A0B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = FutoShieldAction/FutoShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U2J3MULMS3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FutoShieldAction/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shieldaction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A4293A0A701E149FB737ABDB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = FutoShield/FutoShield.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U2J3MULMS3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FutoShield/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shield;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -847,6 +1145,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		49A07257D5859DDE714328F1 /* Build configuration list for PBXNativeTarget "FutoShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8F23403F9594D95B8259A0B0 /* Release */,
+				47DE5FF8E4D627CA12200F5F /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		6274E0C0E588DD8101015FC3 /* Build configuration list for PBXProject "Futo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -870,6 +1177,15 @@
 			buildConfigurations = (
 				B1F05F06510EE3683971BC0B /* Debug */,
 				D7748B0D11C986601399B73D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB339C72F1CE2F3C1FC3BC6A /* Build configuration list for PBXNativeTarget "FutoShield" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A4293A0A701E149FB737ABDB /* Release */,
+				14EC3DDB891781716D1A9BC4 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

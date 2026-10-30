@@ -14,22 +14,36 @@ struct HomeView: View {
         var id: Self { self }
     }
 
-    /// ホームは1画面に収める。通常は上下にスクロールしない。
-    /// 朝夜のカードなどが加わって、どうしても収まらないときだけ、全体をスクロールできるようにする。
+    /// 上は、状態と制限するものの一覧（多いときは自然に上下へスクロール）。
+    /// 操作ボタンは下に固定して、一覧が長くても、いつでも押せる。
     var body: some View {
-        GeometryReader { geo in
-            let rows = visibleRows(forHeight: geo.size.height)
-            ViewThatFits(in: .vertical) {
-                mainContent(rows: rows)
-                ScrollView { mainContent(rows: rows) }
+        VStack(spacing: 0) {
+            ScrollView {
+                scrollContent
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
             }
+            .scrollBounceBehavior(.basedOnSize)
+            VStack(spacing: 12) {
+                actions
+                #if DEBUG
+                debugSection
+                #endif
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
         }
         .background(Theme.background.ignoresSafeArea())
         .demoBanner(model.mode)
         .toolbar(.hidden, for: .navigationBar)
         .task(id: model.restriction) {
             // 一時解除中だけ、拡張による再制限を表示に反映するため定期的に再確認する（再制限そのものは拡張が行う）。
-            guard case .temporarilyUnlocked = model.restriction else { return }
+            // 一時解除中・一時停止中だけ、拡張による再制限を表示に反映するため定期的に再確認する。
+            switch model.restriction {
+            case .temporarilyUnlocked, .paused: break
+            default: return
+            }
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(5))
                 model.refresh()
@@ -46,17 +60,7 @@ struct HomeView: View {
         }
     }
 
-    /// 余裕があるときは、制限するものを多めに（最大8件）見せる。足りなければ3件まで減らす。
-    private func visibleRows(forHeight height: CGFloat) -> Int {
-        var reserved: CGFloat = 270
-        #if DEBUG
-        reserved += 80
-        #endif
-        if model.suggestion != nil { return 3 }
-        return max(3, min(8, Int((height - reserved) / 48)))
-    }
-
-    private func mainContent(rows: Int) -> some View {
+    private var scrollContent: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
                 Text(tr("ふと")).font(.title3.weight(.medium)).foregroundStyle(Theme.accent)
@@ -84,15 +88,8 @@ struct HomeView: View {
                 SuggestionCardView(model: model, suggestion: suggestion)
                     .transition(.opacity)
             }
-            statusCard(rows: rows)
-            actions
-            Spacer(minLength: 0)
-            #if DEBUG
-            debugSection
-            #endif
+            statusCard
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
         .animation(.easeInOut(duration: 0.3), value: model.suggestion)
     }
 
@@ -114,6 +111,7 @@ struct HomeView: View {
         switch model.restriction {
         case .configured: return tr("制限中")
         case .temporarilyUnlocked: return tr("一時的に使えます")
+        case .paused: return tr("制限を一時停止中")
         case .unverifiable: return tr("状態を確認できません")
         case .off: return tr("制限していません")
         }
@@ -129,6 +127,7 @@ struct HomeView: View {
         switch model.restriction {
         case .configured: return tr("選んだものは、ふだん使えません。")
         case .temporarilyUnlocked: return tr("終わったら、制限に戻します。")
+        case .paused(let until): return tr("{0} に、自動で戻ります。", until.formatted(date: .omitted, time: .shortened))
         case .unverifiable: return tr("もう一度、かけ直してください。")
         case .off: return tr("かけておくのがおすすめです。")
         }
@@ -140,13 +139,14 @@ struct HomeView: View {
         switch model.restriction {
         case .configured: return "lock.fill"
         case .temporarilyUnlocked: return "lock.open.fill"
+        case .paused: return "pause.circle"
         case .unverifiable: return "questionmark.circle"
         case .off: return "lock.open"
         }
     }
 
     /// 状態（小さな錠と一言、右端に＋）・制限しているもの・お知らせを1枚にまとめる。
-    private func statusCard(rows: Int) -> some View {
+    private var statusCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 ZStack {
@@ -177,7 +177,7 @@ struct HomeView: View {
 
             if model.targetCount > 0 {
                 Divider()
-                appsSection(rows: rows)
+                appsSection
             }
             if let error = model.permissionError { Text(error).font(.footnote) }
             if let notice = model.notice {
@@ -194,16 +194,15 @@ struct HomeView: View {
 
     // MARK: 制限するもの（状態の行の右端の＋で追加、各行の－で外す）
 
-    /// 変更できる間（制限オフ・一時解除中）だけ「＋」と「－」を出す。多いときは、この欄の中でスクロールする。
-    private func appsSection(rows maxRows: Int) -> some View {
+    /// 変更できる間（制限オフ）だけ、各行にゴミ箱を出す。多いときは、ホーム全体が自然にスクロールする。
+    private var appsSection: some View {
         let editable = !model.isTargetEditLocked
-        let rows = appRows(editable: editable)
         return VStack(alignment: .leading, spacing: 0) {
-            if model.targetCount > maxRows {
-                // 最後の行を半分だけ見せ、下端をぼかして、下にまだあることを伝える。
-                ScrollHintList(height: (CGFloat(maxRows) - 0.5) * 48) { rows }
-            } else {
-                rows
+            appRows(editable: editable)
+            if editable {
+                Text(tr("ゴミ箱は、制限の対象から外すだけです。アプリは削除されません。"))
+                    .font(.caption).foregroundStyle(.secondary)
+                    .padding(.top, 6)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: editable)
@@ -224,7 +223,7 @@ struct HomeView: View {
         }
     }
 
-    /// 1行：名前。解除中のものだけ開いた南京錠。変更できる間だけ目立たない－。
+    /// 1行：名前。解除中のものだけ開いた南京錠。変更できる間だけ、制限の対象から外すゴミ箱。
     private func appRow<Content: View>(unlocked: Bool, editable: Bool, onRemove: @escaping () -> Void,
                                        @ViewBuilder content: () -> Content) -> some View {
         // 右側（解除中の錠・－）の幅を決め、名前はそのぶん引いた幅に収める。
@@ -243,11 +242,13 @@ struct HomeView: View {
                 }
                 if editable {
                     Button(action: onRemove) {
-                        Image(systemName: "minus.circle")
-                            .foregroundStyle(.tertiary)
+                        Image(systemName: "trash")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
                             .frame(width: 44, height: 44)
                     }
-                    .accessibilityLabel(tr("制限から外す"))
+                    // 名前はOSが描画するラベルなので文字列として取れない。隣の名前と続けて読まれる。
+                    .accessibilityLabel(tr("制限の対象から外す（アプリは削除されません）"))
                 }
             }
         }
@@ -274,7 +275,10 @@ struct HomeView: View {
 
     @ViewBuilder
     private var primaryButton: some View {
-        if isUnlocked {
+        if model.isPaused {
+            Button(tr("制限を再開する")) { model.resumeRestriction() }
+                .buttonStyle(FutoButtonStyle())
+        } else if isUnlocked {
             Button(tr("使い終わる")) { model.relockNow() }
                 .buttonStyle(FutoButtonStyle())
         } else if needsPermission {
@@ -326,50 +330,16 @@ struct HomeView: View {
                 Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
             }
             .buttonStyle(FutoCompactButtonStyle())
+            // 待機を省略して、本アプリの制限をすぐ解除する（Debugビルド限定。記録には数えない）。
+            Button { model.debugReleaseRestrictionNow() } label: {
+                Label("開発用：今すぐ制限解除", systemImage: "wrench.and.screwdriver")
+                    .font(.footnote.weight(.medium))
+                    .frame(maxWidth: .infinity, minHeight: 40)
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
         }
-        .padding(.top, 12)
+        .padding(.top, 4)
     }
     #endif
-}
-
-private struct ScrollBottomKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
-/// 高さを固定した縦スクロール。下にまだ続くときだけ、下端のぼかしと矢印で「スクロールできる」ことを伝える。
-private struct ScrollHintList<Content: View>: View {
-    let height: CGFloat
-    @ViewBuilder var content: Content
-    @State private var atBottom = false
-
-    var body: some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 0) {
-                content
-                Color.clear
-                    .frame(height: 1)
-                    .background(GeometryReader { proxy in
-                        Color.clear.preference(key: ScrollBottomKey.self, value: proxy.frame(in: .named("scrollHintList")).maxY)
-                    })
-            }
-        }
-        .coordinateSpace(name: "scrollHintList")
-        .onPreferenceChange(ScrollBottomKey.self) { atBottom = $0 <= height + 2 }
-        .frame(height: height)
-        .overlay(alignment: .bottom) {
-            ZStack(alignment: .bottom) {
-                LinearGradient(colors: [Theme.card.opacity(0), Theme.card], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 36)
-                Image(systemName: "chevron.compact.down")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 2)
-            }
-            .opacity(atBottom ? 0 : 1)
-            .animation(.easeInOut(duration: 0.2), value: atBottom)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-        }
-    }
 }
