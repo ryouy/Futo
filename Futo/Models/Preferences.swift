@@ -28,6 +28,8 @@ struct Preferences: Codable, Equatable {
     var notifyPostUse = false
     var notifyOuting = false
     var outingMinute = 15 * 60
+    /// お出かけのおすすめの、1日の回数（時刻は、ランダムに、できるだけ均等に決まる）
+    var outingPerDay = 1
 
     /// 静かな時間（この間は通知しない）。既定は22時〜翌8時
     var quietStartMinute = 22 * 60
@@ -84,15 +86,17 @@ struct Preferences: Codable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         waitSeconds = try c.decodeIfPresent(Double.self, forKey: .waitSeconds)
         unlockMinutes = try c.decodeIfPresent(Int.self, forKey: .unlockMinutes)
-        morningEnabled = try c.decodeIfPresent(Bool.self, forKey: .morningEnabled) ?? true
+        // 朝夜の振り返りカードは、つねに表示する（設定で切らない）
+        morningEnabled = true
         morningMinute = try c.decodeIfPresent(Int.self, forKey: .morningMinute) ?? 8 * 60
-        nightEnabled = try c.decodeIfPresent(Bool.self, forKey: .nightEnabled) ?? true
+        nightEnabled = true
         nightMinute = try c.decodeIfPresent(Int.self, forKey: .nightMinute) ?? 21 * 60
         notifyMorning = try c.decodeIfPresent(Bool.self, forKey: .notifyMorning) ?? false
         notifyNight = try c.decodeIfPresent(Bool.self, forKey: .notifyNight) ?? false
         notifyPostUse = try c.decodeIfPresent(Bool.self, forKey: .notifyPostUse) ?? false
         notifyOuting = try c.decodeIfPresent(Bool.self, forKey: .notifyOuting) ?? false
         outingMinute = try c.decodeIfPresent(Int.self, forKey: .outingMinute) ?? 15 * 60
+        outingPerDay = min(max(try c.decodeIfPresent(Int.self, forKey: .outingPerDay) ?? 1, 1), 3)
         quietStartMinute = try c.decodeIfPresent(Int.self, forKey: .quietStartMinute) ?? 22 * 60
         quietEndMinute = try c.decodeIfPresent(Int.self, forKey: .quietEndMinute) ?? 8 * 60
     }

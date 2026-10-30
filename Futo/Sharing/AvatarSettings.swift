@@ -3,7 +3,7 @@ import Observation
 import SwiftUI
 
 /// 自分のアイコンの設定。この端末の表示だけに使い、サーバーにも、フレンドにも送らない。
-/// 名前の頭文字か、山・海・魚などの14個から選ぶ。色は、テーマの4色から選ぶ（選ばなければ、いまのテーマ色）。
+/// 名前の頭文字か、山・海・魚などの10個から選ぶ。色は、テーマの4色から選ぶ（選ばなければ、いまのテーマ色）。
 @MainActor
 @Observable
 final class AvatarSettings {
@@ -12,12 +12,10 @@ final class AvatarSettings {
     /// 色の選択肢の数（テーマ色と同じ4色）
     static let colorCount = 4
 
-    /// 選べるアイコン（山・海・魚など14個）。名前は、読み上げ用。
+    /// 選べるアイコン（山・海・魚など10個）。名前は、読み上げ用。
     static let symbols: [(name: String, label: String)] = [
-        ("mountain.2.fill", "山"), ("water.waves", "海"), ("fish.fill", "魚"), ("leaf.fill", "葉"),
-        ("sun.max.fill", "太陽"), ("moon.stars.fill", "月"), ("flame.fill", "炎"), ("snowflake", "雪"),
-        ("tortoise.fill", "亀"), ("bird.fill", "鳥"), ("sailboat.fill", "ヨット"), ("pawprint.fill", "足あと"),
-        ("tree.fill", "木"), ("hare.fill", "うさぎ"),
+        ("mountain.2.fill", "山"), ("water.waves", "海"), ("fish.fill", "魚"), ("leaf.fill", "葉"), ("tree.fill", "木"),
+        ("sun.max.fill", "太陽"), ("moon.stars.fill", "月"), ("bird.fill", "鳥"), ("tortoise.fill", "亀"), ("sailboat.fill", "ヨット"),
     ]
 
     private static let colorKey = "avatar.colorIndex"

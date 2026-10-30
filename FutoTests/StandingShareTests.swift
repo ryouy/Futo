@@ -206,3 +206,35 @@ final class AppUsageSummaryTests: XCTestCase {
         }
     }
 }
+
+final class SeenRecordsTests: XCTestCase {
+    func testNewAndUpdatedRecordsAreUnseenUntilOpened() {
+        var seen = SeenRecords()
+        XCTAssertTrue(seen.isUnseen(id: "S1", version: "v1"))
+        seen.markSeen(id: "S1", version: "v1")
+        XCTAssertFalse(seen.isUnseen(id: "S1", version: "v1"))
+        XCTAssertTrue(seen.isUnseen(id: "S1", version: "v2"), "更新されたら、また新しい")
+        XCTAssertTrue(seen.isUnseen(id: "S2", version: "v1"))
+    }
+
+    func testPruneDropsRecordsThatNoLongerArrive() {
+        var seen = SeenRecords()
+        seen.markSeen(id: "S1", version: "v1"); seen.markSeen(id: "S2", version: "v1")
+        seen.prune(keeping: ["S2"])
+        XCTAssertTrue(seen.isUnseen(id: "S1", version: "v1"))
+        XCTAssertFalse(seen.isUnseen(id: "S2", version: "v1"))
+    }
+
+    func testStoreIsPerAccount() {
+        let name = "seen-tests-\(UUID().uuidString)"
+        let d = UserDefaults(suiteName: name)!
+        d.removePersistentDomain(forName: name)
+        let store = SeenRecordsStore(defaults: d)
+        var seen = SeenRecords(); seen.markSeen(id: "S1", version: "v1")
+        store.save(seen, uid: "A")
+        XCTAssertFalse(store.load(uid: "A").isUnseen(id: "S1", version: "v1"))
+        XCTAssertTrue(store.load(uid: "B").isUnseen(id: "S1", version: "v1"))
+        store.clear(uid: "A")
+        XCTAssertTrue(store.load(uid: "A").isUnseen(id: "S1", version: "v1"))
+    }
+}

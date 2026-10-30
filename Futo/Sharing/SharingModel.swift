@@ -13,6 +13,9 @@ final class SharingModel {
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private let standingStore: StandingShareStoring
     private(set) var standingConfigs: [StandingShareConfig] = []
+    @ObservationIgnored private let seenStore = SeenRecordsStore()
+    /// フレンドから届いた記録の「見た」の控え
+    private(set) var seen = SeenRecords()
 
     private(set) var phase: Phase = .idle
     private(set) var profile: MeResponse?
@@ -37,6 +40,7 @@ final class SharingModel {
             try await service?.validIDToken(forceRefresh: force)
         }
         // 開いた直後から、自分のアイコンを出す（サーバーの応答を待たない）
+        if let uid = service.uid { seen = seenStore.load(uid: uid) }
         if let uid = service.uid, service.isSignedIn, let name = ProfileCache.name(uid: uid) {
             profile = MeResponse(uid: uid, displayName: name, status: "active")
         }
@@ -70,7 +74,7 @@ final class SharingModel {
     }
 
     func signOut() {
-        if let uid { ProfileCache.clear(uid: uid) }
+        if let uid { ProfileCache.clear(uid: uid); seenStore.clear(uid: uid) }
         auth.signOut()
         reset()
     }
@@ -78,7 +82,7 @@ final class SharingModel {
     private func reset() {
         AvatarSettings.shared.reset()
         profile = nil; shares = []; friends = FriendsResponse(friends: [], incoming: [], outgoing: [])
-        receivedShares = []; sentShares = []; invitation = nil; lastCreatedURL = nil; message = nil; standingConfigs = []
+        seen = SeenRecords(); receivedShares = []; sentShares = []; invitation = nil; lastCreatedURL = nil; message = nil; standingConfigs = []
     }
 
     func loadProfile() async {
@@ -311,6 +315,30 @@ final class SharingModel {
         if force { await loadFriendShares() }
     }
 
+    /// 新しい記録・更新が届いているか（バッジ用）。
+    var hasUnseenRecords: Bool { receivedShares.contains { isUnseen($0) } }
+
+    func isUnseen(_ item: ReceivedFriendShare) -> Bool {
+        seen.isUnseen(id: item.id, version: item.updatedAt ?? item.createdAt)
+    }
+
+    /// 届いた記録を開いたとき。同じ版は、もう新しくない。
+    func markSeen(id: String, version: String) {
+        seen.markSeen(id: id, version: version)
+        if let uid { seenStore.save(seen, uid: uid) }
+    }
+
+    /// 届いた記録の一覧だけを取り直す（アプリを開いたときなど。軽い確認）。
+    func loadReceivedShares() async {
+        guard isSignedIn else { return }
+        if let uid { seen = seenStore.load(uid: uid) }
+        if let list = try? await api.send("GET", "/api/friend-shares") as ReceivedFriendSharesResponse {
+            receivedShares = list.items
+            seen.prune(keeping: Set(list.items.map(\.id)))
+            if let uid { seenStore.save(seen, uid: uid) }
+        }
+    }
+
     func loadFriendShares() async {
         guard isSignedIn else { return }
         do {
@@ -363,12 +391,13 @@ final class SharingModel {
 
     // MARK: エラー
 
+    /// 失敗の表示。サーバー側のうまくいかなかった、といった、本人にできることのない失敗は、画面に出さない。
     private func fail(_ error: Error) {
-        guard let api = error as? APIError else { message = tr("うまくいきませんでした。もう一度お試しください。"); return }
-        message = Self.text(for: api)
+        guard let api = error as? APIError, let text = Self.text(for: api) else { return }
+        message = text
     }
 
-    static func text(for error: APIError) -> String {
+    static func text(for error: APIError) -> String? {
         if error.code == "self_invite" { return tr("自分の招待は、受け入れられません。") }
         switch error.kind {
         case .notConfigured: return tr("共有の設定がまだ終わっていません。")
@@ -380,7 +409,7 @@ final class SharingModel {
         case .conflict: return tr("同時に操作されました。もう一度お試しください。")
         case .rateLimited: return tr("回数の上限です。しばらくしてからお試しください。")
         case .invalid: return tr("入力を確認してください。")
-        case .server: return tr("サーバーでうまくいきませんでした。しばらくしてからお試しください。")
+        case .server: return nil
         }
     }
 }

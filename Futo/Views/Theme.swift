@@ -391,3 +391,14 @@ struct WindowBackgroundSetter: UIViewRepresentable {
         DispatchQueue.main.async { view.window?.backgroundColor = color }
     }
 }
+
+/// 新しいものがあるしるし（小さな赤い丸）。
+struct NewBadge: View {
+    var size: CGFloat = 10
+    var body: some View {
+        Circle().fill(Color.red)
+            .frame(width: size, height: size)
+            .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+            .accessibilityLabel(tr("新しい記録があります"))
+    }
+}

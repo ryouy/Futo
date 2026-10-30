@@ -92,36 +92,78 @@ enum NotificationPlanner {
             }
             if preferences.notifyMorning { add(.morning, minute: preferences.morningMinute) }
             if preferences.notifyNight { add(.night, minute: preferences.nightMinute) }
-            if preferences.notifyOuting { add(.outing, minute: preferences.outingMinute) }
+            if preferences.notifyOuting {
+                // お出かけのおすすめ：1日の回数だけ決め、時刻は、日ごとにランダム（ただし均等に離す）
+                let window = OutingSchedule.window(preferences: preferences)
+                let dayKey = calendar.dayKey(for: day)
+                for (index, minute) in OutingSchedule.minutes(count: preferences.outingPerDay, dayKey: dayKey, window: window).enumerated() {
+                    guard let fire = calendar.date(on: day, clockMinute: minute), fire > now.addingTimeInterval(30) else { continue }
+                    result.append(NotificationCandidate(kind: .outing, id: "futo.outing.\(dayKey).\(index)", fireDate: fire))
+                }
+            }
         }
         return result
     }
 
-    /// 設定画面に出す、間引きの知らせ。
+    /// 設定画面に出す、間引きの知らせ（朝と夜の通知が、3時間以内のとき）。
     static func warnings(preferences: Preferences, calendar: Calendar = .current) -> [String] {
-        let policy = NotificationPolicy(quietStartMinute: preferences.quietStartMinute,
-                                        quietEndMinute: preferences.quietEndMinute, calendar: calendar)
-        let base = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_800_000_000))
-        func date(_ minute: Int) -> Date { calendar.date(byAdding: .minute, value: minute, to: base) ?? base }
-        let entries: [(NotificationKind, String, Int)] = [
-            (.morning, tr("朝の振り返り"), preferences.morningMinute),
-            (.night, tr("夜の振り返り"), preferences.nightMinute),
-            (.outing, tr("お出かけの通知"), preferences.outingMinute),
-        ].filter { preferences.isNotificationOn($0.0) }
+        let gap = Int(NotificationPolicy().minimumGap / 60)
+        guard preferences.notifyMorning, preferences.notifyNight else { return [] }
+        let distance = abs(preferences.nightMinute - preferences.morningMinute)
+        return distance < gap ? [tr("{0}と{1}は3時間以内のため、どちらかを間引きます。", tr("朝の振り返り"), tr("夜の振り返り"))] : []
+    }
+}
 
-        var messages: [String] = []
-        for entry in entries where policy.isQuiet(date(entry.2)) {
-            messages.append(tr("{0}の時刻（{1}）は静かな時間にあたるため、通知は送りません。", "\(entry.1)", "\(clockText(minute: entry.2))"))
+/// お出かけのおすすめの時刻。回数だけ決めて、時刻は、日ごとにランダム。ただし、できるだけ均等になるよう、
+/// 1日の時間帯を回数で等分した、それぞれの枠の中でずらす。朝夜の通知とは、3時間あける。
+/// 同じ日は、何度予約し直しても、同じ時刻になる（日付から決めるので、再予約で動かない）。
+enum OutingSchedule {
+    static let earliestMinute = 9 * 60
+    static let latestMinute = 20 * 60
+    static let gapMinutes = 180
+    static let maxJitterMinutes = 60
+
+    /// 使える時間帯。朝・夜の通知がオンなら、その前後3時間をあける。
+    static func window(preferences: Preferences) -> (start: Int, end: Int) {
+        var start = earliestMinute
+        var end = latestMinute
+        if preferences.notifyMorning { start = max(start, preferences.morningMinute + gapMinutes) }
+        if preferences.notifyNight { end = min(end, preferences.nightMinute - gapMinutes) }
+        if end <= start { return (earliestMinute, latestMinute) }
+        return (start, end)
+    }
+
+    /// その日の時刻（0時からの分）。回数は、時間帯に収まる最大数に抑える（3時間あけるため）。
+    static func minutes(count: Int, dayKey: String, window: (start: Int, end: Int)) -> [Int] {
+        let length = window.end - window.start
+        let n = max(1, min(count, max(1, length / gapMinutes)))
+        let slot = Double(length) / Double(n)
+        let jitter = min(max(0, (slot - Double(gapMinutes)) / 2), Double(maxJitterMinutes))
+        var generator = SeededGenerator(seed: dayKey)
+        return (0..<n).map { index in
+            let center = Double(window.start) + slot * (Double(index) + 0.5)
+            let offset = jitter == 0 ? 0 : Double.random(in: -jitter...jitter, using: &generator)
+            return Int((center + offset).rounded())
         }
-        let active = entries.filter { !policy.isQuiet(date($0.2)) }
-        for i in 0..<active.count {
-            for j in (i + 1)..<max(active.count, i + 1) {
-                if abs(active[i].2 - active[j].2) < Int(policy.minimumGap / 60) {
-                    messages.append(tr("{0}と{1}は3時間以内のため、どちらかを間引きます。", "\(active[i].1)", "\(active[j].1)"))
-                }
-            }
-        }
-        return messages
+    }
+}
+
+/// 同じ文字列から、いつも同じ並びになる乱数（SplitMix64）。
+struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: String) {
+        var hash: UInt64 = 0xcbf29ce484222325
+        for byte in seed.utf8 { hash = (hash ^ UInt64(byte)) &* 0x100000001b3 }
+        state = hash
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9e3779b97f4a7c15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xbf58476d1ce4e5b9
+        z = (z ^ (z >> 27)) &* 0x94d049bb133111eb
+        return z ^ (z >> 31)
     }
 }
 

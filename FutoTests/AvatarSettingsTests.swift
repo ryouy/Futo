@@ -25,9 +25,9 @@ final class AvatarSettingsTests: XCTestCase {
         XCTAssertEqual(s.fill(choices: [.red, .green, .blue, .orange], themeColor: .purple), .blue)
     }
 
-    func testSymbolsAreFourteenAndSelectionWorks() {
-        XCTAssertEqual(AvatarSettings.symbols.count, 14)
-        XCTAssertEqual(Set(AvatarSettings.symbols.map(\.name)).count, 14)
+    func testSymbolsAreTenAndSelectionWorks() {
+        XCTAssertEqual(AvatarSettings.symbols.count, 10)
+        XCTAssertEqual(Set(AvatarSettings.symbols.map(\.name)).count, 10)
         let s = AvatarSettings(defaults: defaults())
         s.selectSymbol(2)
         XCTAssertEqual(s.symbolIndex, 2)

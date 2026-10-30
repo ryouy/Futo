@@ -59,45 +59,29 @@ struct NotificationSettingsView: View {
             minute: minute)
     }
 
+    /// お出かけのおすすめ：オン・オフと、1日の回数だけ。時刻は、ランダムに（できるだけ均等に）決まる。
+    @ViewBuilder
+    private var outingRow: some View {
+        row(.outing)
+        if model.prefs.notifyOuting {
+            Picker(tr("1日の回数"), selection: Binding(
+                get: { model.prefs.outingPerDay },
+                set: { value in model.updatePreferences { $0.outingPerDay = value } }
+            )) {
+                ForEach(1...3, id: \.self) { Text(tr("{0}回", "\($0)")).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .frame(minHeight: 44)
+        }
+    }
+
     var body: some View {
         Form {
             CardSection {
                 row(.night, minute: bind(\.nightMinute))
                 row(.morning, minute: bind(\.morningMinute))
-                row(.outing, minute: bind(\.outingMinute))
+                outingRow
                 row(.postUse)
-            }
-
-            CardSection {
-                HStack {
-                    Text(tr("静かな時間"))
-                    Spacer()
-                    DatePicker(tr("はじまり"), selection: minuteBinding(
-                        get: { model.prefs.quietStartMinute },
-                        set: { value in model.updatePreferences { $0.quietStartMinute = value } }),
-                        displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                    Text(tr("〜")).foregroundStyle(.secondary)
-                    DatePicker(tr("おわり"), selection: minuteBinding(
-                        get: { model.prefs.quietEndMinute },
-                        set: { value in model.updatePreferences { $0.quietEndMinute = value } }),
-                        displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                }
-                .frame(minHeight: 44)
-            }
-
-            CardSection {
-                TimeToggleRow(
-                    title: tr("朝の振り返りカード"),
-                    isOn: Binding(get: { model.prefs.morningEnabled },
-                                  set: { on in model.updatePreferences { $0.morningEnabled = on } }),
-                    minute: bind(\.morningMinute))
-                TimeToggleRow(
-                    title: tr("夜の振り返りカード"),
-                    isOn: Binding(get: { model.prefs.nightEnabled },
-                                  set: { on in model.updatePreferences { $0.nightEnabled = on } }),
-                    minute: bind(\.nightMinute))
             }
 
             let warnings = NotificationPlanner.warnings(preferences: model.prefs)

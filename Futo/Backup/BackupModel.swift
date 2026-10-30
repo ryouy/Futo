@@ -173,7 +173,7 @@ final class BackupModel {
         do { try await work() } catch let error as DriveError {
             message = Self.text(for: error)
             if error == .needsConsent { syncConnection() }
-        } catch { message = tr("うまくいきませんでした。もう一度お試しください。") }
+        } catch { /* 本人にできることのない失敗は、表示しない */ }
     }
 
     static func text(for error: DriveError) -> String {
@@ -185,7 +185,7 @@ final class BackupModel {
         case .notFound: return tr("Driveに、バックアップが見つかりませんでした。")
         case .quota: return tr("Driveの空き容量が足りません。")
         case .apiDisabled: return tr("Google Drive APIが有効になっていません。設定の手順を確認してください。")
-        case .failed: return tr("うまくいきませんでした。もう一度お試しください。")
+        case .failed: return ""
         }
     }
 }

@@ -337,14 +337,71 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(NotificationPlanner.recurring(preferences: prefs, now: jst("2027-01-13 22:00"), calendar: cal, viewed: []).count, 1)
     }
 
-    func testSettingsWarningsForQuietAndClose() {
+    func testSettingsWarningsOnlyForMorningAndNightTooClose() {
         var prefs = Preferences()
-        prefs.notifyMorning = true; prefs.morningMinute = 6 * 60
+        prefs.notifyMorning = true; prefs.morningMinute = 6 * 60      // 静かな時間は、もう無い
         prefs.notifyNight = true; prefs.nightMinute = 21 * 60
-        prefs.notifyOuting = true; prefs.outingMinute = 20 * 60
-        let text = NotificationPlanner.warnings(preferences: prefs, calendar: cal.calendar).joined()
-        XCTAssertTrue(text.contains("朝の振り返り"))      // 6:00は静かな時間
-        XCTAssertTrue(text.contains("3時間以内"))          // 夜21:00とお出かけ20:00
+        XCTAssertTrue(NotificationPlanner.warnings(preferences: prefs, calendar: cal.calendar).isEmpty)
+        prefs.nightMinute = 8 * 60
+        XCTAssertTrue(NotificationPlanner.warnings(preferences: prefs, calendar: cal.calendar).joined().contains("3時間以内"))
+    }
+
+    // MARK: お出かけのおすすめ（回数だけ設定。時刻はランダム・均等）
+
+    func testOutingTimesAreStableForADayAndDifferAcrossDays() {
+        let window = (start: 11 * 60, end: 18 * 60)
+        let a = OutingSchedule.minutes(count: 2, dayKey: "2027-01-13", window: window)
+        XCTAssertEqual(a, OutingSchedule.minutes(count: 2, dayKey: "2027-01-13", window: window), "同じ日は、予約し直しても同じ時刻")
+        let days = (1...20).map { OutingSchedule.minutes(count: 1, dayKey: "2027-01-\(String(format: "%02d", $0))", window: window)[0] }
+        XCTAssertGreaterThan(Set(days).count, 10, "日ごとに、ばらける（ランダム）")
+    }
+
+    func testOutingTimesStayInsideTheWindowAndAreSpacedEvenly() {
+        let window = (start: 9 * 60, end: 20 * 60)
+        for day in 1...60 {
+            let key = "2027-02-\(day)"
+            for count in 1...3 {
+                let times = OutingSchedule.minutes(count: count, dayKey: key, window: window)
+                XCTAssertEqual(times.count, count)
+                XCTAssertTrue(times.allSatisfy { $0 >= window.start && $0 <= window.end }, "\(key) \(times)")
+                for pair in zip(times, times.dropFirst()) {
+                    XCTAssertGreaterThanOrEqual(pair.1 - pair.0, OutingSchedule.gapMinutes, "3時間以上あける \(times)")
+                }
+            }
+        }
+    }
+
+    func testOutingCountIsReducedWhenTheWindowIsTooSmallForTheGap() {
+        let tight = OutingSchedule.minutes(count: 3, dayKey: "2027-03-01", window: (start: 11 * 60, end: 17 * 60))
+        XCTAssertEqual(tight.count, 2, "6時間の枠には、3時間あけて2回まで")
+        XCTAssertEqual(OutingSchedule.minutes(count: 3, dayKey: "2027-03-01", window: (start: 12 * 60, end: 13 * 60)).count, 1)
+    }
+
+    func testOutingWindowKeepsThreeHoursFromMorningAndNightNotifications() {
+        var prefs = Preferences()
+        prefs.notifyMorning = true; prefs.morningMinute = 8 * 60
+        prefs.notifyNight = true; prefs.nightMinute = 21 * 60
+        let window = OutingSchedule.window(preferences: prefs)
+        XCTAssertEqual(window.start, 11 * 60)
+        XCTAssertEqual(window.end, 18 * 60)
+    }
+
+    func testRecurringCreatesOneCandidatePerOutingAndPreferencesClampTheCount() throws {
+        var prefs = Preferences()
+        prefs.notifyOuting = true; prefs.outingPerDay = 2
+        let list = NotificationPlanner.recurring(preferences: prefs, now: jst("2027-01-13 06:00"), calendar: cal, viewed: [])
+        let today = list.filter { cal.dayKey(for: $0.fireDate) == "2027-01-13" }
+        XCTAssertEqual(today.filter { $0.kind == .outing }.count, 2)
+        XCTAssertEqual(Set(list.map(\.id)).count, list.count, "識別子は重ならない")
+        let clamped = try JSONDecoder().decode(Preferences.self, from: Data(#"{"outingPerDay":9}"#.utf8))
+        XCTAssertEqual(clamped.outingPerDay, 3)
+        XCTAssertEqual(try JSONDecoder().decode(Preferences.self, from: Data("{}".utf8)).outingPerDay, 1)
+    }
+
+    func testMorningAndNightCardsAreAlwaysEnabledEvenIfSavedOff() throws {
+        let p = try JSONDecoder().decode(Preferences.self, from: Data(#"{"morningEnabled":false,"nightEnabled":false}"#.utf8))
+        XCTAssertTrue(p.morningEnabled)
+        XCTAssertTrue(p.nightEnabled)
     }
 
     func testPreferencesDecodeWithMissingKeys() throws {

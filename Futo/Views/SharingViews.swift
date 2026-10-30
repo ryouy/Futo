@@ -84,7 +84,10 @@ struct SharingTab: View {
                 Label(tr("記録をリンクで共有"), systemImage: "link").foregroundStyle(Theme.accent)
             }.frame(minHeight: 44)
             NavigationLink { FriendsView(model: model) } label: {
-                Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accent)
+                HStack {
+                    Label(tr("フレンド"), systemImage: "person.2").foregroundStyle(Theme.accent)
+                    if sharing.hasUnseenRecords { NewBadge() }
+                }
             }.frame(minHeight: 44)
             NavigationLink { BackupView() } label: {
                 Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accent)
@@ -467,7 +470,7 @@ struct AccountAvatar: View {
     }
 }
 
-/// プロフィール：表示名（上）→ アイコン（頭文字・山や海などの14個）→ 色（テーマの4色）→ 保存（いちばん下）。
+/// プロフィール：表示名（上）→ アイコン（頭文字・山や海などの10個）→ 色（テーマの4色）→ 保存（いちばん下）。
 @MainActor
 struct ProfileView: View {
     @Environment(SharingModel.self) private var sharing
@@ -490,13 +493,18 @@ struct ProfileView: View {
                 .listRowBackground(Color.clear)
             }
 
-            CardSection {
-                TextField(tr("表示名（1〜20文字）"), text: $name)
+            Section {
+                TextField(tr("例：ふとさん"), text: $name)
+            } header: {
+                formHeader(tr("ニックネーム"), tr("フレンドや共有ページに表示されます（1〜20文字）"))
             }
+            .listRowBackground(Theme.card)
 
-            CardSection { iconGrid }
+            Section { iconGrid } header: { formHeader(tr("アイコン")) }
+                .listRowBackground(Theme.card)
 
-            CardSection { colorPicker }
+            Section { colorPicker } header: { formHeader(tr("アイコンの色"), tr("テーマの4色から選べます")) }
+                .listRowBackground(Theme.card)
 
             PrimarySection {
                 Button {
@@ -512,6 +520,14 @@ struct ProfileView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { name = displayName }
         .onChange(of: name) { _, new in if new != displayName { saved = false } }
+    }
+
+    private func formHeader(_ title: String, _ detail: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent)
+            if let detail { Text(detail).font(.caption).foregroundStyle(.secondary) }
+        }
+        .textCase(nil)
     }
 
     // MARK: アイコン

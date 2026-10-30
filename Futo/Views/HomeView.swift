@@ -19,30 +19,26 @@ struct HomeView: View {
     /// 上は、状態と制限するものの一覧（多いときは自然に上下へスクロール）。
     /// 操作ボタンは下に固定して、一覧が長くても、いつでも押せる。
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                scrollContent
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-                    .padding(.bottom, 76)
-            }
-            .scrollBounceBehavior(.basedOnSize)
-            // 下の方は、見切れつつ、ぼかすように薄れて消える。下のボタンとの間は、あけて、重ならない。
-            .mask(
-                VStack(spacing: 0) {
-                    Rectangle()
-                    LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black.opacity(0.35), location: 0.5), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom).frame(height: 76)
+        GeometryReader { geo in
+            let rows = visibleRows(forHeight: geo.size.height)
+            VStack(spacing: 0) {
+                ScrollView {
+                    scrollContent(rows: rows)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .padding(.bottom, 16)
                 }
-            )
-            VStack(spacing: 12) {
-                actions
-                #if DEBUG
-                debugSection
-                #endif
+                .scrollBounceBehavior(.basedOnSize)
+                VStack(spacing: 12) {
+                    actions
+                    #if DEBUG
+                    debugSection
+                    #endif
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+                .padding(.bottom, 12)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 18)
-            .padding(.bottom, 12)
         }
         .background(Theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
@@ -79,7 +75,19 @@ struct HomeView: View {
         }
     }
 
-    private var scrollContent: some View {
+    /// 画面の高さに合わせて、制限するものを何件まで丸ごと見せるか。多いときは、その次の1件を、下の1/3ほど見切れさせる。
+    private func visibleRows(forHeight height: CGFloat) -> Int {
+        var reserved: CGFloat = 300
+        #if DEBUG
+        reserved += 50
+        #endif
+        if model.suggestion != nil { return 3 }
+        return max(3, min(8, Int((height - reserved) / Self.rowHeight)))
+    }
+
+    private static let rowHeight: CGFloat = 48
+
+    private func scrollContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
                 Text(tr("ふと")).font(.title3.weight(.medium)).foregroundStyle(Theme.accent)
@@ -93,6 +101,10 @@ struct HomeView: View {
                         if sharing.isSignedIn, let name = sharing.profile?.displayName {
                             // ログイン中は、アカウントのアイコンで分かるようにする。小さな歯車で、押すと設定を開けると伝える
                             AccountAvatar(name: name, size: 30, isOwn: true)
+                                .overlay(alignment: .topTrailing) {
+                                    // フレンドから新しい記録が届いているとき
+                                    if sharing.hasUnseenRecords { NewBadge().offset(x: 3, y: -3) }
+                                }
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "gearshape.fill")
                                         .font(.system(size: 9, weight: .bold))
@@ -117,7 +129,7 @@ struct HomeView: View {
                 SuggestionCardView(model: model, suggestion: suggestion)
                     .transition(.opacity)
             }
-            statusCard
+            statusCard(rows: rows)
         }
         .animation(.easeInOut(duration: 0.3), value: model.suggestion)
     }
@@ -186,7 +198,7 @@ struct HomeView: View {
     }
 
     /// 状態（小さな錠と一言、右端に＋）・制限しているもの・お知らせを1枚にまとめる。
-    private var statusCard: some View {
+    private func statusCard(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 ZStack {
@@ -217,7 +229,7 @@ struct HomeView: View {
 
             if model.targetCount > 0 {
                 Divider()
-                appsSection
+                appsSection(rows: rows)
             }
             if let error = model.permissionError { Text(error).font(.footnote) }
             if let notice = model.notice {
@@ -234,11 +246,25 @@ struct HomeView: View {
 
     // MARK: 制限するもの（状態の行の右端の＋で追加、各行の－で外す）
 
-    /// 変更できる間（制限オフ）だけ、各行にゴミ箱を出す。多いときは、ホーム全体が自然にスクロールする。
-    private var appsSection: some View {
+    /// 変更できる間（制限オフ）だけ、各行にゴミ箱を出す。
+    /// 多いときは、この欄の中でスクロールできる。最後に見える1件は、下の1/3ほどを見切れさせ、ぼかして、続きがあると伝える。
+    private func appsSection(rows maxRows: Int) -> some View {
         let editable = !model.isTargetEditLocked
         return VStack(alignment: .leading, spacing: 0) {
-            appRows(editable: editable)
+            if model.targetCount > maxRows {
+                ScrollView(.vertical, showsIndicators: false) {
+                    appRows(editable: editable)
+                }
+                .frame(height: (CGFloat(maxRows) + 0.67) * Self.rowHeight)
+                .mask(
+                    VStack(spacing: 0) {
+                        Rectangle()
+                        LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 44)
+                    }
+                )
+            } else {
+                appRows(editable: editable)
+            }
             if editable {
                 Text(tr("ゴミ箱は、制限の対象から外すだけです。アプリは削除されません。"))
                     .font(.caption).foregroundStyle(.secondary)
@@ -372,36 +398,85 @@ struct HomeView: View {
     #endif
 }
 
-/// 制限がかかったときの、鍵のアニメーション。開いた鍵が閉まる。視差効果を減らす設定では、閉じた鍵をふわっと出すだけ。
+/// 錠前のつる（開いているときは、持ち上がって傾く）。
+private struct ShackleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height, r = w / 2, k: CGFloat = 0.5523
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: h))
+        path.addLine(to: CGPoint(x: 0, y: r))
+        path.addCurve(to: CGPoint(x: r, y: 0), control1: CGPoint(x: 0, y: r - k * r), control2: CGPoint(x: r - k * r, y: 0))
+        path.addCurve(to: CGPoint(x: w, y: r), control1: CGPoint(x: r + k * r, y: 0), control2: CGPoint(x: w, y: r - k * r))
+        path.addLine(to: CGPoint(x: w, y: h))
+        return path
+    }
+}
+
+/// 描いた錠前。`progress` が 0 で開き、1 で閉じる。値を連続して動かすので、開いた鍵が、途切れずに閉じる。
+private struct PadlockDrawing: View, Animatable {
+    var progress: CGFloat
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        let open = 1 - progress
+        VStack(spacing: -6) {
+            ShackleShape()
+                .stroke(Theme.accent, style: StrokeStyle(lineWidth: 11, lineCap: .round))
+                .frame(width: 50, height: 46)
+                // 開いているときは、持ち上がり、左の脚を軸に傾く
+                .rotationEffect(.degrees(-28 * open), anchor: .bottomLeading)
+                .offset(y: -12 * open)
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .fill(Theme.accent)
+                .frame(width: 84, height: 62)
+                .overlay {
+                    VStack(spacing: 0) {
+                        Circle().fill(Theme.onAccent).frame(width: 12, height: 12)
+                        Capsule().fill(Theme.onAccent).frame(width: 5, height: 14).offset(y: -2)
+                    }
+                    .opacity(0.9)
+                }
+        }
+    }
+}
+
+/// 制限がかかったときの、鍵のアニメーション。開いた鍵が閉まり、小さな輪が広がる。
+/// 視差効果を減らす設定では、閉じた鍵を、ふわっと出すだけ。
 private struct LockSealView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
-    @State private var closed = false
+    @State private var progress: CGFloat = 0
+    @State private var ripple = false
 
     var body: some View {
         ZStack {
             Circle().fill(Theme.accent.opacity(0.14))
             Circle().stroke(Theme.accent.opacity(0.28), lineWidth: 2)
-            Image(systemName: closed ? "lock.fill" : "lock.open.fill")
-                .font(.system(size: 80, weight: .light))
-                .foregroundStyle(Theme.accent)
-                .contentTransition(.symbolEffect(.replace))
-                .symbolEffect(.bounce, options: reduceMotion ? .nonRepeating.speed(0.001) : .nonRepeating, value: closed)
+            Circle().stroke(Theme.accent.opacity(ripple ? 0 : 0.45), lineWidth: 3)
+                .scaleEffect(ripple ? 1.45 : 1)
+            PadlockDrawing(progress: progress)
+                .scaleEffect(0.95)
         }
-        .frame(width: 184, height: 184)
-        .scaleEffect(reduceMotion ? 1 : (shown ? 1 : 0.72))
+        .frame(width: 190, height: 190)
+        .scaleEffect(reduceMotion ? 1 : (shown ? 1 : 0.8))
         .opacity(shown ? 1 : 0)
         .accessibilityElement()
         .accessibilityLabel(tr("制限がかかりました"))
         .task {
             if reduceMotion {
-                closed = true
+                progress = 1
                 withAnimation(.easeOut(duration: 0.3)) { shown = true }
-            } else {
-                withAnimation(.spring(duration: 0.42, bounce: 0.3)) { shown = true }
-                try? await Task.sleep(for: .milliseconds(500))
-                withAnimation(.easeInOut(duration: 0.3)) { closed = true }
+                return
             }
+            // 現れる → 閉まる → 輪が広がる、を、1つの流れで続ける
+            withAnimation(.easeOut(duration: 0.3)) { shown = true }
+            try? await Task.sleep(for: .milliseconds(320))
+            withAnimation(.spring(duration: 0.55, bounce: 0.3)) { progress = 1 }
+            try? await Task.sleep(for: .milliseconds(380))
+            withAnimation(.easeOut(duration: 0.7)) { ripple = true }
         }
     }
 }

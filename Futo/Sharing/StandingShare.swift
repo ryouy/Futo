@@ -68,3 +68,32 @@ final class UserDefaultsStandingStore: StandingShareStoring {
         if configs.isEmpty { defaults.removeObject(forKey: key(uid)) } else if let data = try? JSONEncoder().encode(configs) { defaults.set(data, forKey: key(uid)) }
     }
 }
+
+/// フレンドから届いた記録の「見た」の控え（この端末だけ）。新しい記録・更新があるとき、バッジを出すために使う。
+/// 共有ごとに、見た時点の版（更新時刻）を覚え、版が変わったら、もう一度「新しい」になる。
+struct SeenRecords: Codable, Equatable {
+    private(set) var versions: [String: String] = [:]
+
+    func isUnseen(id: String, version: String) -> Bool { versions[id] != version }
+
+    mutating func markSeen(id: String, version: String) { versions[id] = version }
+
+    /// 届かなくなった共有（期限切れ・停止・フレンド解除）の控えを捨てる。
+    mutating func prune(keeping ids: Set<String>) { versions = versions.filter { ids.contains($0.key) } }
+}
+
+final class SeenRecordsStore {
+    private let defaults: UserDefaults
+    init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+    private func key(_ uid: String) -> String { "seen.records.\(uid)" }
+
+    func load(uid: String) -> SeenRecords {
+        defaults.data(forKey: key(uid)).flatMap { try? JSONDecoder().decode(SeenRecords.self, from: $0) } ?? SeenRecords()
+    }
+
+    func save(_ seen: SeenRecords, uid: String) {
+        if let data = try? JSONEncoder().encode(seen) { defaults.set(data, forKey: key(uid)) }
+    }
+
+    func clear(uid: String) { defaults.removeObject(forKey: key(uid)) }
+}

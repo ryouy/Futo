@@ -165,9 +165,13 @@ struct FriendsView: View {
                 Text(tr("届いた記録")).font(.footnote).foregroundStyle(.secondary)
                 ForEach(sharing.receivedShares) { item in
                     NavigationLink { FriendShareDetailView(id: item.id) } label: {
-                        VStack(alignment: .leading) {
-                            Text(item.ownerName ?? tr("匿名"))
-                            Text(periodLabel(item.period) + (item.updatedAt.map { " · " + tr("更新 {0}", dateText($0)) } ?? "")).font(.footnote).foregroundStyle(.secondary)
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(item.ownerName ?? tr("匿名"))
+                                Text(periodLabel(item.period) + (item.updatedAt.map { " · " + tr("更新 {0}", dateText($0)) } ?? "")).font(.footnote).foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            if sharing.isUnseen(item) { NewBadge() }
                         }
                     }
                 }
@@ -237,6 +241,8 @@ struct FriendShareDetailView: View {
         .task {
             detail = await sharing.friendShareDetail(id: id)
             failed = detail == nil
+            // 開いたので、この版は「見た」にする（バッジが消える）
+            if let detail { sharing.markSeen(id: id, version: detail.updatedAt ?? detail.createdAt) }
         }
     }
 }

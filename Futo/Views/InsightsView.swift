@@ -6,6 +6,8 @@ struct RecordsView: View {
     let mode: AppMode
     @State private var period: InsightPeriod = .week
     @State private var detail: DayDetail?
+    /// 開いている日（日付をタップすると、その日のアプリごとの回数が見える）
+    @State private var expandedDays: Set<Date> = []
     @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
     @Query(sort: \RestrictionEvent.at, order: .reverse) private var events: [RestrictionEvent]
 
@@ -115,28 +117,51 @@ struct RecordsView: View {
                 Text(tr("この期間に、一時解除した記録はありません。")).font(.footnote).foregroundStyle(.secondary)
             }
             ForEach(days) { day in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(day.day.formatted(Date.FormatStyle().month().day().weekday(.abbreviated).locale(LanguageStore.shared.language.locale)))
-                            .font(.footnote.weight(.semibold))
-                        Spacer()
-                        Text(tr("一時解除 {0}回", "\(day.unlockCount)")).font(.footnote.monospacedDigit()).foregroundStyle(.secondary)
-                    }
-                    ForEach(day.rows) { row in
-                        Button { detail = DayDetail(day: day.day, key: row.key, sessions: row.sessions) } label: {
-                            HStack(spacing: 8) {
-                                Group {
-                                    if let item = row.key { ItemLabel(item: item).lineLimit(1) } else { Text(tr("対象の記録なし")) }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text(tr("{0}回", "\(row.count)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
-                                Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
-                            }
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
+                let expanded = expandedDays.contains(day.day)
+                VStack(alignment: .leading, spacing: 0) {
+                    // 最初は、日付と一時解除の回数だけ。タップで、アプリごとの詳細が開く。
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            if expanded { expandedDays.remove(day.day) } else { expandedDays.insert(day.day) }
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityHint(tr("時刻などの詳細を開きます"))
+                    } label: {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(day.day.formatted(Date.FormatStyle().month().day().weekday(.abbreviated).locale(LanguageStore.shared.language.locale)))
+                                .font(.subheadline.weight(.semibold))
+                            Spacer()
+                            Text(tr("一時解除 {0}回", "\(day.unlockCount)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                                .rotationEffect(.degrees(expanded ? 90 : 0))
+                        }
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityValue(expanded ? tr("開いています") : tr("閉じています"))
+
+                    if expanded {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(day.rows) { row in
+                                Button { detail = DayDetail(day: day.day, key: row.key, sessions: row.sessions) } label: {
+                                    HStack(spacing: 8) {
+                                        Group {
+                                            if let item = row.key { ItemLabel(item: item).lineLimit(1) } else { Text(tr("対象の記録なし")) }
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        Text(tr("{0}回", "\(row.count)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                                        Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                                    }
+                                    .frame(minHeight: 44)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityHint(tr("時刻などの詳細を開きます"))
+                            }
+                        }
+                        .padding(.leading, 12)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                 }
                 if day.id != days.last?.id { Divider() }

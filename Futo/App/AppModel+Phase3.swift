@@ -204,8 +204,8 @@ extension AppModel {
                     NotificationCandidate(kind: .postUse, id: "futo.postUse.\($0.sessionID.uuidString)", fireDate: $0.fireDate)
                 }
             }
-            let policy = NotificationPolicy(quietStartMinute: prefs.quietStartMinute,
-                                            quietEndMinute: prefs.quietEndMinute, calendar: .current)
+            // 静かな時間は設けない（開始と終了を同じにして、無効にする）
+            let policy = NotificationPolicy(quietStartMinute: 0, quietEndMinute: 0, calendar: .current)
             guard !Task.isCancelled else { return }
             await notifications.replaceAll(with: NotificationPlanner.select(candidates, policy: policy).accepted)
         }

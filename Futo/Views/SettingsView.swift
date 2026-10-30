@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor
 struct SettingsView: View {
     @Bindable var model: AppModel
+    @Environment(SharingModel.self) private var sharing
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
 
@@ -28,6 +29,15 @@ struct SettingsView: View {
                 ForEach(SettingsTab.allCases, id: \.self) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
+            .overlay(alignment: .topLeading) {
+                // 「アカウント」（3番目）の右上に、新しい記録があるしるし
+                if sharing.hasUnseenRecords {
+                    GeometryReader { geo in
+                        NewBadge(size: 9).position(x: geo.size.width * 0.75 - 6, y: 5)
+                    }
+                    .allowsHitTesting(false)
+                }
+            }
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
 
@@ -110,14 +120,21 @@ struct SettingsView: View {
 
     private var otherTab: some View {
         Form {
-            CardSection {
+            Section {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 14) {
                     ForEach(ThemeColor.allCases) { option in
                         themeSwatch(option)
                     }
                 }
                 .padding(.vertical, 6)
+            } header: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(tr("テーマカラー")).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accent)
+                    Text(tr("アプリ全体の色を変えます")).font(.caption).foregroundStyle(.secondary)
+                }
+                .textCase(nil)
             }
+            .listRowBackground(Theme.card)
 
             CardSection {
                 // 選択肢は、どちらの言語で表示していても、その言語自身の名前で出す。

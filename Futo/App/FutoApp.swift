@@ -35,11 +35,12 @@ struct FutoApp: App {
                 .environment(backup)
                 .onChange(of: scenePhase) { _, phase in
                     // アプリを開いたとき、継続共有を最新にする（常時同期ではない）
-                    if phase == .active { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode) } }
+                    if phase == .active { Task { await sharing.loadReceivedShares() }; Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode) } }
                 }
                 .task {
                     await sharing.loadProfile()
                     sharing.loadStandingConfigs()
+                    await sharing.loadReceivedShares()
                     await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode)
                 }
                 .onOpenURL { sharing.handleIncoming(url: $0) }
