@@ -17,7 +17,7 @@ export function parseDisplayName(input: unknown): string {
   return parsed.data;
 }
 
-/** プロフィールの作成・更新。表示名は、アプリが初回ログイン時にGoogleの名前から作った初期値、または本人が変えた名前。メール・写真は受け取らない。 */
+/** プロフィールの作成・更新。表示名は、アプリが初回ログイン時にGoogleの名前から作った初期値、または本人が変えた名前。メール・写真は受け取らない（写真はアプリ内の表示だけ）。 */
 export async function putMe(uid: string, displayName: string) {
   const ref = userRef(uid);
   await db().runTransaction(async (tx) => {

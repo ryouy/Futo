@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ja" data-lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ふと — Futo</title>
+  <meta name="description" content="スマホを開く前に、ひと呼吸。使うかどうかを、自分で選ぶ iPhone アプリ「ふと」の紹介。 / Futo — a small iPhone app that gives you a breath before you open your phone.">
+  <link rel="canonical" href="https://futo-share.vercel.app/">
+  <meta name="theme-color" content="#196459">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ふと — Futo">
+  <meta property="og:description" content="使う前に、ひと呼吸。 / Breathe before you use.">
+  <meta property="og:image" content="https://futo-share.vercel.app/assets/web/og.png">
+  <link rel="icon" href="/assets/web/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/web/apple-touch-icon.png">
+  <style>
+    :root {
+      --green: #196459;
+      --green-deep: #124a42;
+      --green-soft: #e3efeb;
+      --cream: #fcf8f0;
+      --ink: #1d2b27;
+      --muted: #5d6d68;
+      --lemon: #ffe38a;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      line-height: 1.8;
+      -webkit-text-size-adjust: 100%;
+      word-break: auto-phrase;      /* 対応ブラウザでは、日本語を文節で折り返す */
+      line-break: strict;
+    }
+    h1, h2, h3, .tagline { text-wrap: balance; }
+    .p { display: inline-block; }   /* 文節の途中では折り返さない */
+    /* 言語の切り替え：日本語と English のどちらかだけを見せる */
+    html[data-lang="ja"] .en, html[data-lang="en"] .ja { display: none !important; }
+
+    .wrap { width: min(1040px, 100% - 40px); margin-inline: auto; }
+
+    /* ヒーロー */
+    .hero {
+      background: linear-gradient(180deg, var(--green) 0%, #1b6b5f 100%);
+      color: var(--cream);
+      text-align: center;
+      padding: 28px 0 72px;
+    }
+    .lang {
+      display: inline-flex; padding: 3px; border-radius: 999px;
+      background: rgba(252, 248, 240, .16); border: 1px solid rgba(252, 248, 240, .28);
+    }
+    .lang button {
+      font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+      border: 0; background: transparent; color: rgba(252, 248, 240, .88);
+      padding: 5px 14px; border-radius: 999px; line-height: 1.6;
+      transition: background .3s, color .3s;
+    }
+    html[data-lang="ja"] .lang [data-set="ja"], html[data-lang="en"] .lang [data-set="en"] {
+      background: var(--cream); color: var(--green);
+    }
+    .topbar { display: flex; justify-content: flex-end; }
+    .logo { width: 132px; height: auto; margin-top: 28px; }
+    h1 { font-size: clamp(40px, 8vw, 56px); font-weight: 600; margin: 10px 0 4px; letter-spacing: .08em; }
+    .tagline { font-size: clamp(17px, 3.4vw, 22px); margin: 0 0 14px; font-weight: 500; }
+    .lead { max-width: 34em; margin: 0 auto 28px; color: rgba(252, 248, 240, .86); }
+    .button {
+      display: inline-block; padding: 12px 28px; border-radius: 999px; text-decoration: none;
+      background: var(--cream); color: var(--green); font-weight: 700;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .18);
+    }
+    .button:hover { filter: brightness(1.04); }
+
+    /* セクション共通 */
+    section { padding: 72px 0; }
+    h2 { font-size: clamp(22px, 4.4vw, 30px); text-align: center; margin: 0 0 36px; color: var(--green); font-weight: 600; }
+
+    /* 使い方 */
+    .steps { display: grid; gap: 16px; grid-template-columns: 1fr; padding: 0; margin: 0; list-style: none; }
+    .step { background: #fff; border-radius: 24px; padding: 22px 22px 24px; border: 1px solid rgba(25, 100, 89, .1); }
+    .step .n {
+      display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+      background: var(--green); color: var(--cream); font-weight: 700; margin-bottom: 10px;
+    }
+    .step h3 { margin: 0 0 4px; font-size: 18px; color: var(--green); }
+    .step p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.75; }
+
+    /* 画面 */
+    .shots { background: var(--green); color: var(--cream); }
+    .shots h2 { color: var(--cream); }
+    .gallery {
+      display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory;
+      padding: 4px 20px 18px; margin-inline: -20px; -webkit-overflow-scrolling: touch;
+    }
+    .gallery figure { flex: 0 0 min(62vw, 240px); margin: 0; scroll-snap-align: center; text-align: center; }
+    .gallery img { width: 100%; height: auto; border-radius: 28px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); display: block; background: var(--cream); }
+    .gallery figcaption { margin-top: 12px; font-size: 14px; color: rgba(252, 248, 240, .86); }
+
+    /* 特長 */
+    .features { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    .feature { background: var(--green-soft); border-radius: 24px; padding: 22px; }
+    .feature h3 { margin: 0 0 4px; font-size: 17px; color: var(--green); }
+    .feature p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.75; }
+    .privacy {
+      margin-top: 28px; text-align: center; color: var(--green); font-weight: 600;
+    }
+    .privacy span { display: inline-block; background: var(--lemon); border-radius: 999px; padding: 6px 18px; }
+
+    /* フッター */
+    footer { background: var(--green-deep); color: rgba(252, 248, 240, .8); text-align: center; padding: 44px 0 56px; font-size: 14px; }
+    footer img { width: 64px; height: 64px; border-radius: 16px; margin-bottom: 12px; }
+    footer a { color: var(--lemon); text-decoration: none; font-weight: 600; }
+    footer a:hover { text-decoration: underline; }
+    footer p { margin: 6px 0; }
+
+    @media (min-width: 720px) {
+      .steps { grid-template-columns: repeat(4, 1fr); }
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 960px) {
+      .gallery { justify-content: center; overflow: visible; padding-inline: 0; margin-inline: 0; }
+      .gallery figure { flex: 1 1 0; min-width: 0; }
+    }
+
+    /* 追加：チップ、原則、よくある質問、はじめ方 */
+    .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
+    .badge { font-size: 13px; padding: 4px 14px; border-radius: 999px; background: rgba(252, 248, 240, .14); border: 1px solid rgba(252, 248, 240, .24); }
+    .concept { max-width: 40em; margin-inline: auto; text-align: center; color: var(--ink); font-size: 17px; }
+    .concept em { font-style: normal; color: var(--green); font-weight: 700; }
+    .alt { background: #f4efe4; }
+    .trio { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    .card { background: #fff; border-radius: 24px; padding: 24px; border: 1px solid rgba(25, 100, 89, .1); }
+    .card h3 { margin: 0 0 8px; font-size: 18px; color: var(--green); }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.75; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .chip { font-size: 14px; padding: 5px 14px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-weight: 600; }
+    .principles { background: var(--green-deep); color: var(--cream); }
+    .principles h2 { color: var(--cream); }
+    .pgrid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    .principle { display: flex; gap: 14px; background: rgba(252, 248, 240, .08); border: 1px solid rgba(252, 248, 240, .16); border-radius: 22px; padding: 20px; }
+    .principle svg { flex: none; width: 26px; height: 26px; margin-top: 2px; }
+    .principle h3 { margin: 0 0 2px; font-size: 17px; color: var(--lemon); }
+    .principle p { margin: 0; font-size: 15px; color: rgba(252, 248, 240, .86); line-height: 1.75; }
+    .faq { max-width: 760px; margin-inline: auto; }
+    .faq details { background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 18px; padding: 0 20px; margin-bottom: 12px; }
+    .faq summary { cursor: pointer; font-weight: 600; color: var(--green); padding: 16px 0; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; font-weight: 400; font-size: 22px; line-height: 1.3; color: var(--green); }
+    .faq details[open] summary::after { content: "–"; }
+    .faq details p { margin: 0 0 16px; color: var(--muted); font-size: 15px; line-height: 1.8; }
+    .start { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    .start .card h3 { display: flex; align-items: center; gap: 10px; }
+    .links { text-align: center; margin-top: 28px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .link { display: inline-block; padding: 10px 22px; border-radius: 999px; text-decoration: none; font-weight: 700; background: var(--green); color: var(--cream); }
+    .link.ghost { background: transparent; color: var(--green); border: 2px solid var(--green); }
+    @media (min-width: 720px) {
+      .trio { grid-template-columns: repeat(3, 1fr); }
+      .pgrid { grid-template-columns: repeat(2, 1fr); }
+      .start { grid-template-columns: repeat(2, 1fr); }
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 960px) { .features { grid-template-columns: repeat(4, 1fr); } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .lang button { transition: none; } }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="lang" role="group" aria-label="言語 / Language">
+        <button type="button" data-set="ja">日本語</button>
+        <button type="button" data-set="en">English</button>
+      </div>
+    </div>
+    <img class="logo" src="/assets/web/logo.png" alt="" width="132">
+    <h1>ふと</h1>
+    <p class="tagline">
+      <span class="ja">「ふと開く」から、「ふと気づく」へ。</span>
+      <span class="en">From “just opening” to “just noticing”.</span>
+    </p>
+    <p class="lead">
+      <span class="ja"><span class="p">スマホを開く前に、ひと呼吸。</span><span class="p">使うかどうかを、</span><span class="p">自分で選ぶ iPhone アプリです。</span></span>
+      <span class="en">A small iPhone app that gives you a breath before you open your phone — so using it is your choice.</span>
+    </p>
+    <a class="button" href="https://github.com/ryouy/Futo">
+      <span class="ja">GitHub で見る</span><span class="en">View on GitHub</span>
+    </a>
+    <div class="badges">
+      <span class="badge">iPhone · iOS 17+</span>
+      <span class="badge"><span class="ja">日本語 / English</span><span class="en">Japanese / English</span></span>
+      <span class="badge"><span class="ja">広告なし・サーバーなし</span><span class="en">No ads · No servers</span></span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2><span class="ja">ふと、とは</span><span class="en">What is Futo?</span></h2>
+    <p class="concept">
+      <span class="ja">ふと、スマホを開いてしまう。そんな瞬間に、<em>少しだけ立ち止まる</em>ためのアプリです。使うことを責めたり、使った時間を競ったりはしません。大切にしているのは、画面の外の時間を、自分で納得して過ごせることです。</span>
+      <span class="en">It's for those moments when you open your phone without thinking — a chance to <em>pause for a moment</em>. No blame, no scores, no competing over screen time. What matters is spending your time away from the screen in a way you feel good about.</span>
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="ja">使い方</span><span class="en">How it works</span></h2>
+    <ol class="steps">
+      <li class="step">
+        <div class="n">1</div>
+        <h3><span class="ja">ふだんは制限</span><span class="en">Locked by default</span></h3>
+        <p><span class="ja">選んだアプリやサイトを、<wbr>ふだんは使えないようにしておきます。</span><span class="en">Apps and sites you pick stay locked most of the time.</span></p>
+      </li>
+      <li class="step">
+        <div class="n">2</div>
+        <h3><span class="ja">ひと呼吸</span><span class="en">Take a breath</span></h3>
+        <p><span class="ja">使いたくなったら、<wbr>何に使いたいかを選んで、<wbr>少し待ちます。</span><span class="en">When you want to use something, say what for and wait a moment.</span></p>
+      </li>
+      <li class="step">
+        <div class="n">3</div>
+        <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
+        <p><span class="ja">待ったあとで、<wbr>使うか、やめておくかを選びます。</span><span class="en">After waiting, choose to use it — or maybe later.</span></p>
+      </li>
+      <li class="step">
+        <div class="n">4</div>
+        <h3><span class="ja">自動で戻る</span><span class="en">Back to locked</span></h3>
+        <p><span class="ja">決めた時間だけ解除して、<wbr>そのあと自動で制限に戻ります。</span><span class="en">It unlocks for the time you set, then locks itself again.</span></p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+
+<section class="alt">
+  <div class="wrap">
+    <h2><span class="ja">ひと呼吸のなかみ</span><span class="en">Inside a breath</span></h2>
+    <div class="trio">
+      <div class="card">
+        <h3><span class="ja">① 何に使いたい？</span><span class="en">① What for?</span></h3>
+        <p><span class="ja">使う前に、目的をひとつ選びます。答えずに進むこともできます。</span><span class="en">Pick one reason before you use it — or skip the question.</span></p>
+        <div class="chips">
+          <span class="chip"><span class="ja">連絡</span><span class="en">Messaging</span></span>
+          <span class="chip"><span class="ja">調べもの</span><span class="en">Looking something up</span></span>
+          <span class="chip"><span class="ja">気分転換</span><span class="en">Taking a break</span></span>
+          <span class="chip"><span class="ja">なんとなく</span><span class="en">Just because</span></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="ja">② 少し待つ</span><span class="en">② Wait a moment</span></h3>
+        <p><span class="ja">標準は3分（1〜10分から選べます）。画面を閉じると止まり、戻ると続きから進みます。ゆっくり動く円が、残りを教えてくれます。</span><span class="en">3 minutes by default (choose 1–10). It pauses when you leave the screen and picks up where it left off. A slow circle shows what's left.</span></p>
+      </div>
+      <div class="card">
+        <h3><span class="ja">③ 自分で決める</span><span class="en">③ You decide</span></h3>
+        <p><span class="ja">「使いたい」か「やめておく」を選びます。使うなら、使うものだけを選んで、1〜30分ほど解除。戻ったら、感想を気軽に残せます。</span><span class="en">Choose “I want to use it” or “Maybe later.” If you use it, pick just what you need and unlock it for 1–30 minutes. Afterwards, leave a quick note on how it felt.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="shots">
+  <div class="wrap">
+    <h2><span class="ja">画面</span><span class="en">Screens</span></h2>
+    <div class="gallery">
+      <figure>
+        <img src="/assets/web/01-intro.webp" alt="" width="540" height="1168" loading="lazy">
+        <figcaption><span class="ja">はじまりの説明</span><span class="en">Intro</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/02-home.webp" alt="" width="540" height="1168" loading="lazy">
+        <figcaption><span class="ja">ホーム</span><span class="en">Home</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/03-purpose.webp" alt="" width="540" height="1168" loading="lazy">
+        <figcaption><span class="ja">何に使いたい？</span><span class="en">What for?</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/04-wait.webp" alt="" width="540" height="1168" loading="lazy">
+        <figcaption><span class="ja">少し立ち止まる</span><span class="en">A moment to pause</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/05-unlocked.webp" alt="" width="540" height="1168" loading="lazy">
+        <figcaption><span class="ja">解除しました</span><span class="en">Unlocked</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="ja">できること</span><span class="en">What it does</span></h2>
+    <div class="features">
+      <div class="feature">
+        <h3><span class="ja">制限</span><span class="en">Lock</span></h3>
+        <p><span class="ja">アプリ・カテゴリ・ウェブサイトを、Screen Time で制限します。追加はいつでも。外せるのは、制限をはずした間だけです。</span><span class="en">Lock apps, categories and websites with Screen Time. Add anytime; remove only while the lock is off.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">一時解除</span><span class="en">Temporary unlock</span></h3>
+        <p><span class="ja">選んだものだけを、1〜30分。時間になると自動で戻ります。「使い終わる」でいつでも戻せます。</span><span class="en">Unlock only what you picked, for 1–30 minutes. It locks itself again — or tap “All done” anytime.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">記録</span><span class="en">Records</span></h3>
+        <p><span class="ja">今週・今月・すべて。目的や感想を円グラフで、時間帯も見られます。</span><span class="en">This week, this month, all time. Purposes and feelings in pie charts, plus when you tend to reach for your phone.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">朝夜の振り返り</span><span class="en">Daily check-ins</span></h3>
+        <p><span class="ja">開くと、やわらかいカードで。短い言葉だけで、評価や点数はつけません。作るのは端末の中で、AI は使いません。</span><span class="en">A soft card when you open the app. Short words only — no scores. Made on your device, no AI.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">やさしい提案</span><span class="en">Gentle suggestions</span></h3>
+        <p><span class="ja">記録が5件以上たまったとき、週に1回まで、小さな工夫を提案。設定は、あなたが決めるまで変わりません。</span><span class="en">Once you have 5+ records, at most one small idea a week. Nothing changes until you say so.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">やさしい通知</span><span class="en">Gentle alerts</span></h3>
+        <p><span class="ja">任意で、初期はオフ。1日4件まで、3時間以上あけて、静かな時間は送りません。</span><span class="en">Optional, off by default. Up to 4 a day, at least 3 hours apart, and never in quiet hours.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">見た目</span><span class="en">Look &amp; feel</span></h3>
+        <p><span class="ja">テーマカラーは4色。ダークモードも、夜にやさしい色合いです。日本語と English を切り替えられます。</span><span class="en">Four theme colors and a soft dark mode for the evening. Switch between Japanese and English anytime.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">デモモード</span><span class="en">Demo mode</span></h3>
+        <p><span class="ja">Screen Time を使わずに、流れを試せます。実際のアプリは制限しません。</span><span class="en">Try the whole flow without Screen Time. No real apps get locked.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="principles">
+  <div class="wrap">
+    <h2><span class="ja">大切にしていること</span><span class="en">What we care about</span></h2>
+    <div class="pgrid">
+      <div class="principle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <div>
+          <h3><span class="ja">責めない</span><span class="en">No blame</span></h3>
+          <p><span class="ja">評価も点数もなし。連続日数やランキングも、作りません。</span><span class="en">No judging, no scores — and no streaks or rankings.</span></p>
+        </div>
+      </div>
+      <div class="principle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <div>
+          <h3><span class="ja">決めるのは自分</span><span class="en">Your call</span></h3>
+          <p><span class="ja">制限は、いつでも自分で外せます。止めるためではなく、気づくための道具です。</span><span class="en">You can always remove the lock yourself. It's a tool for noticing, not for stopping you.</span></p>
+        </div>
+      </div>
+      <div class="principle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <div>
+          <h3><span class="ja">端末の中だけ</span><span class="en">Stays on your device</span></h3>
+          <p><span class="ja">記録は、この端末の中に。サーバー・広告・課金・AI は使いません。</span><span class="en">Records stay on this device. No servers, ads, purchases or AI.</span></p>
+        </div>
+      </div>
+      <div class="principle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <div>
+          <h3><span class="ja">静かに寄りそう</span><span class="en">Quietly alongside</span></h3>
+          <p><span class="ja">通知は控えめに。未読バッジも音もなく、不安をあおる言葉も使いません。</span><span class="en">Notifications stay light — no badges, no sounds, and no wording that nags.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="ja">よくある質問</span><span class="en">FAQ</span></h2>
+    <div class="faq">
+      <details>
+        <summary><span class="ja">制限を、外せないようにできますか？</span><span class="en">Can I make the lock impossible to remove?</span></summary>
+        <p><span class="ja">いいえ。制限は、本人がいつでも設定から外せます。解除を防ぐための管理アプリではありません。</span><span class="en">No. You can always remove it yourself in Settings. This isn't a parental-control or enforcement app.</span></p>
+      </details>
+      <details>
+        <summary><span class="ja">スマホを使った時間は分かりますか？</span><span class="en">Does it track how long I use my phone?</span></summary>
+        <p><span class="ja">実際の使用時間は取得していません。記録するのは、ひと呼吸での操作（目的・選んだ結果・解除していた時間）だけです。</span><span class="en">No. It doesn't read your real usage time. It only records what you do in a breath: the purpose, what you chose, and how long you unlocked something.</span></p>
+      </details>
+      <details>
+        <summary><span class="ja">どの端末で使えますか？</span><span class="en">What do I need to run it?</span></summary>
+        <p><span class="ja">iPhone（iOS 17 以降）です。制限を実際にかけるには、実機と署名の設定が必要です。設定しなくても、デモモードで流れを試せます。</span><span class="en">An iPhone with iOS 17 or later. Actually locking apps needs a real device and signing setup; demo mode lets you try the flow without them.</span></p>
+      </details>
+      <details>
+        <summary><span class="ja">もう公開されていますか？</span><span class="en">Is it available yet?</span></summary>
+        <p><span class="ja">まだ App Store では公開していません。ソースコードは GitHub にあります。</span><span class="en">Not on the App Store yet. The source is on GitHub.</span></p>
+      </details>
+      <details>
+        <summary><span class="ja">記録は、どこに保存されますか？</span><span class="en">Where is my data kept?</span></summary>
+        <p><span class="ja">この端末の中だけです。共有を選んだときだけ、選んだ統計を送ります。設定から、すべての記録を削除できます。</span><span class="en">Only on this device — unless you choose to share, and then only the stats you pick. You can delete all records in Settings.</span></p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2><span class="ja">はじめ方</span><span class="en">Getting started</span></h2>
+    <div class="start">
+      <div class="card">
+        <h3><span class="ja">まず、デモで試す</span><span class="en">Try the demo first</span></h3>
+        <p><span class="ja">Xcode でプロジェクトを開いて実行します。デモなら署名は不要です。初回の画面で「デモで試す」を選んでください。</span><span class="en">Open the project in Xcode and run it — the demo needs no signing. Choose “Try the demo” on the first screen.</span></p>
+      </div>
+      <div class="card">
+        <h3><span class="ja">実機で制限をかける</span><span class="en">Lock apps on a real iPhone</span></h3>
+        <p><span class="ja">Team と Bundle ID、Family Controls と App Group の設定をして、実機で実行します。手順は、セットアップの文書にまとめています。</span><span class="en">Set your Team and Bundle ID, enable Family Controls and an App Group, then run on the device. The steps are in the setup guide.</span></p>
+      </div>
+    </div>
+    <div class="links">
+      <a class="link" href="https://github.com/ryouy/Futo/blob/main/docs/SETUP.md"><span class="ja">セットアップの手順</span><span class="en">Setup guide</span></a>
+      <a class="link ghost" href="https://github.com/ryouy/Futo/blob/main/docs/IMPLEMENTATION_STATUS.md"><span class="ja">実装状況</span><span class="en">Implementation status</span></a>
+      <a class="link ghost" href="https://github.com/ryouy/Futo"><span class="ja">ソースコード</span><span class="en">Source code</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <img src="/assets/web/icon-256.png" alt="" width="64" height="64">
+    <p><strong>ふと / Futo</strong></p>
+    <p>
+    </p>
+    <p><a href="https://github.com/ryouy/Futo">GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+  // 言語：前に選んだものを優先し、なければ、ブラウザの言語（日本語以外は English）にする。
+  (function () {
+    var root = document.documentElement;
+    function apply(lang) {
+      root.setAttribute("data-lang", lang);
+      root.lang = lang;
+      try { localStorage.setItem("futo-lang", lang); } catch (e) {}
+    }
+    var saved = null;
+    try { saved = localStorage.getItem("futo-lang"); } catch (e) {}
+    apply(saved || ((navigator.language || "ja").toLowerCase().indexOf("ja") === 0 ? "ja" : "en"));
+    document.querySelectorAll(".lang [data-set]").forEach(function (b) {
+      b.addEventListener("click", function () { apply(b.getAttribute("data-set")); });
+    });
+  })();
+</script>
+</body>
+</html>

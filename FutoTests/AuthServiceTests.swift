@@ -62,7 +62,7 @@ final class AuthServiceTests: XCTestCase {
             self.bodies.append(self.body(of: request))
             let url = request.url!.absoluteString
             if url.contains("oauth2.googleapis.com/token") { return (200, self.json(["id_token": "GOOGLE-ID-TOKEN"])) }
-            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID-\(self.requests.count)", "refreshToken": "REFRESH-1", "expiresIn": expiresIn, "displayName": "山田 太郎"])) }
+            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID-\(self.requests.count)", "refreshToken": "REFRESH-1", "expiresIn": expiresIn, "displayName": "山田 太郎", "photoUrl": "https://lh3.googleusercontent.com/a/abc=s96-c"])) }
             if url.contains("securetoken.googleapis.com") { return (200, self.json(["id_token": "FB-REFRESHED", "refresh_token": "REFRESH-2", "user_id": uid, "expires_in": "3600"])) }
             return (404, Data())
         }
@@ -85,7 +85,8 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertEqual(uid, "uid-A")
         XCTAssertEqual(service.state, .signedIn(uid: "uid-A"))
         XCTAssertEqual(service.providerDisplayName, "山田 太郎")
-        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1"))
+        XCTAssertEqual(service.photoURL?.host, "lh3.googleusercontent.com")
+        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1", photoURL: "https://lh3.googleusercontent.com/a/abc=s96-c"))
 
         let items = Dictionary(uniqueKeysWithValues: URLComponents(url: authURL!, resolvingAgainstBaseURL: false)!.queryItems!.map { ($0.name, $0.value ?? "") })
         XCTAssertEqual(items["scope"], "openid profile", "名前（表示名の初期値）までで、Drive・メール・写真は求めない")
@@ -210,5 +211,22 @@ final class AuthServiceTests: XCTestCase {
         _ = try await service.signInWithGoogle()
         XCTAssertEqual(cleaned, ["uid-A"], "別アカウントになったら、前のアカウントの端末内の共有情報を除去する")
         XCTAssertEqual(service.uid, "uid-B")
+    }
+
+    func testOnlyGoogleHTTPSPhotosAreAccepted() {
+        XCTAssertNotNil(AuthService.trustedPhotoURL("https://lh3.googleusercontent.com/a/x=s96-c"))
+        XCTAssertNil(AuthService.trustedPhotoURL("http://lh3.googleusercontent.com/a/x"))
+        XCTAssertNil(AuthService.trustedPhotoURL("https://evil.example.com/a.png"))
+        XCTAssertNil(AuthService.trustedPhotoURL("https://googleusercontent.com.evil.com/a.png"))
+        XCTAssertNil(AuthService.trustedPhotoURL(nil))
+    }
+
+    func testSignOutForgetsThePhotoAndName() async throws {
+        installHappyNetwork()
+        let service = make()
+        _ = try await service.signInWithGoogle()
+        service.signOut()
+        XCTAssertNil(service.photoURL)
+        XCTAssertNil(service.providerDisplayName)
     }
 }

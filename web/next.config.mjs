@@ -6,6 +6,10 @@ const noStore = [
 
 const nextConfig = {
   poweredByHeader: false,
+  // トップページは、アプリの紹介ページ（public/intro.html）。共有・招待リンクとは別
+  async rewrites() {
+    return { beforeFiles: [{ source: "/", destination: "/intro.html" }] };
+  },
   async headers() {
     return [
       {

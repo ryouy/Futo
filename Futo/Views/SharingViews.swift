@@ -85,7 +85,7 @@ struct SharingTab: View {
     private var signedIn: some View {
         CardSection {
             HStack(spacing: 14) {
-                AccountAvatar(name: sharing.profile?.displayName ?? "", size: 48)
+                AccountAvatar(name: sharing.profile?.displayName ?? "", photoURL: sharing.auth.photoURL, size: 48)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(sharing.profile?.displayName ?? "…").font(.headline).oneLine()
                     Text(tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
@@ -329,20 +329,34 @@ func dateText(_ iso: String) -> String {
     return date.formatted(date: .abbreviated, time: .shortened)
 }
 
-/// ログイン中のしるし。名前の頭文字を、テーマ色の丸に載せる（Googleの写真は取得しない）。
+/// ログイン中のしるし。Googleのアイコン画像があれば、それを丸く表示する。なければ、名前の頭文字をテーマ色の丸に載せる。
+/// 画像はこの端末の表示だけに使い、サーバーには送らない。小さい画像を1回読み込むだけで、あとはキャッシュされる。
 struct AccountAvatar: View {
     let name: String
+    var photoURL: URL? = nil
     var size: CGFloat = 32
 
     var body: some View {
+        ZStack {
+            initial
+            if let photoURL {
+                AsyncImage(url: photoURL) { phase in
+                    if case .success(let image) = phase { image.resizable().scaledToFill() }
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .accessibilityHidden(true)
+    }
+
+    private var initial: some View {
         Circle()
             .fill(Theme.accent)
-            .frame(width: size, height: size)
             .overlay(
                 Text(String(name.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased())
                     .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
             )
-            .accessibilityHidden(true)
     }
 }

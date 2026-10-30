@@ -22,6 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <footer className="site">
           ふと — 使う前に、ひと呼吸。
+          <br />
+          <a href="/">ふと について（アプリの紹介）</a>
         </footer>
       </body>
     </html>

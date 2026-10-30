@@ -14,7 +14,7 @@ enum AuthError: Error, Equatable {
 }
 
 /// 任意のGoogleログイン。Google（OAuth 2.0 + PKCE）で得たIDトークンを、Firebase Authenticationへ渡す。
-/// アプリの内部IDは、Firebase UID。Googleから受け取るのは名前だけで、表示名の初期値に使う（本人が変更できる）。メール・写真は取得しない。
+/// アプリの内部IDは、Firebase UID。Googleから受け取るのは名前だけで、表示名の初期値に使う（本人が変更できる）。メールは取得しない。写真はアプリ内の表示だけに使う。
 @MainActor
 @Observable
 final class AuthService {
@@ -29,6 +29,8 @@ final class AuthService {
     private(set) var state: State = .signedOut
     /// 直近のログインで、Googleから受け取った名前。表示名の初期値にだけ使う（保存しない・写真やメールは受け取らない）
     private(set) var providerDisplayName: String?
+    /// Googleのアイコン画像のURL。アプリ内の表示だけに使い、サーバーには送らない
+    private(set) var photoURL: URL?
 
     @ObservationIgnored private let config: Phase4Config
     @ObservationIgnored private let urlSession: URLSession
@@ -45,6 +47,7 @@ final class AuthService {
         self.store = store
         if let saved = store.load() {
             refreshToken = saved.refreshToken
+            photoURL = Self.trustedPhotoURL(saved.photoURL)
             state = .signedIn(uid: saved.uid)
         }
     }
@@ -57,6 +60,13 @@ final class AuthService {
     }
 
     var isSignedIn: Bool { if case .signedIn = state { return true } else { return false } }
+
+    /// 写真は、GoogleのHTTPSの画像だけを受け付ける（それ以外のURLは、表示しない）
+    static func trustedPhotoURL(_ raw: String?) -> URL? {
+        guard let raw, let url = URL(string: raw), url.scheme == "https", let host = url.host?.lowercased(),
+              host == "googleusercontent.com" || host.hasSuffix(".googleusercontent.com") else { return nil }
+        return url
+    }
 
     // MARK: ログイン
 
@@ -92,9 +102,10 @@ final class AuthService {
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
             refreshToken = firebase.refreshToken
             providerDisplayName = firebase.displayName
+            photoURL = Self.trustedPhotoURL(firebase.photoURL)
             // 別のアカウントに切り替わったら、前のアカウントの端末内の共有情報を除去する
             if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
-            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken))
+            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, photoURL: photoURL?.absoluteString))
             state = .signedIn(uid: firebase.uid)
             return firebase.uid
         } catch {
@@ -114,7 +125,7 @@ final class AuthService {
             idToken = refreshed.idToken
             idTokenExpiry = Date().addingTimeInterval(refreshed.expiresIn)
             self.refreshToken = refreshed.refreshToken
-            if let uid { store.save(StoredAuthSession(uid: uid, refreshToken: refreshed.refreshToken)) }
+            if let uid { store.save(StoredAuthSession(uid: uid, refreshToken: refreshed.refreshToken, photoURL: photoURL?.absoluteString)) }
             if case .needsReauth(let uid) = state { state = .signedIn(uid: uid) }
             return refreshed.idToken
         } catch AuthError.cancelled {
@@ -134,6 +145,8 @@ final class AuthService {
     func signOut() {
         if let uid { ShareLinkCleanup.run(uid) }
         store.clear()
+        photoURL = nil
+        providerDisplayName = nil
         idToken = nil
         refreshToken = nil
         idTokenExpiry = .distantPast
@@ -144,7 +157,7 @@ final class AuthService {
 
     private enum RefreshFailure: Error { case rejected }
 
-    private struct FirebaseTokens { var uid: String; var idToken: String; var refreshToken: String; var expiresIn: TimeInterval; var displayName: String? = nil }
+    private struct FirebaseTokens { var uid: String; var idToken: String; var refreshToken: String; var expiresIn: TimeInterval; var displayName: String? = nil; var photoURL: String? = nil }
 
     private func formRequest(_ url: URL, _ fields: [String: String]) -> URLRequest {
         var request = URLRequest(url: url, timeoutInterval: 15)
@@ -192,7 +205,7 @@ final class AuthService {
         guard status == 200, let uid = body["localId"] as? String, let idToken = body["idToken"] as? String,
               let refresh = body["refreshToken"] as? String else { throw AuthError.failed }
         let name = (body["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600, displayName: name?.isEmpty == false ? name : nil)
+        return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600, displayName: name?.isEmpty == false ? name : nil, photoURL: body["photoUrl"] as? String)
     }
 
     private func refresh(_ refreshToken: String) async throws -> FirebaseTokens {

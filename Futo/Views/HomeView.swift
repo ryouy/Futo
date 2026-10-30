@@ -69,7 +69,7 @@ struct HomeView: View {
                     Button { sheet = .settings } label: {
                         if sharing.isSignedIn, let name = sharing.profile?.displayName {
                             // ログイン中は、アカウントのアイコンで分かるようにする
-                            AccountAvatar(name: name, size: 28).frame(width: 44, height: 44)
+                            AccountAvatar(name: name, photoURL: sharing.auth.photoURL, size: 28).frame(width: 44, height: 44)
                         } else {
                             Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
                         }
