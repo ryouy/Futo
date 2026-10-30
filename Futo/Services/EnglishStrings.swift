@@ -189,6 +189,7 @@ enum EnglishStrings {
         "一時解除中": "Temporarily unlocked",
         "使い終わる": "All done",
         "許可する": "Allow",
+        "「ふと」自身は、制限できません。": "Futo can't lock itself.",
         "通知を受け取りますか？": "Get notifications?",
         "朝と夜の振り返りをお知らせします。あとから、設定でいつでも変えられます。許可しなくても、ほかの機能は使えます。": "We'll remind you about the morning and night reflections. You can change this anytime in Settings. Everything else works without it.",
         "通知がオフです。設定アプリで許可できます。": "Notifications are off. You can allow them in Settings.",

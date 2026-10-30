@@ -39,8 +39,9 @@ struct DeviceAppPickerView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button(tr("保存")) {
                             // 制限中は、追加だけ。外したものは元に戻る。
-                            model.device.saveSelection(draft, additiveOnly: model.isTargetEditLocked)
+                            let removedSelf = model.device.saveSelection(draft, additiveOnly: model.isTargetEditLocked)
                             model.didChangeDeviceSelection()
+                            if removedSelf { model.notice = tr("「ふと」自身は、制限できません。") }
                             dismiss()
                         }
                     }

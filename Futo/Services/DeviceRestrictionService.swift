@@ -46,8 +46,11 @@ final class DeviceRestrictionService: RestrictionService {
 
     /// 選んだものを保存する。制限中・一時解除中なら、ストアへもすぐ反映する。
     /// `additiveOnly` のときは、いま制限しているものに、追加分だけを足す（選択画面で外したものは、元に戻す）。
-    func saveSelection(_ newSelection: FamilyActivitySelection, additiveOnly: Bool = false) {
+    /// 戻り値は、「ふと」自身が選ばれていて、取り除いたかどうか。
+    @discardableResult
+    func saveSelection(_ newSelection: FamilyActivitySelection, additiveOnly: Bool = false) -> Bool {
         var result = RestrictedItems(selection: newSelection)
+        let removedSelf = result.removeOwnApp()
         if additiveOnly {
             let current = items
             result.apps.formUnion(current.apps)
@@ -57,6 +60,7 @@ final class DeviceRestrictionService: RestrictionService {
         selection = result.selection
         SharedState.saveSelection(selection)
         syncShield()
+        return removedSelf
     }
 
     /// 1つを制限の対象から外す。制限中なら、そのシールドもすぐ外れる。
@@ -194,5 +198,18 @@ final class DeviceRestrictionService: RestrictionService {
             SharedState.relock(reason: tr("アプリで未再制限を検出し、再制限しました"))
         }
         return SharedState.shieldMatches(items: items) ? .configured : .unverifiable
+    }
+}
+
+
+extension RestrictedItems {
+    /// 「ふと」自身は、制限の対象にしない（自分で自分を閉じ込めて、解除できなくなるのを防ぐ）。取り除いたら true。
+    /// アプリとして直接選ばれたものだけを見分けられる。カテゴリの中に含まれる場合は、OSの仕組み上、ここでは除けない。
+    @discardableResult
+    mutating func removeOwnApp() -> Bool {
+        guard let own = Bundle.main.bundleIdentifier else { return false }
+        let before = apps.count
+        apps = apps.filter { Application(token: $0).bundleIdentifier != own }
+        return apps.count != before
     }
 }
