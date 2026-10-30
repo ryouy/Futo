@@ -368,9 +368,10 @@ struct QRSection: View {
                         .transition(.opacity)
                 }
                 Button { withAnimation(.easeInOut(duration: 0.25)) { phase = .idle; image = nil } } label: {
-                    Label(tr("閉じる"), systemImage: "xmark")
+                    Text(tr("閉じる")).font(.subheadline).foregroundStyle(Theme.accent)
+                        .frame(minHeight: 36).padding(.horizontal, 12)
                 }
-                .buttonStyle(ChipButtonStyle())
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity)

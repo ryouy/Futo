@@ -33,10 +33,14 @@ struct BackupView: View {
     }
 
     private var explanation: some View {
-        CardSection {
+        Section {
             Text(tr("記録と設定を、Driveに保存します。"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
         }
     }
 

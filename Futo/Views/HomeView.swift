@@ -414,7 +414,7 @@ private struct ShackleShape: Shape {
         path.addLine(to: CGPoint(x: 0, y: r))
         path.addCurve(to: CGPoint(x: r, y: 0), control1: CGPoint(x: 0, y: r - k * r), control2: CGPoint(x: r - k * r, y: 0))
         path.addCurve(to: CGPoint(x: w, y: r), control1: CGPoint(x: r + k * r, y: 0), control2: CGPoint(x: w, y: r - k * r))
-        path.addLine(to: CGPoint(x: w, y: h))
+        path.addLine(to: CGPoint(x: w, y: h - 14))   // 右の脚は短い（開くと本体から抜ける）
         return path
     }
 }
@@ -431,12 +431,13 @@ private struct PadlockDrawing: View, Animatable {
 
     var body: some View {
         let open = 1 - progress
-        VStack(spacing: -6) {
+        // 南京錠。開いているときは、左の脚だけが本体に刺さったまま、輪が持ち上がって横に振れる。
+        ZStack(alignment: .top) {
             ShackleShape()
                 .stroke(color, style: StrokeStyle(lineWidth: 11, lineCap: .round))
-                .frame(width: 50, height: 46)
-                // 開いているときは、まっすぐ上に持ち上がっている。閉じるときは、上から、真下に降りてかかる
-                .offset(y: -22 * open)
+                .frame(width: 50, height: 62)
+                .rotationEffect(.degrees(-24 * open), anchor: .bottomLeading)
+                .offset(y: -15 * open)
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .fill(color)
                 .frame(width: 84, height: 62)
@@ -446,7 +447,9 @@ private struct PadlockDrawing: View, Animatable {
                         Capsule().fill(keyColor).frame(width: 5, height: 14).offset(y: -2)
                     }
                 }
+                .offset(y: 40)
         }
+        .frame(width: 84, height: 102, alignment: .top)
     }
 }
 
