@@ -80,7 +80,7 @@ struct HomeView: View {
                     Button { sheet = .settings } label: {
                         if sharing.isSignedIn, let name = sharing.profile?.displayName {
                             // ログイン中は、アカウントのアイコンで分かるようにする。小さな歯車で、押すと設定を開けると伝える
-                            AccountAvatar(name: name, photoURL: sharing.auth.photoURL, size: 30, isOwn: true)
+                            AccountAvatar(name: name, size: 30, isOwn: true)
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "gearshape.fill")
                                         .font(.system(size: 9, weight: .bold))

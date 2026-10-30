@@ -354,3 +354,14 @@ struct CardSection<Content: View>: View {
             .listRowBackground(Theme.card)
     }
 }
+
+extension ThemeColor {
+    /// このテーマのアクセント色（ライト／ダークで切り替わる）。アイコンの色の選択肢などに使う。
+    var swatchColor: Color {
+        Color(uiColor: UIColor { trait in
+            let hex = trait.userInterfaceStyle == .dark ? palette.accent.1 : palette.accent.0
+            return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                           blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        })
+    }
+}

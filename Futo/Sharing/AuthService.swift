@@ -14,7 +14,7 @@ enum AuthError: Error, Equatable {
 }
 
 /// 任意のGoogleログイン。Google（OAuth 2.0 + PKCE）で得たIDトークンを、Firebase Authenticationへ渡す。
-/// アプリの内部IDは、Firebase UID。Googleから受け取るのは名前だけで、表示名の初期値に使う（本人が変更できる）。メールは取得しない。写真はアプリ内の表示だけに使う。
+/// アプリの内部IDは、Firebase UID。Googleから使うのは名前だけで、表示名の初期値に使う（本人が変更できる）。メール・写真は使わない。
 @MainActor
 @Observable
 final class AuthService {
@@ -27,10 +27,8 @@ final class AuthService {
     }
 
     private(set) var state: State = .signedOut
-    /// 直近のログインで、Googleから受け取った名前。表示名の初期値にだけ使う（保存しない・写真やメールは受け取らない）
+    /// 直近のログインで、Googleから受け取った名前。表示名の初期値にだけ使う（保存しない）
     private(set) var providerDisplayName: String?
-    /// Googleのアイコン画像のURL。アプリ内の表示だけに使い、サーバーには送らない
-    private(set) var photoURL: URL?
 
     @ObservationIgnored private let config: Phase4Config
     @ObservationIgnored private let urlSession: URLSession
@@ -47,7 +45,6 @@ final class AuthService {
         self.store = store
         if let saved = store.load() {
             refreshToken = saved.refreshToken
-            photoURL = Self.trustedPhotoURL(saved.photoURL)
             state = .signedIn(uid: saved.uid)
         }
     }
@@ -60,13 +57,6 @@ final class AuthService {
     }
 
     var isSignedIn: Bool { if case .signedIn = state { return true } else { return false } }
-
-    /// 写真は、GoogleのHTTPSの画像だけを受け付ける（それ以外のURLは、表示しない）
-    static func trustedPhotoURL(_ raw: String?) -> URL? {
-        guard let raw, let url = URL(string: raw), url.scheme == "https", let host = url.host?.lowercased(),
-              host == "googleusercontent.com" || host.hasSuffix(".googleusercontent.com") else { return nil }
-        return url
-    }
 
     // MARK: ログイン
 
@@ -98,41 +88,20 @@ final class AuthService {
 
             let googleIDToken = try await exchangeCode(code, verifier: verifier, redirect: redirect)
             let firebase = try await signInToFirebase(googleIDToken: googleIDToken)
-            // Firebaseの応答に名前・写真が無いときは、GoogleのIDトークンの申告（name / picture）から補う
-            let claims = GoogleIDToken.profile(from: googleIDToken)
+            // Firebaseの応答に名前が無いときは、GoogleのIDトークンの申告（name）から補う
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
             refreshToken = firebase.refreshToken
-            providerDisplayName = firebase.displayName ?? claims.name
-            photoURL = Self.trustedPhotoURL(firebase.photoURL) ?? Self.trustedPhotoURL(claims.picture)
+            providerDisplayName = firebase.displayName ?? GoogleIDToken.name(from: googleIDToken)
             // 別のアカウントに切り替わったら、前のアカウントの端末内の共有情報を除去する
             if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
-            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, photoURL: photoURL?.absoluteString))
+            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken))
             state = .signedIn(uid: firebase.uid)
             return firebase.uid
         } catch {
             state = previous == .signingIn ? .signedOut : previous
             throw error as? AuthError ?? AuthError.failed
         }
-    }
-
-    /// ログイン済みで写真がまだ無いとき（写真に対応する前のログインなど）、Firebaseのユーザー情報から取り直す。
-    /// 取れなくても、何も変えない。
-    func refreshPhotoIfNeeded() async {
-        guard photoURL == nil, case .signedIn(let uid) = state, let token = try? await validIDToken() else { return }
-        var components = URLComponents(string: "https://identitytoolkit.googleapis.com/v1/accounts:lookup")!
-        components.queryItems = [.init(name: "key", value: config.firebaseAPIKey)]
-        var request = URLRequest(url: components.url!, timeoutInterval: 15)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["idToken": token])
-        guard let (status, body) = try? await decode(request), status == 200,
-              let user = (body["users"] as? [[String: Any]])?.first else { return }
-        let providers = (user["providerUserInfo"] as? [[String: Any]]) ?? []
-        let raw = (user["photoUrl"] as? String) ?? providers.compactMap { $0["photoUrl"] as? String }.first
-        guard let url = Self.trustedPhotoURL(raw) else { return }
-        photoURL = url
-        if let refresh = refreshToken { store.save(StoredAuthSession(uid: uid, refreshToken: refresh, photoURL: url.absoluteString)) }
     }
 
     // MARK: IDトークン
@@ -146,7 +115,7 @@ final class AuthService {
             idToken = refreshed.idToken
             idTokenExpiry = Date().addingTimeInterval(refreshed.expiresIn)
             self.refreshToken = refreshed.refreshToken
-            if let uid { store.save(StoredAuthSession(uid: uid, refreshToken: refreshed.refreshToken, photoURL: photoURL?.absoluteString)) }
+            if let uid { store.save(StoredAuthSession(uid: uid, refreshToken: refreshed.refreshToken)) }
             if case .needsReauth(let uid) = state { state = .signedIn(uid: uid) }
             return refreshed.idToken
         } catch AuthError.cancelled {
@@ -166,7 +135,6 @@ final class AuthService {
     func signOut() {
         if let uid { ShareLinkCleanup.run(uid) }
         store.clear()
-        photoURL = nil
         providerDisplayName = nil
         idToken = nil
         refreshToken = nil
@@ -178,7 +146,7 @@ final class AuthService {
 
     private enum RefreshFailure: Error { case rejected }
 
-    private struct FirebaseTokens { var uid: String; var idToken: String; var refreshToken: String; var expiresIn: TimeInterval; var displayName: String? = nil; var photoURL: String? = nil }
+    private struct FirebaseTokens { var uid: String; var idToken: String; var refreshToken: String; var expiresIn: TimeInterval; var displayName: String? = nil }
 
     private func formRequest(_ url: URL, _ fields: [String: String]) -> URLRequest {
         var request = URLRequest(url: url, timeoutInterval: 15)
@@ -226,7 +194,7 @@ final class AuthService {
         guard status == 200, let uid = body["localId"] as? String, let idToken = body["idToken"] as? String,
               let refresh = body["refreshToken"] as? String else { throw AuthError.failed }
         let name = (body["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600, displayName: name?.isEmpty == false ? name : nil, photoURL: body["photoUrl"] as? String)
+        return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600, displayName: name?.isEmpty == false ? name : nil)
     }
 
     private func refresh(_ refreshToken: String) async throws -> FirebaseTokens {
@@ -252,16 +220,16 @@ enum ShareLinkCleanup {
 }
 
 
-/// GoogleのIDトークン（JWT）の申告から、名前と写真のURLを読む。署名の検証はしない（表示の補助にだけ使い、認証には使わない）。
+/// GoogleのIDトークン（JWT）の申告から、名前を読む。署名の検証はしない（表示名の初期値にだけ使い、認証には使わない）。
 enum GoogleIDToken {
-    static func profile(from jwt: String) -> (name: String?, picture: String?) {
+    static func name(from jwt: String) -> String? {
         let parts = jwt.split(separator: ".")
-        guard parts.count >= 2 else { return (nil, nil) }
+        guard parts.count >= 2 else { return nil }
         var base64 = String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         while base64.count % 4 != 0 { base64 += "=" }
         guard let data = Data(base64Encoded: base64),
-              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return (nil, nil) }
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         let name = (object["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (name?.isEmpty == false ? name : nil, object["picture"] as? String)
+        return name?.isEmpty == false ? name : nil
     }
 }

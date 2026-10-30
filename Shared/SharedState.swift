@@ -32,7 +32,6 @@ enum SharedState {
         static let selection = "device.selection"
         static let intent = "device.intent"
         static let unlock = "device.unlock"
-        static let lastEvent = "device.lastEvent"
         static let unlockEnds = "device.unlockEnds"
         static let pause = "device.pause"
     }
@@ -126,14 +125,6 @@ enum SharedState {
         defaults.set(UserDefaults.standard.bool(forKey: Key.intent), forKey: Key.intent)
     }
 
-    // MARK: 検証用ログ（拡張が最後に何をしたか）
-
-    static func log(_ text: String) {
-        defaults.set("\(Date().formatted(date: .omitted, time: .standard)) \(text)", forKey: Key.lastEvent)
-    }
-
-    static var lastEvent: String? { defaults.string(forKey: Key.lastEvent) }
-
     // MARK: シールド（本アプリ専用ストア）
 
     /// 制限するものを、本アプリ専用ストアへ反映する。`unlocked` に含まれるものは外す。
@@ -190,18 +181,15 @@ enum SharedState {
     static func relock(reason: String) -> Bool {
         // 全体の一時停止中は、一時解除の古いイベントで、停止の状態を上書きしない
         if pauseState?.window != nil {
-            log("一時停止中のため、一時解除の再制限は行いませんでした: \(reason)")
             return false
         }
         guard intendsRestriction,
               let selection = loadSelection(), !RestrictedItems(selection: selection).isEmpty else {
             clearUnlock()
-            log("再制限できませんでした（対象または意図がありません）: \(reason)")
             return false
         }
         applyShield(items: RestrictedItems(selection: selection))
         clearUnlock()
-        log("再制限しました: \(reason)")
         return true
     }
 }
@@ -215,7 +203,6 @@ extension SharedState {
     static func relockFromPause(activityName: String?, reason: String) -> Bool {
         guard var state = pauseState, let window = state.window else { return false }
         if let activityName, !state.isCurrentWindow(activityName) {
-            log("古い一時停止のイベントを無視しました: \(reason)")
             return false
         }
         let items = (try? JSONDecoder().decode(RestrictedItems.self, from: window.itemsData))
@@ -224,13 +211,11 @@ extension SharedState {
         guard intendsRestriction, !items.isEmpty else {
             state.window = nil
             pauseState = state
-            log("一時停止を終えましたが、再制限する対象または意図がありません: \(reason)")
             return false
         }
         applyShield(items: items)
         state.window = nil
         pauseState = state
-        log("一時停止を終え、再制限しました: \(reason)")
         return true
     }
 }

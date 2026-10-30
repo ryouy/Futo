@@ -153,11 +153,9 @@ final class DeviceRestrictionService: RestrictionService {
                                        events: [DeviceActivityEvent.Name(SharedState.usageEventName): usageEvent])
         } catch {
             SharedState.unlock = nil
-            SharedState.log("監視を登録できませんでした: \(error.localizedDescription)")
             return .failed
         }
         SharedState.applyShield(items: items, unlocked: unlockItems)
-        SharedState.log("一時解除を開始しました（\(unlockItems.count)件）")
         return .started(until: end)
     }
 

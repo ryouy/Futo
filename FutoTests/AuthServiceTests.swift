@@ -62,7 +62,7 @@ final class AuthServiceTests: XCTestCase {
             self.bodies.append(self.body(of: request))
             let url = request.url!.absoluteString
             if url.contains("oauth2.googleapis.com/token") { return (200, self.json(["id_token": "GOOGLE-ID-TOKEN"])) }
-            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID-\(self.requests.count)", "refreshToken": "REFRESH-1", "expiresIn": expiresIn, "displayName": "山田 太郎", "photoUrl": "https://lh3.googleusercontent.com/a/abc=s96-c"])) }
+            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID-\(self.requests.count)", "refreshToken": "REFRESH-1", "expiresIn": expiresIn, "displayName": "山田 太郎"])) }
             if url.contains("securetoken.googleapis.com") { return (200, self.json(["id_token": "FB-REFRESHED", "refresh_token": "REFRESH-2", "user_id": uid, "expires_in": "3600"])) }
             return (404, Data())
         }
@@ -85,8 +85,7 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertEqual(uid, "uid-A")
         XCTAssertEqual(service.state, .signedIn(uid: "uid-A"))
         XCTAssertEqual(service.providerDisplayName, "山田 太郎")
-        XCTAssertEqual(service.photoURL?.host, "lh3.googleusercontent.com")
-        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1", photoURL: "https://lh3.googleusercontent.com/a/abc=s96-c"))
+        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1"))
 
         let items = Dictionary(uniqueKeysWithValues: URLComponents(url: authURL!, resolvingAgainstBaseURL: false)!.queryItems!.map { ($0.name, $0.value ?? "") })
         XCTAssertEqual(items["scope"], "openid profile", "名前（表示名の初期値）までで、Drive・メール・写真は求めない")
@@ -213,20 +212,11 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertEqual(service.uid, "uid-B")
     }
 
-    func testOnlyGoogleHTTPSPhotosAreAccepted() {
-        XCTAssertNotNil(AuthService.trustedPhotoURL("https://lh3.googleusercontent.com/a/x=s96-c"))
-        XCTAssertNil(AuthService.trustedPhotoURL("http://lh3.googleusercontent.com/a/x"))
-        XCTAssertNil(AuthService.trustedPhotoURL("https://evil.example.com/a.png"))
-        XCTAssertNil(AuthService.trustedPhotoURL("https://googleusercontent.com.evil.com/a.png"))
-        XCTAssertNil(AuthService.trustedPhotoURL(nil))
-    }
-
-    func testSignOutForgetsThePhotoAndName() async throws {
+    func testSignOutForgetsTheName() async throws {
         installHappyNetwork()
         let service = make()
         _ = try await service.signInWithGoogle()
         service.signOut()
-        XCTAssertNil(service.photoURL)
         XCTAssertNil(service.providerDisplayName)
     }
 
@@ -235,50 +225,22 @@ final class AuthServiceTests: XCTestCase {
         return b64(Data("{}".utf8)) + "." + b64(try! JSONSerialization.data(withJSONObject: claims)) + ".sig"
     }
 
-    func testGooglePhotoAndNameAreReadFromTheIDTokenWhenFirebaseOmitsThem() async throws {
-        let jwt = fakeJWT(["name": "山田 太郎", "picture": "https://lh3.googleusercontent.com/a/from-claims=s96-c"])
+    func testNameIsReadFromTheIDTokenWhenFirebaseOmitsIt() async throws {
+        let jwt = fakeJWT(["name": "山田 太郎", "picture": "https://example.test/ignored.png"])
         StubProtocol.handler = { [unowned self] request in
             let url = request.url!.absoluteString
             if url.contains("oauth2.googleapis.com/token") { return (200, self.json(["id_token": jwt])) }
             if url.contains("signInWithIdp") { return (200, self.json(["localId": "uid-A", "idToken": "FB", "refreshToken": "R", "expiresIn": "3600"])) }
             return (404, Data())
         }
-        let store = MemoryStore()
-        let service = make(store: store)
+        let service = make(store: MemoryStore())
         _ = try await service.signInWithGoogle()
         XCTAssertEqual(service.providerDisplayName, "山田 太郎")
-        XCTAssertEqual(service.photoURL?.path, "/a/from-claims=s96-c")
-        XCTAssertEqual(store.saved?.photoURL, service.photoURL?.absoluteString, "再起動しても、写真のURLが残る")
     }
 
-    func testClaimsFromATokenWithoutThemAreEmptyAndMalformedTokensAreIgnored() {
-        XCTAssertNil(GoogleIDToken.profile(from: fakeJWT(["sub": "1"])).picture)
-        XCTAssertNil(GoogleIDToken.profile(from: "not-a-jwt").name)
-        XCTAssertNil(GoogleIDToken.profile(from: "a.%%%.c").name)
-    }
-
-    func testPhotoIsLookedUpForAnExistingSessionAndUntrustedHostsAreRefused() async throws {
-        installHappyNetwork()
-        let store = MemoryStore()
-        store.saved = StoredAuthSession(uid: "uid-A", refreshToken: "R")            // 写真に対応する前のログイン
-        let service = make(store: store)
-        StubProtocol.handler = { [unowned self] request in
-            let url = request.url!.absoluteString
-            if url.contains("securetoken") { return (200, self.json(["id_token": "FB", "refresh_token": "R2", "user_id": "uid-A", "expires_in": "3600"])) }
-            if url.contains("accounts:lookup") { return (200, self.json(["users": [["providerUserInfo": [["photoUrl": "https://lh3.googleusercontent.com/a/lookup"]]]]])) }
-            return (404, Data())
-        }
-        await service.refreshPhotoIfNeeded()
-        XCTAssertEqual(service.photoURL?.host, "lh3.googleusercontent.com")
-        XCTAssertEqual(store.saved?.photoURL, "https://lh3.googleusercontent.com/a/lookup")
-
-        let other = make(store: { let s = MemoryStore(); s.saved = StoredAuthSession(uid: "uid-B", refreshToken: "R"); return s }())
-        StubProtocol.handler = { [unowned self] request in
-            let url = request.url!.absoluteString
-            if url.contains("securetoken") { return (200, self.json(["id_token": "FB", "refresh_token": "R2", "user_id": "uid-B", "expires_in": "3600"])) }
-            return (200, self.json(["users": [["photoUrl": "https://evil.example/x.png"]]]))
-        }
-        await other.refreshPhotoIfNeeded()
-        XCTAssertNil(other.photoURL, "Google以外の画像URLは使わない")
+    func testTokensWithoutANameOrMalformedOnesGiveNoName() {
+        XCTAssertNil(GoogleIDToken.name(from: fakeJWT(["sub": "1"])))
+        XCTAssertNil(GoogleIDToken.name(from: "not-a-jwt"))
+        XCTAssertNil(GoogleIDToken.name(from: "a.%%%.c"))
     }
 }

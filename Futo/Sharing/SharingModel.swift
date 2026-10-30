@@ -83,7 +83,6 @@ final class SharingModel {
 
     func loadProfile() async {
         guard isSignedIn else { return }
-        await auth.refreshPhotoIfNeeded()
         do {
             profile = try await api.send("GET", "/api/me")
             cacheProfile()

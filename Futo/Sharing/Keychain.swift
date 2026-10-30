@@ -54,8 +54,6 @@ protocol SessionStoring: AnyObject {
 struct StoredAuthSession: Codable, Equatable {
     var uid: String
     var refreshToken: String
-    /// Googleのアイコン画像のURL（端末内の表示だけに使う。サーバーには送らない）
-    var photoURL: String? = nil
 }
 
 final class KeychainSessionStore: SessionStoring {

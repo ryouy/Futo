@@ -23,7 +23,6 @@ final class FutoMonitor: DeviceActivityMonitor {
             return
         }
         guard SharedState.isCurrentUnlock(activity.rawValue) else {
-            SharedState.log("古いイベントを無視しました: \(reason)")
             return
         }
         SharedState.relock(reason: reason)

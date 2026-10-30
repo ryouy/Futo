@@ -11,62 +11,51 @@ final class AvatarSettingsTests: XCTestCase {
         return d
     }
 
-    func testDefaultsUseThePhotoAndTheThemeColor() {
+    func testDefaultsAreTheInitialInTheThemeColor() {
         let s = AvatarSettings(defaults: defaults())
-        XCTAssertTrue(s.usesPhoto)
+        XCTAssertNil(s.symbolIndex)
         XCTAssertNil(s.colorIndex)
-        XCTAssertTrue(s.showsPhoto(available: true))
-        XCTAssertFalse(s.showsPhoto(available: false), "写真が取れていなければ、頭文字")
+        XCTAssertEqual(s.fill(choices: [.red, .green, .blue, .orange], themeColor: .purple), .purple)
     }
 
-    func testChoicesPersistAcrossLaunches() {
-        let d = defaults()
-        let first = AvatarSettings(defaults: d)
-        first.usesPhoto = false
-        first.colorIndex = 3
-        let second = AvatarSettings(defaults: d)
-        XCTAssertFalse(second.usesPhoto)
-        XCTAssertEqual(second.colorIndex, 3)
-        XCTAssertFalse(second.showsPhoto(available: true), "写真を使わない設定なら、写真があっても頭文字")
-    }
-
-    func testInvalidStoredColorFallsBackToTheTheme() {
-        let d = defaults()
-        d.set(99, forKey: "avatar.colorIndex")
-        XCTAssertNil(AvatarSettings(defaults: d).colorIndex)
-    }
-
-    func testResetRestoresTheDefaults() {
+    func testColorIsChosenFromTheFourThemeColors() {
         let s = AvatarSettings(defaults: defaults())
-        s.usesPhoto = false; s.colorIndex = 2
-        s.reset()
-        XCTAssertTrue(s.usesPhoto)
-        XCTAssertNil(s.colorIndex)
+        XCTAssertEqual(AvatarSettings.colorCount, 4)
+        s.colorIndex = 2
+        XCTAssertEqual(s.fill(choices: [.red, .green, .blue, .orange], themeColor: .purple), .blue)
     }
 
-    func testSymbolsAreTwelveAndSelectingOneStopsUsingThePhoto() {
+    func testSymbolsAreTwelveAndSelectionWorks() {
         XCTAssertEqual(AvatarSettings.symbols.count, 12)
         XCTAssertEqual(Set(AvatarSettings.symbols.map(\.name)).count, 12)
         let s = AvatarSettings(defaults: defaults())
         s.selectSymbol(2)
         XCTAssertEqual(s.symbolIndex, 2)
-        XCTAssertFalse(s.showsPhoto(available: true))
-        s.selectPhoto()
-        XCTAssertNil(s.symbolIndex)
-        XCTAssertTrue(s.showsPhoto(available: true))
         s.selectInitial()
-        XCTAssertFalse(s.showsPhoto(available: true))
         XCTAssertNil(s.symbolIndex)
         s.selectSymbol(99)
         XCTAssertNil(s.symbolIndex, "範囲外は無視する")
     }
 
-    func testSymbolChoicePersistsAndBadStoredValuesAreIgnored() {
+    func testChoicesPersistAndBadStoredValuesAreIgnored() {
         let d = defaults()
-        AvatarSettings(defaults: d).selectSymbol(5)
-        XCTAssertEqual(AvatarSettings(defaults: d).symbolIndex, 5)
-        d.set(77, forKey: "avatar.symbolIndex")
-        XCTAssertNil(AvatarSettings(defaults: d).symbolIndex)
+        let first = AvatarSettings(defaults: d)
+        first.selectSymbol(5); first.colorIndex = 3
+        let second = AvatarSettings(defaults: d)
+        XCTAssertEqual(second.symbolIndex, 5)
+        XCTAssertEqual(second.colorIndex, 3)
+        d.set(77, forKey: "avatar.symbolIndex"); d.set(9, forKey: "avatar.colorIndex")
+        let third = AvatarSettings(defaults: d)
+        XCTAssertNil(third.symbolIndex)
+        XCTAssertNil(third.colorIndex, "4色の範囲外は無視する")
+    }
+
+    func testResetRestoresTheDefaults() {
+        let s = AvatarSettings(defaults: defaults())
+        s.selectSymbol(1); s.colorIndex = 1
+        s.reset()
+        XCTAssertNil(s.symbolIndex)
+        XCTAssertNil(s.colorIndex)
     }
 
     func testProfileCacheKeepsTheLastNamePerAccount() {

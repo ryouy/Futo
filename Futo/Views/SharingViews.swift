@@ -69,7 +69,7 @@ struct SharingTab: View {
         CardSection {
             NavigationLink { ProfileView() } label: {
                 HStack(spacing: 14) {
-                    AccountAvatar(name: sharing.profile?.displayName ?? "", photoURL: sharing.auth.photoURL, size: 48, isOwn: true)
+                    AccountAvatar(name: sharing.profile?.displayName ?? "", size: 48, isOwn: true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(sharing.profile?.displayName ?? "…").font(.headline).oneLine()
                         Text(tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
@@ -439,47 +439,35 @@ func dateText(_ iso: String) -> String {
     return date.formatted(date: .abbreviated, time: .shortened)
 }
 
-/// アイコン。自分のもの（`isOwn`）は、設定に従う：Googleの写真があれば写真、なければ（または写真を使わない設定なら）選んだ色の丸に頭文字。
-/// 相手のものは、頭文字だけ（相手の写真・色は、受け取らない）。画像はこの端末の表示だけに使い、サーバーには送らない。
+/// アイコン。自分のもの（`isOwn`）は、設定に従う：選んだアイコン（山・海・魚など）、または名前の頭文字。色はテーマの4色から選んだもの。
+/// 相手のものは、頭文字だけ（相手のアイコン・色は、受け取らない）。
 struct AccountAvatar: View {
     let name: String
-    var photoURL: URL? = nil
     var size: CGFloat = 32
     var isOwn = false
     private var settings: AvatarSettings { .shared }
 
+    static var themeChoices: [Color] { ThemeColor.allCases.map(\.swatchColor) }
+
     var body: some View {
-        ZStack {
-            if isOwn, let index = settings.symbolIndex, AvatarSettings.symbols.indices.contains(index) {
-                Circle().fill(settings.fill(themeColor: Theme.accent))
-                    .overlay(Image(systemName: AvatarSettings.symbols[index].name)
-                        .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white))
-            } else {
-                initial
-            }
-            if isOwn, settings.showsPhoto(available: photoURL != nil), let photoURL {
-                AsyncImage(url: photoURL) { phase in
-                    if case .success(let image) = phase { image.resizable().scaledToFill() }
+        Circle()
+            .fill(isOwn ? settings.fill(choices: Self.themeChoices, themeColor: Theme.accent) : Theme.accent)
+            .frame(width: size, height: size)
+            .overlay {
+                if isOwn, let index = settings.symbolIndex, AvatarSettings.symbols.indices.contains(index) {
+                    Image(systemName: AvatarSettings.symbols[index].name)
+                        .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white)
+                } else {
+                    Text(String(name.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased())
+                        .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
                 }
             }
-        }
-        .frame(width: size, height: size)
-        .clipShape(Circle())
-        .accessibilityHidden(true)
-    }
-
-    private var initial: some View {
-        Circle()
-            .fill(isOwn ? settings.fill(themeColor: Theme.accent) : Theme.accent)
-            .overlay(
-                Text(String(name.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased())
-                    .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
-            )
+            .accessibilityHidden(true)
     }
 }
 
-/// プロフィール：アイコン（Googleの写真・頭文字・山や海などの12個）と色、表示名。保存は、いちばん下。
+/// プロフィール：表示名（上）→ アイコン（頭文字・山や海などの12個）→ 色（テーマの4色）→ 保存（いちばん下）。
 @MainActor
 struct ProfileView: View {
     @Environment(SharingModel.self) private var sharing
@@ -488,9 +476,6 @@ struct ProfileView: View {
     private var avatar: AvatarSettings { .shared }
 
     private var displayName: String { sharing.profile?.displayName ?? "" }
-    private var hasPhoto: Bool { sharing.auth.photoURL != nil }
-    private var usesPhoto: Bool { avatar.showsPhoto(available: hasPhoto) }
-    private var usesInitial: Bool { !usesPhoto && avatar.symbolIndex == nil }
     private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var canSave: Bool { !trimmed.isEmpty && trimmed.count <= 20 && trimmed != displayName && !sharing.isWorking }
 
@@ -499,19 +484,19 @@ struct ProfileView: View {
             Section {
                 HStack {
                     Spacer()
-                    AccountAvatar(name: name.isEmpty ? displayName : name, photoURL: sharing.auth.photoURL, size: 84, isOwn: true)
+                    AccountAvatar(name: name.isEmpty ? displayName : name, size: 84, isOwn: true)
                     Spacer()
                 }
                 .listRowBackground(Color.clear)
             }
 
-            CardSection { iconGrid }
-
-            if !usesPhoto { CardSection { colorPicker } }
-
             CardSection {
                 TextField(tr("表示名（1〜20文字）"), text: $name)
             }
+
+            CardSection { iconGrid }
+
+            CardSection { colorPicker }
 
             PrimarySection {
                 Button {
@@ -523,7 +508,6 @@ struct ProfileView: View {
             }
         }
         .compactForm()
-        .animation(.easeInOut(duration: 0.3), value: usesPhoto)
         .navigationTitle(tr("プロフィール"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { name = displayName }
@@ -533,41 +517,25 @@ struct ProfileView: View {
     // MARK: アイコン
 
     private var iconGrid: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 10)], spacing: 10) {
-            if hasPhoto {
-                iconCell(selected: usesPhoto, label: tr("Googleの写真")) { avatar.selectPhoto() } content: {
-                    AccountAvatar(name: displayName, photoURL: sharing.auth.photoURL, size: 40, isOwn: true)
-                        .opacity(1)
-                        .overlay(Circle().fill(.clear))
-                        .background(photoPreview)
-                }
-            }
-            iconCell(selected: usesInitial, label: tr("頭文字")) { avatar.selectInitial() } content: {
-                Circle().fill(avatar.fill(themeColor: Theme.accent)).frame(width: 40, height: 40)
-                    .overlay(Text(String(displayName.prefix(1)).uppercased()).font(.system(size: 18, weight: .semibold, design: .rounded)).foregroundStyle(.white))
+        let fill = avatar.fill(choices: AccountAvatar.themeChoices, themeColor: Theme.accent)
+        return LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 10)], spacing: 10) {
+            iconCell(selected: avatar.symbolIndex == nil, label: tr("頭文字")) { avatar.selectInitial() } content: {
+                Circle().fill(fill).frame(width: 40, height: 40)
+                    .overlay(Text(String((name.isEmpty ? displayName : name).prefix(1)).uppercased())
+                        .font(.system(size: 18, weight: .semibold, design: .rounded)).foregroundStyle(.white))
             }
             ForEach(Array(AvatarSettings.symbols.enumerated()), id: \.offset) { index, symbol in
-                iconCell(selected: avatar.symbolIndex == index && !usesPhoto, label: symbol.label) { avatar.selectSymbol(index) } content: {
-                    Circle().fill(avatar.fill(themeColor: Theme.accent)).frame(width: 40, height: 40)
+                iconCell(selected: avatar.symbolIndex == index, label: symbol.label) { avatar.selectSymbol(index) } content: {
+                    Circle().fill(fill).frame(width: 40, height: 40)
                         .overlay(Image(systemName: symbol.name).font(.system(size: 19, weight: .medium)).foregroundStyle(.white))
                 }
             }
         }
     }
 
-    /// 写真のセルは、写真そのものを丸く出す（設定の色や記号に左右されない）。
-    private var photoPreview: some View {
-        AsyncImage(url: sharing.auth.photoURL) { phase in
-            if case .success(let image) = phase { image.resizable().scaledToFill() }
-        }
-        .frame(width: 40, height: 40)
-        .clipShape(Circle())
-    }
-
     private func iconCell<Content: View>(selected: Bool, label: String, action: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.25)) { action() }
-            saved = false
         } label: {
             content()
                 .frame(width: 48, height: 48)
@@ -580,28 +548,31 @@ struct ProfileView: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
+    // MARK: 色（テーマの4色）
+
     private var colorPicker: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 12)], spacing: 12) {
-            swatch(index: nil, color: Theme.accent)
-            ForEach(Array(AvatarSettings.palette.enumerated()), id: \.offset) { index, hex in
-                swatch(index: index, color: AvatarSettings.color(hex: hex))
+        HStack(spacing: 16) {
+            ForEach(Array(ThemeColor.allCases.enumerated()), id: \.offset) { index, option in
+                swatch(index: index, option: option)
             }
+            Spacer(minLength: 0)
         }
         .padding(.vertical, 4)
     }
 
-    private func swatch(index: Int?, color: Color) -> some View {
-        let selected = avatar.colorIndex == index
+    /// 色を選んでいなければ、いまのテーマの色に印が付く。
+    private func swatch(index: Int, option: ThemeColor) -> some View {
+        let selected = avatar.colorIndex == index || (avatar.colorIndex == nil && ThemeStore.shared.color == option)
         return Button {
             withAnimation(.easeInOut(duration: 0.25)) { avatar.colorIndex = index }
         } label: {
-            Circle().fill(color).frame(width: 36, height: 36)
+            Circle().fill(option.swatchColor).frame(width: 36, height: 36)
                 .overlay(Image(systemName: "checkmark").font(.footnote.bold()).foregroundStyle(.white).opacity(selected ? 1 : 0))
                 .overlay(Circle().stroke(.primary.opacity(selected ? 0.6 : 0), lineWidth: 2).padding(-4))
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(index == nil ? tr("テーマの色") : tr("色 {0}", "\((index ?? 0) + 1)"))
+        .accessibilityLabel(option.name)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
