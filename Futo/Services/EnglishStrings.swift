@@ -460,5 +460,8 @@ enum EnglishStrings {
         "新しいリンクを作る": "Create a new link",
         "朝の振り返りカード": "Morning check-in card",
         "夜の振り返りカード": "Evening check-in card",
+        "Driveに、すでにバックアップがあります。上書きしないよう、自動のバックアップはしていません。必要なら「バックアップから戻す」を使ってください。": "A backup already exists in Drive. To avoid overwriting it, nothing was backed up automatically. Use “Restore from backup” if you need it.",
+        "バックアップを有効にしました。デモモードの記録は、保存されません。": "Backup is on. Demo-mode records aren't saved.",
+        "保存先は、Driveの「アプリ専用のデータ」領域です。Driveのファイル一覧には出ません。Driveの設定の「アプリの管理」から、確認・削除できます。": "It's saved in Drive's hidden “app data” area, so it won't appear in your file list. You can check or delete it under Drive settings → Manage apps.",
     ]
 }

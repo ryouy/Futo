@@ -21,7 +21,6 @@
       --cream: #fcf8f0;
       --ink: #1d2b27;
       --muted: #5d6d68;
-      --lemon: #ffe38a;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -107,12 +106,12 @@
     .privacy {
       margin-top: 28px; text-align: center; color: var(--green); font-weight: 600;
     }
-    .privacy span { display: inline-block; background: var(--lemon); border-radius: 999px; padding: 6px 18px; }
+    .privacy span { display: inline-block; background: var(--green-soft); border-radius: 999px; padding: 6px 18px; }
 
     /* フッター */
     footer { background: var(--green-deep); color: rgba(252, 248, 240, .8); text-align: center; padding: 44px 0 56px; font-size: 14px; }
     footer img { width: 64px; height: 64px; border-radius: 16px; margin-bottom: 12px; }
-    footer a { color: var(--lemon); text-decoration: none; font-weight: 600; }
+    footer a { color: var(--cream); text-decoration: underline; font-weight: 600; }
     footer a:hover { text-decoration: underline; }
     footer p { margin: 6px 0; }
 
@@ -142,7 +141,7 @@
     .pgrid { display: grid; gap: 16px; grid-template-columns: 1fr; }
     .principle { display: flex; gap: 14px; background: rgba(252, 248, 240, .08); border: 1px solid rgba(252, 248, 240, .16); border-radius: 22px; padding: 20px; }
     .principle svg { flex: none; width: 26px; height: 26px; margin-top: 2px; }
-    .principle h3 { margin: 0 0 2px; font-size: 17px; color: var(--lemon); }
+    .principle h3 { margin: 0 0 2px; font-size: 17px; color: var(--cream); }
     .principle p { margin: 0; font-size: 15px; color: rgba(252, 248, 240, .86); line-height: 1.75; }
     .faq { max-width: 760px; margin-inline: auto; }
     .faq details { background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 18px; padding: 0 20px; margin-bottom: 12px; }
@@ -319,6 +318,14 @@
         <p><span class="ja">任意で、初期はオフ。1日4件まで、3時間以上あけて、静かな時間は送りません。</span><span class="en">Optional, off by default. Up to 4 a day, at least 3 hours apart, and never in quiet hours.</span></p>
       </div>
       <div class="feature">
+        <h3><span class="ja">共有（任意）</span><span class="en">Sharing (optional)</span></h3>
+        <p><span class="ja">Google でログインすると、選んだ項目だけを、グラフでリンクやフレンドに共有できます。期間は今週・先週・全期間。フレンドには、アプリを開いたときに最新にして見せ続けることもできます。ログインしなくても、ほかの機能は使えます。</span><span class="en">Sign in with Google to share only the items you pick — as charts, by link or with friends. Choose this week, last week or all time. With friends, it can stay up to date whenever you open the app. Everything else works without signing in.</span></p>
+      </div>
+      <div class="feature">
+        <h3><span class="ja">バックアップ（任意）</span><span class="en">Backup (optional)</span></h3>
+        <p><span class="ja">記録と設定を、あなたの Google Drive の、ふと専用の場所に保存できます。ほかの Drive のファイルは見えません。機種変更のときに、戻せます。</span><span class="en">Save your records and settings to a private Futo area of your own Google Drive. Your other Drive files stay out of reach, and you can restore on a new phone.</span></p>
+      </div>
+      <div class="feature">
         <h3><span class="ja">見た目</span><span class="en">Look &amp; feel</span></h3>
         <p><span class="ja">テーマカラーは4色。ダークモードも、夜にやさしい色合いです。日本語と English を切り替えられます。</span><span class="en">Four theme colors and a soft dark mode for the evening. Switch between Japanese and English anytime.</span></p>
       </div>
@@ -335,28 +342,28 @@
     <h2><span class="ja">大切にしていること</span><span class="en">What we care about</span></h2>
     <div class="pgrid">
       <div class="principle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fcf8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
         <div>
           <h3><span class="ja">責めない</span><span class="en">No blame</span></h3>
           <p><span class="ja">評価も点数もなし。連続日数やランキングも、作りません。</span><span class="en">No judging, no scores — and no streaks or rankings.</span></p>
         </div>
       </div>
       <div class="principle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fcf8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
         <div>
           <h3><span class="ja">決めるのは自分</span><span class="en">Your call</span></h3>
           <p><span class="ja">制限は、いつでも自分で外せます。止めるためではなく、気づくための道具です。</span><span class="en">You can always remove the lock yourself. It's a tool for noticing, not for stopping you.</span></p>
         </div>
       </div>
       <div class="principle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fcf8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
         <div>
-          <h3><span class="ja">端末の中だけ</span><span class="en">Stays on your device</span></h3>
-          <p><span class="ja">記録は、この端末の中に。サーバー・広告・課金・AI は使いません。</span><span class="en">Records stay on this device. No servers, ads, purchases or AI.</span></p>
+          <h3><span class="ja">選んだものだけ</span><span class="en">Only what you choose</span></h3>
+          <p><span class="ja">記録は、この端末の中に。共有やバックアップは、あなたが選んだときだけ。広告・課金・AI は使いません。</span><span class="en">Records stay on this device. Sharing and backup happen only when you choose. No ads, purchases or AI.</span></p>
         </div>
       </div>
       <div class="principle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ffe38a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fcf8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
         <div>
           <h3><span class="ja">静かに寄りそう</span><span class="en">Quietly alongside</span></h3>
           <p><span class="ja">通知は控えめに。未読バッジも音もなく、不安をあおる言葉も使いません。</span><span class="en">Notifications stay light — no badges, no sounds, and no wording that nags.</span></p>
@@ -388,29 +395,8 @@
       </details>
       <details>
         <summary><span class="ja">記録は、どこに保存されますか？</span><span class="en">Where is my data kept?</span></summary>
-        <p><span class="ja">この端末の中だけです。共有を選んだときだけ、選んだ統計を送ります。設定から、すべての記録を削除できます。</span><span class="en">Only on this device — unless you choose to share, and then only the stats you pick. You can delete all records in Settings.</span></p>
+        <p><span class="ja">この端末の中です。共有を選んだときだけ選んだ統計を送り、バックアップを選んだときだけ、あなたの Google Drive の専用の場所に保存します。設定から、すべての記録を削除できます。</span><span class="en">On this device. Only if you choose to share, the stats you pick are sent; only if you turn on backup, a copy goes to a private Futo area of your own Google Drive. You can delete all records in Settings.</span></p>
       </details>
-    </div>
-  </div>
-</section>
-
-<section class="alt">
-  <div class="wrap">
-    <h2><span class="ja">はじめ方</span><span class="en">Getting started</span></h2>
-    <div class="start">
-      <div class="card">
-        <h3><span class="ja">まず、デモで試す</span><span class="en">Try the demo first</span></h3>
-        <p><span class="ja">Xcode でプロジェクトを開いて実行します。デモなら署名は不要です。初回の画面で「デモで試す」を選んでください。</span><span class="en">Open the project in Xcode and run it — the demo needs no signing. Choose “Try the demo” on the first screen.</span></p>
-      </div>
-      <div class="card">
-        <h3><span class="ja">実機で制限をかける</span><span class="en">Lock apps on a real iPhone</span></h3>
-        <p><span class="ja">Team と Bundle ID、Family Controls と App Group の設定をして、実機で実行します。手順は、セットアップの文書にまとめています。</span><span class="en">Set your Team and Bundle ID, enable Family Controls and an App Group, then run on the device. The steps are in the setup guide.</span></p>
-      </div>
-    </div>
-    <div class="links">
-      <a class="link" href="https://github.com/ryouy/Futo/blob/main/docs/SETUP.md"><span class="ja">セットアップの手順</span><span class="en">Setup guide</span></a>
-      <a class="link ghost" href="https://github.com/ryouy/Futo/blob/main/docs/IMPLEMENTATION_STATUS.md"><span class="ja">実装状況</span><span class="en">Implementation status</span></a>
-      <a class="link ghost" href="https://github.com/ryouy/Futo"><span class="ja">ソースコード</span><span class="en">Source code</span></a>
     </div>
   </div>
 </section>

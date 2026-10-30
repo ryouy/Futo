@@ -40,6 +40,8 @@ struct BackupView: View {
             Text(tr("記録と設定を、あなたのGoogle Driveの、ふと専用の場所に保存します。ほかのDriveのファイルは、見えません。"))
             Text(tr("バックアップに入るのは、実際の記録・朝夜の振り返り・設定です。制限の対象・通知の許可・ログイン情報は入りません。機種変更のあとは、それらを設定し直してください。"))
                 .font(.footnote).foregroundStyle(.secondary)
+            Text(tr("保存先は、Driveの「アプリ専用のデータ」領域です。Driveのファイル一覧には出ません。Driveの設定の「アプリの管理」から、確認・削除できます。"))
+                .font(.footnote).foregroundStyle(.secondary)
             Text(tr("ログインに使ったのと同じGoogleアカウントを選んでください。"))
                 .font(.footnote).foregroundStyle(.secondary)
         }

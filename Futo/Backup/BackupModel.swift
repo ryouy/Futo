@@ -59,6 +59,15 @@ final class BackupModel {
         await run {
             try await self.drive.connect(uid: uid)
             try await self.loadRemote()
+            if self.remote != nil {
+                // すでにバックアップがあるときは、上書きしない（新しい端末で、空の記録に置き換えてしまわないため）
+                self.resultMessage = tr("Driveに、すでにバックアップがあります。上書きしないよう、自動のバックアップはしていません。必要なら「バックアップから戻す」を使ってください。")
+            } else if self.canBackup {
+                // 有効にしたら、最初の1回を自動で保存する
+                try await self.performBackup()
+            } else {
+                self.resultMessage = tr("バックアップを有効にしました。デモモードの記録は、保存されません。")
+            }
         }
     }
 
@@ -84,18 +93,20 @@ final class BackupModel {
 
     func backupNow() async {
         guard canBackup else { message = tr("デモモードの記録は、バックアップできません。"); return }
-        await run {
-            let document = BackupDocument.make(
-                sessions: self.app.sessions.all(), cards: self.app.cards.all(), preferences: self.app.prefs,
-                theme: ThemeStore.shared.color.rawValue, language: LanguageStore.shared.language.rawValue)
-            let data = try document.encoded()
-            // 既存のファイルを確認してから上書きする（重複して作らない）
-            let existing = try await self.client.find()
-            self.remote = try await self.client.save(data, existing: existing)
-            self.checkedRemote = true
-            self.lastBackupAt = Date()
-            self.resultMessage = tr("バックアップしました。（記録 {0} 件）", "\(document.sessions.count)")
-        }
+        await run { try await self.performBackup() }
+    }
+
+    private func performBackup() async throws {
+        let document = BackupDocument.make(
+            sessions: app.sessions.all(), cards: app.cards.all(), preferences: app.prefs,
+            theme: ThemeStore.shared.color.rawValue, language: LanguageStore.shared.language.rawValue)
+        let data = try document.encoded()
+        // 既存のファイルを確認してから上書きする（重複して作らない）
+        let existing = try await client.find()
+        remote = try await client.save(data, existing: existing)
+        checkedRemote = true
+        lastBackupAt = Date()
+        resultMessage = tr("バックアップしました。（記録 {0} 件）", "\(document.sessions.count)")
     }
 
     // MARK: 復元
