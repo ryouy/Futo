@@ -505,6 +505,6 @@ extension View {
 }
 
 enum Layout {
-    /// 広い画面（iPad）で、中身をまとめる最大の幅。広告の幅も、これを超えない。
-    static let columnWidth: CGFloat = 880
+    /// 広い画面（iPad）で、中身をまとめる最大の幅。横幅いっぱいに広げると間延びするので、読みやすい幅に抑える。広告の幅も、これを超えない。
+    static let columnWidth: CGFloat = 640
 }

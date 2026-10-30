@@ -64,7 +64,7 @@ export function ShareView({ share }: { share: PublicShare }) {
       </div>
 
       {slices.length > 0 && (
-        <div className="card minis">
+        <div className="card minis" style={{ gridTemplateColumns: `repeat(${Math.min(slices.length, 3)}, minmax(0, 1fr))` }}>
           {slices.map((s) => (
             <Donut key={s.key} title={s.title} slices={s.slices} />
           ))}

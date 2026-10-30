@@ -37,7 +37,7 @@ struct ReflectionOverlay: View {
                     .padding(.top, 8)
             }
             .padding(28)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: 440)   // 広い画面（iPad）でも、カードを横いっぱいに広げない
             .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
             .padding(.horizontal, 24)
         }
@@ -87,7 +87,7 @@ struct ReflectionQuestionOverlay: View {
                     .opacity(chosen == nil || chosen == .skipped ? 1 : 0.3)
             }
             .padding(28)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: 440)   // 広い画面（iPad）でも、カードを横いっぱいに広げない
             .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
             .padding(.horizontal, 24)
         }

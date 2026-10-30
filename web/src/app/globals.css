@@ -37,10 +37,11 @@ footer.site a { color: var(--green); font-weight: 600; }
 .btn.ghost { background: var(--soft); color: var(--green); }
 
 /* グラフ：小さなドーナツを並べる（凡例は名前だけ） */
-.minis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 18px 12px; }
+.minis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 8px; }  /* 列の数は、グラフの数に合わせて指定する（3つなら、スマホでも横に3つ） */
+.mini svg { width: 100%; max-width: 104px; height: auto; }
 .mini { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .mini h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--green); }
-.legend { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; color: var(--ink); text-align: left; }
+.legend { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; width: fit-content; max-width: 100%; color: var(--ink); text-align: left; }
 .legend li { margin: 3px 0; white-space: nowrap; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
 .appbars { list-style: none; margin: 0; padding: 0; }
