@@ -7,11 +7,16 @@ struct ItemLabel: View, Equatable {
     let item: RestrictedItem
 
     var body: some View {
-        switch item {
-        case .app(let token): Label(token)
-        case .category(let token): Label(token)
-        case .web(let token): Label(token)
+        // 名前（長いURLなど）は、収まらなければ「…」で省略する
+        Group {
+            switch item {
+            case .app(let token): Label(token)
+            case .category(let token): Label(token)
+            case .web(let token): Label(token)
+            }
         }
+        .lineLimit(1)
+        .truncationMode(.tail)
     }
 }
 
