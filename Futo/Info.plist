@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- 使える言語（OSの部品、たとえば「Appleで続ける」のボタンが、英語でも出るように） -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ja</string>
+		<string>en</string>
+	</array>
 	<!-- フレンド招待リンクから、アプリを開くための独自のURL（futo://invite/…）。招待以外のURLは処理しません -->
 	<key>CFBundleURLTypes</key>
 	<array>

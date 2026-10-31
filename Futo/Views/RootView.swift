@@ -78,6 +78,12 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.5), value: questionToShow?.id)
+        #if DEBUG
+        // 開発用：確かめたい画面を引数で指定したときは、はじめの説明を済ませた状態にする
+        .task {
+            if let screen = DebugLaunch.screen, screen != "onboarding", !model.onboardingDone { model.completeOnboarding(mode: .device) }
+        }
+        #endif
         .task(id: model.onboardingDone) {
             // ホームが現れてから、初回（または説明の見直しのあと）だけチュートリアルを始める。
             guard model.onboardingDone, !model.tutorialCompleted else { return }

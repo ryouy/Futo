@@ -29,6 +29,19 @@ struct HomeView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+        #if DEBUG
+        // 開発用：起動の引数で、確かめたい画面を、すぐ開く
+        .task {
+            guard let screen = DebugLaunch.screen else { return }
+            model.finishTutorial()
+            // 通知の説明（finishTutorial が出す）は、確かめたい画面の邪魔になるので、閉じる
+            try? await Task.sleep(for: .milliseconds(1500))
+            model.showNotificationPrimer = false
+            if DebugLaunch.settingsTabIndex != nil { sheet = .settings }
+            else if screen == "records" { sheet = .history }
+            else if screen == "onboarding" { model.replayOnboardingForDebug() }
+        }
+        #endif
         .task(id: model.restriction) {
             // 一時解除中だけ、拡張による再制限を表示に反映するため定期的に再確認する（再制限そのものは拡張が行う）。
             // 一時解除中・一時停止中だけ、拡張による再制限を表示に反映するため定期的に再確認する。

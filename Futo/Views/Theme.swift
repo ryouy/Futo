@@ -341,7 +341,7 @@ struct PrimarySection<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        Section { content.buttonStyle(FutoButtonStyle()) }
+        Section { content.buttonStyle(FutoButtonStyle()).listRowSeparator(.hidden) }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
     }

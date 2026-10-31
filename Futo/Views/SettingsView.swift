@@ -21,7 +21,12 @@ struct SettingsView: View {
             }
         }
     }
-    @State private var tab: SettingsTab = .restriction
+    @State private var tab: SettingsTab = {
+        #if DEBUG
+        if let index = DebugLaunch.settingsTabIndex { return SettingsTab.allCases[index] }
+        #endif
+        return .restriction
+    }()
 
     /// 記録の画面と同じく、上にタブを出して切り替える。
     var body: some View {

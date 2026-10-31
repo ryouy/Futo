@@ -27,7 +27,13 @@ struct OnboardingView: View {
     }
 
     @Namespace private var languageNamespace
-    @State private var page = 0
+    @State private var page: Int = {
+        #if DEBUG
+        return DebugLaunch.onboardingPage
+        #else
+        return 0
+        #endif
+    }()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// ページ移動中は、次の操作を受け付けない（連続操作でアニメーションが重ならないように）。
     @State private var isSliding = false

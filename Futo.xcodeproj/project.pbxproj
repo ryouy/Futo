@@ -102,6 +102,7 @@
 		D6524EB4D95B253B2D0FEC60 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A7A26A456B3046687D2372C /* APIClient.swift */; };
 		D677E926B9023393C7A6EE2F /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26B0FC1E1229764718CF683 /* NotificationService.swift */; };
 		D9DCD71B7EBE925EB79D8A86 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6C85F6C90FCE546C929F5F /* Session.swift */; };
+		E7915213E5D219E08EAFFCDC /* DebugLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B864629D657147D64D74FE /* DebugLaunch.swift */; };
 		EA7E5B92B9D41E40AC4C8F54 /* FutoMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		EACD01277BEC46AE8EC9590B /* Phase3Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */; };
 		EFA2B2010F96E63ECA2E533D /* SharingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB23ABB578D87C290E440A7 /* SharingViews.swift */; };
@@ -244,6 +245,7 @@
 		CDC48F0850D1EC40FBC2BD70 /* Phase3Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Phase3Tests.swift; sourceTree = "<group>"; };
 		CFC033647C6060CD293D5535 /* ReflectionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionViews.swift; sourceTree = "<group>"; };
 		D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionCard.swift; sourceTree = "<group>"; };
+		D2B864629D657147D64D74FE /* DebugLaunch.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLaunch.swift; sourceTree = "<group>"; };
 		D531D20B8BF3515274EA19B0 /* FutoShieldConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FutoShieldConfiguration.swift; sourceTree = "<group>"; };
 		D589FAE9A2A49328F644588A /* BackupModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupModel.swift; sourceTree = "<group>"; };
 		D5AB94950F0760F7FCF9AF18 /* BackupViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupViews.swift; sourceTree = "<group>"; };
@@ -357,6 +359,7 @@
 				F3ABA836A347ACB128D09C74 /* AppModel.swift */,
 				55D3E8121D07DD1E3765C988 /* FutoApp.swift */,
 				57186D513F893809C415EC62 /* AppModel+Phase3.swift */,
+				D2B864629D657147D64D74FE /* DebugLaunch.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -883,6 +886,7 @@
 				25DF0A85386EBB229C77B944 /* ColorMath.swift in Sources */,
 				852B7A88B5B6506BF2531CF2 /* ReceivedGroups.swift in Sources */,
 				4979EC5B9014ED03E1E733CF /* WebShareReplica.swift in Sources */,
+				E7915213E5D219E08EAFFCDC /* DebugLaunch.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
