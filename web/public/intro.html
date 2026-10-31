@@ -97,6 +97,9 @@
     .gallery figure { flex: 0 0 min(62vw, 240px); margin: 0; scroll-snap-align: center; text-align: center; }
     .gallery img { width: 100%; height: auto; border-radius: 28px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); display: block; background: var(--cream); }
     .gallery figcaption { margin-top: 12px; font-size: 14px; color: rgba(252, 248, 240, .86); }
+    .shots-group { margin: 34px 0 10px; font-size: 16px; font-weight: 600; color: rgba(252, 248, 240, .9); letter-spacing: .04em; }
+    .gallery-wide figure { flex-basis: min(86vw, 460px); }
+    .gallery-wide img { border-radius: 16px; }
 
     /* 特長：アイコン＋短い説明のカード */
     .features { display: grid; gap: 12px; grid-template-columns: 1fr; }
@@ -273,26 +276,143 @@
 <section class="shots">
   <div class="wrap">
     <h2><span class="ja">画面</span><span class="en">Screens</span></h2>
+    <h3 class="shots-group"><span class="ja">つかいかた</span><span class="en">How it works</span></h3>
     <div class="gallery">
       <figure>
-        <img src="/assets/web/01-intro.webp" alt="" width="540" height="1168" loading="lazy">
+        <img src="/assets/web/shots/01-intro.jpg" alt="" width="540" height="1076" loading="lazy">
         <figcaption><span class="ja">はじまりの説明</span><span class="en">Intro</span></figcaption>
       </figure>
       <figure>
-        <img src="/assets/web/02-home.webp" alt="" width="540" height="1168" loading="lazy">
+        <img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076" loading="lazy">
         <figcaption><span class="ja">ホーム</span><span class="en">Home</span></figcaption>
       </figure>
       <figure>
-        <img src="/assets/web/03-purpose.webp" alt="" width="540" height="1168" loading="lazy">
+        <img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy">
         <figcaption><span class="ja">何をする？</span><span class="en">What are you doing?</span></figcaption>
       </figure>
       <figure>
-        <img src="/assets/web/04-wait.webp" alt="" width="540" height="1168" loading="lazy">
+        <img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy">
         <figcaption><span class="ja">少し立ち止まる</span><span class="en">A moment to pause</span></figcaption>
       </figure>
       <figure>
-        <img src="/assets/web/05-unlocked.webp" alt="" width="540" height="1168" loading="lazy">
+        <img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">今も使いたい？</span><span class="en">Still want to use it?</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/06-apps.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">どれを使う？</span><span class="en">Which one?</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy">
         <figcaption><span class="ja">解除しました</span><span class="en">Unlocked</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/08-lock.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">制限しました</span><span class="en">Locked again</span></figcaption>
+      </figure>
+    </div>
+    <h3 class="shots-group"><span class="ja">記録と振り返り</span><span class="en">Records & reflections</span></h3>
+    <div class="gallery">
+      <figure>
+        <img src="/assets/web/shots/09-records.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">記録</span><span class="en">Records</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/10-bands.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">時間帯と日ごと</span><span class="en">By time of day</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/11-morning.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">朝の振り返り</span><span class="en">Morning reflection</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/12-feeling.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">さっきの時間は？</span><span class="en">How was that?</span></figcaption>
+      </figure>
+    </div>
+    <h3 class="shots-group"><span class="ja">共有とフレンド</span><span class="en">Sharing & friends</span></h3>
+    <div class="gallery">
+      <figure>
+        <img src="/assets/web/shots/13-friends.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">フレンド</span><span class="en">Friends</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/14-received.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">届いた記録</span><span class="en">Received</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/15-sent.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">共有した記録</span><span class="en">Shared</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/16-link.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">リンクの中身</span><span class="en">Link preview</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/17-account.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">アカウント</span><span class="en">Account</span></figcaption>
+      </figure>
+    </div>
+    <h3 class="shots-group"><span class="ja">見た目と設定</span><span class="en">Looks & settings</span></h3>
+    <div class="gallery">
+      <figure>
+        <img src="/assets/web/shots/18-theme.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">テーマカラー</span><span class="en">Theme colors</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/19-theme-orange.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">好きな色</span><span class="en">Your own color</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/25-dark.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">ダークモード</span><span class="en">Dark mode</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/26-dark-en.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">English</span><span class="en">English</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/27-intro-en.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">English の説明</span><span class="en">English intro</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/20-notify.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">通知</span><span class="en">Notifications</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/21-restriction.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">制限の管理</span><span class="en">Lock management</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/22-backup.jpg" alt="" width="540" height="1068" loading="lazy">
+        <figcaption><span class="ja">バックアップ</span><span class="en">Backup</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/23-tutorial.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">はじめの案内</span><span class="en">Guide</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/24-home-empty.jpg" alt="" width="540" height="1076" loading="lazy">
+        <figcaption><span class="ja">はじめて</span><span class="en">First start</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/28-shield.jpg" alt="" width="540" height="1044" loading="lazy">
+        <figcaption><span class="ja">制限の画面</span><span class="en">Lock screen</span></figcaption>
+      </figure>
+    </div>
+    <h3 class="shots-group"><span class="ja">iPadでも</span><span class="en">On iPad too</span></h3>
+    <div class="gallery gallery-wide">
+      <figure>
+        <img src="/assets/web/shots/29-ipad-home.jpg" alt="" width="1000" height="663" loading="lazy">
+        <figcaption><span class="ja">ホーム</span><span class="en">Home</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/30-ipad-lock.jpg" alt="" width="1000" height="663" loading="lazy">
+        <figcaption><span class="ja">制限しました</span><span class="en">Locked</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/web/shots/31-ipad-purpose.jpg" alt="" width="1000" height="663" loading="lazy">
+        <figcaption><span class="ja">何をする？</span><span class="en">What are you doing?</span></figcaption>
       </figure>
     </div>
   </div>

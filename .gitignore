@@ -10,3 +10,6 @@ xcuserdata/
 
 # 進捗・セットアップなどの非公開メモ（GitHubには置かない）
 /private-docs/
+
+# 撮ったままのスクリーンショット（時刻・電池つき。加工した画像は docs/screenshots に置く）
+/docs/assets/screenshots/
