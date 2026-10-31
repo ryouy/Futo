@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 /// ブラウザ認証（ASWebAuthenticationSession）の窓口。テストでは差し替える。
 protocol WebAuthRunning {
@@ -11,6 +12,26 @@ protocol WebAuthRunning {
 /// それぞれ別のアカウントになる（メールアドレスが同じでも、自動では統合しない）。
 enum SignInProvider: String, Equatable {
     case google, apple
+}
+
+/// ログインの調査用のログ（Xcodeのコンソールや、Console.app で、subsystem: com.ryouy.futo / category: auth で絞れる）。
+/// 出すのは、どの段階で・どの種類のエラーかだけ。トークン・認可コード・nonce・鍵・メールアドレスは、決して出さない。
+enum AuthLog {
+    private static let logger = Logger(subsystem: "com.ryouy.futo", category: "auth")
+
+    static func failure(stage: String, detail: String) {
+        logger.error("auth failed stage=\(stage, privacy: .public) \(detail, privacy: .public)")
+    }
+
+    static func info(stage: String, detail: String = "") {
+        logger.info("auth stage=\(stage, privacy: .public) \(detail, privacy: .public)")
+    }
+
+    /// NSError の domain と code（内容は、秘密を含まない範囲の説明だけ）
+    static func describe(_ error: Error) -> String {
+        let ns = error as NSError
+        return "domain=\(ns.domain) code=\(ns.code)"
+    }
 }
 
 enum AuthError: Error, Equatable {
@@ -37,6 +58,8 @@ final class AuthService {
     private(set) var providerDisplayName: String?
     /// いまのアカウントのログイン方法
     private(set) var provider: SignInProvider?
+    /// 直近のログインが失敗した理由の短い説明（トークンなどは含まない）。開発中の表示と、調査のためだけに使う
+    private(set) var lastFailureDetail: String?
 
     @ObservationIgnored private let config: Phase4Config
     @ObservationIgnored private let urlSession: URLSession
@@ -96,7 +119,7 @@ final class AuthService {
                   let code = items.first(where: { $0.name == "code" })?.value else { throw AuthError.failed }
 
             let googleIDToken = try await exchangeCode(code, verifier: verifier, redirect: redirect)
-            let firebase = try await signInToFirebase(postBody: "id_token=\(googleIDToken)&providerId=google.com")
+            let firebase = try await signInToFirebase(postBody: "id_token=\(googleIDToken)&providerId=google.com", stage: "google.firebase")
             // Firebaseの応答に名前が無いときは、GoogleのIDトークンの申告（name）から補う
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
@@ -122,7 +145,10 @@ final class AuthService {
         let previous = state
         state = .signingIn
         do {
-            let firebase = try await signInToFirebase(postBody: "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)")
+            lastFailureDetail = nil
+            AuthLog.info(stage: "apple.firebase.request")
+            let firebase = try await signInToFirebase(postBody: "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)", stage: "apple.firebase")
+            AuthLog.info(stage: "apple.firebase.ok")
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
             refreshToken = firebase.refreshToken
@@ -134,6 +160,7 @@ final class AuthService {
             state = .signedIn(uid: firebase.uid)
             return firebase.uid
         } catch {
+            if lastFailureDetail == nil { lastFailureDetail = AuthLog.describe(error) }
             state = previous == .signingIn ? .signedOut : previous
             throw error as? AuthError ?? AuthError.failed
         }
@@ -214,7 +241,7 @@ final class AuthService {
         return idToken
     }
 
-    private func signInToFirebase(postBody: String) async throws -> FirebaseTokens {
+    private func signInToFirebase(postBody: String, stage: String) async throws -> FirebaseTokens {
         var components = URLComponents(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp")!
         components.queryItems = [.init(name: "key", value: config.firebaseAPIKey)]
         var request = URLRequest(url: components.url!, timeoutInterval: 15)
@@ -228,9 +255,31 @@ final class AuthService {
         ])
         let (status, body) = try await decode(request)
         guard status == 200, let uid = body["localId"] as? String, let idToken = body["idToken"] as? String,
-              let refresh = body["refreshToken"] as? String else { throw AuthError.failed }
+              let refresh = body["refreshToken"] as? String else {
+            // 失敗の理由を、秘密を含まない形で控える（Firebaseが返すエラーの種類だけ）
+            let detail = Self.firebaseFailureDetail(status: status, body: body)
+            lastFailureDetail = detail
+            AuthLog.failure(stage: stage, detail: detail)
+            throw AuthError.failed
+        }
         let name = (body["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
         return FirebaseTokens(uid: uid, idToken: idToken, refreshToken: refresh, expiresIn: TimeInterval(body["expiresIn"] as? String ?? "") ?? 3600, displayName: name?.isEmpty == false ? name : nil)
+    }
+
+    /// Firebase の応答から、失敗の種類だけを取り出す（例：`http=400 error=INVALID_IDP_RESPONSE`）。トークンや本文は、含めない。
+    static func firebaseFailureDetail(status: Int, body: [String: Any]) -> String {
+        if body["needConfirmation"] as? Bool == true {
+            // 同じメールアドレスの別のアカウントがあり、Firebase が自動で統合しようとしている
+            return "http=\(status) needConfirmation=true (same email already exists with another sign-in method)"
+        }
+        var parts = ["http=\(status)"]
+        if let error = body["error"] as? [String: Any] {
+            if let message = error["message"] as? String { parts.append("error=\(String(message.prefix(120)))") }
+            if let code = error["code"] as? Int { parts.append("code=\(code)") }
+        } else if status == 200 {
+            parts.append("missing localId/idToken/refreshToken in response")
+        }
+        return parts.joined(separator: " ")
     }
 
     private func refresh(_ refreshToken: String) async throws -> FirebaseTokens {

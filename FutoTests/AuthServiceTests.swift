@@ -133,6 +133,27 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertNil(service.provider)
     }
 
+    func testFirebaseFailureReasonIsRecordedWithoutAnyToken() async {
+        StubProtocol.handler = { [unowned self] _ in (400, self.json(["error": ["code": 400, "message": "INVALID_IDP_RESPONSE : Unable to verify audience"]])) }
+        let service = make()
+        do { _ = try await service.signInWithApple(identityToken: "SECRET-APPLE-TOKEN", rawNonce: "SECRET-NONCE", fullName: nil); XCTFail() } catch {}
+        let detail = service.lastFailureDetail ?? ""
+        XCTAssertTrue(detail.contains("http=400"))
+        XCTAssertTrue(detail.contains("INVALID_IDP_RESPONSE"))
+        XCTAssertFalse(detail.contains("SECRET"), "トークンやnonceは、失敗の説明に入れない")
+    }
+
+    func testNeedConfirmationIsReportedAsAFailureNotASilentMerge() async {
+        // Firebaseが「同じメールアドレスの別のアカウントがある」として、統合の確認を求めた（idTokenは返らない）
+        StubProtocol.handler = { [unowned self] _ in (200, self.json(["needConfirmation": true, "providerId": "apple.com"])) }
+        let store = MemoryStore()
+        let service = make(store: store)
+        do { _ = try await service.signInWithApple(identityToken: "T", rawNonce: "N", fullName: nil); XCTFail() } catch { XCTAssertEqual(error as? AuthError, .failed) }
+        XCTAssertTrue((service.lastFailureDetail ?? "").contains("needConfirmation=true"))
+        XCTAssertEqual(service.state, .signedOut)
+        XCTAssertNil(store.saved, "自動では統合しない")
+    }
+
     func testSavedSessionWithoutAProviderIsTreatedAsGoogle() {
         let store = MemoryStore()
         store.saved = StoredAuthSession(uid: "old-user", refreshToken: "R")

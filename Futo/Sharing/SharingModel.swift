@@ -100,14 +100,20 @@ final class SharingModel {
         case .failure(let error):
             // 取りやめただけなら、何も変えない
             if (error as? ASAuthorizationError)?.code == .canceled { return }
-            message = tr("ログインできませんでした　もう一度お試しください")
+            // Appleの認証そのものが失敗した（1000：設定・署名・iCloudのサインイン、1004：Appleの応答の失敗、など）
+            let detail = AuthLog.describe(error)
+            AuthLog.failure(stage: "apple.authorization", detail: detail)
+            message = Self.loginFailedText(stage: "apple.authorization", detail: detail)
         case .success(let authorization):
             guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let tokenData = credential.identityToken, let token = String(data: tokenData, encoding: .utf8),
                   let nonce = appleNonce else {
-                message = tr("ログインできませんでした　もう一度お試しください")
+                let detail = "hasCredential=\(authorization.credential is ASAuthorizationAppleIDCredential) hasNonce=\(appleNonce != nil)"
+                AuthLog.failure(stage: "apple.credential", detail: detail)
+                message = Self.loginFailedText(stage: "apple.credential", detail: detail)
                 return
             }
+            AuthLog.info(stage: "apple.authorization.ok")
             phase = .working
             defer { phase = .idle }
             let name = credential.fullName.map { PersonNameComponentsFormatter().string(from: $0) }
@@ -122,9 +128,19 @@ final class SharingModel {
             } catch AuthError.notConfigured {
                 message = tr("共有の設定がまだ終わっていません")
             } catch {
-                message = tr("ログインできませんでした　もう一度お試しください")
+                message = Self.loginFailedText(stage: "apple.firebase", detail: auth.lastFailureDetail ?? AuthLog.describe(error))
             }
         }
+    }
+
+    /// 「ログインできませんでした」。開発用のビルドでは、調べやすいよう、失敗した段階と種類（秘密を含まない）も添える。
+    static func loginFailedText(stage: String, detail: String) -> String {
+        let base = tr("ログインできませんでした　もう一度お試しください")
+        #if DEBUG
+        return base + "\n[\(stage)] \(detail)"
+        #else
+        return base
+        #endif
     }
 
     func signOut() {
