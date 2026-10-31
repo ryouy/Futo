@@ -46,12 +46,24 @@ struct BackupView: View {
     }
 
     private var notConnected: some View {
-        CardSection {
-            // Appleでログインしている人だけ。バックアップは、Googleとの接続が別に要る
+        Group {
+            // Appleでログインしている人だけ。バックアップは、Googleとの接続が別に要る（カードなしの説明）
             if sharing.signInProvider == .apple {
-                Text(tr("バックアップには、Googleアカウントとの接続が必要です"))
-                    .font(.footnote).foregroundStyle(.secondary)
+                Section {
+                    Text(tr("バックアップには、Googleアカウントとの接続が必要です"))
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
+                }
             }
+            CardSection { connectButton }
+        }
+    }
+
+    private var connectButton: some View {
+        Group {
             Button { Task { await backup.connect() } } label: {
                 Label(tr("バックアップを有効にする"), systemImage: "icloud.and.arrow.up")
             }

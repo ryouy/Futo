@@ -336,8 +336,8 @@ struct HomeView: View {
                 }
                 if editable {
                     Button(action: onRemove) {
-                        Image(systemName: "trash")
-                            .font(.body)
+                        Image(systemName: "minus.circle")
+                            .font(.title3)
                             .foregroundStyle(.secondary)
                             .frame(width: 44, height: 44)
                     }

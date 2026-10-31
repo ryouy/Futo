@@ -67,12 +67,6 @@ struct ShareListResponse: Codable, Equatable {
     var next: String?
 }
 
-struct RotatedShareResponse: Codable, Equatable {
-    var token: String
-    var expiresAt: String
-    var url: String
-}
-
 struct InvitationResponse: Codable, Equatable {
     var inviteId: String
     var token: String

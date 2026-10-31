@@ -265,20 +265,6 @@ final class SharingModel {
         } catch { fail(error) }
     }
 
-    /// 新しいリンクを作る。古いリンクは、サーバー側で無効になる。
-    func rotateShare(_ item: ShareListItem) async -> URL? {
-        guard let uid else { return nil }
-        phase = .working
-        defer { phase = .idle }
-        do {
-            let rotated: RotatedShareResponse = try await api.send("POST", "/api/shares/\(item.id)/rotate")
-            guard let url = URL(string: rotated.url) else { throw APIError(kind: .server, code: "invalid_response") }
-            ShareLinkStore.save(url: rotated.url, uid: uid, shareId: item.id)
-            await loadShares()
-            return url
-        } catch { fail(error); return nil }
-    }
-
     // MARK: フレンド
 
     func loadFriends() async {

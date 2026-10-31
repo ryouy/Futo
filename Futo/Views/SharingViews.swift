@@ -8,6 +8,8 @@ import SwiftUI
 struct SharingTab: View {
     let model: AppModel
     @Environment(SharingModel.self) private var sharing
+    /// 削除・ログアウトのあと、画面を確実に組み直すための目印（ページ表示の中で、見た目が古いまま残らないように）
+    @State private var refreshID = UUID()
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
 
@@ -29,21 +31,27 @@ struct SharingTab: View {
             }
         }
         .compactForm()
+        .id(refreshID)
         .task { if sharing.isSignedIn { await sharing.loadProfile() } }
         .confirmationDialog(tr("ログアウトしますか？ 共有中のリンクは、そのまま有効です"), isPresented: $confirmSignOut, titleVisibility: .visible) {
-            Button(tr("ログアウト"), role: .destructive) { sharing.signOut() }
+            Button(tr("ログアウト"), role: .destructive) { sharing.signOut(); refreshID = UUID() }
             Button(tr("キャンセル"), role: .cancel) {}
         }
         .confirmationDialog(tr("アカウントと、共有・フレンドのデータをすべて削除しますか？ 取り消せません　端末の記録は消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button(tr("削除する"), role: .destructive) { Task { _ = await sharing.deleteAccount() } }
+            Button(tr("削除する"), role: .destructive) { Task { _ = await sharing.deleteAccount(); refreshID = UUID() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
     }
 
     private var signedOut: some View {
         Group {
-            CardSection {
+            Section {
                 Text(tr("ログインすると、選んだ記録だけを、リンクやフレンドに共有できます"))
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
             }
             // Google を上、Apple を下に。どちらも同じ大きさで、同じように目に入る
             PrimarySection { SignInButtons() }
@@ -427,7 +435,6 @@ struct SharedLinksView: View {
     let model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var confirmRevoke: ShareListItem?
-    @State private var rotated: URL?
 
     var body: some View {
         Form {
@@ -437,7 +444,12 @@ struct SharedLinksView: View {
                 }.frame(minHeight: 44)
             }
             if sharing.shares.allSatisfy({ $0.status == "revoked" }) {
-                CardSection { Text(tr("共有中のリンクはありません")).foregroundStyle(.secondary) }
+                Section {
+                    Text(tr("共有中のリンクはありません")).font(.subheadline).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
+                }
             }
             ForEach(sharing.shares.filter { $0.status != "revoked" }) { item in
                 CardSection {
@@ -456,24 +468,11 @@ struct SharedLinksView: View {
                                 ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }.accessibilityLabel(tr("送る"))
                                 CopyChip(text: url.absoluteString)
                             }
-                            Button { Task { rotated = await sharing.rotateShare(item) } } label: { Image(systemName: "arrow.triangle.2.circlepath") }
-                                .accessibilityLabel(tr("作り直す"))
-                            Button(role: .destructive) { confirmRevoke = item } label: { Image(systemName: "stop.circle") }
-                                .accessibilityLabel(tr("停止"))
+                            Button(role: .destructive) { confirmRevoke = item } label: { Image(systemName: "trash") }
+                                .accessibilityLabel(tr("削除"))
                         }
                         .buttonStyle(ChipButtonStyle())
                     }
-                }
-            }
-            if let rotated {
-                CardSection {
-                    Label(tr("新しいリンクを作りました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
-                    HStack(spacing: 8) {
-                        ShareLink(item: rotated) { Image(systemName: "square.and.arrow.up") }.accessibilityLabel(tr("送る"))
-                        Link(destination: rotated) { Image(systemName: "safari") }.accessibilityLabel(tr("開く"))
-                        CopyChip(text: rotated.absoluteString)
-                    }
-                    .buttonStyle(ChipButtonStyle())
                 }
             }
             if let message = sharing.message { CardSection { Text(message).font(.footnote) } }
