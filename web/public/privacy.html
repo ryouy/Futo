@@ -232,5 +232,11 @@
     });
   })();
 </script>
+<script>
+  // 紹介サイトの「アプリ用のページ」（/about）から来たときは、トップへ戻るリンクを、/about に向ける
+  if (location.search.indexOf("from=about") >= 0) {
+    document.querySelectorAll('a[href="/"]').forEach(function (a) { a.setAttribute("href", "/about"); });
+  }
+</script>
 </body>
 </html>

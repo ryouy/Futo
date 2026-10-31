@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "firebase emulators:exec --only auth,firestore --project demo-futo \"vitest run\"",
     "test:unit": "vitest run tests/unit",
-    "cleanup:dry-run": "tsx scripts/cleanup.ts --dry-run"
+    "cleanup:dry-run": "tsx scripts/cleanup.ts --dry-run",
+    "make:about": "tsx scripts/make-about.ts"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
@@ -29,5 +30,7 @@
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

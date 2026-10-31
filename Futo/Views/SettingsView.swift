@@ -125,9 +125,9 @@ struct SettingsView: View {
 
     // MARK: その他
 
-    /// 紹介サイト（共有・招待と同じドメインのトップページ）
+    /// 紹介サイト（共有・招待と同じドメインの /about）。課金のページへのリンクを取り除いた、アプリ用のページ。
     private var introSiteURL: URL? {
-        sharing.config.apiBaseURL ?? URL(string: "https://futo-share.vercel.app")
+        (sharing.config.apiBaseURL ?? URL(string: "https://futo-share.vercel.app")).flatMap { URL(string: "about", relativeTo: $0)?.absoluteURL }
     }
 
     private var otherTab: some View {
