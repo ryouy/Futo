@@ -60,7 +60,7 @@
     <td align="center" valign="top"><img src="docs/screenshots/18-theme.png" width="170"><br><b>テーマカラー</b></td>
     <td align="center" valign="top"><img src="docs/screenshots/19-theme-orange.png" width="170"><br><b>好きな色</b></td>
     <td align="center" valign="top"><img src="docs/screenshots/25-dark.png" width="170"><br><b>ダークモード</b></td>
-    <td align="center" valign="top"><img src="docs/screenshots/26-dark-en.png" width="170"><br><b>English</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/32-records-en.png" width="170"><br><b>English</b></td>
   </tr>
 </table>
 
