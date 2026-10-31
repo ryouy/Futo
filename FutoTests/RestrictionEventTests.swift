@@ -47,7 +47,7 @@ final class RestrictionEventTests: XCTestCase {
     }
 
     func testShareCountsAreOnlyIncludedWhenSelected() throws {
-        var selection = ShareSelection(); selection.counts = true; selection.apps = false
+        var selection = ShareSelection(); selection.counts = true
         let off = try ShareStatsBuilder.make(sessions: [], mode: .device, period: .thisWeek, selection: selection, now: now,
                                              restrictionCounts: { _ in RestrictionCounts(pauses: 2, ends: 1) })
         XCTAssertNil(off.restriction, "初期は、含めない")

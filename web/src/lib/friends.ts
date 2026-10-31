@@ -5,7 +5,7 @@ import { ApiError } from "./http";
 import { codeHash, invitationTokens, invitations } from "./invitations";
 import { assertNotLimited, recordFailure } from "./rateLimit";
 import { hashToken, looksLikeCode, looksLikeToken, normalizeCode, pairKey } from "./tokens";
-import { activeNames, loadActiveUser, userRef } from "./users";
+import { activeProfiles, loadActiveUser, userRef } from "./users";
 
 export const MAX_FRIENDS = 50;
 export const MAX_PENDING_REQUESTS = 20;
@@ -164,16 +164,16 @@ export async function listFriends(uid: string) {
   const friendUids = friendSnap.docs.map((d) => (d.data().members as string[]).find((m) => m !== uid) as string);
   const incoming = incomingSnap.docs.filter((d) => isPendingValid(d.data()));
   const outgoing = outgoingSnap.docs.filter((d) => isPendingValid(d.data()));
-  const names = await activeNames([...friendUids, ...incoming.map((d) => d.data().requesterUid as string), ...outgoing.map((d) => d.data().inviterUid as string)]);
+  const profiles = await activeProfiles([...friendUids, ...incoming.map((d) => d.data().requesterUid as string), ...outgoing.map((d) => d.data().inviterUid as string)]);
   return {
     friends: friendSnap.docs
-      .map((d, i) => ({ friendshipId: d.id, uid: friendUids[i], displayName: names.get(friendUids[i]) }))
+      .map((d, i) => ({ friendshipId: d.id, uid: friendUids[i], displayName: profiles.get(friendUids[i])?.name, avatar: profiles.get(friendUids[i])?.avatar }))
       .filter((f) => f.displayName !== undefined),
     incoming: incoming
-      .map((d) => ({ requestId: d.id, uid: d.data().requesterUid as string, displayName: names.get(d.data().requesterUid as string), expiresAt: iso(d.data().expiresAt) }))
+      .map((d) => ({ requestId: d.id, uid: d.data().requesterUid as string, displayName: profiles.get(d.data().requesterUid as string)?.name, avatar: profiles.get(d.data().requesterUid as string)?.avatar, expiresAt: iso(d.data().expiresAt) }))
       .filter((r) => r.displayName !== undefined),
     outgoing: outgoing
-      .map((d) => ({ requestId: d.id, displayName: names.get(d.data().inviterUid as string), expiresAt: iso(d.data().expiresAt) }))
+      .map((d) => ({ requestId: d.id, displayName: profiles.get(d.data().inviterUid as string)?.name, avatar: profiles.get(d.data().inviterUid as string)?.avatar, expiresAt: iso(d.data().expiresAt) }))
       .filter((r) => r.displayName !== undefined),
   };
 }

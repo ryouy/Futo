@@ -6,7 +6,6 @@ struct ChartStats {
     var counts: (wantsToUse: Int, deferred: Int, interrupted: Int)?
     var purposes: (contact: Int, research: Int, change: Int, noReason: Int, unanswered: Int)?
     var feelings: (satisfied: Int, neutral: Int, wishedLess: Int)?
-    var apps: [AppCount]?
     var restriction: RestrictionCounts?
     var phrase: String?
     var message: String?
@@ -17,7 +16,6 @@ struct ChartStats {
         feelings = payload.feelings.map { ($0.satisfied, $0.neutral, $0.wishedLess) }
         phrase = payload.phraseId.flatMap(SharePhrase.init(rawValue:))?.text
         message = payload.message
-        apps = payload.apps
         restriction = payload.restriction
     }
 
@@ -27,7 +25,6 @@ struct ChartStats {
         feelings = snapshot.feelings.map { ($0.satisfied, $0.neutral, $0.wishedLess) }
         phrase = snapshot.phrase
         message = snapshot.message
-        apps = snapshot.apps
         restriction = snapshot.restriction
     }
 }
@@ -56,7 +53,6 @@ struct StatsChartsView: View {
             if let c = stats.counts { countsCard(c) }
             if let p = stats.purposes { purposesCard(p) }
             if let f = stats.feelings { feelingsCard(f) }
-            if let apps = stats.apps, !apps.isEmpty { appsCard(apps) }
             if let r = stats.restriction { restrictionCard(r) }
             if let phrase = stats.phrase {
                 Text(phrase).font(.subheadline.weight(.medium)).multilineTextAlignment(.center)
@@ -109,28 +105,6 @@ struct StatsChartsView: View {
                 Text(tr("制限の終了"))
                 Spacer()
                 Text(tr("{0}回", "\(r.ends)")).monospacedDigit().foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card()
-    }
-
-    /// よく解除したアプリ：名前と、横棒。
-    private func appsCard(_ apps: [AppCount]) -> some View {
-        let maxCount = max(apps.map(\.count).max() ?? 1, 1)
-        return VStack(alignment: .leading, spacing: 10) {
-            Text(tr("よく解除したアプリ")).font(.subheadline.weight(.medium))
-            ForEach(apps, id: \.name) { app in
-                HStack(spacing: 10) {
-                    Text(app.name).font(.footnote).lineLimit(1).frame(width: 96, alignment: .leading)
-                    GeometryReader { proxy in
-                        Capsule().fill(Theme.accent.opacity(0.85))
-                            .frame(width: max(8, proxy.size.width * CGFloat(app.count) / CGFloat(maxCount)))
-                    }
-                    .frame(height: 10)
-                    Text("\(app.count)").font(.footnote.monospacedDigit()).foregroundStyle(.secondary).frame(width: 28, alignment: .trailing)
-                }
-                .accessibilityElement(children: .combine)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

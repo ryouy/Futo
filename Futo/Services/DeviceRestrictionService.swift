@@ -22,7 +22,6 @@ final class DeviceRestrictionService: RestrictionService {
             loaded = stored.selection
             SharedState.saveSelection(loaded)
         }
-        AppNameStore.record(loaded)
         self.selection = loaded
         refreshPermission()
     }
@@ -57,8 +56,6 @@ final class DeviceRestrictionService: RestrictionService {
     /// 戻り値は、「ふと」自身が選ばれていて、取り除いたかどうか。
     @discardableResult
     func saveSelection(_ newSelection: FamilyActivitySelection, additiveOnly: Bool = false) -> Bool {
-        // 名前は、選んだ直後だけ読めることが多い。いまのうちに控える（共有で、アプリ名を出すために使う）
-        AppNameStore.record(newSelection)
         var cleaned = newSelection
         // 選択画面が返した情報から、「ふと」自身を見分ける（トークンだけでは分からないことがある）
         var removedSelf = false

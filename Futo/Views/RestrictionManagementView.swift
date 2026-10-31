@@ -40,7 +40,7 @@ struct RestrictionManagementView: View {
                         }.frame(minHeight: 44)
                     } else {
                         Label(tr("制限を一時停止"), systemImage: "pause.circle").foregroundStyle(.secondary).frame(minHeight: 44)
-                        Text(pauseUnavailableText).font(.footnote).foregroundStyle(.secondary)
+                        if let reason = pauseUnavailableText { Text(reason).font(.footnote).foregroundStyle(.secondary) }
                     }
                 }
             }
@@ -56,10 +56,11 @@ struct RestrictionManagementView: View {
         model.permission == .approved && model.restriction == .configured && model.device.supportsTemporaryUnlock
     }
 
-    private var pauseUnavailableText: String {
+    /// 使えない理由。「制限がかかっているときだけ」は、見れば分かるので、書かない。
+    private var pauseUnavailableText: String? {
         if !model.device.supportsTemporaryUnlock { return tr("この環境では、一時停止を使えません") }
         if model.permission != .approved { return tr("Screen Timeの許可が必要です") }
-        return tr("制限がかかっているときに、使えます")
+        return nil
     }
 
     // MARK: 終了（恒久）

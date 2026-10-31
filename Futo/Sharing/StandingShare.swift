@@ -9,8 +9,6 @@ struct StandingShareConfig: Codable, Equatable, Identifiable {
     var counts: Bool
     var purposes: Bool
     var feelings: Bool
-    /// アプリ名を含めるか（古い設定には無いので、既定は含める）
-    var apps: Bool? = nil
     var restriction: Bool? = nil
     var phraseId: String?
     /// フレンドへの一言（本人が入力した文）。統計の値ではない
@@ -26,7 +24,6 @@ struct StandingShareConfig: Codable, Equatable, Identifiable {
         self.counts = selection.counts
         self.purposes = selection.purposes
         self.feelings = selection.feelings
-        self.apps = selection.apps
         self.restriction = selection.restriction
         self.phraseId = selection.phrase?.rawValue
         self.message = ShareMessage.normalized(selection.message)
@@ -37,7 +34,7 @@ struct StandingShareConfig: Codable, Equatable, Identifiable {
 
     var selection: ShareSelection {
         var s = ShareSelection()
-        s.showName = showName; s.counts = counts; s.purposes = purposes; s.feelings = feelings; s.apps = apps ?? true; s.restriction = restriction ?? false
+        s.showName = showName; s.counts = counts; s.purposes = purposes; s.feelings = feelings; s.restriction = restriction ?? false
         s.phrase = phraseId.flatMap(SharePhrase.init(rawValue:))
         s.message = message ?? ""
         return s

@@ -51,7 +51,7 @@ export async function createFriendShare(uid: string, payload: FriendSharePayload
       grants, // 受信者ごとの「関係の世代」。解除・再承認で世代が変わると、古い権限は復活しない
       ownerName: payload.showName ? user.displayName : null,
       stats: snapshotFrom(payload),
-      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), apps: Boolean(payload.apps), restriction: Boolean(payload.restriction), phrase: Boolean(payload.phraseId) },
+      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), restriction: Boolean(payload.restriction), phrase: Boolean(payload.phraseId) },
       createdAt: Timestamp.fromDate(t),
       updatedAt: Timestamp.fromDate(t),
       expiresAt,
@@ -82,6 +82,8 @@ export async function getFriendShare(uid: string, shareId: string) {
   return {
     id: snap.id,
     ownerName: (data.ownerName as string | null) ?? null,
+    // 名前を出す共有だけ、作成者の今のアイコンも見せる
+    ownerAvatar: data.ownerName ? ((await userRef(data.ownerUid as string).get()).data()?.avatar ?? null) : null,
     isOwner,
     createdAt: iso(data.createdAt),
     updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp),
@@ -155,7 +157,7 @@ export async function updateFriendShare(uid: string, shareId: string, payload: z
     tx.update(ref, {
       ownerName: payload.showName ? user.displayName : null,
       stats: snapshotFrom(payload),
-      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), apps: Boolean(payload.apps), restriction: Boolean(payload.restriction), phrase: Boolean(payload.phraseId) },
+      selected: { counts: Boolean(payload.counts), purposes: Boolean(payload.purposes), feelings: Boolean(payload.feelings), restriction: Boolean(payload.restriction), phrase: Boolean(payload.phraseId) },
       updatedAt: Timestamp.fromDate(t),
       expiresAt,
     });

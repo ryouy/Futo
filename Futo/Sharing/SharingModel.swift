@@ -90,6 +90,7 @@ final class SharingModel {
         do {
             profile = try await api.send("GET", "/api/me")
             cacheProfile()
+            await reconcileAvatar()
         } catch let error as APIError where error.kind == .notFound {
             // 初めてのログイン：Googleの名前を表示名の初期値にする（あとから変えられる）
             await createProfile()
@@ -98,14 +99,29 @@ final class SharingModel {
 
     private func createProfile() async {
         let name = DisplayName.initial(from: auth.providerDisplayName)
-        do { profile = try await api.send("PUT", "/api/me", body: ["displayName": name]); cacheProfile() } catch { fail(error) }
+        do { profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec)); cacheProfile() } catch { fail(error) }
+    }
+
+    /// サーバーのアイコンと、この端末のアイコンをそろえる。サーバーに無ければ送り、違っていれば、サーバーのものを取り込む。
+    private func reconcileAvatar() async {
+        guard let remote = profile?.avatar else { await syncAvatar(); return }
+        if remote != AvatarSettings.shared.spec { AvatarSettings.shared.adopt(remote) }
+    }
+
+    /// アイコンを変えたとき、フレンドにも見えるよう、サーバーへ送る。失敗しても、この端末の表示は変わらない。
+    func syncAvatar() async {
+        guard isSignedIn, let name = profile?.displayName else { return }
+        if let updated: MeResponse = try? await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec)) {
+            profile = updated
+            cacheProfile()
+        }
     }
 
     func saveDisplayName(_ name: String) async -> Bool {
         phase = .working
         defer { phase = .idle }
         do {
-            profile = try await api.send("PUT", "/api/me", body: ["displayName": name])
+            profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec))
             cacheProfile()
             message = nil
             return true
@@ -116,7 +132,6 @@ final class SharingModel {
 
     func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased(), allowsMessage: Bool = false, events: [RestrictionEvent] = []) throws -> SharePayload {
         try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage,
-                                        appCounts: AppNameResolver.counts(sessions: sessions, mode: mode),
                                         restrictionCounts: Self.restrictionCounts(events: events, mode: mode))
     }
 
@@ -294,7 +309,6 @@ final class SharingModel {
         for index in configs.indices.reversed() where force || configs[index].isDue(now: now) {
             let config = configs[index]
             guard let payload = try? ShareStatsBuilder.make(sessions: sessions, mode: mode, period: config.sharePeriod, selection: config.selection, now: now, allowsMessage: true,
-                                                            appCounts: AppNameResolver.counts(sessions: sessions, mode: mode),
                                                             restrictionCounts: Self.restrictionCounts(events: events, mode: mode)) else { continue }
             do {
                 let _: EmptyResponse = try await api.send("PUT", "/api/friend-shares/\(config.shareId)", body: payload.updateBody)

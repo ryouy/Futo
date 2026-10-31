@@ -55,14 +55,6 @@ describe("Web共有ページの表示", () => {
     expect(html).toContain("連絡 3件");
   });
 
-  it("アプリ名：選んだときだけ出る。名前はエスケープされる", () => {
-    const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, apps: [{ name: "<b>SNS</b>", count: 7 }, { name: "動画", count: 3 }] } }} />);
-    expect(html).toContain("よく解除したアプリ");
-    expect(html).toContain("&lt;b&gt;SNS&lt;/b&gt;");
-    expect(html).not.toContain("<b>SNS</b>");
-    expect(html).toContain("動画");
-  });
-
   it("制限の管理：選んだときだけ、一時停止と終了の回数が出る", () => {
     expect(renderToStaticMarkup(<ShareView share={base} />)).not.toContain("制限の管理");
     const html = renderToStaticMarkup(<ShareView share={{ ...base, stats: { ...base.stats, restriction: { pauses: 2, ends: 1 } } }} />);

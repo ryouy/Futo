@@ -9,25 +9,10 @@ import UIKit
 /// ボタンは、実際にできる動作（`ShieldActionResponse.close` = ホームに戻る）と一致させる。
 /// 本体アプリを直接開くAPIは、公式には用意されていないため、ボタンにはしない（説明文で案内する）。
 final class FutoShieldConfiguration: ShieldConfigurationDataSource {
-    // 名前は、ここでしか読めない。出すたびに書き留めて、本体が、共有でアプリ名を出すときに使う。
-    override func configuration(shielding application: Application) -> ShieldConfiguration {
-        AppNameBook.save(name: application.localizedDisplayName, for: application.token)
-        return Self.make()
-    }
-    override func configuration(shielding application: Application, in category: ActivityCategory) -> ShieldConfiguration {
-        AppNameBook.save(name: application.localizedDisplayName, for: application.token)
-        AppNameBook.save(name: category.localizedDisplayName, for: category.token)
-        return Self.make()
-    }
-    override func configuration(shielding webDomain: WebDomain) -> ShieldConfiguration {
-        AppNameBook.save(name: webDomain.domain, for: webDomain.token)
-        return Self.make()
-    }
-    override func configuration(shielding webDomain: WebDomain, in category: ActivityCategory) -> ShieldConfiguration {
-        AppNameBook.save(name: webDomain.domain, for: webDomain.token)
-        AppNameBook.save(name: category.localizedDisplayName, for: category.token)
-        return Self.make()
-    }
+    override func configuration(shielding application: Application) -> ShieldConfiguration { Self.make() }
+    override func configuration(shielding application: Application, in category: ActivityCategory) -> ShieldConfiguration { Self.make() }
+    override func configuration(shielding webDomain: WebDomain) -> ShieldConfiguration { Self.make() }
+    override func configuration(shielding webDomain: WebDomain, in category: ActivityCategory) -> ShieldConfiguration { Self.make() }
 
     // MARK: 色（生成りと、落ち着いた緑。ダークでは、深い緑地に生成り）
 

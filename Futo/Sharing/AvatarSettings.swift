@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import SwiftUI
 
-/// 自分のアイコンの設定。この端末の表示だけに使い、サーバーにも、フレンドにも送らない。
+/// 自分のアイコンの設定。この端末に保存し、フレンドに見せるため、サーバーにも送る（変えたときに、反映される）。
 /// 何も描かない無印（初期設定）か、山・海・魚などの9個から選ぶ（無印を含めて10個）。色は、テーマの4色から選ぶ（選ばなければ、いまのテーマ色）。
 @MainActor
 @Observable
@@ -48,6 +48,18 @@ final class AvatarSettings {
     func fill(choices: [Color], themeColor: Color) -> Color {
         if let colorIndex, choices.indices.contains(colorIndex) { return choices[colorIndex] }
         return themeColor
+    }
+
+    /// サーバーに送る、いまのアイコン。色を選んでいなければ、いまのテーマ色の番号。
+    var spec: AvatarSpec {
+        let themeIndex = ThemeColor.allCases.firstIndex(of: ThemeStore.shared.color) ?? 0
+        return AvatarSpec(symbol: symbolIndex, color: colorIndex ?? themeIndex)
+    }
+
+    /// サーバーのアイコンを、この端末に取り込む（別の端末で変えたとき）。
+    func adopt(_ spec: AvatarSpec) {
+        symbolIndex = spec.symbol.flatMap { Self.symbols.indices.contains($0) ? $0 : nil }
+        colorIndex = (0..<Self.colorCount).contains(spec.color) ? spec.color : nil
     }
 
     func selectPlain() { symbolIndex = nil }

@@ -174,7 +174,7 @@ struct CreateShareView: View {
                         if chosen.contains(friend.uid) { chosen.remove(friend.uid) } else { chosen.insert(friend.uid) }
                     } label: {
                         HStack(spacing: 10) {
-                            AccountAvatar(name: friend.displayName, size: 28)
+                            AccountAvatar(name: friend.displayName, size: 28, spec: friend.avatar)
                             Text(friend.displayName).foregroundStyle(.primary).oneLine()
                             Spacer(minLength: 0)
                             Image(systemName: chosen.contains(friend.uid) ? "checkmark.circle.fill" : "circle")
@@ -207,25 +207,11 @@ struct CreateShareView: View {
             Toggle(tr("ひと呼吸の結果"), isOn: $selection.counts)
             Toggle(tr("使いたかった目的"), isOn: $selection.purposes)
             Toggle(tr("使ったあとの感想"), isOn: $selection.feelings)
-            Toggle(isOn: $selection.apps) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(tr("よく解除したアプリ"))
-                    if let note = appsNote { Text(note).font(.caption).foregroundStyle(.secondary) }
-                }
-            }
             Toggle(tr("制限の管理"), isOn: $selection.restriction)
         } header: {
             header(tr("共有する記録"))
         }
         .listRowBackground(Theme.card)
-    }
-
-    /// アプリ名を読み取れないときだけ、短く理由を出す。
-    private var appsNote: String? {
-        guard selection.apps else { return nil }
-        let availability = AppNameResolver.availability(sessions: allSessions, mode: model.mode, interval: nil)
-        if availability.total > 0, availability.named == 0 { return tr("名前を読み取れません") }
-        return nil
     }
 
     private var optionsSection: some View {
@@ -494,18 +480,32 @@ struct AccountAvatar: View {
     let name: String
     var size: CGFloat = 32
     var isOwn = false
+    /// フレンドのアイコン（サーバーから届いたもの）。無ければ、頭文字を出す。
+    var spec: AvatarSpec? = nil
     private var settings: AvatarSettings { .shared }
 
     static var themeChoices: [Color] { ThemeColor.allCases.map(\.swatchColor) }
 
+    private var fillColor: Color {
+        if isOwn { return settings.fill(choices: Self.themeChoices, themeColor: Theme.accent) }
+        if let spec, Self.themeChoices.indices.contains(spec.color) { return Self.themeChoices[spec.color] }
+        return Theme.accent
+    }
+
     var body: some View {
         Circle()
-            .fill(isOwn ? settings.fill(choices: Self.themeChoices, themeColor: Theme.accent) : Theme.accent)
+            .fill(fillColor)
             .frame(width: size, height: size)
             .overlay {
                 if isOwn {
                     // 自分のアイコン：選んだ絵。初期は、何も描かない無印
                     if let index = settings.symbolIndex, AvatarSettings.symbols.indices.contains(index) {
+                        Image(systemName: AvatarSettings.symbols[index].name)
+                            .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white)
+                    }
+                } else if let spec {
+                    // フレンドのアイコン：選んだ絵。無印なら、何も描かない
+                    if let index = spec.symbol, AvatarSettings.symbols.indices.contains(index) {
                         Image(systemName: AvatarSettings.symbols[index].name)
                             .font(.system(size: size * 0.48, weight: .medium)).foregroundStyle(.white)
                     }
@@ -632,6 +632,7 @@ struct ProfileView: View {
     private func iconCell<Content: View>(selected: Bool, label: String, action: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.25)) { action() }
+            Task { await sharing.syncAvatar() }
         } label: {
             content()
                 .frame(width: 48, height: 48)
@@ -661,6 +662,7 @@ struct ProfileView: View {
         let selected = avatar.colorIndex == index || (avatar.colorIndex == nil && ThemeStore.shared.color == option)
         return Button {
             withAnimation(.easeInOut(duration: 0.25)) { avatar.colorIndex = index }
+            Task { await sharing.syncAvatar() }
         } label: {
             Circle().fill(option.swatchColor).frame(width: 36, height: 36)
                 .overlay(Image(systemName: "checkmark").font(.footnote.bold()).foregroundStyle(.white).opacity(selected ? 1 : 0))

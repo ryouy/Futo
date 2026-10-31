@@ -1,6 +1,6 @@
 import { handle, json, readJson, requireUser, clientKey, type Ctx } from "@/lib/routeHelpers";
 import { beginAccountDeletion, purgeUserData } from "@/lib/accountDeletion";
-import { getMe, parseDisplayName, putMe } from "@/lib/users";
+import { getMe, parseAvatar, parseDisplayName, putMe } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,8 +14,8 @@ export const GET = (req: Request) =>
 export const PUT = (req: Request) =>
   handle(async () => {
     const user = await requireUser(req);
-    const body = (await readJson(req)) as { displayName?: unknown };
-    return json(200, await putMe(user.uid, parseDisplayName(body.displayName)));
+    const body = (await readJson(req)) as { displayName?: unknown; avatar?: unknown };
+    return json(200, await putMe(user.uid, parseDisplayName(body.displayName), parseAvatar(body.avatar)));
   });
 
 /** アカウント削除：直近のサインインを検証。未完了なら202を返し、呼び出し側が再度呼ぶ（再開できる）。 */

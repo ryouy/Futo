@@ -10,6 +10,12 @@ export const PHRASES = {
 } as const;
 export type PhraseId = keyof typeof PHRASES;
 
+/** アイコン：山・海などの番号（0〜8、無印は null）と、テーマ色の番号（0〜3）。フレンドにだけ見える。 */
+export const avatarSchema = z
+  .object({ symbol: z.number().int().min(0).max(8).nullable(), color: z.number().int().min(0).max(3) })
+  .strict();
+export type Avatar = z.infer<typeof avatarSchema>;
+
 /** 公開表示名：1〜20文字。空白だけ・制御文字・改行を拒否する。 */
 export const displayNameSchema = z
   .string()
@@ -29,16 +35,6 @@ export const messageSchema = z
   .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control")
   .refine((value) => !/:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|jp|io|co|app|me|ly|xyz)\b/i.test(value), "url");
 
-/** アプリ名（解除した対象の表示名）。1〜40文字、制御文字なし。 */
-const appNameSchema = z
-  .string()
-  .transform((value) => value.normalize("NFC").trim())
-  .refine((value) => value.length >= 1 && [...value].length <= 40, "length")
-  .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control");
-
-export const MAX_APPS = 10;
-const appsSchema = z.array(z.object({ name: appNameSchema, count }).strict()).min(1).max(MAX_APPS);
-
 /** 共有する統計。選んだ項目だけを送り、選ばなかった項目はキー自体を付けない。 */
 const statsShape = {
   period: z.enum(["thisWeek", "lastWeek", "all"]),
@@ -54,8 +50,6 @@ const statsShape = {
     .optional(),
   feelings: z.object({ satisfied: count, neutral: count, wishedLess: count }).strict().optional(),
   phraseId: z.enum(["p1", "p2", "p3"]).optional(),
-  /** よく解除したアプリ名と回数（任意）。選んだときだけ送る */
-  apps: appsSchema.optional(),
   /** 制限の管理：一時停止・終了の回数（任意） */
   restriction: z.object({ pauses: count, ends: count }).strict().optional(),
 };
@@ -63,7 +57,7 @@ const statsShape = {
 /** 週は最大8日。「全期間」は、最大10年。 */
 const MAX_SPAN_DAYS = { week: 8, all: 3650 };
 
-function checkStats(value: { period: string; periodStart: string; periodEnd: string; counts?: unknown; purposes?: unknown; feelings?: unknown; apps?: unknown; restriction?: unknown; phraseId?: unknown }, ctx: z.RefinementCtx) {
+function checkStats(value: { period: string; periodStart: string; periodEnd: string; counts?: unknown; purposes?: unknown; feelings?: unknown; restriction?: unknown; phraseId?: unknown }, ctx: z.RefinementCtx) {
   const start = Date.parse(value.periodStart);
   const end = Date.parse(value.periodEnd);
   const maxDays = value.period === "all" ? MAX_SPAN_DAYS.all : MAX_SPAN_DAYS.week;
@@ -71,7 +65,7 @@ function checkStats(value: { period: string; periodStart: string; periodEnd: str
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "period" });
   }
   // 全項目が未選択なら公開しない（ひとことだけの共有も作らない）
-  if (!value.counts && !value.purposes && !value.feelings && !value.apps && !value.restriction) {
+  if (!value.counts && !value.purposes && !value.feelings && !value.restriction) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "nothing_selected" });
   }
 }
@@ -112,7 +106,6 @@ export interface StatsSnapshot {
   counts?: { wantsToUse: number; deferred: number; interrupted: number };
   purposes?: { contact: number; research: number; break: number; noReason: number; unanswered: number };
   feelings?: { satisfied: number; neutral: number; wishedLess: number; answered: number };
-  apps?: { name: string; count: number }[];
   restriction?: { pauses: number; ends: number };
   phrase?: string;
   /** 一言（自由入力）。フレンド共有・Web共有 */
@@ -130,7 +123,6 @@ export function snapshotFrom(payload: WebSharePayload | FriendSharePayload | z.i
   if (payload.counts) snapshot.counts = { ...payload.counts };
   if (payload.purposes) snapshot.purposes = { ...payload.purposes };
   if (payload.restriction) snapshot.restriction = { ...payload.restriction };
-  if (payload.apps) snapshot.apps = payload.apps.map((a) => ({ name: a.name, count: a.count }));
   if (payload.feelings) {
     // 満足感は、回答済み件数を分母とする。未回答の補完はしない。
     const { satisfied, neutral, wishedLess } = payload.feelings;

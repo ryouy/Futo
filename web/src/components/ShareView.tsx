@@ -1,6 +1,6 @@
 import type { PublicShare } from "@/lib/shares";
 import { Bi, type Bilingual } from "./Bi";
-import { AppBars, Donut, type Slice } from "./Charts";
+import { Donut, type Slice } from "./Charts";
 
 const b = (ja: string, en: string): Bilingual => ({ ja, en });
 
@@ -79,13 +79,6 @@ export function ShareView({ share }: { share: PublicShare }) {
           {slices.map((s) => (
             <Donut key={s.key} title={s.title} slices={s.slices} />
           ))}
-        </div>
-      )}
-
-      {stats.apps && stats.apps.length > 0 && (
-        <div className="card">
-          <h2><Bi ja="よく解除したアプリ" en="Most unlocked apps" /></h2>
-          <AppBars apps={stats.apps} color={PALETTE[0]} />
         </div>
       )}
 

@@ -2,10 +2,40 @@ import Foundation
 
 /// サーバーAPIの応答（`web/` のAPIと同じ形）。
 
+/// アイコンの設定（フレンドにも見える）。`symbol` は絵の番号（nil は無印）、`color` はテーマの4色の番号。
+struct AvatarSpec: Codable, Equatable {
+    var symbol: Int?
+    var color: Int
+
+    init(symbol: Int?, color: Int) { self.symbol = symbol; self.color = color }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        symbol = try c.decodeIfPresent(Int.self, forKey: .symbol)
+        color = try c.decode(Int.self, forKey: .color)
+    }
+
+    /// 無印は、キーを省かず null で送る（サーバーが、無印を明示として受け取る）。
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(symbol, forKey: .symbol)
+        try c.encode(color, forKey: .color)
+    }
+
+    private enum CodingKeys: String, CodingKey { case symbol, color }
+}
+
 struct MeResponse: Codable, Equatable {
     var uid: String
     var displayName: String
     var status: String
+    var avatar: AvatarSpec? = nil
+}
+
+/// プロフィールの更新（ニックネームと、アイコン）
+struct MeUpdate: Encodable {
+    var displayName: String
+    var avatar: AvatarSpec?
 }
 
 struct CreatedShareResponse: Codable, Equatable {
@@ -64,12 +94,14 @@ struct FriendsResponse: Codable, Equatable {
         var friendshipId: String
         var uid: String
         var displayName: String
+        var avatar: AvatarSpec? = nil
         var id: String { friendshipId }
     }
     struct Incoming: Codable, Equatable, Identifiable {
         var requestId: String
         var uid: String
         var displayName: String
+        var avatar: AvatarSpec? = nil
         var expiresAt: String
         var id: String { requestId }
     }
@@ -96,7 +128,6 @@ struct StatsSnapshotDTO: Codable, Equatable {
     var counts: Counts?
     var purposes: Purposes?
     var feelings: Feelings?
-    var apps: [AppCount]?
     var restriction: RestrictionCounts?
     var phrase: String?
     var message: String?
@@ -132,6 +163,7 @@ struct SentFriendSharesResponse: Codable, Equatable {
 struct FriendShareDetail: Codable, Equatable {
     var id: String
     var ownerName: String?
+    var ownerAvatar: AvatarSpec? = nil
     var isOwner: Bool
     var createdAt: String
     var updatedAt: String?

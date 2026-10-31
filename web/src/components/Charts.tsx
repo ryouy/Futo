@@ -17,7 +17,7 @@ export function Donut({ slices, title }: { slices: Slice[]; title: Bilingual }) 
   const radius = 40;
   const circumference = TAU * radius;
   let offset = 0;
-  const description = `${title.ja} / ${title.en}：${slices.filter((s) => s.value > 0).map((s) => `${s.label.ja} ${s.value}`).join(", ")}`;
+  const description = `${title.ja} / ${title.en}：${slices.filter((s) => s.value > 0).map((s) => `${s.label.ja} ${s.value}件`).join(", ")}`;
   return (
     <div className="mini">
       <h3><span><Bi ja={title.ja} en={title.en} /></span></h3>
@@ -54,23 +54,5 @@ export function Donut({ slices, title }: { slices: Slice[]; title: Bilingual }) 
         ))}
       </ul>
     </div>
-  );
-}
-
-/** よく解除したアプリ：名前と、横棒。 */
-export function AppBars({ apps, color }: { apps: { name: string; count: number }[]; color: string }) {
-  const max = Math.max(...apps.map((a) => a.count), 1);
-  return (
-    <ul className="appbars">
-      {apps.map((a) => (
-        <li key={a.name}>
-          <span className="appname">{a.name}</span>
-          <span className="bar" aria-hidden="true">
-            <span style={{ width: `${Math.max(6, (a.count / max) * 100)}%`, background: color }} />
-          </span>
-          <span className="n">{a.count}</span>
-        </li>
-      ))}
-    </ul>
   );
 }

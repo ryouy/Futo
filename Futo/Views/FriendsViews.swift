@@ -142,7 +142,7 @@ struct FriendsView: View {
             if sharing.friends.friends.isEmpty { Text(tr("まだフレンドはいません")).foregroundStyle(.secondary) }
             ForEach(sharing.friends.friends) { friend in
                 HStack(spacing: 12) {
-                    AccountAvatar(name: friend.displayName, size: 32)
+                    AccountAvatar(name: friend.displayName, size: 32, spec: friend.avatar)
                     Text(friend.displayName).oneLine()
                     Spacer(minLength: 0)
                     Menu {
@@ -217,7 +217,7 @@ struct FriendShareDetailView: View {
                 let s = detail.stats
                 CardSection {
                     HStack(spacing: 12) {
-                        AccountAvatar(name: detail.ownerName ?? "?", size: 40)
+                        AccountAvatar(name: detail.ownerName ?? "?", size: 40, spec: detail.ownerAvatar)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(detail.ownerName ?? tr("匿名")).font(.headline)
                             Text(periodLabel(s.period) + (s.isPartial ? " · " + tr("途中までの集計") : "")).font(.footnote).foregroundStyle(.secondary)

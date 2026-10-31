@@ -285,7 +285,6 @@ final class AppModel {
     func startWait(_ kind: WaitKind) -> Bool {
         guard mode == .device, permission == .approved else { return false }
         guard restriction == .configured || isPaused || (kind == .end && intendsRestriction) else {
-            notice = tr("制限がかかっているときに、使えます")
             return false
         }
         guard device.supportsTemporaryUnlock else {

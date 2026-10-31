@@ -532,26 +532,26 @@ function webPayloadWithMessage() {
   };
 }
 
-describe("アプリ名の共有・招待ページのコード", () => {
-  it("アプリ名は、選んだときだけ保存され、10件まで・40文字まで。制御文字は拒否", async () => {
+describe("アイコンの共有", () => {
+  it("アイコンを変えると、フレンドの一覧に反映される。不正な値は拒否", async () => {
     const alice = await newUser("アリス");
-    const ok = await call("POST", "/api/shares", { token: alice.token, body: webPayloadApps([{ name: "動画アプリ", count: 7 }, { name: "SNS", count: 3 }]) });
-    expect(ok.status).toBe(201);
-    const page = await call("GET", `/api/public/shares/${ok.body.token}`);
-    expect(page.body.stats.apps).toEqual([{ name: "動画アプリ", count: 7 }, { name: "SNS", count: 3 }]);
-    for (const bad of [Array.from({ length: 11 }, (_, i) => ({ name: `A${i}`, count: 1 })), [{ name: "a".repeat(41), count: 1 }], [{ name: "x\u0000y", count: 1 }], [{ name: "ok", count: 1, extra: 1 }], []]) {
-      expect((await call("POST", "/api/shares", { token: alice.token, body: webPayloadApps(bad as never) })).status).toBe(400);
+    const bob = await newUser("ボブ");
+    await makeFriends(alice, bob);
+    expect((await call("GET", "/api/friends", { token: bob.token })).body.friends[0].avatar).toBeUndefined();
+    const put = await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス", avatar: { symbol: 3, color: 1 } } });
+    expect(put.status).toBe(200);
+    expect((await call("GET", "/api/me", { token: alice.token })).body.avatar).toEqual({ symbol: 3, color: 1 });
+    expect((await call("GET", "/api/friends", { token: bob.token })).body.friends[0].avatar).toEqual({ symbol: 3, color: 1 });
+    // 無印（symbol なし）も選べる
+    await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス", avatar: { symbol: null, color: 0 } } });
+    expect((await call("GET", "/api/friends", { token: bob.token })).body.friends[0].avatar).toEqual({ symbol: null, color: 0 });
+    for (const bad of [{ symbol: 9, color: 0 }, { symbol: 1, color: 4 }, { symbol: 1, color: 0, extra: 1 }, "x"]) {
+      expect((await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス", avatar: bad } })).status).toBe(400);
     }
   });
+});
 
-  it("アプリ名だけを選んだ共有も作れる。何も選ばなければ作れない", async () => {
-    const alice = await newUser("アリス");
-    const onlyApps = { ...webPayloadApps([{ name: "動画", count: 2 }]), counts: undefined };
-    expect((await call("POST", "/api/shares", { token: alice.token, body: onlyApps })).status).toBe(201);
-    const nothing = { ...webPayloadApps([{ name: "動画", count: 2 }]), counts: undefined, apps: undefined, idempotencyKey: crypto.randomUUID() };
-    expect((await call("POST", "/api/shares", { token: alice.token, body: nothing })).status).toBe(400);
-  });
-
+describe("招待ページのコード", () => {
   it("招待ページには、リンクと同じ招待のコードを出せる。別の人には、コードは推測できない", async () => {
     const alice = await newUser("アリス");
     const created = await invite(alice);
@@ -574,17 +574,17 @@ describe("アプリ名の共有・招待ページのコード", () => {
   });
 });
 
-function webPayloadApps(apps: { name: string; count: number }[]) {
+function webPayloadBasic() {
   return {
     period: "thisWeek", periodStart: "2027-01-10T19:00:00.000Z", periodEnd: "2027-01-17T19:00:00.000Z", timezone: "Asia/Tokyo", isPartial: true,
-    showName: true, counts: { wantsToUse: 1, deferred: 1, interrupted: 0 }, apps, expiresInDays: 7, idempotencyKey: crypto.randomUUID(),
+    showName: true, counts: { wantsToUse: 1, deferred: 1, interrupted: 0 }, expiresInDays: 7, idempotencyKey: crypto.randomUUID(),
   };
 }
 
 describe("制限の管理の共有", () => {
   it("一時停止・終了の回数は、選んだときだけ保存される。それだけを選んだ共有も作れる", async () => {
     const alice = await newUser("アリス");
-    const body = { ...webPayloadApps([{ name: "動画", count: 1 }]), apps: undefined, counts: undefined, restriction: { pauses: 3, ends: 1 } };
+    const body = { ...webPayloadBasic(), counts: undefined, restriction: { pauses: 3, ends: 1 } };
     const created = await call("POST", "/api/shares", { token: alice.token, body });
     expect(created.status).toBe(201);
     const page = await call("GET", `/api/public/shares/${created.body.token}`);
