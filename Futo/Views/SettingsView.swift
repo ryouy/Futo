@@ -125,6 +125,11 @@ struct SettingsView: View {
 
     // MARK: その他
 
+    /// 紹介サイト（共有・招待と同じドメインのトップページ）
+    private var introSiteURL: URL? {
+        sharing.config.apiBaseURL ?? URL(string: "https://futo-share.vercel.app")
+    }
+
     private var otherTab: some View {
         Form {
             Section {
@@ -171,6 +176,14 @@ struct SettingsView: View {
                     Label(tr("ふとを応援"), systemImage: "heart").foregroundStyle(Theme.accentText)
                 }
                 .frame(minHeight: 44)
+                // ふとの紹介サイト（ブラウザで開く）
+                if let site = introSiteURL {
+                    Link(destination: site) {
+                        Label(tr("ふとの紹介サイト"), systemImage: "safari").foregroundStyle(Theme.accentText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(minHeight: 44)
+                }
             }
 
             CardSection {

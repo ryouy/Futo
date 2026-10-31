@@ -189,6 +189,7 @@ enum EnglishStrings {
         "一時解除中": "Temporarily unlocked",
         "使い終わる": "All done",
         "許可する": "Allow",
+        "ふとの紹介サイト": "About Futo (website)",
         "に共有": "shared",
         "ふとの紹介を見る": "About Futo",
         "プライバシーポリシー": "Privacy Policy",
