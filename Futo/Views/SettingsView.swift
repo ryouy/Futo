@@ -178,32 +178,26 @@ struct SettingsView: View {
             }
 
             #if DEBUG
-            // 開発用：朝夜の振り返り・通知・制限の解除を、時間を待たずに確かめる（Debugビルドにだけ存在する）
+            // 開発用（Debugビルドにだけ存在する）：ハンマーの印の1つのメニューに、まとめてしまう
             CardSection {
-                Button(tr("朝の振り返り")) { model.showReflectionNow(.morning); dismiss() }
-                    .frame(minHeight: 44)
-                Button(tr("夜の振り返り")) { model.showReflectionNow(.night); dismiss() }
-                    .frame(minHeight: 44)
-                Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
-                    .frame(minHeight: 44)
-                // 待機を省略して、本アプリの制限をすぐ解除する（記録には数えない）。
-                Button("制限解除") { model.debugReleaseRestrictionNow() }
-                    .tint(.orange)
-                    .frame(minHeight: 44)
-            }
-
-            CardSection {
-                Button {
-                    // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
-                    dismiss()
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(700))
-                        model.replayOnboardingForDebug()
+                Menu {
+                    Button(tr("朝の振り返り")) { model.showReflectionNow(.morning); dismiss() }
+                    Button(tr("夜の振り返り")) { model.showReflectionNow(.night); dismiss() }
+                    Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
+                    // 待機を省略して、本アプリの制限をすぐ解除する（記録には数えない）。
+                    Button("制限解除") { model.debugReleaseRestrictionNow() }
+                    Button(tr("初回説明をもう一度表示")) {
+                        // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
+                        dismiss()
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(700))
+                            model.replayOnboardingForDebug()
+                        }
                     }
                 } label: {
-                    Label(tr("初回説明をもう一度表示"), systemImage: "arrow.counterclockwise").foregroundStyle(Theme.accentText)
+                    Label("開発用", systemImage: "hammer").foregroundStyle(Theme.accentText)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
-                .frame(minHeight: 44)
             }
             #endif
         }
