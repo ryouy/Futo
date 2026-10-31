@@ -6,9 +6,9 @@ import StoreKit
 /// どちらも、加入すると、待機画面のバナー広告が出なくなる（基本の機能は、加入しなくても、すべて無料）。
 /// 決済・請求・解約は、すべて Apple が扱う。ふとは、購入者の情報を受け取らない。
 enum SupportPlan: String, CaseIterable, Identifiable {
-    /// 広告なし（月額100円）
+    /// 広告なし（App Store 経由は月額150円。Web 経由は100円）
     case adFree = "com.ryouy.futo.noads.monthly"
-    /// ふとを応援（月額300円。広告非表示も含む）
+    /// ふとを応援（月額500円。広告非表示も含む）
     case support = "com.ryouy.futo.support.monthly"
 
     var id: String { rawValue }
@@ -31,8 +31,8 @@ enum SupportPlan: String, CaseIterable, Identifiable {
     /// App Store から価格を取れないときに出す、予定の価格（円）
     var fallbackPrice: Int {
         switch self {
-        case .adFree: return 100
-        case .support: return 300
+        case .adFree: return 150
+        case .support: return 500
         }
     }
 }
