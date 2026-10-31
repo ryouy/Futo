@@ -175,7 +175,92 @@
     }
     @media (min-width: 960px) { .features { gap: 14px; } }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .lang button { transition: none; } }
+    /* ===== 追加：画面の見せ方（端末の枠・動き） ===== */
+    .phone { position: relative; border-radius: 40px; padding: 7px; background: #0f1714;
+      box-shadow: 0 30px 60px rgba(8, 30, 26, .30), inset 0 0 0 1.5px rgba(255, 255, 255, .14); }
+    .phone img { display: block; width: 100%; height: auto; border-radius: 33px; background: var(--cream); }
+    .tablet { border-radius: 28px; padding: 10px; background: #0f1714; box-shadow: 0 30px 60px rgba(8, 30, 26, .26), inset 0 0 0 1.5px rgba(255, 255, 255, .14); }
+    .tablet img { display: block; width: 100%; height: auto; border-radius: 18px; }
+
+    /* ヒーロー：文字と、象徴的な画面を、並べる */
+    .hero { text-align: left; padding-bottom: 56px; overflow: hidden; }
+    .hero-inner { display: grid; gap: 28px; align-items: center; grid-template-columns: 1fr; }
+    .brand { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+    .hero .logo { width: 68px; margin: 0; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .22)); }
+    .hero h1 { margin: 0; }
+    .hero .lead { margin: 0 0 24px; max-width: 30em; }
+    .hero .badges { justify-content: flex-start; }
+    .stage { position: relative; height: clamp(420px, 108vw, 560px); will-change: transform; }
+    .stage .phone { position: absolute; width: clamp(150px, 42vw, 236px); animation: bob 7s ease-in-out infinite; }
+    .stage .p1 { left: 50%; top: 0; margin-left: clamp(-190px, -40vw, -150px); rotate: -4deg; z-index: 2; }
+    .stage .p2 { left: 50%; top: clamp(50px, 14vw, 84px); margin-left: clamp(-30px, -6vw, -14px); rotate: 5deg; animation-delay: -3.2s; animation-duration: 8.5s; }
+    .stage::before { content: ""; position: absolute; inset: 8% 4% 4%; border-radius: 50%; background: radial-gradient(closest-side, rgba(252, 248, 240, .22), transparent 72%); }
+    @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -12px; } }
+    .hero .copy > * { animation: rise .9s cubic-bezier(.2, .7, .2, 1) both; }
+    .hero .copy > :nth-child(2) { animation-delay: .08s; } .hero .copy > :nth-child(3) { animation-delay: .16s; }
+    .hero .copy > :nth-child(4) { animation-delay: .24s; } .hero .copy > :nth-child(5) { animation-delay: .32s; }
+    .hero .stage { animation: rise 1.1s .15s cubic-bezier(.2, .7, .2, 1) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+    /* ふわっと現れる */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2, .7, .2, 1), transform .9s cubic-bezier(.2, .7, .2, 1); transition-delay: var(--d, 0s); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ものがたり：画面と説明を、左右に交互に */
+    .story { display: grid; gap: 64px; }
+    .row { display: grid; gap: 22px; align-items: center; grid-template-columns: 1fr; }
+    .row .media { display: flex; justify-content: center; align-items: flex-start; gap: 18px; }
+    .row .media .phone { width: min(60vw, 250px); }
+    .row .media.pair .phone { width: min(40vw, 200px); }
+    .row .media.pair .phone:last-child { margin-top: 44px; }
+    .row .text .n { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--green); color: var(--cream); font-weight: 700; margin-bottom: 10px; }
+    .row .text h3 { margin: 0 0 8px; font-size: clamp(22px, 4.6vw, 28px); color: var(--green); }
+    .row .text p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.85; }
+    .row .text .chips { margin-top: 16px; }
+
+    /* 帯：記録・共有・見た目 */
+    .band { background: var(--green); color: var(--cream); }
+    .band h2 { color: var(--cream); margin-bottom: 12px; }
+    .band .sub { text-align: center; color: rgba(252, 248, 240, .86); max-width: 34em; margin: 0 auto 34px; }
+    .band.light { background: #f4efe4; color: var(--ink); }
+    .band.light h2 { color: var(--green); }
+    .band.light .sub { color: var(--muted); }
+    .windows { display: grid; gap: 18px; grid-template-columns: 1fr; max-width: 980px; margin-inline: auto; }
+    .win { margin: 0; }
+    .win .frame { border-radius: 24px; overflow: hidden; background: var(--cream); aspect-ratio: 4 / 3.4; box-shadow: 0 18px 44px rgba(0, 0, 0, .24); border: 1px solid rgba(252, 248, 240, .22); }
+    .win img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s cubic-bezier(.2, .7, .2, 1); }
+    .win:hover img { transform: scale(1.05); }
+    .win figcaption { margin-top: 12px; text-align: center; font-size: 14px; font-weight: 600; opacity: .92; }
+    .fan { display: flex; justify-content: center; align-items: flex-start; gap: clamp(8px, 2.4vw, 22px); }
+    .fan .phone { width: min(30vw, 220px); border-radius: 30px; padding: 5px; }
+    .fan .phone img { border-radius: 25px; }
+    .fan .phone:nth-child(1) { rotate: -4deg; margin-top: 26px; }
+    .fan .phone:nth-child(2) { margin-top: 0; }
+    .fan .phone:nth-child(3) { rotate: 4deg; margin-top: 34px; }
+    .fan .phone { transition: translate .6s cubic-bezier(.2, .7, .2, 1); }
+    .fan .phone:hover { translate: 0 -10px; }
+    .caps { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+    .caps .chip { background: rgba(252, 248, 240, .14); color: var(--cream); border: 1px solid rgba(252, 248, 240, .24); }
+    .band.light .caps .chip { background: var(--green-soft); color: var(--green); border-color: transparent; }
+    .ipad { max-width: 760px; margin-inline: auto; }
+
+    @media (min-width: 860px) {
+      .hero-inner { grid-template-columns: 1.02fr 1fr; gap: 48px; }
+      .hero .logo { width: 84px; }
+      .row { grid-template-columns: 1fr 1fr; gap: 56px; }
+      .row.flip .media { order: 2; }
+      .windows { grid-template-columns: repeat(3, 1fr); }
+      .fan .phone { width: min(22vw, 230px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .stage .phone { animation: none; }
+      .hero .copy > *, .hero .stage { animation: none; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .win img, .fan .phone { transition: none; }
+    }
+
   </style>
+  <noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
 </head>
 <body>
 
@@ -187,23 +272,33 @@
         <button type="button" data-set="en">English</button>
       </div>
     </div>
-    <img class="logo" src="/assets/web/logo.png" alt="" width="132">
-    <h1>ふと</h1>
-    <p class="tagline">
-      <span class="ja">「ふと開く」から、「ふと気づく」へ</span>
-      <span class="en">From “just opening” to “just noticing”</span>
-    </p>
-    <p class="lead">
-      <span class="ja"><span class="p">スマホを開く前に、ひと呼吸</span><span class="p">使うかどうかを、</span><span class="p">自分で選ぶ iPhone アプリです</span></span>
-      <span class="en">A small iPhone app that gives you a breath before you open your phone — so using it is your choice</span>
-    </p>
-    <a class="button" href="https://github.com/ryouy/Futo">
-      <span class="ja">GitHub で見る</span><span class="en">View on GitHub</span>
-    </a>
-    <div class="badges">
-      <span class="badge">iPhone · iOS 17+</span>
-      <span class="badge"><span class="ja">日本語 / English</span><span class="en">Japanese / English</span></span>
-      <span class="badge"><span class="ja">記録は端末の中・広告は小さなバナーだけ</span><span class="en">Records stay on device · One small banner ad</span></span>
+    <div class="hero-inner">
+      <div class="copy">
+        <div class="brand">
+          <img class="logo" src="/assets/web/logo.png" alt="" width="84">
+          <h1>ふと</h1>
+        </div>
+        <p class="tagline">
+          <span class="ja">「ふと開く」から、「ふと気づく」へ</span>
+          <span class="en">From “just opening” to “just noticing”</span>
+        </p>
+        <p class="lead">
+          <span class="ja"><span class="p">スマホを開く前に、ひと呼吸</span><span class="p">使うかどうかを、</span><span class="p">自分で選ぶ iPhone アプリです</span></span>
+          <span class="en">A small iPhone app that gives you a breath before you open your phone — so using it is your choice</span>
+        </p>
+        <a class="button" href="https://github.com/ryouy/Futo">
+          <span class="ja">GitHub で見る</span><span class="en">View on GitHub</span>
+        </a>
+        <div class="badges">
+          <span class="badge">iPhone · iOS 17+</span>
+          <span class="badge"><span class="ja">日本語 / English</span><span class="en">Japanese / English</span></span>
+          <span class="badge"><span class="ja">記録は端末の中・広告は小さなバナーだけ</span><span class="en">Records stay on device · One small banner ad</span></span>
+        </div>
+      </div>
+      <div class="stage" id="stage" aria-hidden="true">
+        <div class="phone p1"><img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076"></div>
+        <div class="phone p2"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076"></div>
+      </div>
     </div>
   </div>
 </header>
@@ -220,201 +315,109 @@
 
 <section>
   <div class="wrap">
-    <h2><span class="ja">使い方</span><span class="en">How it works</span></h2>
-    <ol class="steps">
-      <li class="step">
-        <div class="n">1</div>
-        <h3><span class="ja">ふだんは制限</span><span class="en">Locked by default</span></h3>
-        <p><span class="ja">選んだアプリやサイトを、<wbr>ふだんは使えないようにしておきます</span><span class="en">Apps and sites you pick stay locked most of the time</span></p>
-      </li>
-      <li class="step">
-        <div class="n">2</div>
-        <h3><span class="ja">ひと呼吸</span><span class="en">Take a breath</span></h3>
-        <p><span class="ja">使いたくなったら、<wbr>何をするかを選んで、<wbr>少し待ちます</span><span class="en">When you want to use something, say what for and wait a moment</span></p>
-      </li>
-      <li class="step">
-        <div class="n">3</div>
-        <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
-        <p><span class="ja">待ったあとで、<wbr>使うか、やめておくかを選びます</span><span class="en">After waiting, choose to use it — or maybe later</span></p>
-      </li>
-      <li class="step">
-        <div class="n">4</div>
-        <h3><span class="ja">自動で戻る</span><span class="en">Back to locked</span></h3>
-        <p><span class="ja">決めた時間だけ解除して、<wbr>そのあと自動で制限に戻ります</span><span class="en">It unlocks for the time you set, then locks itself again</span></p>
-      </li>
-    </ol>
-  </div>
-</section>
-
-
-<section class="alt">
-  <div class="wrap">
-    <h2><span class="ja">ひと呼吸のなかみ</span><span class="en">Inside a breath</span></h2>
-    <div class="trio">
-      <div class="card">
-        <h3><span class="ja">① 何をする？</span><span class="en">① What are you doing?</span></h3>
-        <p><span class="ja">使う前に、目的をひとつ選びます<br>答えずに進むこともできます</span><span class="en">Pick one reason before you use it — or skip the question</span></p>
-        <div class="chips">
-          <span class="chip"><span class="ja">連絡</span><span class="en">Messaging</span></span>
-          <span class="chip"><span class="ja">調べもの</span><span class="en">Looking something up</span></span>
-          <span class="chip"><span class="ja">気分転換</span><span class="en">Taking a break</span></span>
-          <span class="chip"><span class="ja">なんとなく</span><span class="en">Just because</span></span>
+    <h2 class="reveal"><span class="ja">使い方</span><span class="en">How it works</span></h2>
+    <div class="story">
+      <div class="row reveal">
+        <div class="media"><div class="phone"><img src="/assets/web/shots/08-lock.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="text">
+          <div class="n">1</div>
+          <h3><span class="ja">ふだんは制限</span><span class="en">Locked by default</span></h3>
+          <p><span class="ja">選んだアプリやサイトを、<wbr>ふだんは使えないようにしておきます<br>制限は、いつでも自分で外せます</span><span class="en">Apps and sites you pick stay locked most of the time. You can always remove the lock yourself</span></p>
         </div>
       </div>
-      <div class="card">
-        <h3><span class="ja">② 少し待つ</span><span class="en">② Wait a moment</span></h3>
-        <p><span class="ja">標準は3分（1〜10分から選べます）<br>画面を閉じると止まり、戻ると続きから進みます<br>ゆっくり動く円が、残りを教えてくれます</span><span class="en">3 minutes by default (choose 1–10). It pauses when you leave the screen and picks up where it left off. A slow circle shows what's left</span></p>
+      <div class="row flip reveal">
+        <div class="media"><div class="phone"><img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="text">
+          <div class="n">2</div>
+          <h3><span class="ja">何をする？</span><span class="en">What are you doing?</span></h3>
+          <p><span class="ja">使いたくなったら、目的をひとつ選びます<br>答えずに進むこともできます</span><span class="en">When you want to use something, pick one reason — or skip the question</span></p>
+          <div class="chips">
+            <span class="chip"><span class="ja">連絡</span><span class="en">Messaging</span></span>
+            <span class="chip"><span class="ja">調べもの</span><span class="en">Looking something up</span></span>
+            <span class="chip"><span class="ja">気分転換</span><span class="en">Taking a break</span></span>
+            <span class="chip"><span class="ja">なんとなく</span><span class="en">Just because</span></span>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <h3><span class="ja">③ 自分で決める</span><span class="en">③ You decide</span></h3>
-        <p><span class="ja">「使いたい」か「やめておく」を選びます<br>使うなら、使うものだけを選んで、1〜30分ほど解除<br>戻ったら、感想を気軽に残せます</span><span class="en">Choose “I want to use it” or “Maybe later.” If you use it, pick just what you need and unlock it for 1–30 minutes. Afterwards, leave a quick note on how it felt</span></p>
+      <div class="row reveal">
+        <div class="media"><div class="phone"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="text">
+          <div class="n">3</div>
+          <h3><span class="ja">少し、立ち止まる</span><span class="en">Pause for a moment</span></h3>
+          <p><span class="ja">標準は1分（10秒〜10分から選べます）<br>画面を閉じると止まり、戻ると続きから進みます<br>ゆっくり動く円が、残りを教えてくれます</span><span class="en">1 minute by default (10 seconds to 10 minutes). It pauses when you leave the screen and picks up where it left off. A slow circle shows what's left</span></p>
+        </div>
+      </div>
+      <div class="row flip reveal">
+        <div class="media pair"><div class="phone"><img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy"></div><div class="phone"><img src="/assets/web/shots/06-apps.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="text">
+          <div class="n">4</div>
+          <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
+          <p><span class="ja">「使いたい」か「やめておく」を選びます<br>使うなら、使うものだけを選んで、1〜10分ほど解除します<br>戻ったら、感想を気軽に残せます</span><span class="en">Choose “I want to use it” or “Maybe later.” If you use it, pick just what you need and unlock it for 1–10 minutes. Afterwards, leave a quick note on how it felt</span></p>
+        </div>
+      </div>
+      <div class="row reveal">
+        <div class="media"><div class="phone"><img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="text">
+          <div class="n">5</div>
+          <h3><span class="ja">自動で戻る</span><span class="en">Back to locked</span></h3>
+          <p><span class="ja">決めた時間が過ぎたら、<wbr>自動で制限に戻ります<br>制限しなおす操作は、いらません</span><span class="en">When the time you set is up, it locks itself again — nothing for you to do</span></p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="shots">
+<section class="band">
   <div class="wrap">
-    <h2><span class="ja">画面</span><span class="en">Screens</span></h2>
-    <h3 class="shots-group"><span class="ja">つかいかた</span><span class="en">How it works</span></h3>
-    <div class="gallery">
-      <figure>
-        <img src="/assets/web/shots/01-intro.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">はじまりの説明</span><span class="en">Intro</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">ホーム</span><span class="en">Home</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">何をする？</span><span class="en">What are you doing?</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">少し立ち止まる</span><span class="en">A moment to pause</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">今も使いたい？</span><span class="en">Still want to use it?</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/06-apps.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">どれを使う？</span><span class="en">Which one?</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">解除しました</span><span class="en">Unlocked</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/08-lock.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">制限しました</span><span class="en">Locked again</span></figcaption>
-      </figure>
+    <h2 class="reveal"><span class="ja">気づくための、記録</span><span class="en">Records for noticing</span></h2>
+    <p class="sub reveal"><span class="ja">目的や感想を、やさしいグラフで<br>責めたり、競ったりは、しません</span><span class="en">Purpose and feelings as gentle charts — no blame, no competing</span></p>
+    <div class="windows">
+      <figure class="win reveal" style="--d:0s"><div class="frame"><img src="/assets/web/shots/09-records.jpg" alt="" width="540" height="1068" loading="lazy" style="object-position: 50% 55%"></div><figcaption><span class="ja">いつ、何のために</span><span class="en">When and why</span></figcaption></figure>
+      <figure class="win reveal" style="--d:.12s"><div class="frame"><img src="/assets/web/shots/10-bands.jpg" alt="" width="540" height="1068" loading="lazy" style="object-position: 50% 52%"></div><figcaption><span class="ja">時間帯と、日ごと</span><span class="en">Time of day, day by day</span></figcaption></figure>
+      <figure class="win reveal" style="--d:.24s"><div class="frame"><img src="/assets/web/shots/11-morning.jpg" alt="" width="540" height="1076" loading="lazy" style="object-position: 50% 35%"></div><figcaption><span class="ja">朝と夜の、振り返り</span><span class="en">Morning and evening reflection</span></figcaption></figure>
     </div>
-    <h3 class="shots-group"><span class="ja">記録と振り返り</span><span class="en">Records & reflections</span></h3>
-    <div class="gallery">
-      <figure>
-        <img src="/assets/web/shots/09-records.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">記録</span><span class="en">Records</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/10-bands.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">時間帯と日ごと</span><span class="en">By time of day</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/11-morning.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">朝の振り返り</span><span class="en">Morning reflection</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/12-feeling.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">さっきの時間は？</span><span class="en">How was that?</span></figcaption>
-      </figure>
+  </div>
+</section>
+
+<section class="band light">
+  <div class="wrap">
+    <h2 class="reveal"><span class="ja">選んだものだけ、分かち合う</span><span class="en">Share only what you choose</span></h2>
+    <p class="sub reveal"><span class="ja">リンクやフレンドに、選んだ記録だけを<br>ログインは、使いたいときだけ</span><span class="en">Send just the records you pick, by link or to friends. Sign in only when you want to</span></p>
+    <div class="fan reveal">
+      <div class="phone"><img src="/assets/web/shots/13-friends.jpg" alt="" width="540" height="1068" loading="lazy"></div>
+      <div class="phone"><img src="/assets/web/shots/14-received.jpg" alt="" width="540" height="1068" loading="lazy"></div>
+      <div class="phone"><img src="/assets/web/shots/16-link.jpg" alt="" width="540" height="1068" loading="lazy"></div>
     </div>
-    <h3 class="shots-group"><span class="ja">共有とフレンド</span><span class="en">Sharing & friends</span></h3>
-    <div class="gallery">
-      <figure>
-        <img src="/assets/web/shots/13-friends.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">フレンド</span><span class="en">Friends</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/14-received.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">届いた記録</span><span class="en">Received</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/15-sent.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">共有した記録</span><span class="en">Shared</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/16-link.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">リンクの中身</span><span class="en">Link preview</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/17-account.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">アカウント</span><span class="en">Account</span></figcaption>
-      </figure>
+    <div class="caps reveal">
+      <span class="chip"><span class="ja">フレンド</span><span class="en">Friends</span></span>
+      <span class="chip"><span class="ja">届いた記録</span><span class="en">Received records</span></span>
+      <span class="chip"><span class="ja">リンクの中身</span><span class="en">Link preview</span></span>
+      <span class="chip"><span class="ja">Google / Apple でログイン</span><span class="en">Sign in with Google or Apple</span></span>
     </div>
-    <h3 class="shots-group"><span class="ja">見た目と設定</span><span class="en">Looks & settings</span></h3>
-    <div class="gallery">
-      <figure>
-        <img src="/assets/web/shots/18-theme.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">テーマカラー</span><span class="en">Theme colors</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/19-theme-orange.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">好きな色</span><span class="en">Your own color</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/25-dark.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">ダークモード</span><span class="en">Dark mode</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/26-dark-en.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">English</span><span class="en">English</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/27-intro-en.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">English の説明</span><span class="en">English intro</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/20-notify.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">通知</span><span class="en">Notifications</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/21-restriction.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">制限の管理</span><span class="en">Lock management</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/22-backup.jpg" alt="" width="540" height="1068" loading="lazy">
-        <figcaption><span class="ja">バックアップ</span><span class="en">Backup</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/23-tutorial.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">はじめの案内</span><span class="en">Guide</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/24-home-empty.jpg" alt="" width="540" height="1076" loading="lazy">
-        <figcaption><span class="ja">はじめて</span><span class="en">First start</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/28-shield.jpg" alt="" width="540" height="1044" loading="lazy">
-        <figcaption><span class="ja">制限の画面</span><span class="en">Lock screen</span></figcaption>
-      </figure>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="reveal"><span class="ja">あなたの色で</span><span class="en">In your colors</span></h2>
+    <p class="sub reveal"><span class="ja">4色のテーマと、好きな色<br>ダークモードと、日本語・English にも対応</span><span class="en">Four themes or your own color, dark mode, Japanese and English</span></p>
+    <div class="fan reveal">
+      <div class="phone"><img src="/assets/web/shots/19-theme-orange.jpg" alt="" width="540" height="1068" loading="lazy"></div>
+      <div class="phone"><img src="/assets/web/shots/25-dark.jpg" alt="" width="540" height="1076" loading="lazy"></div>
+      <div class="phone"><img src="/assets/web/shots/26-dark-en.jpg" alt="" width="540" height="1076" loading="lazy"></div>
     </div>
-    <h3 class="shots-group"><span class="ja">iPadでも</span><span class="en">On iPad too</span></h3>
-    <div class="gallery gallery-wide">
-      <figure>
-        <img src="/assets/web/shots/29-ipad-home.jpg" alt="" width="1000" height="663" loading="lazy">
-        <figcaption><span class="ja">ホーム</span><span class="en">Home</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/30-ipad-lock.jpg" alt="" width="1000" height="663" loading="lazy">
-        <figcaption><span class="ja">制限しました</span><span class="en">Locked</span></figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/web/shots/31-ipad-purpose.jpg" alt="" width="1000" height="663" loading="lazy">
-        <figcaption><span class="ja">何をする？</span><span class="en">What are you doing?</span></figcaption>
-      </figure>
+    <div class="caps reveal">
+      <span class="chip"><span class="ja">好きな色</span><span class="en">Your own color</span></span>
+      <span class="chip"><span class="ja">ダークモード</span><span class="en">Dark mode</span></span>
+      <span class="chip">English</span>
     </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="reveal"><span class="ja">iPad の横画面にも</span><span class="en">Landscape on iPad too</span></h2>
+    <div class="ipad reveal"><div class="tablet"><img src="/assets/web/shots/29-ipad-home.jpg" alt="" width="1000" height="663" loading="lazy"></div></div>
   </div>
 </section>
 
@@ -433,7 +436,7 @@
         <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M9.5 3h5"/></svg></div>
         <div>
           <h3><span class="ja">一時解除</span><span class="en">Temporary unlock</span></h3>
-          <p><span class="ja">選んだものだけを1〜30分<br>時間になると、自動で戻ります</span><span class="en">Unlock only what you pick for 1–30 minutes. It locks itself again</span></p>
+          <p><span class="ja">選んだものだけを1〜10分<br>時間になると、自動で戻ります</span><span class="en">Unlock only what you pick for 1–10 minutes, and it locks itself again when time is up</span></p>
         </div>
       </div>
       <div class="feature">
@@ -571,6 +574,22 @@
     document.querySelectorAll(".lang [data-set]").forEach(function (b) {
       b.addEventListener("click", function () { apply(b.getAttribute("data-set")); });
     });
+  })();
+
+  // ふわっと現れる／ヒーローの画面を、スクロールで、少し動かす
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var items = document.querySelectorAll(".reveal");
+    if (reduce || !("IntersectionObserver" in window)) { items.forEach(function (el) { el.classList.add("in"); }); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { threshold: 0.14, rootMargin: "0px 0px -6% 0px" });
+    items.forEach(function (el) { io.observe(el); });
+    var stage = document.getElementById("stage"), ticking = false;
+    if (stage) window.addEventListener("scroll", function () {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(function () { stage.style.transform = "translateY(" + Math.min(window.scrollY, 600) * 0.12 + "px)"; ticking = false; });
+    }, { passive: true });
   })();
 </script>
 </body>
