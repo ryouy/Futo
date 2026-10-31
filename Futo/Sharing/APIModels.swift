@@ -82,6 +82,8 @@ struct InvitationResponse: Codable, Equatable {
 struct PublicInvitationResponse: Codable, Equatable {
     var inviterName: String
     var expiresAt: String
+    /// リンクと同じ招待のコード（コード入力欄に、自動で入れるため）
+    var code: String? = nil
 }
 
 struct FriendRequestResponse: Codable, Equatable {

@@ -60,9 +60,6 @@ struct FutoApp: App {
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
                     if let url = activity.webpageURL { sharing.handleIncoming(url: url) }
                 }
-                .sheet(isPresented: Binding(get: { sharing.pendingInviteToken != nil }, set: { if !$0 { sharing.pendingInviteToken = nil } })) {
-                    if let token = sharing.pendingInviteToken { InviteLandingView(token: token).environment(sharing) }
-                }
         }
         .modelContainer(container)
     }

@@ -45,6 +45,8 @@ struct HomeView: View {
         // 制限がかかったとき（手動・一時解除や一時停止からの復帰）、鍵のアニメーションを見せる（合図は、AppModelが出す）
         .onChange(of: model.lockSealToken) { _, _ in showLockSeal() }
         .onChange(of: sheet) { _, value in model.homeSheetOpen = value != nil }
+        // 招待リンクを開いたとき：設定（アカウント）を開く。フレンドのページへは、設定の中で進む
+        .onChange(of: sharing.friendsRequestID) { _, _ in sheet = .settings }
         .onDisappear {
             lockSealTask?.cancel()
             model.lockSealActive = false

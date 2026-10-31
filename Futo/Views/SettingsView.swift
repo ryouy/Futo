@@ -41,6 +41,9 @@ struct SettingsView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
         }
         .background(Theme.background.ignoresSafeArea())
+        // 招待リンクから来たときは、アカウントのタブを開く
+        .onAppear { if sharing.openFriendsPending { tab = .account } }
+        .onChange(of: sharing.friendsRequestID) { _, _ in tab = .account }
         // テーマカラーを変えた瞬間に、設定の中の色（言語の選択など）も変わるように
         .tint(Theme.accentText)
         .id(ThemeStore.shared.selectionKey)

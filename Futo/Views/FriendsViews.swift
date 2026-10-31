@@ -40,7 +40,15 @@ struct FriendsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
-        .task { await sharing.loadFriends(); await sharing.loadFriendShares(); await sharing.loadBlocked() }
+        .task {
+            // 招待リンクから来たときは、コードを、入力欄に入れる
+            if let incoming = sharing.pendingFriendCode {
+                code = incoming
+                page = .friends
+                sharing.pendingFriendCode = nil
+            }
+            await sharing.loadFriends(); await sharing.loadFriendShares(); await sharing.loadBlocked()
+        }
         .sheet(item: $previewing) { item in
             NavigationStack {
                 FriendShareDetailView(id: item.id)
@@ -436,53 +444,6 @@ struct FriendShareDetailView: View {
             failed = detail == nil
             // 開いたので、この版は「見た」にする（バッジが消える）
             if let detail, !detail.isOwner { sharing.markSeen(id: id, version: detail.updatedAt ?? detail.createdAt) }
-        }
-    }
-}
-
-/// 招待リンクから開いたときの確認。「受け入れる」を押してから送る（開いただけでは送らない）。
-@MainActor
-struct InviteLandingView: View {
-    let token: String
-    @Environment(SharingModel.self) private var sharing
-    @Environment(\.dismiss) private var dismiss
-    @State private var inviter: PublicInvitationResponse?
-    @State private var loaded = false
-    @State private var sent = false
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                if !sharing.isConfigured || !sharing.isSignedIn {
-                    CardSection {
-                        Text(sharing.isConfigured ? tr("招待を受け入れるには、ログインが必要です") : tr("共有の設定がまだ終わっていません"))
-                        if sharing.isConfigured {
-                            SignInButtons()
-                        }
-                    }
-                } else if sent {
-                    CardSection { Text(tr("受け入れました\n相手が承認すると、フレンドになります")) }
-                } else if let inviter {
-                    CardSection {
-                        Text(tr("{0} さんからの招待です", inviter.inviterName))
-                        Button(tr("招待を受け入れる")) { Task { sent = await sharing.sendFriendRequest(token: token) } }
-                            .buttonStyle(FutoButtonStyle()).disabled(sharing.isWorking)
-                    }
-                } else if loaded {
-                    CardSection { Text(sharing.message ?? tr("この招待は、使えません")) }
-                } else {
-                    CardSection { ProgressView() }
-                }
-                if let message = sharing.message, inviter != nil { CardSection { Text(message).font(.footnote) } }
-            }
-            .compactForm()
-            .navigationTitle(tr("フレンドの招待"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { dismiss() } } }
-            .task {
-                if sharing.isConfigured { inviter = await sharing.previewInvitation(token: token) }
-                loaded = true
-            }
         }
     }
 }

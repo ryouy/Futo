@@ -33,7 +33,12 @@ final class SharingModel {
     /// 直近の操作の結果（エラー文言）。成功は、各画面が状態の変化で示す
     var message: String?
     /// 招待リンクから開かれたときの、招待の識別子。確認の画面を出したら nil に戻す
-    var pendingInviteToken: String?
+    /// 招待リンクを開いたときに、入力欄へ自動で入れるコード（入れたら、nil に戻す）
+    var pendingFriendCode: String?
+    /// 招待リンクから、フレンドのページ（コード入力欄）を開く要求。ログインしていなければ、ログインのあとで開く。
+    var openFriendsPending = false
+    /// 画面が、設定を開くための合図（値が変わったら、ホームが設定を開く）
+    private(set) var friendsRequestID = 0
     /// 作成直後の共有リンク（その場で見せるため。Keychainにも保存する）
     private(set) var lastCreatedURL: URL?
 
@@ -561,7 +566,17 @@ final class SharingModel {
 
 extension SharingModel {
     /// 開かれたURLが招待リンクなら、確認の画面に渡す。統計の共有リンク（/s/…）は、アプリでは処理しない。
+    /// 招待リンクなら、リンクの招待コードを調べて、フレンドのページのコード入力欄へ、そのまま移る（開いただけでは、申請しない）。
     func handleIncoming(url: URL) {
-        if let token = InviteLink.token(from: url, allowedHost: config.allowedHost) { pendingInviteToken = token }
+        guard let token = InviteLink.token(from: url, allowedHost: config.allowedHost) else { return }
+        Task { @MainActor in
+            if isConfigured, let info = await previewInvitation(token: token), let code = info.code, InviteLink.normalizedCode(code) != nil {
+                pendingFriendCode = code
+            } else if isConfigured {
+                message = tr("この招待は、使えません")
+            }
+            openFriendsPending = true
+            friendsRequestID += 1
+        }
     }
 }

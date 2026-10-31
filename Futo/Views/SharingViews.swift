@@ -10,6 +10,7 @@ struct SharingTab: View {
     @Environment(SharingModel.self) private var sharing
     /// 削除・ログアウトのあと、画面を確実に組み直すための目印（ページ表示の中で、見た目が古いまま残らないように）
     @State private var refreshID = UUID()
+    @State private var showFriends = false
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
 
@@ -42,6 +43,14 @@ struct SharingTab: View {
         .compactForm()
         .id(refreshID)
         .task { if sharing.isSignedIn { await sharing.loadProfile() } }
+        // 招待リンクから来たとき：ログイン済みなら、そのままフレンドのページ（コード入力欄）へ。未ログインなら、ログインのあとで
+        .task(id: sharing.openFriendsPending && sharing.isSignedIn) {
+            if sharing.openFriendsPending, sharing.isSignedIn {
+                sharing.openFriendsPending = false
+                showFriends = true
+            }
+        }
+        .navigationDestination(isPresented: $showFriends) { FriendsView(model: model) }
         .confirmationDialog(tr("ログアウトしますか？\n共有中のリンクは、そのまま有効です"), isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button(tr("ログアウト"), role: .destructive) { sharing.signOut(); refreshID = UUID() }
             Button(tr("キャンセル"), role: .cancel) {}
@@ -368,8 +377,11 @@ struct CreateShareView: View {
                 QRSection(text: created.absoluteString)
             }
         } else if done {
-            CardSection {
+            Section {
                 Label(tr("共有しました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
             }
         } else {
             PrimarySection {
