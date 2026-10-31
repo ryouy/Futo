@@ -130,22 +130,16 @@ struct ShareLinkPreviewView: View {
     @State private var failed = false
 
     var body: some View {
-        ScrollView {
+        Group {
             if let detail {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(detail.displayName ?? tr("匿名")).font(.headline)
-                    Text(periodLabel(detail.stats.period) + " · " + tr("期限：{0}", dateText(detail.expiresAt)))
-                        .font(.footnote).foregroundStyle(.secondary)
-                    StatsChartsView(stats: ChartStats(snapshot: detail.stats))
-                }
-                .padding(20)
+                // 相手に見えるWebページを、そのまま模した表示
+                WebShareReplica(name: detail.displayName, stats: detail.stats, createdAt: detail.createdAt)
             } else if failed {
                 Text(tr("中身を読み込めませんでした")).foregroundStyle(.secondary).padding(20)
             } else {
                 ProgressView().frame(maxWidth: .infinity).padding(40)
             }
         }
-        .background(Theme.background.ignoresSafeArea())
         .navigationTitle(tr("リンクの中身"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
