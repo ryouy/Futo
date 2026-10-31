@@ -72,7 +72,11 @@
       box-shadow: 0 6px 24px rgba(0, 0, 0, .18);
     }
     .button:hover { filter: brightness(1.04); }
-    .button.alt { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 1.5px rgba(252, 248, 240, .6); margin-left: 8px; }
+    .cta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 420px; margin: 0 0 4px; }
+    .cta .button { margin: 0; white-space: nowrap; text-align: center; }
+    .cta .button.primary { grid-column: 1 / -1; padding: 15px 34px; font-size: 17px; }
+    .cta .button.alt { padding: 12px 10px; font-weight: 600; font-size: 15px; }
+    .button.alt { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 1.5px rgba(252, 248, 240, .6); }
 
     /* セクション共通 */
     section { padding: 72px 0; }
@@ -357,7 +361,8 @@
           <span class="ja"><span class="p">スマホを開く前に、ひと呼吸</span><span class="p">使うかどうかを、</span><span class="p">自分で選ぶ iPhone アプリです</span></span>
           <span class="en">A small iPhone app that gives you a breath before you open your phone — so using it is your choice</span>
         </p>
-        <a class="button" href="https://appetize.io/app/b_3mqpcg45pb32ch2v7l22we5n7i" target="_blank" rel="noopener">
+        <div class="cta">
+        <a class="button primary" href="https://appetize.io/app/b_3mqpcg45pb32ch2v7l22we5n7i" target="_blank" rel="noopener">
           <span class="ja">ブラウザで試す</span><span class="en">Try it in your browser</span>
         </a>
         <a class="button alt" href="https://apps.apple.com/jp/app/chatgpt/id6448311069" target="_blank" rel="noopener" title="App Store">
@@ -366,6 +371,7 @@
         <a class="button alt" href="https://github.com/ryouy/Futo">
           <span class="ja">GitHub で見る</span><span class="en">View on GitHub</span>
         </a>
+        </div>
         <div class="badges">
           <span class="badge">iPhone · iOS 17+</span>
           <span class="badge"><span class="ja">日本語 / English</span><span class="en">Japanese / English</span></span>
