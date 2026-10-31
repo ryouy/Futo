@@ -162,6 +162,13 @@ struct SettingsView: View {
             }
 
             CardSection {
+                NavigationLink { SupportView() } label: {
+                    Label(tr("ふとを応援"), systemImage: "heart").foregroundStyle(Theme.accentText)
+                }
+                .frame(minHeight: 44)
+            }
+
+            CardSection {
                 Button(role: .destructive) { confirmDelete = true } label: {
                     Label(tr("すべての記録を削除"), systemImage: "trash").foregroundStyle(.red)
                 }

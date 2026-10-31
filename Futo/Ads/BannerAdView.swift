@@ -45,6 +45,7 @@ struct BannerAdView: UIViewRepresentable {
 /// 前面でなくなる・画面を離れたら、バナーを取り除く。
 struct WaitBannerSlot: View {
     @Environment(AdsService.self) private var ads
+    @Environment(SupportStore.self) private var support
     @Environment(\.scenePhase) private var scenePhase
     /// 画面が現れた時点で、広告を要求してよいか
     @State private var eligible = false
@@ -66,7 +67,8 @@ struct WaitBannerSlot: View {
         }
         .onAppear {
             if !decided {
-                eligible = ads.startIfAllowed()
+                // 「広告なし」「ふとを応援」に加入していれば、広告は出さない（加入状況の確認前も出さない）
+                eligible = support.entitlementsLoaded && !support.adsRemoved && ads.startIfAllowed()
                 decided = true
             }
             visible = true

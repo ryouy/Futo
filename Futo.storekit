@@ -1,0 +1,30 @@
+{
+  "identifier" : "A1B2C3D4",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : { "_applicationInternalID" : "0", "_developerTeamID" : "", "_failTransactionsEnabled" : false, "_lastSynchronizedDate" : 0, "_locale" : "ja_JP", "_storefront" : "JPN", "_storeKitErrors" : [] },
+  "subscriptionGroups" : [
+    {
+      "id" : "21500001",
+      "localizations" : [],
+      "name" : "ふとを応援",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [], "codeOffers" : [], "displayPrice" : "300", "familyShareable" : false,
+          "groupNumber" : 1, "internalID" : "6700000002", "introductoryOffer" : null,
+          "localizations" : [ { "description" : "ふとの開発と運営を支える　広告非表示も含む", "displayName" : "ふとを応援", "locale" : "ja" } ],
+          "productID" : "com.ryouy.futo.support.monthly", "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "ふとを応援（月額）", "subscriptionGroupID" : "21500001", "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [], "codeOffers" : [], "displayPrice" : "100", "familyShareable" : false,
+          "groupNumber" : 2, "internalID" : "6700000001", "introductoryOffer" : null,
+          "localizations" : [ { "description" : "待機の時間を、より静かに", "displayName" : "広告なし", "locale" : "ja" } ],
+          "productID" : "com.ryouy.futo.noads.monthly", "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "広告なし（月額）", "subscriptionGroupID" : "21500001", "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : { "major" : 3, "minor" : 0 }
+}
