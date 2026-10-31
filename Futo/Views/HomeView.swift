@@ -69,9 +69,6 @@ struct HomeView: View {
     /// 画面の高さに合わせて、制限するものを何件まで丸ごと見せるか。多いときは、その次の1件を、下の1/3ほど見切れさせる。
     private func visibleRows(forHeight height: CGFloat) -> Int {
         var reserved: CGFloat = 300
-        #if DEBUG
-        reserved += 50
-        #endif
         // 提案のカードが出ているときは、その分、一覧を短くする
         if model.suggestion != nil { reserved += 210 }
         return max(2, min(8, Int((height - reserved) / Self.rowHeight)))
@@ -87,9 +84,6 @@ struct HomeView: View {
             Spacer(minLength: 12)
             VStack(spacing: 12) {
                 actions
-                #if DEBUG
-                debugSection
-                #endif
             }
             .padding(.horizontal, 20)
             .padding(.top, 14)
@@ -409,24 +403,6 @@ struct HomeView: View {
             }
             }
     }
-
-    #if DEBUG
-    /// 開発用：朝夜の振り返り・通知・制限の解除を、時間を待たずに確かめる（Debugビルドにだけ存在する）。1列に並べる。
-    private var debugSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Button(tr("朝の振り返り")) { model.showReflectionNow(.morning) }
-                Button(tr("夜の振り返り")) { model.showReflectionNow(.night) }
-                Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
-                // 待機を省略して、本アプリの制限をすぐ解除する（記録には数えない）。
-                Button("制限解除") { model.debugReleaseRestrictionNow() }
-                    .tint(.orange)
-            }
-            .buttonStyle(FutoCompactButtonStyle())
-        }
-        .padding(.top, 4)
-    }
-    #endif
 }
 
 /// 錠前のつる（開いているときは、持ち上がって傾く）。

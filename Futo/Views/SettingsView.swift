@@ -178,6 +178,20 @@ struct SettingsView: View {
             }
 
             #if DEBUG
+            // 開発用：朝夜の振り返り・通知・制限の解除を、時間を待たずに確かめる（Debugビルドにだけ存在する）
+            CardSection {
+                Button(tr("朝の振り返り")) { model.showReflectionNow(.morning); dismiss() }
+                    .frame(minHeight: 44)
+                Button(tr("夜の振り返り")) { model.showReflectionNow(.night); dismiss() }
+                    .frame(minHeight: 44)
+                Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
+                    .frame(minHeight: 44)
+                // 待機を省略して、本アプリの制限をすぐ解除する（記録には数えない）。
+                Button("制限解除") { model.debugReleaseRestrictionNow() }
+                    .tint(.orange)
+                    .frame(minHeight: 44)
+            }
+
             CardSection {
                 Button {
                     // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
