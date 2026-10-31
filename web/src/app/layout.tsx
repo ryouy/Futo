@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main>{children}</main>
         <footer className="site">
-          <a href="/"><Bi ja="ふとの紹介を見る" en="About Futo" /></a> ・ <a href="/privacy"><Bi ja="プライバシーポリシー" en="Privacy Policy" /></a>
+          <a href="/"><Bi ja="ふとの紹介を見る" en="About Futo" /></a> ・ <a href="/support"><Bi ja="ふとを応援" en="Support Futo" /></a> ・ <a href="/privacy"><Bi ja="プライバシーポリシー" en="Privacy Policy" /></a>
         </footer>
       </body>
     </html>

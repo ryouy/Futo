@@ -4,6 +4,7 @@ import { adminAuth, db } from "./firebase";
 import { ApiError } from "./http";
 import { sha256 } from "./tokens";
 import { userRef } from "./users";
+import { cancelWebSubscription } from "./billing";
 
 /** 再認証の有効時間（秒）。アカウント削除は、直近にサインインした本人にだけ許す。 */
 export const RECENT_LOGIN_SECONDS = 5 * 60;
@@ -11,7 +12,7 @@ export const RECENT_LOGIN_SECONDS = 5 * 60;
 const BATCH = 100;
 
 /** 削除の各ステップ。すべて冪等で、途中で失敗しても、同じ呼び出しで再開できる。 */
-const STEPS = ["shares", "invitations", "friendRequests", "friendships", "friendShares", "blocks", "counters", "profile", "auth"] as const;
+const STEPS = ["shares", "invitations", "friendRequests", "friendships", "friendShares", "blocks", "billing", "counters", "profile", "auth"] as const;
 type Step = (typeof STEPS)[number];
 
 async function drain(query: Query, each: (doc: FirebaseFirestore.QueryDocumentSnapshot) => Promise<void> | void, deadline: number): Promise<boolean> {
@@ -80,6 +81,10 @@ export async function purgeUserData(uid: string, options: DeletionOptions = {}):
   for (const field of ["blockerUid", "blockedUid"]) {
     if (!(await drain(d.collection("blocks").where(field, "==", uid), (doc) => void doc.ref.delete(), deadline))) return "in_progress";
   }
+
+  // Web の契約が続いていれば、先に解約する（アカウントが消えたあとも、請求が続かないように）
+  guard("billing");
+  await cancelWebSubscription(uid);
 
   guard("counters");
   for (const name of ["usageLimits", "operationKeys"]) {

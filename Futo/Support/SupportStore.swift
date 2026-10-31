@@ -50,7 +50,19 @@ final class SupportStore {
     var message: String?
     @ObservationIgnored private var updates: Task<Void, Never>?
 
-    var adsRemoved: Bool { current != nil }
+    /// アカウント（ログイン）に紐づく加入。アプリの外で加入した分も、同じアカウントなら、ここに反映される。
+    private(set) var accountPlan: SupportPlan?
+
+    var adsRemoved: Bool { current != nil || accountPlan != nil }
+
+    /// サーバーのアカウント情報から、加入しているプランを受け取る（ログアウト時は nil）。
+    func setAccountPlan(_ raw: String?) {
+        switch raw {
+        case "adFree": accountPlan = .adFree
+        case "support": accountPlan = .support
+        default: accountPlan = nil
+        }
+    }
 
     /// アプリの起動時に1回。購入の更新（別の端末・更新・解約など）も、受け取り続ける。
     func start() {

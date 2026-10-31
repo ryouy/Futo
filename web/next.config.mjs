@@ -27,6 +27,8 @@ const nextConfig = {
       // 共有・招待・APIは、共有CDN・ISR・静的生成に残さない
       { source: "/s/:path*", headers: noStore },
       { source: "/i/:path*", headers: noStore },
+      { source: "/support", headers: noStore },
+      { source: "/legal", headers: noStore },
       { source: "/api/:path*", headers: noStore },
     ];
   },

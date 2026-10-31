@@ -189,6 +189,8 @@ enum EnglishStrings {
         "一時解除中": "Temporarily unlocked",
         "使い終わる": "All done",
         "許可する": "Allow",
+        "{0}に加入中": "Subscribed to {0}",
+        "このアカウントの加入が、反映されています": "This account's subscription is applied",
         "広告なし": "No ads",
         "ふとを応援": "Support Futo",
         "待機の時間を、より静かに": "A calmer time while you wait",

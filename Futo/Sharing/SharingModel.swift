@@ -97,6 +97,15 @@ final class SharingModel {
         } catch { fail(error) }
     }
 
+    /// アカウントの加入状況（Web で加入した分など）を、静かに取り直す。失敗しても、何も表示しない。
+    func refreshAccountPlan() async {
+        guard isSignedIn, profile != nil else { return }
+        if let latest: MeResponse = try? await api.send("GET", "/api/me"), latest.webPlan != profile?.webPlan {
+            profile = latest
+            cacheProfile()
+        }
+    }
+
     private func createProfile() async {
         let name = DisplayName.initial(from: auth.providerDisplayName)
         do { profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec)); cacheProfile() } catch { fail(error) }

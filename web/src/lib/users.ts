@@ -3,6 +3,7 @@ import { now } from "./clock";
 import { db } from "./firebase";
 import { ApiError } from "./http";
 import { avatarSchema, displayNameSchema, type Avatar } from "./schema";
+import { activeWebPlan } from "./billing";
 
 export interface UserDoc {
   displayName: string;
@@ -44,7 +45,8 @@ export async function getMe(uid: string) {
   const snap = await userRef(uid).get();
   if (!snap.exists) throw new ApiError(404, "profile_missing");
   const data = snap.data() as UserDoc;
-  return { uid, displayName: data.displayName, status: data.status, ...(data.avatar ? { avatar: data.avatar } : {}) };
+  const webPlan = activeWebPlan(data as { webPlan?: never });
+  return { uid, displayName: data.displayName, status: data.status, ...(data.avatar ? { avatar: data.avatar } : {}), ...(webPlan ? { webPlan } : {}) };
 }
 
 /** 共有・フレンド操作の前提：プロフィールがあり、削除中でない。 */

@@ -22,8 +22,18 @@ struct SupportView: View {
                 .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
             }
 
-            ForEach(SupportPlan.allCases) { plan in
-                planCard(plan)
+            if let plan = store.accountPlan, store.current == nil {
+                // アカウントで加入している（アプリの外での加入）。二重に購入しないよう、購入のボタンは出さない
+                CardSection {
+                    Label(tr("{0}に加入中", plan.title), systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(Theme.accentText)
+                        .frame(minHeight: 44)
+                    Text(tr("このアカウントの加入が、反映されています")).font(.footnote).foregroundStyle(.secondary)
+                }
+            } else {
+                ForEach(SupportPlan.allCases) { plan in
+                    planCard(plan)
+                }
             }
 
             if let message = store.message {
