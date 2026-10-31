@@ -82,10 +82,10 @@ struct StatsChartsView: View {
                 .frame(height: 26)
                 .accessibilityLabel(tr("ひと呼吸の結果"))
                 .accessibilityValue(slices.map { "\($0.label) \($0.count)" }.joined(separator: " / "))
-                HStack(spacing: 16) {
+                WrapHStack(spacing: 16, lineSpacing: 6) {
                     ForEach(slices) { slice in legend(slice) }
-                    Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,11 +164,21 @@ struct StatsChartsView: View {
     }
 
     private func legend(_ slice: ChartSlice, total: Int? = nil) -> some View {
-        HStack(spacing: 6) {
-            Circle().fill(slice.color).frame(width: 8, height: 8)
-            Text(slice.label).font(.caption).oneLine(0.8)
-            Text(total.map { total in total > 0 ? "\(slice.count)（\(Int((Double(slice.count) / Double(total) * 100).rounded()))%）" : "\(slice.count)" } ?? "\(slice.count)")
-                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+        let value = total.map { total in total > 0 ? "\(slice.count)（\(Int((Double(slice.count) / Double(total) * 100).rounded()))%）" : "\(slice.count)" } ?? "\(slice.count)"
+        // 1行に収まれば1行。英語のように長いときは、名前の下に数を置く（名前も、折り返して、省略しない）
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 6) {
+                Circle().fill(slice.color).frame(width: 8, height: 8)
+                Text(slice.label).font(.caption).lineLimit(1)
+                Text(value).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+            }
+            HStack(alignment: .top, spacing: 6) {
+                Circle().fill(slice.color).frame(width: 8, height: 8).padding(.top, 4)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(slice.label).font(.caption).fixedSize(horizontal: false, vertical: true)
+                    Text(value).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                }
+            }
         }
     }
 }

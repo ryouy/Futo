@@ -150,9 +150,9 @@ struct WebShareReplica: View {
             }
             VStack(alignment: .leading, spacing: 3) {
                 ForEach(mini.slices) { slice in
-                    HStack(spacing: 6) {
-                        Circle().fill(slice.color).frame(width: 9, height: 9)
-                        Text(slice.label).font(.system(size: 12)).lineLimit(1).fixedSize()
+                    HStack(alignment: .top, spacing: 6) {
+                        Circle().fill(slice.color).frame(width: 9, height: 9).padding(.top, 4)
+                        Text(slice.label).font(.system(size: 12)).multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }

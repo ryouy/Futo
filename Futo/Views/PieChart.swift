@@ -34,9 +34,9 @@ struct PieCard: View {
                     // 凡例は小さく、グラフの横に縦に並べる。
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(shown) { slice in
-                            HStack(spacing: 6) {
-                                Circle().fill(color(for: slice)).frame(width: 8, height: 8)
-                                Text(slice.label).font(.caption).oneLine(0.8)
+                            HStack(alignment: .top, spacing: 6) {
+                                Circle().fill(color(for: slice)).frame(width: 8, height: 8).padding(.top, 4)
+                                Text(slice.label).font(.caption).fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }

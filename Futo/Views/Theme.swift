@@ -594,12 +594,12 @@ struct FutoTabPicker<T: Hashable>: View {
 
 extension View {
     /// 広い画面（iPad）では、中身を読みやすい幅の中央にまとめる。iPhoneの幅では何も変わらない。
-    func readableColumn(_ width: CGFloat = Layout.columnWidth) -> some View {
+    func readableColumn(_ width: CGFloat = AppLayout.columnWidth) -> some View {
         frame(maxWidth: width).frame(maxWidth: .infinity)
     }
 }
 
-enum Layout {
+enum AppLayout {
     /// 広い画面（iPad）で、中身をまとめる最大の幅。横幅いっぱいに広げると間延びするので、読みやすい幅に抑える。広告の幅も、これを超えない。
     static let columnWidth: CGFloat = 640
 }
@@ -729,5 +729,35 @@ struct CustomColorWell: View {
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// 横に並べて、入りきらなければ、次の行へ折り返す（凡例など。英語のように、文字が長くなっても、見切れない）。
+struct WrapHStack: Layout {
+    var spacing: CGFloat = 16
+    var lineSpacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, width: CGFloat = 0
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > maxWidth { y += rowHeight + lineSpacing; x = 0; rowHeight = 0 }
+            x += size.width + spacing
+            width = max(width, x - spacing)
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: width, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + size.width > bounds.maxX { y += rowHeight + lineSpacing; x = bounds.minX; rowHeight = 0 }
+            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
     }
 }

@@ -49,7 +49,7 @@ footer.site a { color: var(--green); font-weight: 600; }
 .mini { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .mini h3 { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; color: var(--green); line-height: 1.35; min-height: 2.7em; display: flex; align-items: flex-end; justify-content: center; text-wrap: balance; }  /* タイトルが2行でも、1行でも、グラフの位置がそろう */
 .legend { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; width: fit-content; max-width: 100%; color: var(--ink); text-align: left; }
-.legend li { margin: 3px 0; white-space: nowrap; }
-.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.legend li { margin: 3px 0; display: flex; align-items: flex-start; line-height: 1.4; }  /* 英語のように長くても、折り返して、見切れない */
+.dot { flex: none; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; margin-top: .42em; }
 .codebox { margin: 10px 0 0; padding: 10px 14px; background: var(--soft); border-radius: 14px; font-size: 14px; }
 .codebox strong { font-family: ui-monospace, Menlo, monospace; font-size: 17px; letter-spacing: .08em; color: var(--green); margin-left: 6px; }

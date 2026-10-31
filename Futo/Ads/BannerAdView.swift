@@ -52,7 +52,7 @@ struct WaitBannerSlot: View {
     @State private var decided = false
     @State private var visible = true
 
-    private var width: CGFloat { min(UIScreen.main.bounds.width, Layout.columnWidth) }
+    private var width: CGFloat { min(UIScreen.main.bounds.width, AppLayout.columnWidth) }
 
     var body: some View {
         let size = AdsService.bannerSize(width: width)
