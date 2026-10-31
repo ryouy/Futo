@@ -252,6 +252,21 @@
       .windows { grid-template-columns: repeat(3, 1fr); }
       .fan .phone { width: min(22vw, 230px); }
     }
+
+    /* 使い方：流れを、1列で */
+    .sub-flow { text-wrap: balance; text-align: center; color: var(--muted); margin: -22px 0 30px; }
+    .flow { list-style: none; margin: 0; padding: 6px 4px 18px; display: flex; align-items: flex-start; gap: 4px;
+      overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+    .flow > li:not(.arrow) { flex: 0 0 148px; scroll-snap-align: center; text-align: center; }
+    .flow .phone { width: 148px; border-radius: 28px; padding: 5px; }
+    .flow .phone img { border-radius: 23px; }
+    .flow .fn { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; margin: 14px 0 6px;
+      background: var(--green); color: var(--cream); font-weight: 700; font-size: 14px; }
+    .flow h3 { margin: 0 0 4px; font-size: 16px; color: var(--green); }
+    .flow p { text-wrap: balance; margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+    .flow .arrow { flex: 0 0 26px; align-self: flex-start; margin-top: 150px; display: grid; place-items: center; }
+    .flow .arrow svg { width: 22px; height: 22px; fill: none; stroke: var(--green); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+    @media (min-width: 1060px) { .flow { justify-content: center; overflow: visible; } }
     @media (prefers-reduced-motion: reduce) {
       .stage .phone { animation: none; }
       .hero .copy > *, .hero .stage { animation: none; }
@@ -315,54 +330,50 @@
 <section>
   <div class="wrap">
     <h2 class="reveal"><span class="ja">使い方</span><span class="en">How it works</span></h2>
-    <div class="story">
-      <div class="row reveal">
-        <div class="media"><div class="phone"><img src="/assets/web/shots/08-lock.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
-        <div class="text">
-          <div class="n">1</div>
-          <h3><span class="ja">ふだんは制限</span><span class="en">Locked by default</span></h3>
-          <p><span class="ja">選んだアプリやサイトを、<wbr>ふだんは使えないようにしておきます<br>制限は、いつでも自分で外せます</span><span class="en">Apps and sites you pick stay locked most of the time. You can always remove the lock yourself</span></p>
-        </div>
-      </div>
-      <div class="row flip reveal">
-        <div class="media"><div class="phone"><img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
-        <div class="text">
-          <div class="n">2</div>
-          <h3><span class="ja">何をする？</span><span class="en">What are you doing?</span></h3>
-          <p><span class="ja">使いたくなったら、目的をひとつ選びます<br>答えずに進むこともできます</span><span class="en">When you want to use something, pick one reason — or skip the question</span></p>
-          <div class="chips">
-            <span class="chip"><span class="ja">連絡</span><span class="en">Messaging</span></span>
-            <span class="chip"><span class="ja">調べもの</span><span class="en">Looking something up</span></span>
-            <span class="chip"><span class="ja">気分転換</span><span class="en">Taking a break</span></span>
-            <span class="chip"><span class="ja">なんとなく</span><span class="en">Just because</span></span>
-          </div>
-        </div>
-      </div>
-      <div class="row reveal">
-        <div class="media"><div class="phone"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
-        <div class="text">
-          <div class="n">3</div>
-          <h3><span class="ja">少し、立ち止まる</span><span class="en">Pause for a moment</span></h3>
-          <p><span class="ja">標準は1分（10秒〜10分から選べます）<br>画面を閉じると止まり、戻ると続きから進みます<br>ゆっくり動く円が、残りを教えてくれます</span><span class="en">1 minute by default (10 seconds to 10 minutes). It pauses when you leave the screen and picks up where it left off. A slow circle shows what's left</span></p>
-        </div>
-      </div>
-      <div class="row flip reveal">
-        <div class="media pair"><div class="phone"><img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy"></div><div class="phone"><img src="/assets/web/shots/06-apps.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
-        <div class="text">
-          <div class="n">4</div>
-          <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
-          <p><span class="ja">「使いたい」か「やめておく」を選びます<br>使うなら、使うものだけを選んで、1〜10分ほど解除します<br>戻ったら、感想を気軽に残せます</span><span class="en">Choose “I want to use it” or “Maybe later.” If you use it, pick just what you need and unlock it for 1–10 minutes. Afterwards, leave a quick note on how it felt</span></p>
-        </div>
-      </div>
-      <div class="row reveal">
-        <div class="media"><div class="phone"><img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
-        <div class="text">
-          <div class="n">5</div>
-          <h3><span class="ja">自動で戻る</span><span class="en">Back to locked</span></h3>
-          <p><span class="ja">決めた時間が過ぎたら、<wbr>自動で制限に戻ります<br>制限しなおす操作は、いらません</span><span class="en">When the time you set is up, it locks itself again — nothing for you to do</span></p>
-        </div>
-      </div>
-    </div>
+    <p class="sub-flow reveal"><span class="ja">制限したアプリを開くところから、自動で戻るまで</span><span class="en">From opening a locked app to locking again</span></p>
+    <ol class="flow">
+      <li class="reveal" style="--d:0.00s">
+        <div class="phone"><img src="/assets/web/shots/28-shield.jpg" alt="" width="540" height="1044" loading="lazy"></div>
+        <div class="fn">1</div>
+        <h3><span class="ja">制限の画面</span><span class="en">Lock screen</span></h3>
+        <p><span class="ja">制限したアプリを開くと、<span class="p">この画面が出ます</span></span><span class="en">Open a locked app and this appears</span></p>
+      </li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
+      <li class="reveal" style="--d:0.08s">
+        <div class="phone"><img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076" loading="lazy"></div>
+        <div class="fn">2</div>
+        <h3><span class="ja">ふとを開く</span><span class="en">Open Futo</span></h3>
+        <p><span class="ja"><span class="p">「ひと呼吸おいて、使う」</span>を押します</span><span class="en">Tap “Take a breath, then use”</span></p>
+      </li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
+      <li class="reveal" style="--d:0.16s">
+        <div class="phone"><img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy"></div>
+        <div class="fn">3</div>
+        <h3><span class="ja">何をする？</span><span class="en">What for?</span></h3>
+        <p><span class="ja">使う目的を、<span class="p">ひとつ選びます</span></span><span class="en">Pick one reason</span></p>
+      </li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
+      <li class="reveal" style="--d:0.24s">
+        <div class="phone"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy"></div>
+        <div class="fn">4</div>
+        <h3><span class="ja">少し待つ</span><span class="en">Wait a moment</span></h3>
+        <p><span class="ja">ゆっくり息をしながら、<span class="p">待ちます</span></span><span class="en">Breathe slowly while you wait</span></p>
+      </li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
+      <li class="reveal" style="--d:0.32s">
+        <div class="phone"><img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy"></div>
+        <div class="fn">5</div>
+        <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
+        <p><span class="ja">使うか、<span class="p">やめておくかを選びます</span></span><span class="en">Use it, or maybe later</span></p>
+      </li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
+      <li class="reveal" style="--d:0.40s">
+        <div class="phone"><img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy"></div>
+        <div class="fn">6</div>
+        <h3><span class="ja">自動で戻る</span><span class="en">Locks again</span></h3>
+        <p><span class="ja">決めた時間のあと、<span class="p">自動で制限に戻ります</span></span><span class="en">It locks itself when time is up</span></p>
+      </li>
+    </ol>
   </div>
 </section>
 
