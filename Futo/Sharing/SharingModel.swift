@@ -1,3 +1,5 @@
+import AuthenticationServices
+import CryptoKit
 import Foundation
 import Observation
 
@@ -73,6 +75,58 @@ final class SharingModel {
         }
     }
 
+    /// いまのアイコン（色を選んでいなければ、いまのテーマ色の番号）
+    private static var currentAvatarSpec: AvatarSpec {
+        AvatarSettings.shared.spec(themeIndex: ThemeColor.allCases.firstIndex(of: ThemeStore.shared.color) ?? 0)
+    }
+
+    /// いまのアカウントのログイン方法（Google / Apple）
+    var signInProvider: SignInProvider? { auth.provider }
+
+    @ObservationIgnored private var appleNonce: String?
+
+    /// 「Appleで続ける」の要求を整える。求めるのは名前だけ（メールアドレスは求めない）。nonce は、ハッシュだけをAppleへ渡す。
+    func prepareApple(_ request: ASAuthorizationAppleIDRequest) {
+        let raw = PKCE.randomString(byteCount: 16)
+        appleNonce = raw
+        request.requestedScopes = [.fullName]
+        request.nonce = SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Appleでの認証が終わったとき。Firebaseのアカウントに替えて、プロフィールを読み込む。
+    func completeApple(_ result: Result<ASAuthorization, Error>) async {
+        message = nil
+        switch result {
+        case .failure(let error):
+            // 取りやめただけなら、何も変えない
+            if (error as? ASAuthorizationError)?.code == .canceled { return }
+            message = tr("ログインできませんでした　もう一度お試しください")
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken, let token = String(data: tokenData, encoding: .utf8),
+                  let nonce = appleNonce else {
+                message = tr("ログインできませんでした　もう一度お試しください")
+                return
+            }
+            phase = .working
+            defer { phase = .idle }
+            let name = credential.fullName.map { PersonNameComponentsFormatter().string(from: $0) }
+            do {
+                try await auth.signInWithApple(identityToken: token, rawNonce: nonce, fullName: name)
+                appleNonce = nil
+                await loadProfile()
+                // アカウント削除のとき、Appleの接続も解除できるよう、サーバーに認可コードを預ける（できなくても、ログインには影響しない）
+                if let codeData = credential.authorizationCode, let code = String(data: codeData, encoding: .utf8) {
+                    let _: EmptyResponse? = try? await api.send("POST", "/api/apple/link", body: ["authorizationCode": code])
+                }
+            } catch AuthError.notConfigured {
+                message = tr("共有の設定がまだ終わっていません")
+            } catch {
+                message = tr("ログインできませんでした　もう一度お試しください")
+            }
+        }
+    }
+
     func signOut() {
         if let uid { ProfileCache.clear(uid: uid); seenStore.clear(uid: uid) }
         auth.signOut()
@@ -108,19 +162,19 @@ final class SharingModel {
 
     private func createProfile() async {
         let name = DisplayName.initial(from: auth.providerDisplayName)
-        do { profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec)); cacheProfile() } catch { fail(error) }
+        do { profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: Self.currentAvatarSpec)); cacheProfile() } catch { fail(error) }
     }
 
     /// サーバーのアイコンと、この端末のアイコンをそろえる。サーバーに無ければ送り、違っていれば、サーバーのものを取り込む。
     private func reconcileAvatar() async {
         guard let remote = profile?.avatar else { await syncAvatar(); return }
-        if remote != AvatarSettings.shared.spec { AvatarSettings.shared.adopt(remote) }
+        if remote != Self.currentAvatarSpec { AvatarSettings.shared.adopt(remote) }
     }
 
     /// アイコンを変えたとき、フレンドにも見えるよう、サーバーへ送る。失敗しても、この端末の表示は変わらない。
     func syncAvatar() async {
         guard isSignedIn, let name = profile?.displayName else { return }
-        if let updated: MeResponse = try? await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec)) {
+        if let updated: MeResponse = try? await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: Self.currentAvatarSpec)) {
             profile = updated
             cacheProfile()
         }
@@ -130,7 +184,7 @@ final class SharingModel {
         phase = .working
         defer { phase = .idle }
         do {
-            profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: AvatarSettings.shared.spec))
+            profile = try await api.send("PUT", "/api/me", body: MeUpdate(displayName: name, avatar: Self.currentAvatarSpec))
             cacheProfile()
             message = nil
             return true

@@ -7,13 +7,19 @@ protocol WebAuthRunning {
     func run(url: URL, callbackScheme: String) async throws -> URL
 }
 
+/// ログインの方法。どちらでログインしても、共有・フレンドは同じ機能を使える。
+/// それぞれ別のアカウントになる（メールアドレスが同じでも、自動では統合しない）。
+enum SignInProvider: String, Equatable {
+    case google, apple
+}
+
 enum AuthError: Error, Equatable {
     case notConfigured
     case cancelled
     case failed          // 認証の失敗（通信・応答の不備）。理由の詳細や、トークンは含めない
 }
 
-/// 任意のGoogleログイン。Google（OAuth 2.0 + PKCE）で得たIDトークンを、Firebase Authenticationへ渡す。
+/// 任意のログイン（Google または Apple）。Google（OAuth 2.0 + PKCE）またはAppleで得たIDトークンを、Firebase Authenticationへ渡す。
 /// アプリの内部IDは、Firebase UID。Googleから使うのは名前だけで、表示名の初期値に使う（本人が変更できる）。メール・写真は使わない。
 @MainActor
 @Observable
@@ -29,6 +35,8 @@ final class AuthService {
     private(set) var state: State = .signedOut
     /// 直近のログインで、Googleから受け取った名前。表示名の初期値にだけ使う（保存しない）
     private(set) var providerDisplayName: String?
+    /// いまのアカウントのログイン方法
+    private(set) var provider: SignInProvider?
 
     @ObservationIgnored private let config: Phase4Config
     @ObservationIgnored private let urlSession: URLSession
@@ -45,6 +53,7 @@ final class AuthService {
         self.store = store
         if let saved = store.load() {
             refreshToken = saved.refreshToken
+            provider = SignInProvider(rawValue: saved.provider ?? "") ?? .google
             state = .signedIn(uid: saved.uid)
         }
     }
@@ -87,7 +96,7 @@ final class AuthService {
                   let code = items.first(where: { $0.name == "code" })?.value else { throw AuthError.failed }
 
             let googleIDToken = try await exchangeCode(code, verifier: verifier, redirect: redirect)
-            let firebase = try await signInToFirebase(googleIDToken: googleIDToken)
+            let firebase = try await signInToFirebase(postBody: "id_token=\(googleIDToken)&providerId=google.com")
             // Firebaseの応答に名前が無いときは、GoogleのIDトークンの申告（name）から補う
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
@@ -95,7 +104,33 @@ final class AuthService {
             providerDisplayName = firebase.displayName ?? GoogleIDToken.name(from: googleIDToken)
             // 別のアカウントに切り替わったら、前のアカウントの端末内の共有情報を除去する
             if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
-            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken))
+            provider = .google
+            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, provider: SignInProvider.google.rawValue))
+            state = .signedIn(uid: firebase.uid)
+            return firebase.uid
+        } catch {
+            state = previous == .signingIn ? .signedOut : previous
+            throw error as? AuthError ?? AuthError.failed
+        }
+    }
+
+    /// Appleで続ける。Appleが発行したIDトークン（`rawNonce` のハッシュを含むもの）を、Firebase Authenticationへ渡す。
+    /// 要求する情報は、名前だけ（メールアドレスは求めない）。名前は、Appleが最初の1回しか渡さないので、あれば表示名の初期値にする。
+    @discardableResult
+    func signInWithApple(identityToken: String, rawNonce: String, fullName: String?) async throws -> String {
+        guard config.isConfigured else { throw AuthError.notConfigured }
+        let previous = state
+        state = .signingIn
+        do {
+            let firebase = try await signInToFirebase(postBody: "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)")
+            idToken = firebase.idToken
+            idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
+            refreshToken = firebase.refreshToken
+            let name = fullName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            providerDisplayName = name?.isEmpty == false ? name : firebase.displayName
+            if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
+            provider = .apple
+            store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, provider: SignInProvider.apple.rawValue))
             state = .signedIn(uid: firebase.uid)
             return firebase.uid
         } catch {
@@ -115,7 +150,7 @@ final class AuthService {
             idToken = refreshed.idToken
             idTokenExpiry = Date().addingTimeInterval(refreshed.expiresIn)
             self.refreshToken = refreshed.refreshToken
-            if let uid { store.save(StoredAuthSession(uid: uid, refreshToken: refreshed.refreshToken)) }
+            if let uid { store.save(StoredAuthSession(uid: uid, refreshToken: refreshed.refreshToken, provider: provider?.rawValue)) }
             if case .needsReauth(let uid) = state { state = .signedIn(uid: uid) }
             return refreshed.idToken
         } catch AuthError.cancelled {
@@ -136,6 +171,7 @@ final class AuthService {
         if let uid { ShareLinkCleanup.run(uid) }
         store.clear()
         providerDisplayName = nil
+        provider = nil
         idToken = nil
         refreshToken = nil
         idTokenExpiry = .distantPast
@@ -178,14 +214,14 @@ final class AuthService {
         return idToken
     }
 
-    private func signInToFirebase(googleIDToken: String) async throws -> FirebaseTokens {
+    private func signInToFirebase(postBody: String) async throws -> FirebaseTokens {
         var components = URLComponents(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp")!
         components.queryItems = [.init(name: "key", value: config.firebaseAPIKey)]
         var request = URLRequest(url: components.url!, timeoutInterval: 15)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "postBody": "id_token=\(googleIDToken)&providerId=google.com",
+            "postBody": postBody,
             "requestUri": "http://localhost",
             "returnIdpCredential": true,
             "returnSecureToken": true,

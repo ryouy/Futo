@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor
 struct BackupView: View {
     @Environment(BackupModel.self) private var backup
+    @Environment(SharingModel.self) private var sharing
     @State private var confirmDisconnect = false
     @State private var confirmDeleteRemote = false
     @State private var includeSettings = true
@@ -46,6 +47,11 @@ struct BackupView: View {
 
     private var notConnected: some View {
         CardSection {
+            // Appleでログインしている人だけ。バックアップは、Googleとの接続が別に要る
+            if sharing.signInProvider == .apple {
+                Text(tr("バックアップには、Googleアカウントとの接続が必要です"))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
             Button { Task { await backup.connect() } } label: {
                 Label(tr("バックアップを有効にする"), systemImage: "icloud.and.arrow.up")
             }

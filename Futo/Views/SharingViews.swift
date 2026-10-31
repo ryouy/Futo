@@ -1,5 +1,6 @@
 import CoreImage.CIFilterBuiltins
 import SwiftData
+import AuthenticationServices
 import SwiftUI
 
 /// 設定の「共有」タブ。ログインは任意で、しなくても、ほかの機能はすべて使える。
@@ -44,12 +45,8 @@ struct SharingTab: View {
             CardSection {
                 Text(tr("ログインすると、選んだ記録だけを、リンクやフレンドに共有できます"))
             }
-            PrimarySection {
-                Button { Task { await sharing.signIn() } } label: {
-                    Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark")
-                }
-                .disabled(sharing.isWorking)
-            }
+            // Google を上、Apple を下に。どちらも同じ大きさで、同じように目に入る
+            PrimarySection { SignInButtons() }
         }
     }
 
@@ -57,7 +54,8 @@ struct SharingTab: View {
         Group {
             CardSection { Text(tr("ログインの確認が必要です")) }
             PrimarySection {
-                Button(tr("もう一度ログイン")) { Task { await sharing.signIn() } }
+                // 前にログインした方法で、もう一度（別の方法だと、別のアカウントになる）
+                SignInButtons(only: sharing.signInProvider ?? .google)
                 Button(tr("ログアウト"), role: .destructive) { sharing.signOut() }
                     .buttonStyle(FutoButtonStyle(prominent: false))
             }
@@ -72,7 +70,7 @@ struct SharingTab: View {
                     AccountAvatar(name: sharing.profile?.displayName ?? "", size: 48, isOwn: true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(sharing.profile?.displayName ?? "…").font(.headline).oneLine()
-                        Text(tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
+                        Text(sharing.signInProvider == .apple ? tr("Appleでログイン中") : tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
                     }
                 }
                 .padding(.vertical, 4)
@@ -102,6 +100,35 @@ struct SharingTab: View {
                 Label(tr("アカウントを削除"), systemImage: "trash").foregroundStyle(.red)
             }
             .frame(minHeight: 44)
+        }
+    }
+}
+
+/// 「Googleで続ける」（上）と「Appleで続ける」（下）。どちらも同じ大きさで、隠さず、目立たなくもしない。
+/// `only` を指定すると、その方法だけ（前にログインした方法で、もう一度ログインするとき）。
+struct SignInButtons: View {
+    var only: SignInProvider?
+    @Environment(SharingModel.self) private var sharing
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        if only != .apple {
+            Button { Task { await sharing.signIn() } } label: {
+                Label(tr("Googleで続ける"), systemImage: "person.crop.circle.badge.checkmark")
+            }
+            .buttonStyle(FutoButtonStyle())
+            .disabled(sharing.isWorking)
+        }
+        if only != .google {
+            SignInWithAppleButton(.continue) { request in
+                sharing.prepareApple(request)
+            } onCompletion: { result in
+                Task { await sharing.completeApple(result) }
+            }
+            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+            .frame(height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .disabled(sharing.isWorking)
         }
     }
 }

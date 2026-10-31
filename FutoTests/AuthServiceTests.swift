@@ -85,7 +85,8 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertEqual(uid, "uid-A")
         XCTAssertEqual(service.state, .signedIn(uid: "uid-A"))
         XCTAssertEqual(service.providerDisplayName, "山田 太郎")
-        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1"))
+        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-A", refreshToken: "REFRESH-1", provider: "google"))
+        XCTAssertEqual(service.provider, .google)
 
         let items = Dictionary(uniqueKeysWithValues: URLComponents(url: authURL!, resolvingAgainstBaseURL: false)!.queryItems!.map { ($0.name, $0.value ?? "") })
         XCTAssertEqual(items["scope"], "openid profile", "名前（表示名の初期値）までで、Drive・メール・写真は求めない")
@@ -103,6 +104,41 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertTrue(bodies[1].contains("providerId=google.com"))
         XCTAssertTrue(bodies[1].contains("GOOGLE-ID-TOKEN"))
         XCTAssertTrue(requests[1].url!.absoluteString.contains("key=API-KEY"))
+    }
+
+    func testSignInWithApplePassesTheAppleTokenAndNonceToFirebaseAndRemembersTheProvider() async throws {
+        installHappyNetwork(uid: "uid-APPLE")
+        let store = MemoryStore()
+        let service = make(store: store)
+        let uid = try await service.signInWithApple(identityToken: "APPLE-ID-TOKEN", rawNonce: "RAW-NONCE", fullName: "  佐藤 花子 ")
+        XCTAssertEqual(uid, "uid-APPLE")
+        XCTAssertEqual(service.state, .signedIn(uid: "uid-APPLE"))
+        XCTAssertEqual(service.provider, .apple)
+        XCTAssertEqual(service.providerDisplayName, "佐藤 花子", "Appleが渡した名前を、表示名の初期値にする")
+        XCTAssertEqual(store.saved, StoredAuthSession(uid: "uid-APPLE", refreshToken: "REFRESH-1", provider: "apple"))
+        XCTAssertEqual(requests.count, 1, "Googleには、一切、通信しない")
+        XCTAssertTrue(bodies[0].contains("providerId=apple.com"))
+        XCTAssertTrue(bodies[0].contains("APPLE-ID-TOKEN"))
+        XCTAssertTrue(bodies[0].contains("nonce=RAW-NONCE"))
+        XCTAssertFalse(requests[0].url!.absoluteString.contains("google.com/o/oauth2"))
+    }
+
+    func testAppleSignInFailureIsAFailureAndStoresNothing() async {
+        StubProtocol.handler = { _ in (400, Data("{}".utf8)) }
+        let store = MemoryStore()
+        let service = make(store: store)
+        do { _ = try await service.signInWithApple(identityToken: "T", rawNonce: "N", fullName: nil); XCTFail() } catch { XCTAssertEqual(error as? AuthError, .failed) }
+        XCTAssertEqual(service.state, .signedOut)
+        XCTAssertNil(store.saved)
+        XCTAssertNil(service.provider)
+    }
+
+    func testSavedSessionWithoutAProviderIsTreatedAsGoogle() {
+        let store = MemoryStore()
+        store.saved = StoredAuthSession(uid: "old-user", refreshToken: "R")
+        XCTAssertEqual(make(store: store).provider, .google, "以前の版で保存したログインは、Googleのもの")
+        let decoded = try? JSONDecoder().decode(StoredAuthSession.self, from: Data(#"{"uid":"u","refreshToken":"r"}"#.utf8))
+        XCTAssertEqual(decoded, StoredAuthSession(uid: "u", refreshToken: "r"))
     }
 
     func testStateMismatchIsRejectedAndNothingIsStored() async {

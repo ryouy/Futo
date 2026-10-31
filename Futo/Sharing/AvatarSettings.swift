@@ -51,9 +51,8 @@ final class AvatarSettings {
     }
 
     /// サーバーに送る、いまのアイコン。色を選んでいなければ、いまのテーマ色の番号。
-    var spec: AvatarSpec {
-        let themeIndex = ThemeColor.allCases.firstIndex(of: ThemeStore.shared.color) ?? 0
-        return AvatarSpec(symbol: symbolIndex, color: colorIndex ?? themeIndex)
+    func spec(themeIndex: Int) -> AvatarSpec {
+        AvatarSpec(symbol: symbolIndex, color: colorIndex ?? themeIndex)
     }
 
     /// サーバーのアイコンを、この端末に取り込む（別の端末で変えたとき）。

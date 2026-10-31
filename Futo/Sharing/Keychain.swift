@@ -54,6 +54,8 @@ protocol SessionStoring: AnyObject {
 struct StoredAuthSession: Codable, Equatable {
     var uid: String
     var refreshToken: String
+    /// ログインに使ったもの（"google" / "apple"）。以前の版で保存した分は nil（Google）
+    var provider: String? = nil
 }
 
 final class KeychainSessionStore: SessionStoring {

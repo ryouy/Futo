@@ -73,18 +73,20 @@
 <p>Deletion: use “Delete all records” in Settings to remove records, check-ins and lock-management records. Deleting the app removes all on-device data</p></div>
 </section>
 <section>
-  <h2><span class="ja">2. Google ログイン（任意）</span><span class="en">2. Google sign-in (optional)</span></h2>
-  <div class="ja"><p>共有・フレンド・バックアップを使うときだけ、Google でログインします<br>ログインしなくても、ほかの機能はすべて使えます</p>
+  <h2><span class="ja">2. ログイン（Google または Apple・任意）</span><span class="en">2. Sign-in (Google or Apple, optional)</span></h2>
+  <div class="ja"><p>共有・フレンドを使うときだけ、Google または Apple でログインします（バックアップは、別に Google との接続が必要です）<br>ログインしなくても、ほかの機能はすべて使えます<br>どちらでログインしても、使える機能は同じです<br>メールアドレスが同じでも、アカウントは自動では統合されません</p>
 <ul>
-<li>認証は、Google のログイン（OAuth）と Firebase Authentication で行います<br>要求する権限は、<strong>名前（profile）だけ</strong>です<br>メールアドレスと写真は、使いません</li>
-<li>サーバー（Google Cloud の Firestore）に保存するのは、アカウントの内部 ID（Firebase UID）、<strong>表示名</strong>（初期値は Google の名前<br>いつでも変更できます）、作成・更新の日時、状態です</li>
+<li>認証は、Google のログイン（OAuth）または Apple で続ける（Sign in with Apple）と、Firebase Authentication で行います<br>要求する情報は、<strong>名前だけ</strong>です<br>メールアドレスと写真は、使いません</li>
+<li>Apple でログインしたアカウントを削除すると、Apple 側のアプリへの接続も取り消します</li>
+<li>サーバー（Google Cloud の Firestore）に保存するのは、アカウントの内部 ID（Firebase UID）、<strong>表示名</strong>（初期値は Google または Apple の名前<br>取得できなければ「ふと」<br>いつでも変更できます）、作成・更新の日時、状態です</li>
 <li>用途：共有・フレンド機能の本人確認と、相手に表示する名前のため<br>広告や分析には使いません</li>
 </ul>
 <p>削除：設定 →「アカウント」→「アカウントを削除」で、再ログインの確認のあと、サーバー上のデータ（下記の共有・フレンド関連と、プロフィール、ログインのアカウント）をすべて削除します<br>ログアウトすると、端末内のログイン情報を消します</p></div>
-  <div class="en"><p>You sign in with Google only when you use sharing, friends or backup. Everything else works without signing in</p>
+  <div class="en"><p>You sign in with Google or Apple only when you use sharing or friends (backup needs a separate Google connection). Everything else works without signing in. Both give the same features, and accounts are never merged automatically even if the email address is the same</p>
 <ul>
-<li>Authentication uses Google sign-in (OAuth) and Firebase Authentication. The only permission requested is your <strong>name (profile)</strong>. Your email address and photo are not used</li>
-<li>What we store on our server (Google Cloud Firestore): an internal account ID (Firebase UID), your <strong>display name</strong> (initially your Google name; you can change it any time), creation/update times and status</li>
+<li>Authentication uses Google sign-in (OAuth) or Sign in with Apple, together with Firebase Authentication. The only information requested is your <strong>name</strong>. Your email address and photo are not used</li>
+<li>Deleting an account created with Apple also revokes the app's connection on Apple's side</li>
+<li>What we store on our server (Google Cloud Firestore): an internal account ID (Firebase UID), your <strong>display name</strong> (initially your Google or Apple name, or "Futo" if unavailable; you can change it any time), creation/update times and status</li>
 <li>Purpose: identifying you for sharing and friends, and the name shown to others. Not used for ads or analytics</li>
 </ul>
 <p>Deletion: Settings → Account → “Delete account” deletes all server-side data (sharing and friends data below, your profile and the sign-in account) after re-authentication. Signing out removes the sign-in information from your device</p></div>

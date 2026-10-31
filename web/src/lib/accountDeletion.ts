@@ -5,6 +5,7 @@ import { ApiError } from "./http";
 import { sha256 } from "./tokens";
 import { userRef } from "./users";
 import { cancelWebSubscription } from "./billing";
+import { revokeAppleForUser } from "./apple";
 
 /** 再認証の有効時間（秒）。アカウント削除は、直近にサインインした本人にだけ許す。 */
 export const RECENT_LOGIN_SECONDS = 5 * 60;
@@ -12,7 +13,7 @@ export const RECENT_LOGIN_SECONDS = 5 * 60;
 const BATCH = 100;
 
 /** 削除の各ステップ。すべて冪等で、途中で失敗しても、同じ呼び出しで再開できる。 */
-const STEPS = ["shares", "invitations", "friendRequests", "friendships", "friendShares", "blocks", "billing", "counters", "profile", "auth"] as const;
+const STEPS = ["shares", "invitations", "friendRequests", "friendships", "friendShares", "blocks", "billing", "apple", "counters", "profile", "auth"] as const;
 type Step = (typeof STEPS)[number];
 
 async function drain(query: Query, each: (doc: FirebaseFirestore.QueryDocumentSnapshot) => Promise<void> | void, deadline: number): Promise<boolean> {
@@ -85,6 +86,10 @@ export async function purgeUserData(uid: string, options: DeletionOptions = {}):
   // Web の契約が続いていれば、先に解約する（アカウントが消えたあとも、請求が続かないように）
   guard("billing");
   await cancelWebSubscription(uid);
+
+  // 「Appleで続ける」のアカウントは、Apple への接続も取り消す（Apple の規約）
+  guard("apple");
+  await revokeAppleForUser(uid, Math.floor(now().getTime() / 1000));
 
   guard("counters");
   for (const name of ["usageLimits", "operationKeys"]) {

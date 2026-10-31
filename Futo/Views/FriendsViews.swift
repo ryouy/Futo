@@ -265,8 +265,7 @@ struct InviteLandingView: View {
                     CardSection {
                         Text(sharing.isConfigured ? tr("招待を受け入れるには、ログインが必要です") : tr("共有の設定がまだ終わっていません"))
                         if sharing.isConfigured {
-                            Button { Task { await sharing.signIn() } } label: { Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark") }
-                                .buttonStyle(FutoButtonStyle())
+                            SignInButtons()
                         }
                     }
                 } else if sent {
