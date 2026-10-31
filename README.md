@@ -1,28 +1,72 @@
-# ふと
+<h1 align="center">ふと</h1>
 
-**「ふと開く」から、「ふと気づく」へ**
+<p align="center">
+  <b>「ふと開く」から、「ふと気づく」へ</b><br>
+  スマホを使う前に、ひと呼吸。使うかどうかを、自分で選ぶ iPhone アプリ
+</p>
 
-スマホを使う前に、ひと呼吸  
-使うかどうかを、自分で選ぶ iPhone アプリ
+<p align="center">
+  <a href="https://futo-share.vercel.app/"><b>紹介サイト</b></a> ・
+  <a href="https://futo-share.vercel.app/privacy">プライバシーポリシー</a>
+</p>
 
-**[紹介サイト](https://futo-share.vercel.app/)**
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/01-intro.png" width="170"></td>
-    <td align="center"><img src="docs/screenshots/02-home.png" width="170"></td>
-    <td align="center"><img src="docs/screenshots/03-purpose.png" width="170"></td>
-    <td align="center"><img src="docs/screenshots/04-wait.png" width="170"></td>
-    <td align="center"><img src="docs/screenshots/07-unlocked.png" width="170"></td>
-  </tr>
-</table>
+<p align="center"><img src="docs/screenshots/hero.png" alt="ふとの画面（ホーム・待機・記録）"></p>
 
 ## 使い方
 
-1. 制限するアプリやサイトを選ぶ
-2. 使いたくなったら「ふと」で目的を選び、少し待つ
-3. 使うか、やめておくかを選ぶ
-4. 決めた時間が過ぎたら、自動で制限に戻る
+<table>
+  <tr>
+    <td align="center" valign="top"><img src="docs/screenshots/08-lock.png" width="170"><br><b>1　ふだんは制限</b><br><sub>選んだものは<br>ふだん使えません</sub></td>
+    <td align="center" valign="top"><img src="docs/screenshots/03-purpose.png" width="170"><br><b>2　何をする？</b><br><sub>使いたくなったら<br>目的をひとつ選ぶ</sub></td>
+    <td align="center" valign="top"><img src="docs/screenshots/04-wait.png" width="170"><br><b>3　少し、立ち止まる</b><br><sub>ゆっくり息をしながら<br>待つ</sub></td>
+    <td align="center" valign="top"><img src="docs/screenshots/05-choice.png" width="170"><br><b>4　自分で決める</b><br><sub>使うか、やめておくか</sub></td>
+    <td align="center" valign="top"><img src="docs/screenshots/07-unlocked.png" width="170"><br><b>5　自動で戻る</b><br><sub>時間が過ぎたら<br>制限に戻ります</sub></td>
+  </tr>
+</table>
+
+決めた時間が過ぎたら、自動で制限に戻ります。制限は、いつでも自分で外せます。
+
+## 気づくための、記録
+
+目的や感想を、やさしいグラフで。責めたり、競ったりはしません。
+
+<table>
+  <tr>
+    <td align="center" valign="top"><img src="docs/screenshots/crop-records.png" width="230"><br><b>いつ、何のために</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/crop-bands.png" width="230"><br><b>時間帯と、日ごと</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/crop-morning.png" width="230"><br><b>朝と夜の、振り返り</b></td>
+  </tr>
+</table>
+
+## 選んだものだけ、分かち合う
+
+リンクやフレンドに、選んだ記録だけを。ログインは、使いたいときだけです。
+
+<table>
+  <tr>
+    <td align="center" valign="top"><img src="docs/screenshots/13-friends.png" width="190"><br><b>フレンド</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/14-received.png" width="190"><br><b>届いた記録</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/15-sent.png" width="190"><br><b>共有した記録</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/16-link.png" width="190"><br><b>リンクの中身</b></td>
+  </tr>
+</table>
+
+## あなたの色で
+
+4色のテーマと、好きな色。ダークモードと、日本語・English にも対応しています。
+
+<table>
+  <tr>
+    <td align="center" valign="top"><img src="docs/screenshots/18-theme.png" width="170"><br><b>テーマカラー</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/19-theme-orange.png" width="170"><br><b>好きな色</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/25-dark.png" width="170"><br><b>ダークモード</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/26-dark-en.png" width="170"><br><b>English</b></td>
+  </tr>
+</table>
+
+## iPad の横画面にも
+
+<p align="center"><img src="docs/screenshots/29-ipad-home.png" width="560"></p>
 
 ## 主な機能
 
@@ -40,70 +84,14 @@
 - **フレンド**：リンク・コード・QRで招待し、承認してつながる
 - **バックアップ**：記録と設定をGoogle Driveのアプリ専用領域に保存（Googleとの接続が別に必要）
 
-## 画面
-
-**使うとき**
+## そのほかの画面
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/05-choice.png" width="150"><br><sub>今も使いたい？</sub></td>
-    <td align="center"><img src="docs/screenshots/06-apps.png" width="150"><br><sub>どれを使う？</sub></td>
-    <td align="center"><img src="docs/screenshots/08-lock.png" width="150"><br><sub>制限しました</sub></td>
-    <td align="center"><img src="docs/screenshots/24-home-empty.png" width="150"><br><sub>はじめて</sub></td>
-    <td align="center"><img src="docs/screenshots/28-shield.png" width="150"><br><sub>制限の画面</sub></td>
-  </tr>
-</table>
-
-**記録と振り返り**
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/09-records.png" width="150"><br><sub>記録</sub></td>
-    <td align="center"><img src="docs/screenshots/10-bands.png" width="150"><br><sub>時間帯と日ごと</sub></td>
-    <td align="center"><img src="docs/screenshots/11-morning.png" width="150"><br><sub>朝の振り返り</sub></td>
-    <td align="center"><img src="docs/screenshots/12-feeling.png" width="150"><br><sub>さっきの時間は？</sub></td>
-  </tr>
-</table>
-
-**共有とフレンド**
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/13-friends.png" width="150"><br><sub>フレンド</sub></td>
-    <td align="center"><img src="docs/screenshots/14-received.png" width="150"><br><sub>届いた記録</sub></td>
-    <td align="center"><img src="docs/screenshots/15-sent.png" width="150"><br><sub>共有した記録</sub></td>
-    <td align="center"><img src="docs/screenshots/16-link.png" width="150"><br><sub>リンクの中身</sub></td>
-    <td align="center"><img src="docs/screenshots/17-account.png" width="150"><br><sub>アカウント</sub></td>
-  </tr>
-</table>
-
-**見た目と設定**
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/18-theme.png" width="150"><br><sub>テーマカラー</sub></td>
-    <td align="center"><img src="docs/screenshots/19-theme-orange.png" width="150"><br><sub>好きな色</sub></td>
-    <td align="center"><img src="docs/screenshots/25-dark.png" width="150"><br><sub>ダークモード</sub></td>
-    <td align="center"><img src="docs/screenshots/26-dark-en.png" width="150"><br><sub>English</sub></td>
-    <td align="center"><img src="docs/screenshots/20-notify.png" width="150"><br><sub>通知</sub></td>
-  </tr>
-</table>
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/21-restriction.png" width="150"><br><sub>制限の管理</sub></td>
-    <td align="center"><img src="docs/screenshots/22-backup.png" width="150"><br><sub>バックアップ</sub></td>
-    <td align="center"><img src="docs/screenshots/23-tutorial.png" width="150"><br><sub>はじめの案内</sub></td>
-    <td align="center"><img src="docs/screenshots/27-intro-en.png" width="150"><br><sub>English の説明</sub></td>
-  </tr>
-</table>
-
-**iPad（横画面）**
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/29-ipad-home.png" width="300"></td>
-    <td align="center"><img src="docs/screenshots/30-ipad-lock.png" width="300"></td>
-    <td align="center"><img src="docs/screenshots/31-ipad-purpose.png" width="300"></td>
+    <td align="center" valign="top"><img src="docs/screenshots/24-home-empty.png" width="150"><br><b>はじめて</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/28-shield.png" width="150"><br><b>制限の画面</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/20-notify.png" width="150"><br><b>通知</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/21-restriction.png" width="150"><br><b>制限の管理</b></td>
+    <td align="center" valign="top"><img src="docs/screenshots/22-backup.png" width="150"><br><b>バックアップ</b></td>
   </tr>
 </table>
