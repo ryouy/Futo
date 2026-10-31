@@ -35,10 +35,7 @@ struct SessionRow: View {
     }
 
     private var timeText: String {
-        let locale = LanguageStore.shared.language.locale
-        return showsDate
-            ? session.startedAt.formatted(Date.FormatStyle().month().day().hour().minute().locale(locale))
-            : session.startedAt.formatted(Date.FormatStyle().hour().minute().locale(locale))
+        showsDate ? DateText.dayTime(session.startedAt) : DateText.time(session.startedAt)
     }
 
     /// 解除したもの（アプリ・カテゴリ・ウェブサイト）。以前の版の保存形式（アプリのみ）も読める。

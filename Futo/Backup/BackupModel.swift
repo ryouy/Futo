@@ -60,7 +60,7 @@ final class BackupModel {
             try await self.loadRemote()
             if self.remote != nil {
                 // すでにバックアップがあるときは、上書きしない（新しい端末で、空の記録に置き換えてしまわないため）
-                self.resultMessage = tr("Driveに、すでにバックアップがあります。上書きしないよう、自動のバックアップはしていません。必要なら「バックアップから戻す」を使ってください。")
+                self.resultMessage = tr("Driveに、すでにバックアップがあります　上書きしないよう、自動のバックアップはしていません　必要なら「バックアップから戻す」を使ってください")
             } else {
                 // 有効にしたら、最初の1回を自動で保存する
                 try await self.performBackup()
@@ -103,7 +103,7 @@ final class BackupModel {
         remote = try await client.save(data, existing: existing)
         checkedRemote = true
         lastBackupAt = Date()
-        resultMessage = tr("バックアップしました。（記録 {0} 件）", "\(document.sessions.count)")
+        resultMessage = tr("バックアップしました（記録 {0} 件）", "\(document.sessions.count)")
     }
 
     // MARK: 復元
@@ -115,9 +115,9 @@ final class BackupModel {
             let data = try await self.client.download(file)
             let document: BackupDocument
             do { document = try BackupDocument.parse(data) } catch BackupDocument.ParseError.newerVersion {
-                self.message = tr("このバックアップは、新しいバージョンのふとで作られています。アプリを更新してください。"); return
+                self.message = tr("このバックアップは、新しいバージョンのふとで作られています　アプリを更新してください"); return
             } catch {
-                self.message = tr("バックアップを読み込めませんでした。ファイルが壊れているかもしれません。"); return
+                self.message = tr("バックアップを読み込めませんでした　ファイルが壊れているかもしれません"); return
             }
             let plan = BackupMergePlan.make(
                 document: document,
@@ -139,7 +139,7 @@ final class BackupModel {
     func confirmRestore(includeSettings: Bool) {
         guard let plan = pendingPlan, let document = pendingDocument else { return }
         guard BackupRestorer.apply(plan, to: app.sessions.context) else {
-            message = tr("復元に失敗しました。端末の記録は、変えていません。")
+            message = tr("復元に失敗しました　端末の記録は、変えていません")
             return
         }
         if includeSettings {
@@ -148,7 +148,7 @@ final class BackupModel {
             if let raw = document.language, let language = AppLanguage(rawValue: raw) { app.changeLanguage(language) }
         }
         app.refresh()
-        resultMessage = tr("復元しました。（追加 {0} 件）", "\(plan.newSessions.count)")
+        resultMessage = tr("復元しました（追加 {0} 件）", "\(plan.newSessions.count)")
         cancelRestore()
     }
 
@@ -160,7 +160,7 @@ final class BackupModel {
             try await self.client.delete(file)
             self.remote = nil
             self.lastBackupAt = nil
-            self.resultMessage = tr("Driveのバックアップを削除しました。")
+            self.resultMessage = tr("Driveのバックアップを削除しました")
         }
     }
 
@@ -178,13 +178,13 @@ final class BackupModel {
 
     static func text(for error: DriveError) -> String {
         switch error {
-        case .notConfigured: return tr("共有の設定がまだ終わっていません。")
+        case .notConfigured: return tr("共有の設定がまだ終わっていません")
         case .cancelled: return ""
-        case .needsConsent: return tr("Driveの許可が必要です。もう一度、許可してください。")
-        case .offline: return tr("通信できませんでした。つながってから、もう一度お試しください。")
-        case .notFound: return tr("Driveに、バックアップが見つかりませんでした。")
-        case .quota: return tr("Driveの空き容量が足りません。")
-        case .apiDisabled: return tr("Google Drive APIが有効になっていません。設定の手順を確認してください。")
+        case .needsConsent: return tr("Driveの許可が必要です　もう一度、許可してください")
+        case .offline: return tr("通信できませんでした　つながってから、もう一度お試しください")
+        case .notFound: return tr("Driveに、バックアップが見つかりませんでした")
+        case .quota: return tr("Driveの空き容量が足りません")
+        case .apiDisabled: return tr("Google Drive APIが有効になっていません　設定の手順を確認してください")
         case .failed: return ""
         }
     }

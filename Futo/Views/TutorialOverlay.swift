@@ -38,30 +38,30 @@ struct TutorialOverlay: View {
 
     /// 今の状態で見えているものだけを案内する。
     private var steps: [Step] {
-        var result = [Step(target: .status, lines: [tr("ここに、いまの状態が出ます。"), tr("ふだんは「制限中」です。")])]
+        var result = [Step(target: .status, lines: [tr("ここに、いまの状態が出ます"), tr("ふだんは「制限中」です")])]
         if anchors[.setup] != nil {
             let lines = model.permission != .approved
-                ? [tr("まず、ここで"), tr("許可をします。")]
-                : [tr("まず、ここで"), tr("制限するものを選びます。")]
+                ? [tr("まず、ここで"), tr("許可をします")]
+                : [tr("まず、ここで"), tr("制限するものを選びます")]
             result.append(Step(target: .setup, lines: lines))
         }
         if anchors[.plus] != nil {
-            result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます。"), tr("足すのは、いつでもできます。")]))
+            result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます"), tr("足すのは、いつでもできます")]))
         }
         result.append(Step(target: .main, lines: mainLines))
-        result.append(Step(target: .header, lines: [tr("左の時計は記録、"), tr("右は設定とアカウントです。")]))
-        result.append(Step(target: .header, lines: [tr("制限を止めたいときは、"), tr("設定の「制限の管理」から。"), tr("止める前に、待機があります。")]))
-        result.append(Step(target: nil, lines: [tr("準備はできました。")]))
+        result.append(Step(target: .header, lines: [tr("左の時計は記録、"), tr("右は設定とアカウントです")]))
+        result.append(Step(target: .header, lines: [tr("制限を止めたいときは、"), tr("設定の「制限の管理」から"), tr("止める前に、待機があります")]))
+        result.append(Step(target: nil, lines: [tr("準備はできました")]))
         return result
     }
 
     private var mainLines: [String] {
-        if model.permission != .approved || model.targetCount == 0 { return [tr("準備ができたら、"), tr("ここで制限をかけます。")] }
+        if model.permission != .approved || model.targetCount == 0 { return [tr("準備ができたら、"), tr("ここで制限をかけます")] }
         switch model.restriction {
-        case .configured: return [tr("使いたくなったら、ここ。"), tr("少し待ってから、"), tr("使うかどうかを選べます。")]
-        case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻せます。")]
-        case .paused: return [tr("止めている間も、"), tr("ここで制限を再開できます。")]
-        case .off, .unverifiable: return [tr("ここで制限をかけます。")]
+        case .configured: return [tr("使いたくなったら、ここ"), tr("少し待ってから、"), tr("使うかどうかを選べます")]
+        case .temporarilyUnlocked: return [tr("使い終わったら、"), tr("ここで制限に戻せます")]
+        case .paused: return [tr("止めている間も、"), tr("ここで制限を再開できます")]
+        case .off, .unverifiable: return [tr("ここで制限をかけます")]
         }
     }
 
@@ -177,7 +177,7 @@ struct TutorialOverlay: View {
 
     /// 最後は、一言だけ。タッチすると、案内を終える。
     private var endView: some View {
-        messageCard([tr("準備はできました。")])
+        messageCard([tr("準備はできました")])
             .frame(maxHeight: .infinity)
     }
 }

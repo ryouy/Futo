@@ -46,7 +46,7 @@ struct RecordsView: View {
         return ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if insights.total == 0 && RestrictionEventSummary.counts(events, mode: mode, interval: interval).isEmpty {
-                        Text(tr("この期間の記録はまだありません。")).foregroundStyle(.secondary).card()
+                        Text(tr("この期間の記録はまだありません")).foregroundStyle(.secondary).card()
                     } else {
                         countsCard(insights, restriction: RestrictionEventSummary.counts(events, mode: mode, interval: interval))
                         PieCard(title: tr("目的"), slices: breakdown.purposes)
@@ -118,7 +118,7 @@ struct RecordsView: View {
         return VStack(alignment: .leading, spacing: 14) {
             Text(tr("一時解除（日ごと）")).font(.subheadline.weight(.medium))
             if days.isEmpty {
-                Text(tr("この期間に、一時解除した記録はありません。")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("この期間に、一時解除した記録はありません")).font(.footnote).foregroundStyle(.secondary)
             }
             ForEach(days) { day in
                 DayRow(day: day) { row in
@@ -148,7 +148,7 @@ struct DayDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(detail.day.formatted(Date.FormatStyle().year().month().day().weekday(.wide).locale(LanguageStore.shared.language.locale)))
+                    Text(DateText.dayWeekday(detail.day, wide: true))
                         .font(.footnote).foregroundStyle(.secondary)
                     Group {
                         if let item = detail.key { ItemLabel(item: item) } else { Text(tr("対象の記録なし")) }
@@ -189,7 +189,7 @@ private struct DayRow: View {
                 withAnimation(.easeInOut(duration: 0.28)) { expanded.toggle() }
             } label: {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(day.day.formatted(Date.FormatStyle().month().day().weekday(.abbreviated).locale(LanguageStore.shared.language.locale)))
+                    Text(DateText.dayWeekday(day.day))
                         .font(.subheadline.weight(.semibold))
                     Spacer()
                     Text(tr("一時解除 {0}回", "\(day.unlockCount)")).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)

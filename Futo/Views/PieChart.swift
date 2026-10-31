@@ -5,7 +5,7 @@ import SwiftUI
 struct PieCard: View {
     let title: String
     let slices: [Breakdown.Slice]
-    var emptyText = tr("まだ記録がありません。")
+    var emptyText = tr("まだ記録がありません")
 
     private var shown: [Breakdown.Slice] { slices.filter { $0.count > 0 } }
 

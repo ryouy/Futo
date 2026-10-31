@@ -93,7 +93,7 @@ enum SuggestionEngine {
             return Suggestion(
                 weekKey: weekKey, kind: .waitLonger,
                 title: tr("待機時間を長くしてみますか？"),
-                evidence: tr("7日間で、待機のあと「使いたい」は{0}件中{1}件。", "\(chosen.count)", "\(wants)"),
+                evidence: tr("7日間で、待機のあと「使いたい」は{0}件中{1}件", "\(chosen.count)", "\(wants)"),
                 currentText: tr("待機時間 {0}", "\(durationText(seconds: currentWait))"),
                 proposedText: tr("待機時間 {0}", "\(durationText(seconds: longer))"),
                 change: .waitSeconds(longer))
@@ -107,7 +107,7 @@ enum SuggestionEngine {
                 return Suggestion(
                     weekKey: weekKey, kind: .nightEarlier,
                     title: tr("夜の振り返りを早めますか？"),
-                    evidence: tr("{0}より後の記録が、7日間で{1}件。", "\(clockText(minute: preferences.nightMinute))", "\(late)"),
+                    evidence: tr("{0}より後の記録が、7日間で{1}件", "\(clockText(minute: preferences.nightMinute))", "\(late)"),
                     currentText: tr("夜の振り返り {0}", "\(clockText(minute: preferences.nightMinute))"),
                     proposedText: tr("夜の振り返り {0}", "\(clockText(minute: earlier))"),
                     change: .nightMinute(earlier))
@@ -120,7 +120,7 @@ enum SuggestionEngine {
             return Suggestion(
                 weekKey: weekKey, kind: .waitShorter,
                 title: tr("待機時間を短くしてみますか？"),
-                evidence: tr("7日間で、途中でやめたのは{0}件。", "\(interrupted)"),
+                evidence: tr("7日間で、途中でやめたのは{0}件", "\(interrupted)"),
                 currentText: tr("待機時間 {0}", "\(durationText(seconds: currentWait))"),
                 proposedText: tr("待機時間 {0}", "\(durationText(seconds: shorter))"),
                 change: .waitSeconds(shorter))

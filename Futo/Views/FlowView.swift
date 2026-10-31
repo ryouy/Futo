@@ -82,7 +82,7 @@ struct PurposeView: View {
         CenteredScroll {
             VStack(spacing: 14) {
                 FlowTitle(text: tr("これから、何をしますか？"))
-                Text(tr("使う前に、{0}だけ待ちます。", "\(model.waitDurationText)"))
+                Text(tr("使う前に、{0}だけ待ちます", "\(model.waitDurationText)"))
                     .oneLine(0.8)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -131,8 +131,8 @@ struct WaitView: View {
     var body: some View {
         CenteredScroll {
             VStack(spacing: 24) {
-                FlowTitle(text: tr("少し、立ち止まってみましょう。"))
-                Text(tr("ゆっくり息をしながら、{0}待ちましょう。", "\(model.waitDurationText)"))
+                FlowTitle(text: tr("少し、立ち止まってみましょう"))
+                Text(tr("ゆっくり息をしながら、{0}待ちましょう", "\(model.waitDurationText)"))
                     .oneLine(0.8)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -246,18 +246,18 @@ struct ResultView: View {
 
     /// 見出しと本文。解除できたときは「解除しました」と、ひとこと添える。
     private var content: (title: String, lines: [String]) {
-        if outcome == .deferred { return (tr("記録しました。"), []) }
+        if outcome == .deferred { return (tr("記録しました"), []) }
         if model.isUnlocking { return (tr("解除しています…"), []) }
         switch model.unlockResult {
         case .started:
             let minutes = model.prefs.effectiveUnlockMinutes
-            return (tr("解除しました"), [tr("{0}分ほど、ゆっくりどうぞ。", "\(minutes)"), tr("戻ってきたら、感想を教えてください。")])
+            return (tr("解除しました"), [tr("{0}分ほど、ゆっくりどうぞ", "\(minutes)"), tr("戻ってきたら、感想を教えてください")])
         case .failed:
-            return (tr("解除できませんでした"), [tr("制限は続いています。")])
+            return (tr("解除できませんでした"), [tr("制限は続いています")])
         case .unsupported:
-            return (tr("記録しました。"), [tr("この設定では、解除は使えません。")])
+            return (tr("記録しました"), [tr("この設定では、解除は使えません")])
         case nil:
-            return (tr("記録しました。"), [tr("制限は続いています。")])
+            return (tr("記録しました"), [tr("制限は続いています")])
         }
     }
 

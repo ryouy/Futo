@@ -55,9 +55,9 @@ enum SharePhrase: String, CaseIterable, Identifiable, Codable {
     var id: String { rawValue }
     var text: String {
         switch self {
-        case .p1: return tr("こんな感じでした。")
-        case .p2: return tr("ひと呼吸の記録を、少しだけ共有します。")
-        case .p3: return tr("ふと、立ち止まった記録です。")
+        case .p1: return tr("こんな感じでした")
+        case .p2: return tr("ひと呼吸の記録を、少しだけ共有します")
+        case .p3: return tr("ふと、立ち止まった記録です")
         }
     }
 }

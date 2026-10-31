@@ -178,15 +178,15 @@ struct HomeView: View {
     private var subline: String {
         if needsPermission {
             return model.permission == .denied
-                ? tr("設定アプリで許可をオンにしてください。")
-                : tr("Screen Timeの許可が必要です。")
+                ? tr("設定アプリで許可をオンにしてください")
+                : tr("Screen Timeの許可が必要です")
         }
-        if model.targetCount == 0 { return tr("アプリやサイトを選びます。") }
+        if model.targetCount == 0 { return tr("アプリやサイトを選びます") }
         switch model.restriction {
         case .configured: return tr("")
         case .temporarilyUnlocked: return ""
-        case .paused(let until): return tr("{0} に、自動で戻ります。", until.formatted(date: .omitted, time: .shortened))
-        case .unverifiable: return tr("もう一度、かけ直してください。")
+        case .paused(let until): return tr("{0} に、自動で戻ります", DateText.time(until))
+        case .unverifiable: return tr("もう一度、かけ直してください")
         case .off: return ""
         }
     }

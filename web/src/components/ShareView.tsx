@@ -4,8 +4,8 @@ import { AppBars, Donut, type Slice } from "./Charts";
 // テーマの緑を中心にした、区別しやすい配色
 const PALETTE = ["#196459", "#6fa898", "#e0b84a", "#b9c9c2"];
 
-function dateRange(start: string, end: string, timeZone: string, withYear = false): string {
-  const fmt = new Intl.DateTimeFormat("ja-JP", { ...(withYear ? { year: "numeric" as const } : {}), month: "numeric", day: "numeric", timeZone });
+function dateRange(start: string, end: string, timeZone: string): string {
+  const fmt = new Intl.DateTimeFormat("sv-SE", { year: "numeric", month: "2-digit", day: "2-digit", timeZone });
   return `${fmt.format(new Date(start))}〜${fmt.format(new Date(Date.parse(end) - 1000))}`;
 }
 
@@ -59,7 +59,7 @@ export function ShareView({ share }: { share: PublicShare }) {
       <div className="card">
         <p className="who">{share.displayName ?? "匿名"}</p>
         <p className="muted">
-          {periodLabel}（{dateRange(stats.periodStart, stats.periodEnd, stats.timezone, stats.period === "all")}）
+          {periodLabel}（{dateRange(stats.periodStart, stats.periodEnd, stats.timezone)}）
         </p>
       </div>
 
@@ -87,9 +87,10 @@ export function ShareView({ share }: { share: PublicShare }) {
       )}
 
       {stats.phrase && <p className="phrase">{stats.phrase}</p>}
+      {stats.message && <p className="phrase">{stats.message}</p>}
 
       <p className="muted" style={{ textAlign: "center" }}>
-        {new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: stats.timezone }).format(new Date(share.createdAt))} に共有
+        {new Intl.DateTimeFormat("sv-SE", { dateStyle: "short", timeStyle: "short", timeZone: stats.timezone }).format(new Date(share.createdAt))} に共有
       </p>
     </>
   );

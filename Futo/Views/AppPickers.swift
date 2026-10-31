@@ -46,7 +46,7 @@ struct DeviceAppPickerView: View {
                             // 制限中は、追加だけ。外したものは元に戻る。
                             let removedSelf = model.device.saveSelection(draft, additiveOnly: model.isTargetEditLocked)
                             model.didChangeDeviceSelection()
-                            if removedSelf { model.notice = tr("「ふと」自身は、制限できません。") }
+                            if removedSelf { model.notice = tr("「ふと」自身は、制限できません") }
                             dismiss()
                         }
                     }

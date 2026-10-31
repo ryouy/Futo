@@ -47,7 +47,7 @@ struct SettingsView: View {
         .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
-            tr("すべての記録を削除しますか？ 制限の設定は変わりません。"),
+            tr("すべての記録を削除しますか？ 制限の設定は変わりません"),
             isPresented: $confirmDelete, titleVisibility: .visible
         ) {
             Button(tr("削除"), role: .destructive) { model.deleteAllRecords() }
@@ -64,19 +64,24 @@ struct SettingsView: View {
 
             CardSection {
                 Picker(tr("待機時間"), selection: Binding(
-                    get: { model.prefs.effectiveWaitSeconds },
-                    set: { value in model.updatePreferences { $0.waitSeconds = value } }
+                    get: { model.prefs.pendingWaitSeconds ?? model.prefs.effectiveWaitSeconds },
+                    set: { value in model.updatePreferences { $0.setWait(value) } }
                 )) {
                     ForEach(Preferences.waitOptions, id: \.self) { Text(durationText(seconds: $0)).tag($0) }
                 }
                 .frame(minHeight: 44)
                 Picker(tr("解除する時間"), selection: Binding(
-                    get: { model.prefs.effectiveUnlockMinutes },
-                    set: { value in model.updatePreferences { $0.unlockMinutes = value } }
+                    get: { model.prefs.pendingUnlockMinutes ?? model.prefs.effectiveUnlockMinutes },
+                    set: { value in model.updatePreferences { $0.setUnlockMinutes(value) } }
                 )) {
                     ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text(tr("{0}分", "\($0)")).tag($0) }
                 }
                 .frame(minHeight: 44)
+                // ゆるめる変更は、1分後に反映される（その間、元の設定のまま）
+                if model.prefs.pendingWaitSeconds != nil || model.prefs.pendingUnlockMinutes != nil {
+                    Text(tr("ゆるめる変更は、1分後に反映されます"))
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
             }
 
             CardSection {
@@ -89,6 +94,15 @@ struct SettingsView: View {
             if model.permission == .approved { permissionSection }
         }
         .compactForm()
+        .task {
+            // 1分たった変更を、本設定へ移す
+            while !Task.isCancelled {
+                if model.prefs.pendingWaitAt != nil || model.prefs.pendingUnlockAt != nil {
+                    model.updatePreferences { $0.settlePending() }
+                }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
     }
 
     private var permissionSection: some View {

@@ -27,9 +27,9 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     static func body(for kind: NotificationKind, seed: String = "") -> String {
         switch kind {
-        case .morning: return tr("今日のはじまりに、記録を少し見てみませんか。")
-        case .night: return tr("一日の終わりに、少しだけ振り返りませんか。")
-        case .postUse: return tr("使ったあとの気持ちを、よければ残せます。")
+        case .morning: return tr("今日のはじまりに、記録を少し見てみませんか")
+        case .night: return tr("一日の終わりに、少しだけ振り返りませんか")
+        case .postUse: return tr("使ったあとの気持ちを、よければ残せます")
         case .outing: return OutingMessages.pick(seed: seed)
         }
     }

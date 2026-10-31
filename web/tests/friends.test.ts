@@ -512,10 +512,16 @@ describe("自分自身の招待・一言（自由入力）", () => {
     expect(ok.status).toBe(201);
   });
 
-  it("Webの公開リンクでは、自由入力の一言は受け付けない", async () => {
+  it("Webの公開リンクでも、一言（自由入力）は使える。URLや長すぎる文は拒否", async () => {
     const alice = await newUser("アリス");
-    const r = await call("POST", "/api/shares", { token: alice.token, body: webPayloadWithMessage() });
-    expect(r.status).toBe(400);
+    const ok = await call("POST", "/api/shares", { token: alice.token, body: webPayloadWithMessage() });
+    expect(ok.status).toBe(201);
+    const page = await call("GET", `/api/public/shares/${ok.body.token}`);
+    expect(page.body.stats.message).toBe("こんにちは");
+    for (const bad of ["https://example.com", "あ".repeat(61), "x\u0000y"]) {
+      const r = await call("POST", "/api/shares", { token: alice.token, body: { ...webPayloadWithMessage(), idempotencyKey: crypto.randomUUID(), message: bad } });
+      expect(r.status).toBe(400);
+    }
   });
 });
 

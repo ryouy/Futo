@@ -22,11 +22,11 @@ struct BackupView: View {
         .sheet(isPresented: Binding(get: { backup.preview != nil }, set: { if !$0 { backup.cancelRestore() } })) {
             restoreSheet
         }
-        .confirmationDialog(tr("Driveの許可を取り消しますか？ Drive上のバックアップは、そのまま残ります。"), isPresented: $confirmDisconnect, titleVisibility: .visible) {
+        .confirmationDialog(tr("Driveの許可を取り消しますか？ Drive上のバックアップは、そのまま残ります"), isPresented: $confirmDisconnect, titleVisibility: .visible) {
             Button(tr("取り消す"), role: .destructive) { Task { await backup.disconnect() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("Drive上のバックアップを削除しますか？ 取り消せません。端末の記録は消えません。"), isPresented: $confirmDeleteRemote, titleVisibility: .visible) {
+        .confirmationDialog(tr("Drive上のバックアップを削除しますか？ 取り消せません　端末の記録は消えません"), isPresented: $confirmDeleteRemote, titleVisibility: .visible) {
             Button(tr("削除する"), role: .destructive) { Task { await backup.deleteRemote() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -34,7 +34,7 @@ struct BackupView: View {
 
     private var explanation: some View {
         Section {
-            Text(tr("記録と設定を、Driveに保存します。"))
+            Text(tr("記録と設定を、Driveに保存します"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -65,7 +65,7 @@ struct BackupView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             } else if backup.checkedRemote {
-                Text(tr("まだバックアップはありません。")).foregroundStyle(.secondary)
+                Text(tr("まだバックアップはありません")).foregroundStyle(.secondary)
             }
         }
         PrimarySection {
@@ -116,7 +116,7 @@ struct BackupView: View {
                     }
                     CardSection {
                         Toggle(tr("設定も戻す"), isOn: $includeSettings)
-                        Text(tr("いま端末にある記録は、消えません。足りない記録だけが追加されます。"))
+                        Text(tr("いま端末にある記録は、消えません　足りない記録だけが追加されます"))
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     CardSection {

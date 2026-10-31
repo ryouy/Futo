@@ -15,14 +15,14 @@ struct OnboardingView: View {
 
     private var pages: [Page] {
         [
-        Page(symbol: nil, title: tr("使う前に、ひと呼吸。"),
-             text: tr("スマホを開く前に、\n少し立ち止まる時間をつくるアプリです。")),
+        Page(symbol: nil, title: tr("使う前に、ひと呼吸"),
+             text: tr("スマホを開く前に、\n少し立ち止まる時間をつくるアプリです")),
         Page(symbol: "lock.fill", title: tr("ふだんは、制限をかけておく"),
-             text: tr("選んだアプリやサイトは、\nふだんは使えなくします。")),
+             text: tr("選んだアプリやサイトは、\nふだんは使えなくします")),
         Page(symbol: "hourglass", title: tr("使いたいときは、ひと呼吸"),
-             text: tr("使う理由を選んで、少し待ちます。\nそのあと、自分で決めます。")),
+             text: tr("使う理由を選んで、少し待ちます\nそのあと、自分で決めます")),
         Page(symbol: "moon.stars", title: tr("そっと、振り返る"),
-             text: tr("朝や夜に、短く振り返れます。\n記録は、選ばない限り、\nこの端末の中だけに保存されます。")),
+             text: tr("朝や夜に、短く振り返れます\n記録は、選ばない限り、\nこの端末の中だけに保存されます")),
         ]
     }
 
@@ -104,10 +104,7 @@ struct OnboardingView: View {
         VStack(spacing: 22) {
             Spacer(minLength: 0)
             Image("Logo").resizable().scaledToFit().frame(width: 96).accessibilityHidden(true)
-            Text(tr("はじめましょう"))
-                .font(.title2.weight(.medium))
-                .foregroundStyle(Self.cream)
-            Text(model.isOnboardingReplay ? tr("説明は以上です。") : tr("準備はできました。"))
+            Text(model.isOnboardingReplay ? tr("説明は以上です") : tr("準備はできました"))
                 .foregroundStyle(Self.cream.opacity(0.85))
             Spacer(minLength: 0)
         }

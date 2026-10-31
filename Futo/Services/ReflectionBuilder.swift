@@ -27,7 +27,7 @@ enum ReflectionBuilder {
         let dayWord = kind == .morning ? tr("昨日") : dayWord
 
         guard !records.isEmpty else {
-            return ReflectionContent(title: kind.title, lines: [tr("{0}は、記録がまだありません。", "\(dayWord)"), closing])
+            return ReflectionContent(title: kind.title, lines: [tr("{0}は、記録がまだありません", "\(dayWord)"), closing])
         }
 
         let volume: Volume = records.count <= 2 ? .few : (records.count <= 5 ? .some : .many)
@@ -45,24 +45,24 @@ enum ReflectionBuilder {
     private static func openings(_ kind: ReflectionKind, _ volume: Volume, _ day: String) -> [String] {
         switch (kind, volume) {
         case (.morning, .few):
-            return [tr("{0}は、立ち止まる場面が少なめでした。", "\(day)"), tr("{0}は、ひと呼吸が少なめでした。", "\(day)")]
+            return [tr("{0}は、立ち止まる場面が少なめでした", "\(day)"), tr("{0}は、ひと呼吸が少なめでした", "\(day)")]
         case (.morning, .some):
-            return [tr("{0}は、何度か立ち止まる時間がありました。", "\(day)"), tr("{0}は、ひと呼吸が何回かありました。", "\(day)")]
+            return [tr("{0}は、何度か立ち止まる時間がありました", "\(day)"), tr("{0}は、ひと呼吸が何回かありました", "\(day)")]
         case (.morning, .many):
-            return [tr("{0}は、立ち止まる場面が多めでした。", "\(day)"), tr("{0}は、ひと呼吸をたくさんしました。", "\(day)")]
+            return [tr("{0}は、立ち止まる場面が多めでした", "\(day)"), tr("{0}は、ひと呼吸をたくさんしました", "\(day)")]
         case (.night, .few):
-            return [tr("{0}は、立ち止まる場面が少なめでした。", "\(day)"), tr("{0}は、ひと呼吸が少なめでした。", "\(day)")]
+            return [tr("{0}は、立ち止まる場面が少なめでした", "\(day)"), tr("{0}は、ひと呼吸が少なめでした", "\(day)")]
         case (.night, .some):
-            return [tr("{0}は、何度か立ち止まりました。", "\(day)"), tr("{0}は、ひと呼吸が何回かありました。", "\(day)")]
+            return [tr("{0}は、何度か立ち止まりました", "\(day)"), tr("{0}は、ひと呼吸が何回かありました", "\(day)")]
         case (.night, .many):
-            return [tr("{0}は、立ち止まる場面が多めでした。", "\(day)"), tr("{0}は、ひと呼吸をたくさんしました。", "\(day)")]
+            return [tr("{0}は、立ち止まる場面が多めでした", "\(day)"), tr("{0}は、ひと呼吸をたくさんしました", "\(day)")]
         }
     }
 
     private static func closings(_ kind: ReflectionKind) -> [String] {
         switch kind {
-        case .morning: return [tr("新しい一日のはじまりです。"), tr("今日のペースで、ゆっくり。"), tr("ゆっくり始めましょう。")]
-        case .night: return [tr("今日はここまでです。"), tr("一日の終わりです。"), tr("ここでひと区切りにしましょう。")]
+        case .morning: return [tr("新しい一日のはじまりです"), tr("今日のペースで、ゆっくり"), tr("ゆっくり始めましょう")]
+        case .night: return [tr("今日はここまでです"), tr("一日の終わりです"), tr("ここでひと区切りにしましょう")]
         }
     }
 
@@ -71,33 +71,33 @@ enum ReflectionBuilder {
         let wants = records.filter { $0.outcome == .wantsToUse }.count
         let interrupted = records.count - deferred - wants
         if records.count == 1 {
-            if deferred == 1 { return tr("「やめておく」を選びました。") }
-            if wants == 1 { return tr("「使いたい」を選びました。") }
-            return tr("途中でやめました。")
+            if deferred == 1 { return tr("「やめておく」を選びました") }
+            if wants == 1 { return tr("「使いたい」を選びました") }
+            return tr("途中でやめました")
         }
         if interrupted * 2 >= records.count {
-            return pick([tr("途中でやめる場面が多めでした。"), tr("途中で終えることが多めでした。")], seed, 2)
+            return pick([tr("途中でやめる場面が多めでした"), tr("途中で終えることが多めでした")], seed, 2)
         }
         let decided = deferred + wants
         guard decided > 0 else { return nil }
         let share = Double(deferred) / Double(decided)
-        if share >= 0.7 { return pick([tr("「やめておく」が多めでした。"), tr("ほとんど「やめておく」でした。")], seed, 3) }
-        if share <= 0.3 { return pick([tr("「使いたい」が多めでした。"), tr("ほとんど「使いたい」でした。")], seed, 3) }
-        return pick([tr("「やめておく」と「使いたい」は半々でした。"), tr("どちらも同じくらいでした。")], seed, 3)
+        if share >= 0.7 { return pick([tr("「やめておく」が多めでした"), tr("ほとんど「やめておく」でした")], seed, 3) }
+        if share <= 0.3 { return pick([tr("「使いたい」が多めでした"), tr("ほとんど「使いたい」でした")], seed, 3) }
+        return pick([tr("「やめておく」と「使いたい」は半々でした"), tr("どちらも同じくらいでした")], seed, 3)
     }
 
     private static func purposeLine(_ records: [Session], _ seed: String) -> String? {
         let counts = Purpose.allCases.map { p in (p, records.filter { $0.purpose == p }.count) }.filter { $0.1 > 0 }
         let answered = counts.reduce(0) { $0 + $1.1 }
         if answered == 0 {
-            return records.count == 1 ? tr("目的は答えませんでした。") : tr("目的は、あまり答えませんでした。")
+            return records.count == 1 ? tr("目的は答えませんでした") : tr("目的は、あまり答えませんでした")
         }
         let top = counts.max { $0.1 < $1.1 }!
-        if answered == 1 { return tr("目的は「{0}」でした。", "\(top.0.label)") }
+        if answered == 1 { return tr("目的は「{0}」でした", "\(top.0.label)") }
         if Double(top.1) / Double(answered) >= 0.6 {
-            return pick([tr("目的は「{0}」が中心でした。", "\(top.0.label)"), tr("目的は、おもに「{0}」でした。", "\(top.0.label)")], seed, 4)
+            return pick([tr("目的は「{0}」が中心でした", "\(top.0.label)"), tr("目的は、おもに「{0}」でした", "\(top.0.label)")], seed, 4)
         }
-        return pick([tr("目的は、いろいろでした。"), tr("目的は、ばらけていました。")], seed, 4)
+        return pick([tr("目的は、いろいろでした"), tr("目的は、ばらけていました")], seed, 4)
     }
 
     private static func reflectionLine(_ records: [Session], _ seed: String) -> String? {
@@ -106,12 +106,12 @@ enum ReflectionBuilder {
         let answered = counts.reduce(0) { $0 + $1.1 }
         guard answered > 0 else { return nil }
         let top = counts.max { $0.1 < $1.1 }!
-        if answered == 1 { return tr("感想は「{0}」でした。", "\(top.0.label)") }
-        guard Double(top.1) / Double(answered) >= 0.6 else { return tr("感想は、分かれていました。") }
+        if answered == 1 { return tr("感想は「{0}」でした", "\(top.0.label)") }
+        guard Double(top.1) / Double(answered) >= 0.6 else { return tr("感想は、分かれていました") }
         switch top.0 {
-        case .satisfied: return tr("感想は「満足した」が多めでした。")
-        case .neutral: return tr("感想は「どちらでもない」が多めでした。")
-        case .wishedLess: return tr("感想は「使いすぎかも」が多めでした。")
+        case .satisfied: return tr("感想は「満足した」が多めでした")
+        case .neutral: return tr("感想は「どちらでもない」が多めでした")
+        case .wishedLess: return tr("感想は「使いすぎかも」が多めでした")
         case .skipped: return nil
         }
     }
@@ -121,11 +121,11 @@ enum ReflectionBuilder {
         let unlocked = records.filter { $0.temporaryUnlockStartedAt != nil }
         guard !unlocked.isEmpty else { return nil }
         let known = unlocked.compactMap(\.unlockDuration)
-        guard !known.isEmpty else { return tr("一時的に解除した場面がありました。") }
+        guard !known.isEmpty else { return tr("一時的に解除した場面がありました") }
         let minutes = known.reduce(0, +) / 60
-        if minutes < 5 { return tr("解除していた時間は、短めでした。") }
-        if minutes < 20 { return tr("解除していた時間は、ほどほどでした。") }
-        return tr("解除していた時間は、長めでした。")
+        if minutes < 5 { return tr("解除していた時間は、短めでした") }
+        if minutes < 20 { return tr("解除していた時間は、ほどほどでした") }
+        return tr("解除していた時間は、長めでした")
     }
 
     // MARK: 言い回しの選択（同じ入力なら同じ結果）

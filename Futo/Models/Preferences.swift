@@ -17,6 +17,12 @@ struct Preferences: Codable, Equatable {
     /// 解除していられる分数（その分だけ使うと制限に戻る）。nil は既定（Releaseは5分、Debugは1分）
     var unlockMinutes: Int?
 
+    /// ゆるめる変更（待機を短く・解除を長く）は、押してから1分たつまで反映しない。待っている変更と、押した時刻。
+    var pendingWaitSeconds: Double?
+    var pendingWaitAt: Date?
+    var pendingUnlockMinutes: Int?
+    var pendingUnlockAt: Date?
+
     var morningEnabled = true
     var morningMinute = 8 * 60
     var nightEnabled = true
@@ -55,10 +61,55 @@ struct Preferences: Codable, Equatable {
         options.min { abs($0 - value) < abs($1 - value) } ?? value
     }
 
-    var effectiveWaitSeconds: Double { Self.nearest(waitSeconds ?? Self.defaultWaitSeconds, in: Self.waitOptions) }
+    /// ゆるめる変更が反映されるまでの時間（秒）
+    static let loosenDelay: TimeInterval = 60
 
-    var effectiveUnlockMinutes: Int {
-        Int(Self.nearest(Double(unlockMinutes ?? Self.defaultUnlockMinutes), in: Self.unlockMinuteOptions.map(Double.init)))
+    private func isDue(_ at: Date?, now: Date) -> Bool {
+        guard let at else { return false }
+        return now.timeIntervalSince(at) >= Self.loosenDelay
+    }
+
+    func effectiveWaitSeconds(now: Date) -> Double {
+        let value = (isDue(pendingWaitAt, now: now) ? pendingWaitSeconds : nil) ?? waitSeconds ?? Self.defaultWaitSeconds
+        return Self.nearest(value, in: Self.waitOptions)
+    }
+
+    func effectiveUnlockMinutes(now: Date) -> Int {
+        let value = (isDue(pendingUnlockAt, now: now) ? pendingUnlockMinutes : nil) ?? unlockMinutes ?? Self.defaultUnlockMinutes
+        return Int(Self.nearest(Double(value), in: Self.unlockMinuteOptions.map(Double.init)))
+    }
+
+    var effectiveWaitSeconds: Double { effectiveWaitSeconds(now: Date()) }
+    var effectiveUnlockMinutes: Int { effectiveUnlockMinutes(now: Date()) }
+
+    /// 1分たった、待っていた変更を、本設定に移す。
+    mutating func settlePending(now: Date = Date()) {
+        if isDue(pendingWaitAt, now: now), let value = pendingWaitSeconds { waitSeconds = value }
+        if isDue(pendingWaitAt, now: now) { pendingWaitSeconds = nil; pendingWaitAt = nil }
+        if isDue(pendingUnlockAt, now: now), let value = pendingUnlockMinutes { unlockMinutes = value }
+        if isDue(pendingUnlockAt, now: now) { pendingUnlockMinutes = nil; pendingUnlockAt = nil }
+    }
+
+    /// 待機時間を変える。短くする（ゆるめる）ときは1分後、長くする・同じにするときはすぐ。
+    mutating func setWait(_ value: Double, now: Date = Date()) {
+        settlePending(now: now)
+        if value < effectiveWaitSeconds(now: now) {
+            if pendingWaitSeconds != value { pendingWaitSeconds = value; pendingWaitAt = now }
+        } else {
+            waitSeconds = value
+            pendingWaitSeconds = nil; pendingWaitAt = nil
+        }
+    }
+
+    /// 解除する時間を変える。長くする（ゆるめる）ときは1分後、短くする・同じにするときはすぐ。
+    mutating func setUnlockMinutes(_ value: Int, now: Date = Date()) {
+        settlePending(now: now)
+        if value > effectiveUnlockMinutes(now: now) {
+            if pendingUnlockMinutes != value { pendingUnlockMinutes = value; pendingUnlockAt = now }
+        } else {
+            unlockMinutes = value
+            pendingUnlockMinutes = nil; pendingUnlockAt = nil
+        }
     }
 
     /// Device Activityの監視区間の長さ。Appleの最短は15分なので、短い設定でも16分を下回らない。
@@ -89,6 +140,10 @@ struct Preferences: Codable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         waitSeconds = try c.decodeIfPresent(Double.self, forKey: .waitSeconds)
         unlockMinutes = try c.decodeIfPresent(Int.self, forKey: .unlockMinutes)
+        pendingWaitSeconds = try c.decodeIfPresent(Double.self, forKey: .pendingWaitSeconds)
+        pendingWaitAt = try c.decodeIfPresent(Date.self, forKey: .pendingWaitAt)
+        pendingUnlockMinutes = try c.decodeIfPresent(Int.self, forKey: .pendingUnlockMinutes)
+        pendingUnlockAt = try c.decodeIfPresent(Date.self, forKey: .pendingUnlockAt)
         // 朝夜の振り返りカードは、つねに表示する（設定で切らない）
         morningEnabled = true
         morningMinute = try c.decodeIfPresent(Int.self, forKey: .morningMinute) ?? 8 * 60

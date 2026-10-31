@@ -14,7 +14,7 @@ struct SharingTab: View {
         Form {
             if !sharing.isConfigured {
                 CardSection {
-                    Text(tr("共有の機能は、まだ使えません。"))
+                    Text(tr("共有の機能は、まだ使えません"))
                 }
             } else {
                 switch sharing.auth.state {
@@ -29,11 +29,11 @@ struct SharingTab: View {
         }
         .compactForm()
         .task { if sharing.isSignedIn { await sharing.loadProfile() } }
-        .confirmationDialog(tr("ログアウトしますか？ 共有中のリンクは、そのまま有効です。"), isPresented: $confirmSignOut, titleVisibility: .visible) {
+        .confirmationDialog(tr("ログアウトしますか？ 共有中のリンクは、そのまま有効です"), isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button(tr("ログアウト"), role: .destructive) { sharing.signOut() }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("アカウントと、共有・フレンドのデータをすべて削除しますか？ 取り消せません。端末の記録は消えません。"), isPresented: $confirmDelete, titleVisibility: .visible) {
+        .confirmationDialog(tr("アカウントと、共有・フレンドのデータをすべて削除しますか？ 取り消せません　端末の記録は消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
             Button(tr("削除する"), role: .destructive) { Task { _ = await sharing.deleteAccount() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -42,7 +42,7 @@ struct SharingTab: View {
     private var signedOut: some View {
         Group {
             CardSection {
-                Text(tr("ログインすると、選んだ記録だけを、リンクやフレンドに共有できます。"))
+                Text(tr("ログインすると、選んだ記録だけを、リンクやフレンドに共有できます"))
             }
             PrimarySection {
                 Button { Task { await sharing.signIn() } } label: {
@@ -55,7 +55,7 @@ struct SharingTab: View {
 
     private var needsReauth: some View {
         Group {
-            CardSection { Text(tr("ログインの確認が必要です。")) }
+            CardSection { Text(tr("ログインの確認が必要です")) }
             PrimarySection {
                 Button(tr("もう一度ログイン")) { Task { await sharing.signIn() } }
                 Button(tr("ログアウト"), role: .destructive) { sharing.signOut() }
@@ -118,7 +118,7 @@ struct CreateShareView: View {
 
     @Environment(SharingModel.self) private var sharing
     @Query private var allSessions: [Session]
-    @State private var period: SharePeriod = .lastWeek
+    @State private var period: SharePeriod = .thisWeek
     @State private var selection = ShareSelection()
     @State private var expiresInDays = 7
     @State private var chosen: Set<String> = []
@@ -131,13 +131,13 @@ struct CreateShareView: View {
     private var payload: SharePayload? {
         try? sharing.previewPayload(sessions: allSessions, mode: model.mode, period: period, selection: selection,
                                     expiresInDays: isFriends ? nil : expiresInDays,
-                                    recipientUids: isFriends ? Array(chosen) : nil, allowsMessage: isFriends,
+                                    recipientUids: isFriends ? Array(chosen) : nil, allowsMessage: true,
                                     events: model.events.all())
     }
 
     private var messageProblem: String? {
-        guard isFriends, let text = ShareMessage.normalized(selection.message) else { return nil }
-        return ShareMessage.looksLikeLink(text) ? tr("リンクやURLは、一言に入れられません。") : nil
+        guard let text = ShareMessage.normalized(selection.message) else { return nil }
+        return ShareMessage.looksLikeLink(text) ? tr("リンクやURLは、一言に入れられません") : nil
     }
 
     private var canCreate: Bool {
@@ -167,7 +167,7 @@ struct CreateShareView: View {
     private var whoSection: some View {
         Section {
             if recipients.isEmpty {
-                Text(tr("まだフレンドがいません。")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("まだフレンドがいません")).font(.footnote).foregroundStyle(.secondary)
             } else {
                 ForEach(recipients) { friend in
                     Button {
@@ -234,36 +234,32 @@ struct CreateShareView: View {
                 ForEach(SharePeriod.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
-            if isFriends {
-                HStack(spacing: 8) {
-                    TextField(tr("ひとこと（任意）"), text: $selection.message, axis: .vertical)
-                        .lineLimit(1...2)
-                        .onChange(of: selection.message) { _, value in
-                            if value.count > ShareMessage.maxLength { selection.message = String(value.prefix(ShareMessage.maxLength)) }
-                        }
-                    Menu {
-                        ForEach(SharePhrase.allCases) { phrase in Button(phrase.text) { selection.message = phrase.text } }
-                        if !selection.message.isEmpty { Button(tr("消す"), role: .destructive) { selection.message = "" } }
-                    } label: {
-                        Image(systemName: "text.quote").foregroundStyle(Theme.accentText).frame(width: 36, height: 36)
+            HStack(spacing: 8) {
+                TextField(tr("ひとこと（任意）"), text: $selection.message, axis: .vertical)
+                    .lineLimit(1...2)
+                    .onChange(of: selection.message) { _, value in
+                        if value.count > ShareMessage.maxLength { selection.message = String(value.prefix(ShareMessage.maxLength)) }
                     }
-                    .accessibilityLabel(tr("定型文から選ぶ"))
+                Menu {
+                    ForEach(SharePhrase.allCases) { phrase in Button(phrase.text) { selection.message = phrase.text } }
+                    if !selection.message.isEmpty { Button(tr("消す"), role: .destructive) { selection.message = "" } }
+                } label: {
+                    Image(systemName: "text.quote").foregroundStyle(Theme.accentText).frame(width: 36, height: 36)
                 }
-                if let problem = messageProblem { Text(problem).font(.caption).foregroundStyle(.red) }
-            } else {
-                Picker(tr("ひとこと"), selection: Binding(get: { selection.phrase?.rawValue ?? "" }, set: { selection.phrase = SharePhrase(rawValue: $0) })) {
-                    Text(tr("なし")).tag("")
-                    ForEach(SharePhrase.allCases) { Text($0.text).tag($0.rawValue) }
-                }
+                .accessibilityLabel(tr("定型文から選ぶ"))
             }
-            Toggle(tr("表示名を出す"), isOn: $selection.showName)
+            if let problem = messageProblem { Text(problem).font(.caption).foregroundStyle(.red) }
+            Toggle(tr("ニックネームを出す"), isOn: $selection.showName)
             if isFriends {
                 Toggle(tr("アプリを開いたとき、最新にする"), isOn: $standing)
             } else {
-                Picker(tr("有効期間"), selection: $expiresInDays) {
-                    Text(tr("1日")).tag(1); Text(tr("7日")).tag(7); Text(tr("30日")).tag(30)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(tr("リンクの期限"))
+                    Picker(tr("リンクの期限"), selection: $expiresInDays) {
+                        Text(tr("1日後")).tag(1); Text(tr("7日後")).tag(7); Text(tr("30日後")).tag(30)
+                    }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
             }
         } header: {
             header(tr("設定"))
@@ -285,7 +281,7 @@ struct CreateShareView: View {
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
             } else {
-                Text(tr("項目を選ぶと、ここに表示されます。")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("項目を選ぶと、ここに表示されます")).font(.footnote).foregroundStyle(.secondary)
                     .listRowBackground(Theme.card)
             }
         } header: {
@@ -314,7 +310,7 @@ struct CreateShareView: View {
             }
         } else if done {
             CardSection {
-                Label(tr("共有しました。"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
+                Label(tr("共有しました"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.accentText)
             }
         } else {
             PrimarySection {
@@ -427,17 +423,18 @@ struct SharedLinksView: View {
                 }.frame(minHeight: 44)
             }
             if sharing.shares.allSatisfy({ $0.status == "revoked" }) {
-                CardSection { Text(tr("共有中のリンクはありません。")).foregroundStyle(.secondary) }
+                CardSection { Text(tr("共有中のリンクはありません")).foregroundStyle(.secondary) }
             }
             ForEach(sharing.shares.filter { $0.status != "revoked" }) { item in
                 CardSection {
-                    HStack {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text(periodLabel(item.period)).font(.headline)
-                        Spacer()
+                        Text(tr("期限：{0}", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                        Spacer(minLength: 4)
                         Text(statusText(item.status)).font(.footnote.weight(.medium))
                             .foregroundStyle(item.status == "active" ? Theme.accentText : .secondary)
                     }
-                    Text(tr("期限：{0}", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                     if item.status == "active" {
                         HStack(spacing: 8) {
                             if let url = sharing.localURL(for: item) {
@@ -491,7 +488,7 @@ func dateText(_ iso: String) -> String {
     parser.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     let plain = ISO8601DateFormatter()
     guard let date = parser.date(from: iso) ?? plain.date(from: iso) else { return iso }
-    return date.formatted(date: .abbreviated, time: .shortened)
+    return DateText.dayTime(date)
 }
 
 /// アイコン。自分のもの（`isOwn`）は、設定に従う：選んだアイコン（山・海・魚など）、または何も描かない無印。色はテーマの4色から選んだもの。

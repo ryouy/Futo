@@ -13,7 +13,7 @@ function Unavailable({ configured = true }: { configured?: boolean }) {
   return (
     <div className="card unavailable">
       <h2>{configured ? "この共有は利用できません" : "現在、利用できません"}</h2>
-      <p className="muted">リンクの期限が切れているか、取り消されています。</p>
+      <p className="muted">リンクの期限が切れているか、取り消されています</p>
     </div>
   );
 }

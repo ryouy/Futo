@@ -16,8 +16,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body>
         <header className="site">
-          <img src="/logo.png" alt="" width={36} />
-          <h1>ふと</h1>
+          <a href="/" aria-label="ふとの紹介を見る">
+            <img src="/logo.png" alt="" width={36} />
+            <h1>ふと</h1>
+          </a>
         </header>
         <main>{children}</main>
         <footer className="site">

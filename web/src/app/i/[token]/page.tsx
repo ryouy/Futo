@@ -22,15 +22,15 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     return (
       <div className="card unavailable">
         <h2>この招待は利用できません</h2>
-        <p className="muted">期限が切れているか、すでに使われています。招待した人に、新しい招待をお願いしてください。</p>
+        <p className="muted">期限が切れているか、すでに使われています　招待した人に、新しい招待をお願いしてください</p>
       </div>
     );
   }
-  const expires = new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" }).format(new Date(info.expiresAt));
+  const expires = new Intl.DateTimeFormat("sv-SE", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Tokyo" }).format(new Date(info.expiresAt));
   return (
     <div className="card">
       <p className="who">{info.inviterName}さんからの招待</p>
-      <p className="muted">期限：{expires}（日本時間）。承認されるまで、フレンドにはなりません。</p>
+      <p className="muted">期限：{expires}（日本時間）　承認されるまで、フレンドにはなりません</p>
       {info.code && (
         <p className="codebox">
           招待コード <strong>{info.code.replace(/(.{4})(?=.)/g, "$1-")}</strong>
@@ -40,7 +40,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         <a className="btn" href={`futo://invite/${encodeURIComponent(token)}`}>ふとアプリで開く</a>
         <a className="btn ghost" href="/">ふとの紹介</a>
       </div>
-      <p className="muted">アプリがない方は「ふとの紹介」へ。開けないときは、教わった招待コードをアプリに入力してください。</p>
+      <p className="muted">アプリがない方は「ふとの紹介」へ　開けないときは、教わった招待コードをアプリに入力してください</p>
     </div>
   );
 }

@@ -36,12 +36,12 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
         (Locale.preferredLanguages.first ?? "ja").hasPrefix("ja")
     }
 
-    static var title: String { isJapanese ? "使う前に、ひと呼吸。" : "A breath before you use it." }
+    static var title: String { isJapanese ? "使う前に、ひと呼吸" : "A breath before you use it." }
 
     /// 1行を短くして、折り返しで文が不自然に切れないようにする（改行は、文の区切りに合わせて自分で入れる）。
     static var subtitle: String {
         isJapanese
-            ? "今、何に使いたいですか。\n『ふと』で少し立ち止まれます。\nホーム画面から開いてください。"
+            ? "今、何に使いたいですか\n『ふと』で少し立ち止まれます\nホーム画面から開いてください"
             : "What do you want to use it for?\nFuto can help you pause.\nOpen it from your Home Screen."
     }
 

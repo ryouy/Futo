@@ -18,7 +18,7 @@ export const displayNameSchema = z
   .refine((value) => !/[\p{Cc}\p{Cf}\u2028\u2029]/u.test(value), "control");
 
 /**
- * フレンドへの一言（自由入力）。フレンド共有だけで使い、Webの公開リンクでは受け付けない。
+ * 一言（自由入力）。フレンド共有とWebの公開リンクで使う。
  * 1〜60文字。制御文字・URL（迷惑・誘導の防止）は拒否する。
  */
 export const MESSAGE_MAX = 60;
@@ -79,6 +79,7 @@ function checkStats(value: { period: string; periodStart: string; periodEnd: str
 export const webSharePayload = z
   .object({
     ...statsShape,
+    message: messageSchema.optional(),
     expiresInDays: z.union([z.literal(1), z.literal(7), z.literal(30)]),
     idempotencyKey: z.string().uuid(),
   })
@@ -114,7 +115,7 @@ export interface StatsSnapshot {
   apps?: { name: string; count: number }[];
   restriction?: { pauses: number; ends: number };
   phrase?: string;
-  /** フレンドへの一言（自由入力）。フレンド共有だけ */
+  /** 一言（自由入力）。フレンド共有・Web共有 */
   message?: string;
 }
 

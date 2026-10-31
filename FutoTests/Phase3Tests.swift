@@ -80,7 +80,7 @@ final class Phase3Tests: XCTestCase {
 
     func testBuilderNeutralWhenNoRecords() {
         let c = build(.night)
-        XCTAssertEqual(c.lines.first, "今日は、記録がまだありません。")
+        XCTAssertEqual(c.lines.first, "今日は、記録がまだありません")
         XCTAssertEqual(c.lines.count, 2, "記録が無くても、短い締めの一文だけ")
     }
 
@@ -109,8 +109,8 @@ final class Phase3Tests: XCTestCase {
         let morning = build(.morning).lines.last!
         let night = build(.night).lines.last!
         XCTAssertNotEqual(morning, night)
-        XCTAssertTrue(["新しい一日のはじまりです。", "今日のペースで、ゆっくり。", "ゆっくり始めましょう。"].contains(morning))
-        XCTAssertTrue(["今日はここまでです。", "一日の終わりです。", "ここでひと区切りにしましょう。"].contains(night))
+        XCTAssertTrue(["新しい一日のはじまりです", "今日のペースで、ゆっくり", "ゆっくり始めましょう"].contains(morning))
+        XCTAssertTrue(["今日はここまでです", "一日の終わりです", "ここでひと区切りにしましょう"].contains(night))
     }
 
     func testBuilderBranchesOnDominantOutcomePurposeAndReflection() {
@@ -131,7 +131,7 @@ final class Phase3Tests: XCTestCase {
     }
 
     func testMorningAlwaysStartsWithYesterday() {
-        XCTAssertEqual(build(.morning).lines.first, "昨日は、記録がまだありません。")
+        XCTAssertEqual(build(.morning).lines.first, "昨日は、記録がまだありません")
         for i in 0..<7 { record("2027-01-13 1\(i):00", purpose: .contact, outcome: .deferred) }
         for seed in ["a", "b", "c", "d"] {
             XCTAssertTrue(build(.morning, seed).lines[0].hasPrefix("昨日は、"), build(.morning, seed).lines[0])

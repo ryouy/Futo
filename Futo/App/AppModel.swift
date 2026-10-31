@@ -158,7 +158,7 @@ final class AppModel {
             sessions.interrupt(session)
             activeSession = nil
             showFlow = false
-            notice = tr("許可を確認できなかったため、ひと呼吸を中断しました。")
+            notice = tr("許可を確認できなかったため、ひと呼吸を中断しました")
         }
     }
 
@@ -268,7 +268,7 @@ final class AppModel {
         service.start()
         refresh()
         if restriction != .configured {
-            errorMessage = tr("設定を確認できませんでした。もう一度お試しください")
+            errorMessage = tr("設定を確認できませんでした　もう一度お試しください")
         }
     }
 
@@ -285,11 +285,11 @@ final class AppModel {
     func startWait(_ kind: WaitKind) -> Bool {
         guard mode == .device, permission == .approved else { return false }
         guard restriction == .configured || isPaused || (kind == .end && intendsRestriction) else {
-            notice = tr("制限がかかっているときに、使えます。")
+            notice = tr("制限がかかっているときに、使えます")
             return false
         }
         guard device.supportsTemporaryUnlock else {
-            errorMessage = tr("この環境では、使えません。")
+            errorMessage = tr("この環境では、使えません")
             return false
         }
         return pause.beginWait(kind: kind)
@@ -304,11 +304,11 @@ final class AppModel {
             events.record(.pause, mode: .device, minutes: pause.rules.pauseMinutes)
         case .notReady: break
         case .failed(.scheduling):
-            errorMessage = tr("自動で制限に戻す準備ができなかったため、停止しませんでした。制限は続いています。もう一度お試しください。")
+            errorMessage = tr("自動で制限に戻す準備ができなかったため、停止しませんでした　制限は続いています　もう一度お試しください")
         case .failed(.shield):
-            errorMessage = tr("制限を外せなかったため、停止しませんでした。制限は続いています。もう一度お試しください。")
+            errorMessage = tr("制限を外せなかったため、停止しませんでした　制限は続いています　もう一度お試しください")
         case .failed(.notRestricted):
-            errorMessage = tr("制限がかかっていないため、停止できません。")
+            errorMessage = tr("制限がかかっていないため、停止できません")
         }
         refresh()
         return result
@@ -333,7 +333,7 @@ final class AppModel {
     private func stopRestriction() {
         pause.clearAll()
         if !service.stop() {
-            errorMessage = tr("制限を外せたか確認できませんでした。もう一度お試しください")
+            errorMessage = tr("制限を外せたか確認できませんでした　もう一度お試しください")
         }
         refresh()
     }

@@ -138,7 +138,7 @@ extension AppModel {
             case .notDetermined:
                 pendingNotificationEnable = kind
             default:
-                notificationMessage = tr("通知が許可されていません。iPhoneの設定アプリで変えられます。")
+                notificationMessage = tr("通知が許可されていません　iPhoneの設定アプリで変えられます")
             }
         }
     }
@@ -150,7 +150,7 @@ extension AppModel {
             if await notifications.requestAuthorization() {
                 updatePreferences { $0.setNotification(kind, true) }
             } else {
-                notificationMessage = tr("通知は許可されませんでした。通知なしでも、すべての機能が使えます。")
+                notificationMessage = tr("通知は許可されませんでした　通知なしでも、すべての機能が使えます")
             }
         }
     }

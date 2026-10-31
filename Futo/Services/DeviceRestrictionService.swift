@@ -22,6 +22,7 @@ final class DeviceRestrictionService: RestrictionService {
             loaded = stored.selection
             SharedState.saveSelection(loaded)
         }
+        AppNameStore.record(loaded)
         self.selection = loaded
         refreshPermission()
     }
@@ -44,10 +45,10 @@ final class DeviceRestrictionService: RestrictionService {
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
             refreshPermission()
-            return permission == .approved ? nil : tr("許可が完了しませんでした。もう一度お試しください。")
+            return permission == .approved ? nil : tr("許可が完了しませんでした　もう一度お試しください")
         } catch {
             refreshPermission()
-            return tr("許可が完了しませんでした。もう一度お試しください。")
+            return tr("許可が完了しませんでした　もう一度お試しください")
         }
     }
 
@@ -56,8 +57,20 @@ final class DeviceRestrictionService: RestrictionService {
     /// 戻り値は、「ふと」自身が選ばれていて、取り除いたかどうか。
     @discardableResult
     func saveSelection(_ newSelection: FamilyActivitySelection, additiveOnly: Bool = false) -> Bool {
-        var result = RestrictedItems(selection: newSelection)
-        let removedSelf = result.removeOwnApp()
+        // 名前は、選んだ直後だけ読めることが多い。いまのうちに控える（共有で、アプリ名を出すために使う）
+        AppNameStore.record(newSelection)
+        var cleaned = newSelection
+        // 選択画面が返した情報から、「ふと」自身を見分ける（トークンだけでは分からないことがある）
+        var removedSelf = false
+        if let own = Bundle.main.bundleIdentifier {
+            let ownTokens = Set(cleaned.applications.filter { $0.bundleIdentifier == own }.compactMap(\.token))
+            if !ownTokens.isEmpty {
+                cleaned.applicationTokens.subtract(ownTokens)
+                removedSelf = true
+            }
+        }
+        var result = RestrictedItems(selection: cleaned)
+        if result.removeOwnApp() { removedSelf = true }
         if additiveOnly {
             let current = items
             result.apps.formUnion(current.apps)

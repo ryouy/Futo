@@ -76,7 +76,7 @@ struct StatsChartsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text(tr("ひと呼吸の結果")).font(.subheadline.weight(.medium))
             if slices.allSatisfy({ $0.count == 0 }) {
-                Text(tr("まだ記録がありません。")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("まだ記録がありません")).font(.footnote).foregroundStyle(.secondary)
             } else {
                 Chart(slices.filter { $0.count > 0 }) { slice in
                     BarMark(x: .value(tr("件数"), slice.count)).foregroundStyle(slice.color)
@@ -159,7 +159,7 @@ struct StatsChartsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.subheadline.weight(.medium))
             if total == 0 {
-                Text(tr("まだ記録がありません。")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("まだ記録がありません")).font(.footnote).foregroundStyle(.secondary)
             } else {
                 HStack(spacing: 20) {
                     Chart(slices.filter { $0.count > 0 }) { slice in

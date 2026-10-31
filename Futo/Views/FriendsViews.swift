@@ -32,11 +32,11 @@ struct FriendsView: View {
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await sharing.loadFriends(); await sharing.loadFriendShares() }
-        .confirmationDialog(tr("フレンドをやめますか？ 共有済みの記録も、見えなくなります。"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("フレンドをやめますか？ 共有済みの記録も、見えなくなります"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
             Button(tr("やめる"), role: .destructive) { if let f = removing { Task { await sharing.removeFriend(f) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("ブロックしますか？ 相手からの申請や、記録は届かなくなります。"), isPresented: Binding(get: { blocking != nil }, set: { if !$0 { blocking = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("ブロックしますか？ 相手からの申請や、記録は届かなくなります"), isPresented: Binding(get: { blocking != nil }, set: { if !$0 { blocking = nil } }), titleVisibility: .visible) {
             Button(tr("ブロック"), role: .destructive) { if let f = blocking { Task { await sharing.block(uid: f.uid) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -61,12 +61,13 @@ struct FriendsView: View {
                     CopyIconButton(text: invitation.code)
                 }
                 Text(tr("期限：{0}", dateText(invitation.expiresAt))).font(.footnote).foregroundStyle(.secondary)
-                ShareLink(item: url, message: Text(tr("ふとのフレンド招待です。招待コード：{0}", formatted(invitation.code)))) { Label(tr("招待リンクを送る"), systemImage: "square.and.arrow.up") }
-                    .buttonStyle(FutoButtonStyle())
+                // 送る・コピーは、1列に横並び
                 HStack(spacing: 8) {
-                    Label(tr("リンクをコピー"), systemImage: "link").font(.subheadline)
-                    Spacer(minLength: 0)
-                    CopyIconButton(text: invitation.url)
+                    ShareLink(item: url, message: Text(tr("ふとのフレンド招待です　招待コード：{0}", formatted(invitation.code)))) {
+                        Label(tr("送る"), systemImage: "square.and.arrow.up")
+                    }
+                    .buttonStyle(ChipButtonStyle())
+                    CopyLabelButton(text: invitation.url)
                 }
                 QRSection(text: invitation.url)
                 Button(role: .destructive) { Task { await sharing.cancelInvitation() } } label: { Label(tr("招待を取り消す"), systemImage: "xmark.circle") }
@@ -90,14 +91,18 @@ struct FriendsView: View {
                 .labelStyle(.iconOnly)
                 .buttonBorderShape(.circle)
                 .accessibilityLabel(tr("貼り付け"))
-            }
-            Button(tr("受け入れる")) {
+                // コードが入ってから、右に「受け入れる」を出す
                 if let normalized = InviteLink.normalizedCode(code) {
-                    Task { if await sharing.sendFriendRequest(code: normalized) { code = "" } }
+                    Button(tr("受け入れる")) {
+                        Task { if await sharing.sendFriendRequest(code: normalized) { code = "" } }
+                    }
+                    .buttonStyle(ChipButtonStyle())
+                    .fixedSize()
+                    .disabled(sharing.isWorking)
+                    .transition(.opacity)
                 }
             }
-            .buttonStyle(FutoButtonStyle(prominent: false))
-            .disabled(InviteLink.normalizedCode(code) == nil || sharing.isWorking)
+            .animation(.easeInOut(duration: 0.2), value: InviteLink.normalizedCode(code) != nil)
         }
     }
 
@@ -134,7 +139,7 @@ struct FriendsView: View {
     private var friendsSection: some View {
         CardSection {
             Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
-            if sharing.friends.friends.isEmpty { Text(tr("まだフレンドはいません。")).foregroundStyle(.secondary) }
+            if sharing.friends.friends.isEmpty { Text(tr("まだフレンドはいません")).foregroundStyle(.secondary) }
             ForEach(sharing.friends.friends) { friend in
                 HStack(spacing: 12) {
                     AccountAvatar(name: friend.displayName, size: 32)
@@ -226,7 +231,7 @@ struct FriendShareDetailView: View {
                         .listRowBackground(Color.clear)
                 }
             } else if failed {
-                CardSection { Text(sharing.message ?? tr("見られませんでした。")).foregroundStyle(.secondary) }
+                CardSection { Text(sharing.message ?? tr("見られませんでした")).foregroundStyle(.secondary) }
             } else {
                 CardSection { ProgressView() }
             }
@@ -258,22 +263,22 @@ struct InviteLandingView: View {
             Form {
                 if !sharing.isConfigured || !sharing.isSignedIn {
                     CardSection {
-                        Text(sharing.isConfigured ? tr("招待を受け入れるには、ログインが必要です。") : tr("共有の設定がまだ終わっていません。"))
+                        Text(sharing.isConfigured ? tr("招待を受け入れるには、ログインが必要です") : tr("共有の設定がまだ終わっていません"))
                         if sharing.isConfigured {
                             Button { Task { await sharing.signIn() } } label: { Label(tr("Googleでログイン"), systemImage: "person.crop.circle.badge.checkmark") }
                                 .buttonStyle(FutoButtonStyle())
                         }
                     }
                 } else if sent {
-                    CardSection { Text(tr("受け入れました。相手が承認すると、フレンドになります。")) }
+                    CardSection { Text(tr("受け入れました　相手が承認すると、フレンドになります")) }
                 } else if let inviter {
                     CardSection {
-                        Text(tr("{0} さんからの招待です。", inviter.inviterName))
+                        Text(tr("{0} さんからの招待です", inviter.inviterName))
                         Button(tr("招待を受け入れる")) { Task { sent = await sharing.sendFriendRequest(token: token) } }
                             .buttonStyle(FutoButtonStyle()).disabled(sharing.isWorking)
                     }
                 } else if loaded {
-                    CardSection { Text(sharing.message ?? tr("この招待は、使えません。")) }
+                    CardSection { Text(sharing.message ?? tr("この招待は、使えません")) }
                 } else {
                     CardSection { ProgressView() }
                 }

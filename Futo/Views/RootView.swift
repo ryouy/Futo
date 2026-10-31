@@ -98,7 +98,7 @@ struct RootView: View {
         .background(WindowBackgroundSetter(color: Theme.windowBackgroundUIColor))
         .environment(\.locale, LanguageStore.shared.language.locale)
         .foregroundStyle(Theme.text)
-        .animation(.easeInOut(duration: 0.3), value: ThemeStore.shared.color)
+        .animation(.easeInOut(duration: 0.23), value: ThemeStore.shared.color)
         .fontDesign(.rounded)
         .onChange(of: scenePhase) { _, phase in
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。
@@ -108,7 +108,7 @@ struct RootView: View {
             Button(tr("許可する")) { model.requestNotificationPermission(enableDefaults: true) }
             Button(tr("今はしない"), role: .cancel) {}
         } message: {
-            Text(tr("朝と夜の振り返りをお知らせします。あとから、設定でいつでも変えられます。許可しなくても、ほかの機能は使えます。"))
+            Text(tr("朝と夜の振り返りをお知らせします　あとから、設定でいつでも変えられます　許可しなくても、ほかの機能は使えます"))
         }
         .alert(tr("お知らせ"), isPresented: Binding(
             get: { model.errorMessage != nil },

@@ -67,9 +67,9 @@ final class SharingModel {
         } catch AuthError.cancelled {
             // 取りやめただけ。何も変えない
         } catch AuthError.notConfigured {
-            message = tr("共有の設定がまだ終わっていません。")
+            message = tr("共有の設定がまだ終わっていません")
         } catch {
-            message = tr("ログインできませんでした。もう一度お試しください。")
+            message = tr("ログインできませんでした　もう一度お試しください")
         }
     }
 
@@ -130,14 +130,14 @@ final class SharingModel {
 
     /// 共有リンクを作る。サーバーが成功を返し、リンクを受け取れたときだけ、端末（Keychain）に保存する。
     func createWebShare(_ payload: SharePayload) async -> URL? {
-        guard let uid else { message = tr("ログインが必要です。"); return nil }
+        guard let uid else { message = tr("ログインが必要です"); return nil }
         phase = .working
         defer { phase = .idle }
         do {
             let created: CreatedShareResponse = try await api.send("POST", "/api/shares", body: payload)
             guard let urlString = created.url, let url = URL(string: urlString) else {
                 // 再送で作成済みだった場合は、リンクを再取得できない。共有一覧から「リンクを作り直す」
-                message = tr("共有は作成済みです。共有の一覧から、リンクを作り直せます。")
+                message = tr("共有は作成済みです　共有の一覧から、リンクを作り直せます")
                 await loadShares()
                 return nil
             }
@@ -372,7 +372,7 @@ final class SharingModel {
         defer { phase = .idle }
         do {
             let reauthed = try await auth.signInWithGoogle()
-            guard reauthed == current else { message = tr("別のアカウントでログインされました。削除は行っていません。"); await loadProfile(); return false }
+            guard reauthed == current else { message = tr("別のアカウントでログインされました　削除は行っていません"); await loadProfile(); return false }
             for _ in 0..<5 {
                 let result: DeletionResponse = try await api.send("DELETE", "/api/me")
                 if result.status == "deleted" {
@@ -382,7 +382,7 @@ final class SharingModel {
                     return true
                 }
             }
-            message = tr("削除が終わっていません。もう一度お試しください。")
+            message = tr("削除が終わっていません　もう一度お試しください")
             return false
         } catch AuthError.cancelled {
             return false
@@ -398,17 +398,17 @@ final class SharingModel {
     }
 
     static func text(for error: APIError) -> String? {
-        if error.code == "self_invite" { return tr("自分の招待は、受け入れられません。") }
+        if error.code == "self_invite" { return tr("自分の招待は、受け入れられません") }
         switch error.kind {
-        case .notConfigured: return tr("共有の設定がまだ終わっていません。")
-        case .offline: return tr("通信できませんでした。つながってから、もう一度お試しください。")
-        case .unauthorized: return tr("ログインの確認が必要です。もう一度ログインしてください。")
-        case .forbidden: return tr("この操作はできません。")
-        case .notFound: return tr("見つかりませんでした。")
-        case .gone: return tr("期限が切れているか、すでに使われています。")
-        case .conflict: return tr("同時に操作されました。もう一度お試しください。")
-        case .rateLimited: return tr("回数の上限です。しばらくしてからお試しください。")
-        case .invalid: return tr("入力を確認してください。")
+        case .notConfigured: return tr("共有の設定がまだ終わっていません")
+        case .offline: return tr("通信できませんでした　つながってから、もう一度お試しください")
+        case .unauthorized: return tr("ログインの確認が必要です　もう一度ログインしてください")
+        case .forbidden: return tr("この操作はできません")
+        case .notFound: return tr("見つかりませんでした")
+        case .gone: return tr("期限が切れているか、すでに使われています")
+        case .conflict: return tr("同時に操作されました　もう一度お試しください")
+        case .rateLimited: return tr("回数の上限です　しばらくしてからお試しください")
+        case .invalid: return tr("入力を確認してください")
         case .server: return nil
         }
     }

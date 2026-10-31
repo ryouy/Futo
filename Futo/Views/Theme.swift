@@ -156,7 +156,8 @@ struct FutoButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let pressed = configuration.isPressed
+        return configuration.label
             .font(.headline.weight(.medium))
             .lineLimit(1)
             .minimumScaleFactor(0.75)
@@ -166,13 +167,13 @@ struct FutoButtonStyle: ButtonStyle {
             .foregroundStyle(!isEnabled ? Color.secondary : (prominent ? Theme.onAccent : Theme.accentText))
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(!isEnabled ? Color.gray.opacity(0.22) : (prominent ? Theme.accent : Theme.accent.opacity(bordered ? 0.24 : 0.14)))
+                    .fill(!isEnabled ? Color.gray.opacity(0.22) : (prominent ? Theme.accent : Theme.accent.opacity(pressed ? 0.38 : (bordered ? 0.24 : 0.14))))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(Theme.accent.opacity(bordered && !prominent ? 0.7 : 0), lineWidth: 1.5)
             )
-            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 1)
+            .opacity(isEnabled ? (pressed && prominent ? 0.85 : 1) : 1)
     }
 }
 
@@ -197,6 +198,26 @@ struct ChipButtonStyle: ButtonStyle {
 }
 
 /// 文字列をコピーするアイコン。押すと、少しの間チェックに変わる。
+/// 「コピー」（アイコン付き）。押すと、少しの間「コピーしました」になる。ChipButtonStyle の行に並べる用。
+struct CopyLabelButton: View {
+    let text: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.string = text
+            copied = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.6))
+                copied = false
+            }
+        } label: {
+            Label(copied ? tr("コピーしました") : tr("コピー"), systemImage: copied ? "checkmark" : "doc.on.doc")
+        }
+        .buttonStyle(ChipButtonStyle())
+    }
+}
+
 struct CopyIconButton: View {
     let text: String
     @State private var copied = false
@@ -447,9 +468,9 @@ enum ThemeCrossfade {
         snapshot.isUserInteractionEnabled = false
         window.addSubview(snapshot)
         change()
-        let duration = UIAccessibility.isReduceMotionEnabled ? 0.3 : 0.75
+        let duration = UIAccessibility.isReduceMotionEnabled ? 0.23 : 0.58
         // 新しい色の画面が描かれてから、重ねた画面を溶かす
-        UIView.animate(withDuration: duration, delay: 0.08, options: [.curveEaseInOut, .allowUserInteraction]) {
+        UIView.animate(withDuration: duration, delay: 0.06, options: [.curveEaseInOut, .allowUserInteraction]) {
             snapshot.alpha = 0
         } completion: { _ in snapshot.removeFromSuperview() }
     }
@@ -492,7 +513,7 @@ struct FutoTabPicker<T: Hashable>: View {
             }
         }
         .padding(5)
-        .background(Capsule().fill(Theme.softBlue))
+        .background(Capsule().fill(Theme.softBlue.opacity(0.5)))
         .animation(.spring(duration: 0.4, bounce: 0.22), value: selection)
     }
 }
@@ -507,4 +528,43 @@ extension View {
 enum Layout {
     /// 広い画面（iPad）で、中身をまとめる最大の幅。横幅いっぱいに広げると間延びするので、読みやすい幅に抑える。広告の幅も、これを超えない。
     static let columnWidth: CGFloat = 640
+}
+
+/// 説明の文（カードなし）と、そのすぐ下に置く操作のカード。説明と操作が離れて見えないよう、1つのまとまりにする。
+struct DescribedSection<Content: View>: View {
+    let lines: [String]
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(lines, id: \.self) { Text($0) }
+            }
+            .font(.subheadline)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
+            content.listRowBackground(Theme.card)
+        }
+    }
+}
+
+/// アプリ内の日付は、すべてハイフン区切り（2026-10-31）。時刻は24時間表記。
+enum DateText {
+    private static func format(_ date: Date, _ pattern: String, locale: Locale = Locale(identifier: "en_US_POSIX")) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = pattern
+        return formatter.string(from: date)
+    }
+
+    static func day(_ date: Date) -> String { format(date, "yyyy-MM-dd") }
+    static func dayTime(_ date: Date) -> String { format(date, "yyyy-MM-dd HH:mm") }
+    static func time(_ date: Date) -> String { format(date, "HH:mm") }
+    /// 「2026-10-31 土」。曜日は、アプリの言語で。
+    static func dayWeekday(_ date: Date, wide: Bool = false) -> String {
+        "\(day(date)) \(format(date, wide ? "EEEE" : "EEE", locale: LanguageStore.shared.language.locale))"
+    }
 }
