@@ -76,7 +76,7 @@
   <h2><span class="ja">2. ログイン（Google または Apple・任意）</span><span class="en">2. Sign-in (Google or Apple, optional)</span></h2>
   <div class="ja"><p>共有・フレンドを使うときだけ、Google または Apple でログインします（バックアップは、別に Google との接続が必要です）<br>ログインしなくても、ほかの機能はすべて使えます<br>どちらでログインしても、使える機能は同じです<br>メールアドレスが同じでも、アカウントは自動では統合されません</p>
 <ul>
-<li>認証は、Google のログイン（OAuth）または Apple で続ける（Sign in with Apple）と、Firebase Authentication で行います<br>要求する情報は、<strong>名前だけ</strong>です<br>メールアドレスと写真は、使いません</li>
+<li>認証は、Google のログイン（OAuth）または Apple で続ける（Sign in with Apple）と、Firebase Authentication で行います<br>ログインのために要求する情報は、<strong>名前だけ</strong>です<br>メールアドレスと写真は、使いません<br>Google でログインするときは、同じ画面で、バックアップ用の許可（下記 5 の Google Drive のアプリ専用領域）も、あわせてお願いします<br>許可しなくても、ログインできます</li>
 <li>Apple でログインしたアカウントを削除すると、Apple 側のアプリへの接続も取り消します</li>
 <li>サーバー（Google Cloud の Firestore）に保存するのは、アカウントの内部 ID（Firebase UID）、<strong>表示名</strong>（初期値は Google または Apple の名前<br>取得できなければ「ふと」<br>いつでも変更できます）、作成・更新の日時、状態です</li>
 <li>用途：共有・フレンド機能の本人確認と、相手に表示する名前のため<br>広告や分析には使いません</li>
@@ -84,7 +84,7 @@
 <p>削除：設定 →「アカウント」→「アカウントを削除」で、再ログインの確認のあと、サーバー上のデータ（下記の共有・フレンド関連と、プロフィール、ログインのアカウント）をすべて削除します<br>ログアウトすると、端末内のログイン情報を消します</p></div>
   <div class="en"><p>You sign in with Google or Apple only when you use sharing or friends (backup needs a separate Google connection). Everything else works without signing in. Both give the same features, and accounts are never merged automatically even if the email address is the same</p>
 <ul>
-<li>Authentication uses Google sign-in (OAuth) or Sign in with Apple, together with Firebase Authentication. The only information requested is your <strong>name</strong>. Your email address and photo are not used</li>
+<li>Authentication uses Google sign-in (OAuth) or Sign in with Apple, together with Firebase Authentication. The only information requested for signing in is your <strong>name</strong>. Your email address and photo are not used. When you sign in with Google, the same screen also asks for the backup permission described in section 5 (the app-specific area of Google Drive). You can sign in without allowing it</li>
 <li>Deleting an account created with Apple also revokes the app's connection on Apple's side</li>
 <li>What we store on our server (Google Cloud Firestore): an internal account ID (Firebase UID), your <strong>display name</strong> (initially your Google or Apple name, or "Futo" if unavailable; you can change it any time), creation/update times and status</li>
 <li>Purpose: identifying you for sharing and friends, and the name shown to others. Not used for ads or analytics</li>
@@ -128,7 +128,7 @@
 <section>
   <h2><span class="ja">5. Google Drive バックアップ（任意）</span><span class="en">5. Google Drive backup (optional)</span></h2>
   <div class="ja"><ul>
-<li>「バックアップを有効にする」を押したときだけ、Google Drive の<strong>アプリ専用領域（drive.appdata）</strong>の権限を求めます<br>ほかの Drive のファイルは、見えず、触れません</li>
+<li>Google Drive の<strong>アプリ専用領域（drive.appdata）</strong>の権限を、Google でのログインのときに、同じ画面で求めます（Apple でログインした人や、許可しなかった人には、「バックアップを有効にする」を押したときに求めます）<br>許可しても、<strong>バックアップを実行するまで</strong>、Drive には何も保存しません<br>ほかの Drive のファイルは、見えず、触れません</li>
 <li>保存されるもの：実機の記録、朝夜の振り返り、制限の一時停止・終了の記録、設定、テーマ・言語（1つのファイル futo-backup.json）<br>Screen Time の許可や制限の対象、ログイン情報、通知の許可は、含まれません</li>
 <li>バックアップは、<strong>あなたの Google Drive に保存され、本アプリの運営者のサーバーには送られません</strong><br>Drive の更新トークンは端末の Keychain にだけ保存します</li>
 <li>復元は、端末に足りない記録を追加するだけで、いまの記録を消したり、上書きしたりしません</li>
@@ -136,7 +136,7 @@
 <p>Google API から受け取った情報の使用と、ほかのアプリへの転送は、Limited Use の要件を含む <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API サービスのユーザーデータに関するポリシー</a>に従います</p>
 <p>削除：「バックアップ」画面の「Drive のバックアップを削除」、「Drive の許可を取り消す」で、バックアップと許可を消せます<br>Google アカウントの「サードパーティのアクセス」からも、許可を取り消せます<br>アカウント削除は、Drive 上のバックアップを自動では削除しないので、先に削除してください</p></div>
   <div class="en"><ul>
-<li>Only when you press “Turn on backup”, we ask for permission to the <strong>app-specific hidden area of Google Drive (drive.appdata)</strong>. Your other Drive files are not visible or accessible</li>
+<li>We ask for permission to the <strong>app-specific hidden area of Google Drive (drive.appdata)</strong> on the same screen when you sign in with Google (for people who sign in with Apple or decline it, when you press “Turn on backup”). Even if you allow it, <strong>nothing is saved to Drive until you run a backup</strong>. Your other Drive files are not visible or accessible</li>
 <li>What is saved: your device records, check-ins, lock pause/end records, settings, theme and language (one file, futo-backup.json). Screen Time permission, locked targets, sign-in information and notification permission are not included</li>
 <li>The backup is <strong>stored in your own Google Drive and is not sent to the app operator's servers</strong>. The Drive refresh token is kept only in your device Keychain</li>
 <li>Restore only adds records missing on your device; it never deletes or overwrites current records</li>

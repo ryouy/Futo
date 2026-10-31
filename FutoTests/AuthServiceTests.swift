@@ -154,6 +154,94 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertNil(store.saved, "自動では統合しない")
     }
 
+    final class FakeDriveStore: DriveTokenStoring {
+        var tokens: [String: String] = [:]
+        func loadRefreshToken(uid: String) -> String? { tokens[uid] }
+        func saveRefreshToken(_ token: String, uid: String) { tokens[uid] = token }
+        func clear(uid: String) { tokens[uid] = nil }
+    }
+
+    private func googleNetwork(scope: String, driveRefresh: String? = "DRIVE-REFRESH", uid: String = "uid-G") {
+        StubProtocol.handler = { [unowned self] request in
+            self.requests.append(request)
+            self.bodies.append(self.body(of: request))
+            let url = request.url!.absoluteString
+            if url.contains("oauth2.googleapis.com/token") {
+                var body: [String: Any] = ["id_token": "GOOGLE-ID-TOKEN", "scope": scope]
+                if let driveRefresh { body["refresh_token"] = driveRefresh }
+                return (200, self.json(body))
+            }
+            if url.contains("signInWithIdp") { return (200, self.json(["localId": uid, "idToken": "FB-ID", "refreshToken": "REFRESH-1", "expiresIn": "3600"])) }
+            return (404, Data())
+        }
+    }
+
+    func testGoogleSignInCanAskForBackupPermissionInTheSameScreenAndKeepsIt() async throws {
+        googleNetwork(scope: "openid profile https://www.googleapis.com/auth/drive.appdata")
+        let drive = FakeDriveStore()
+        var authURL: URL?
+        let service = AuthService(config: config, urlSession: session, web: FakeWeb { url in
+            authURL = url
+            let state = URLComponents(url: url, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "state" }!.value!
+            return URL(string: "com.googleusercontent.apps.123-abc:/oauth2redirect?code=C&state=\(state)")!
+        }, store: MemoryStore(), driveStore: drive)
+        _ = try await service.signInWithGoogle(includeDrive: true)
+        let scope = URLComponents(url: authURL!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "scope" }!.value!
+        XCTAssertEqual(scope, "openid profile https://www.googleapis.com/auth/drive.appdata")
+        XCTAssertEqual(drive.tokens["uid-G"], "DRIVE-REFRESH", "許可されたら、バックアップ用の許可を控える")
+    }
+
+    func testBackupPermissionIsNotKeptWhenTheUserDidNotGrantIt() async throws {
+        googleNetwork(scope: "openid profile")   // Driveの許可は、外された
+        let drive = FakeDriveStore()
+        let service = AuthService(config: config, urlSession: session, web: goodWeb(), store: MemoryStore(), driveStore: drive)
+        _ = try await service.signInWithGoogle(includeDrive: true)
+        XCTAssertTrue(drive.tokens.isEmpty, "許可されていなければ、控えない（ログインだけできる）")
+    }
+
+    func testPlainGoogleSignInNeverAsksForDrive() async throws {
+        googleNetwork(scope: "openid profile https://www.googleapis.com/auth/drive.appdata")
+        let drive = FakeDriveStore()
+        let service = AuthService(config: config, urlSession: session, web: goodWeb(), store: MemoryStore(), driveStore: drive)
+        _ = try await service.signInWithGoogle()
+        XCTAssertTrue(drive.tokens.isEmpty)
+    }
+
+    func testReauthenticationWithAnotherAccountChangesNothing() async throws {
+        installHappyNetwork(uid: "uid-A")
+        let store = MemoryStore()
+        let service = make(store: store)
+        _ = try await service.signInWithGoogle()
+        let before = store.saved
+        // 確認のための再ログインで、別のアカウント（uid-B）が選ばれた
+        installHappyNetwork(uid: "uid-B")
+        do { _ = try await service.signInWithGoogle(expectingUID: "uid-A"); XCTFail() } catch { XCTAssertEqual(error as? AuthError, .accountMismatch) }
+        XCTAssertEqual(service.state, .signedIn(uid: "uid-A"), "別のアカウントに切り替わらない")
+        XCTAssertEqual(store.saved, before)
+        XCTAssertTrue(cleaned.isEmpty)
+    }
+
+    func testReauthenticationDoesNotFlashTheSignedOutState() async throws {
+        installHappyNetwork(uid: "uid-A")
+        let service = make()
+        _ = try await service.signInWithGoogle()
+        _ = try await service.signInWithGoogle(expectingUID: "uid-A")
+        XCTAssertEqual(service.state, .signedIn(uid: "uid-A"))
+    }
+
+    func testAppleReauthenticationWithAnotherAccountChangesNothing() async throws {
+        installHappyNetwork(uid: "uid-APPLE")
+        let store = MemoryStore()
+        let service = make(store: store)
+        _ = try await service.signInWithApple(identityToken: "T", rawNonce: "N", fullName: nil)
+        let before = store.saved
+        installHappyNetwork(uid: "uid-OTHER")
+        do { _ = try await service.signInWithApple(identityToken: "T2", rawNonce: "N2", fullName: nil, expectingUID: "uid-APPLE"); XCTFail() } catch { XCTAssertEqual(error as? AuthError, .accountMismatch) }
+        XCTAssertEqual(service.state, .signedIn(uid: "uid-APPLE"))
+        XCTAssertEqual(store.saved, before)
+        XCTAssertEqual(service.provider, .apple)
+    }
+
     func testSavedSessionWithoutAProviderIsTreatedAsGoogle() {
         let store = MemoryStore()
         store.saved = StoredAuthSession(uid: "old-user", refreshToken: "R")

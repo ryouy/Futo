@@ -36,7 +36,7 @@ final class SharingModel {
     init(config: Phase4Config = .load(), auth: AuthService? = nil, urlSession: URLSession = .shared, standingStore: StandingShareStoring = UserDefaultsStandingStore()) {
         self.config = config
         self.standingStore = standingStore
-        let service = auth ?? AuthService(config: config, urlSession: urlSession, web: WebAuthRunner(), store: KeychainSessionStore())
+        let service = auth ?? AuthService(config: config, urlSession: urlSession, web: WebAuthRunner(), store: KeychainSessionStore(), driveStore: KeychainDriveTokenStore())
         self.auth = service
         self.api = APIClient(baseURL: config.apiBaseURL, session: urlSession) { [weak service] force in
             try await service?.validIDToken(forceRefresh: force)
@@ -64,7 +64,8 @@ final class SharingModel {
         phase = .working
         defer { phase = .idle }
         do {
-            try await auth.signInWithGoogle()
+            // バックアップ用の許可も、同じ画面でお願いする（許可しなくても、ログインはできる）
+            try await auth.signInWithGoogle(includeDrive: true)
             await loadProfile()
         } catch AuthError.cancelled {
             // 取りやめただけ。何も変えない
@@ -87,10 +88,10 @@ final class SharingModel {
 
     /// 「Appleで続ける」の要求を整える。求めるのは名前だけ（メールアドレスは求めない）。nonce は、ハッシュだけをAppleへ渡す。
     func prepareApple(_ request: ASAuthorizationAppleIDRequest) {
-        let raw = PKCE.randomString(byteCount: 16)
-        appleNonce = raw
+        let nonce = AppleNonce.make()
+        appleNonce = nonce.raw
         request.requestedScopes = [.fullName]
-        request.nonce = SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
+        request.nonce = nonce.hashed
     }
 
     /// Appleでの認証が終わったとき。Firebaseのアカウントに替えて、プロフィールを読み込む。
@@ -458,28 +459,56 @@ final class SharingModel {
 
     // MARK: アカウント削除
 
-    /// 直近のログイン確認のため、まず再ログインしてから削除する。途中で止まっても、もう一度押せば続きから進む。
+    /// アカウントを削除する。サーバーが「直近のログインの確認が要る」と返したときだけ、そのアカウントのログイン方法
+    /// （Google または Apple）で、本人の確認をしてから、続ける。確認で別のアカウントが選ばれたら、何も変えずに止める。
+    /// 途中で止まっても、もう一度押せば続きから進む。
     func deleteAccount() async -> Bool {
         guard let current = uid else { return false }
         phase = .working
         defer { phase = .idle }
+        var reauthenticated = false
         do {
-            let reauthed = try await auth.signInWithGoogle()
-            guard reauthed == current else { message = tr("別のアカウントでログインされました　削除は行っていません"); await loadProfile(); return false }
-            for _ in 0..<5 {
-                let result: DeletionResponse = try await api.send("DELETE", "/api/me")
-                if result.status == "deleted" {
-                    ProfileCache.clear(uid: current)
-                    auth.signOut()
-                    reset()
-                    return true
+            for _ in 0..<6 {
+                do {
+                    let result: DeletionResponse = try await api.send("DELETE", "/api/me")
+                    if result.status == "deleted" {
+                        ProfileCache.clear(uid: current)
+                        auth.signOut()
+                        reset()
+                        return true
+                    }
+                } catch let error as APIError where error.code == "recent_login_required" && !reauthenticated {
+                    reauthenticated = true
+                    try await reauthenticate(expecting: current)
                 }
             }
             message = tr("削除が終わっていません　もう一度お試しください")
             return false
         } catch AuthError.cancelled {
+            // 確認を取りやめた。ログインは、そのまま
+            return false
+        } catch AuthError.accountMismatch {
+            message = tr("別のアカウントでログインされました　削除は行っていません")
+            return false
+        } catch AuthError.failed {
+            message = Self.loginFailedText(stage: "reauth", detail: auth.lastFailureDetail ?? "")
             return false
         } catch { fail(error); return false }
+    }
+
+    /// 本人の確認。いまのアカウントを作ったログイン方法で行う（Appleのアカウントに、Googleは求めない）。
+    private func reauthenticate(expecting uid: String) async throws {
+        switch auth.provider ?? .google {
+        case .google:
+            try await auth.signInWithGoogle(expectingUID: uid)
+        case .apple:
+            let result = try await AppleAuthorizer().authorize()
+            try await auth.signInWithApple(identityToken: result.identityToken, rawNonce: result.rawNonce, fullName: nil, expectingUID: uid)
+            // 新しい認可コードを預け直す（削除のとき、Apple側の接続を取り消すため。できなくても、続ける）
+            if let code = result.authorizationCode {
+                let _: EmptyResponse? = try? await api.send("POST", "/api/apple/link", body: ["authorizationCode": code])
+            }
+        }
     }
 
     // MARK: エラー

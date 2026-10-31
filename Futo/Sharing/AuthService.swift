@@ -37,6 +37,8 @@ enum AuthLog {
 enum AuthError: Error, Equatable {
     case notConfigured
     case cancelled
+    /// 確認のための再ログインで、別のアカウントが選ばれた（いまのアカウントは、変えない）
+    case accountMismatch
     case failed          // 認証の失敗（通信・応答の不備）。理由の詳細や、トークンは含めない
 }
 
@@ -65,11 +67,14 @@ final class AuthService {
     @ObservationIgnored private let urlSession: URLSession
     @ObservationIgnored private let web: WebAuthRunning
     @ObservationIgnored private let store: SessionStoring
+    /// Googleのログインと同じ画面で、バックアップ（Drive）の許可も得たときの、許可の保管先
+    @ObservationIgnored private let driveStore: DriveTokenStoring?
     @ObservationIgnored private var idToken: String?
     @ObservationIgnored private var idTokenExpiry = Date.distantPast
     @ObservationIgnored private var refreshToken: String?
 
-    init(config: Phase4Config, urlSession: URLSession = .shared, web: WebAuthRunning, store: SessionStoring) {
+    init(config: Phase4Config, urlSession: URLSession = .shared, web: WebAuthRunning, store: SessionStoring, driveStore: DriveTokenStoring? = nil) {
+        self.driveStore = driveStore
         self.config = config
         self.urlSession = urlSession
         self.web = web
@@ -93,11 +98,14 @@ final class AuthService {
     // MARK: ログイン
 
     /// Googleでログインする。成功したらFirebase UIDを返す。
+    /// - `includeDrive`: 同じ許可の画面で、バックアップ用の許可（Driveのアプリ専用領域）も求める。許可されたら、あとで、もう一度尋ねない。
+    /// - `expectingUID`: 確認のための再ログイン。別のアカウントが選ばれたら、いまのログインは変えずに `accountMismatch` で止める。
     @discardableResult
-    func signInWithGoogle() async throws -> String {
+    func signInWithGoogle(includeDrive: Bool = false, expectingUID: String? = nil) async throws -> String {
         guard config.isConfigured else { throw AuthError.notConfigured }
         let previous = state
-        state = .signingIn
+        // 再ログインの間は、「ログイン中」の表示に切り替えない（画面が、ログイン前の見た目に変わらないように）
+        if expectingUID == nil { state = .signingIn }
         do {
             let verifier = PKCE.randomString()
             let expectedState = PKCE.randomString(byteCount: 16)
@@ -108,7 +116,7 @@ final class AuthService {
                 .init(name: "redirect_uri", value: redirect),
                 .init(name: "response_type", value: "code"),
                 // ログインと、表示名の初期値（Googleの名前）に必要な最小限。Drive・メール・写真は求めない
-                .init(name: "scope", value: "openid profile"),
+                .init(name: "scope", value: includeDrive ? "openid profile \(DriveAuthService.scope)" : "openid profile"),
                 .init(name: "code_challenge", value: PKCE.challenge(for: verifier)),
                 .init(name: "code_challenge_method", value: "S256"),
                 .init(name: "state", value: expectedState),
@@ -118,8 +126,10 @@ final class AuthService {
             guard items.first(where: { $0.name == "state" })?.value == expectedState,
                   let code = items.first(where: { $0.name == "code" })?.value else { throw AuthError.failed }
 
-            let googleIDToken = try await exchangeCode(code, verifier: verifier, redirect: redirect)
+            let google = try await exchangeCode(code, verifier: verifier, redirect: redirect)
+            let googleIDToken = google.idToken
             let firebase = try await signInToFirebase(postBody: "id_token=\(googleIDToken)&providerId=google.com", stage: "google.firebase")
+            if let expectingUID, firebase.uid != expectingUID { throw AuthError.accountMismatch }
             // Firebaseの応答に名前が無いときは、GoogleのIDトークンの申告（name）から補う
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
@@ -129,6 +139,11 @@ final class AuthService {
             if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
             provider = .google
             store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, provider: SignInProvider.google.rawValue))
+            // バックアップの許可も、同じ画面で得られていれば、ここで控える（許可の範囲に、Driveのアプリ専用領域が含まれるときだけ）
+            if includeDrive, let driveStore, let driveRefresh = google.refreshToken,
+               google.scope.split(separator: " ").contains(Substring(DriveAuthService.scope)) {
+                driveStore.saveRefreshToken(driveRefresh, uid: firebase.uid)
+            }
             state = .signedIn(uid: firebase.uid)
             return firebase.uid
         } catch {
@@ -140,15 +155,16 @@ final class AuthService {
     /// Appleで続ける。Appleが発行したIDトークン（`rawNonce` のハッシュを含むもの）を、Firebase Authenticationへ渡す。
     /// 要求する情報は、名前だけ（メールアドレスは求めない）。名前は、Appleが最初の1回しか渡さないので、あれば表示名の初期値にする。
     @discardableResult
-    func signInWithApple(identityToken: String, rawNonce: String, fullName: String?) async throws -> String {
+    func signInWithApple(identityToken: String, rawNonce: String, fullName: String?, expectingUID: String? = nil) async throws -> String {
         guard config.isConfigured else { throw AuthError.notConfigured }
         let previous = state
-        state = .signingIn
+        if expectingUID == nil { state = .signingIn }
         do {
             lastFailureDetail = nil
             AuthLog.info(stage: "apple.firebase.request")
             let firebase = try await signInToFirebase(postBody: "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)", stage: "apple.firebase")
             AuthLog.info(stage: "apple.firebase.ok")
+            if let expectingUID, firebase.uid != expectingUID { throw AuthError.accountMismatch }
             idToken = firebase.idToken
             idTokenExpiry = Date().addingTimeInterval(firebase.expiresIn)
             refreshToken = firebase.refreshToken
@@ -231,14 +247,16 @@ final class AuthService {
         }
     }
 
-    private func exchangeCode(_ code: String, verifier: String, redirect: String) async throws -> String {
+    private struct GoogleTokens { var idToken: String; var refreshToken: String?; var scope: String }
+
+    private func exchangeCode(_ code: String, verifier: String, redirect: String) async throws -> GoogleTokens {
         let request = formRequest(URL(string: "https://oauth2.googleapis.com/token")!, [
             "code": code, "client_id": config.googleClientID, "code_verifier": verifier,
             "redirect_uri": redirect, "grant_type": "authorization_code",
         ])
         let (status, body) = try await decode(request)
         guard status == 200, let idToken = body["id_token"] as? String else { throw AuthError.failed }
-        return idToken
+        return GoogleTokens(idToken: idToken, refreshToken: body["refresh_token"] as? String, scope: body["scope"] as? String ?? "")
     }
 
     private func signInToFirebase(postBody: String, stage: String) async throws -> FirebaseTokens {
