@@ -189,6 +189,7 @@ enum EnglishStrings {
         "一時解除中": "Temporarily unlocked",
         "使い終わる": "All done",
         "許可する": "Allow",
+        "名前で探す": "Search by name",
         "フレンドを削除しますか？ 相手は、あなたに申請できなくなり、記録も届かなくなります": "Delete this friend? They won't be able to send you requests, and their records won't reach you",
         "フレンドを削除": "Delete friend",
         "届いた記録は、まだありません": "No records received yet",

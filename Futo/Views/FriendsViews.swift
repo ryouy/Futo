@@ -8,6 +8,7 @@ struct FriendsView: View {
     @State private var code = ""
     @State private var deleting: FriendsResponse.Friend?
     @State private var revoking: SentFriendShare?
+    @State private var search = ""
     @State private var page: Page = .friends
 
     /// 下のページ：左右にスライドして切り替える。多くなっても、それぞれのページの中で、スクロールできる。
@@ -198,26 +199,69 @@ struct FriendsView: View {
         }
     }
 
+    /// 人数が多いときの見つけやすさ：6人以上で検索、8人以上で、頭文字ごとの見出し。
+    private static let searchFrom = 6
+    private static let sectionsFrom = 8
+
+    private var visibleFriends: [FriendsResponse.Friend] {
+        FriendIndex.filter(sharing.friends.friends, query: search, name: { $0.displayName })
+    }
+
+    @ViewBuilder
     private var friendsSection: some View {
-        CardSection {
-            Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
-            if sharing.friends.friends.isEmpty { Text(tr("まだフレンドはいません")).foregroundStyle(.secondary) }
-            ForEach(sharing.friends.friends) { friend in
-                HStack(spacing: 12) {
-                    AccountAvatar(name: friend.displayName, size: 32, spec: friend.avatar)
-                    Text(friend.displayName).oneLine()
-                    Spacer(minLength: 0)
-                    // 削除は、関係を終わらせて、ブロックもする（まとめて1つのボタン）
-                    Button { deleting = friend } label: {
-                        Image(systemName: "trash").font(.body).foregroundStyle(.secondary)
-                            .frame(width: 44, height: 44).contentShape(Rectangle())
+        let count = sharing.friends.friends.count
+        if count >= Self.searchFrom {
+            CardSection {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField(tr("名前で探す"), text: $search)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    if !search.isEmpty {
+                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                            .buttonStyle(.plain).accessibilityLabel(tr("消す"))
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(tr("フレンドを削除"))
                 }
                 .frame(minHeight: 44)
             }
         }
+        if count == 0 {
+            CardSection {
+                Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("まだフレンドはいません")).foregroundStyle(.secondary)
+            }
+        } else if visibleFriends.isEmpty {
+            CardSection { Text(tr("見つかりませんでした")).foregroundStyle(.secondary) }
+        } else if count >= Self.sectionsFrom {
+            ForEach(FriendIndex.grouped(visibleFriends, name: { $0.displayName }), id: \.key) { group in
+                Section {
+                    ForEach(group.items) { friend in friendRow(friend) }
+                } header: {
+                    Text(group.key).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accentText).textCase(nil)
+                }
+                .listRowBackground(Theme.card)
+            }
+        } else {
+            CardSection {
+                Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
+                ForEach(FriendIndex.grouped(visibleFriends, name: { $0.displayName }).flatMap(\.items)) { friend in friendRow(friend) }
+            }
+        }
+    }
+
+    private func friendRow(_ friend: FriendsResponse.Friend) -> some View {
+        HStack(spacing: 12) {
+            AccountAvatar(name: friend.displayName, size: 32, spec: friend.avatar)
+            Text(friend.displayName).oneLine()
+            Spacer(minLength: 0)
+            // 削除は、関係を終わらせて、ブロックもする（まとめて1つのボタン）
+            Button { deleting = friend } label: {
+                Image(systemName: "trash").font(.body).foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(tr("フレンドを削除"))
+        }
+        .frame(minHeight: 44)
     }
 
     /// 届いた記録：送ってきた人ごとにまとめる。人を選んでから、いつの記録を見るか選ぶ。
@@ -289,6 +333,7 @@ struct FriendRecordsListView: View {
     let groupID: String
     @Environment(SharingModel.self) private var sharing
     @State private var confirmDeleteAll = false
+    @State private var deletingRecord: ReceivedFriendShare?
 
     private var group: ReceivedGroup? { ReceivedGrouping.group(sharing.receivedShares).first { $0.id == groupID } }
 
@@ -297,20 +342,28 @@ struct FriendRecordsListView: View {
             if let group {
                 CardSection {
                     ForEach(group.items) { item in
-                        NavigationLink { FriendShareDetailView(id: item.id) } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(periodLabel(item.period))
-                                    Text(tr("更新 {0}", dateText(item.updatedAt ?? item.createdAt))).font(.footnote).foregroundStyle(.secondary)
+                        // 左：記録（押すと中身）。右：この記録の削除ボタン
+                        HStack(spacing: 8) {
+                            NavigationLink { FriendShareDetailView(id: item.id) } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(periodLabel(item.period))
+                                        Text(tr("更新 {0}", dateText(item.updatedAt ?? item.createdAt))).font(.footnote).foregroundStyle(.secondary)
+                                    }
+                                    Spacer(minLength: 0)
+                                    if sharing.isUnseen(item) { NewBadge() }
                                 }
-                                Spacer(minLength: 0)
-                                if sharing.isUnseen(item) { NewBadge() }
                             }
-                            .frame(minHeight: 44)
+                            Button { deletingRecord = item } label: {
+                                Image(systemName: "trash").font(.body).foregroundStyle(.secondary)
+                                    .frame(width: 44, height: 44).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(tr("この記録を削除"))
                         }
-                        // 左にスワイプして、この記録を削除（自分の側だけ）
+                        .frame(minHeight: 44)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(tr("削除"), role: .destructive) { Task { await sharing.removeReceived(ids: [item.id]) } }
+                            Button(tr("削除"), role: .destructive) { deletingRecord = item }
                         }
                     }
                 }
@@ -327,6 +380,10 @@ struct FriendRecordsListView: View {
         .compactForm()
         .navigationTitle(group?.name ?? tr("匿名"))
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(tr("この記録を削除しますか？ 相手の共有は、消えません"), isPresented: Binding(get: { deletingRecord != nil }, set: { if !$0 { deletingRecord = nil } }), titleVisibility: .visible) {
+            Button(tr("削除"), role: .destructive) { if let item = deletingRecord { Task { await sharing.removeReceived(ids: [item.id]) } } }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
         .confirmationDialog(tr("この人から届いた記録を、すべて削除しますか？ 相手の共有は、消えません"), isPresented: $confirmDeleteAll, titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) {
                 if let group { Task { await sharing.removeReceived(ids: group.items.map(\.id)) } }
