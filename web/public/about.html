@@ -268,6 +268,42 @@
     .flow .arrow { flex: 0 0 26px; align-self: flex-start; margin-top: 150px; display: grid; place-items: center; }
     .flow .arrow svg { width: 22px; height: 22px; fill: none; stroke: var(--green); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
     @media (min-width: 1060px) { .flow { justify-content: center; overflow: visible; } }
+
+    /* 使い方：縦の流れ。線にそって、視線が、上から下へ進む */
+    .tl-sec { background: linear-gradient(180deg, var(--cream) 0%, #f4efe4 100%); }
+    .tl { list-style: none; margin: 0 auto; padding: 8px 0 0; position: relative; max-width: 940px; counter-reset: none; --p: 0; }
+    .tl::before, .tl::after { content: ""; position: absolute; top: 20px; bottom: 20px; width: 4px; left: 22px; border-radius: 4px; }
+    .tl::before { background: repeating-linear-gradient(180deg, rgba(25, 100, 89, .22) 0 10px, transparent 10px 20px); }
+    .tl::after { background: linear-gradient(180deg, var(--green), #e0b84a); height: calc((100% - 40px) * var(--p)); bottom: auto; transition: height .25s linear; }
+    .tstep { position: relative; display: grid; grid-template-columns: 1fr; gap: 14px; padding: 6px 0 56px 62px; }
+    .tnode { position: absolute; left: 6px; top: 6px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; z-index: 2;
+      background: var(--cream); color: var(--green); font-weight: 700; border: 3px solid rgba(25, 100, 89, .28);
+      transition: background .5s, color .5s, border-color .5s, transform .5s; }
+    .tstep.on .tnode { background: var(--green); color: var(--cream); border-color: var(--green); transform: scale(1.12); box-shadow: 0 0 0 8px rgba(25, 100, 89, .12); }
+    .tmedia { position: relative; display: flex; justify-content: flex-start; }
+    .tmedia .glow { position: absolute; width: 130%; aspect-ratio: 1; left: -15%; top: 4%; border-radius: 50%; z-index: 0;
+      background: radial-gradient(closest-side, rgba(25, 100, 89, .14), transparent 72%); }
+    .tmedia .phone { position: relative; z-index: 1; width: min(54vw, 232px); transition: transform .8s cubic-bezier(.2, .7, .2, 1); }
+    .tstep:nth-child(odd) .phone { transform: rotate(-1.6deg); } .tstep:nth-child(even) .phone { transform: rotate(1.6deg); }
+    .tstep.on .phone { transform: rotate(0deg) translateY(-4px); }
+    .ttext { align-self: center; }
+    .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; border-radius: 999px; padding: 3px 12px; margin-bottom: 8px; }
+    .tag.sys { background: #e6e6e1; color: #55605c; } .tag.app { background: var(--green-soft); color: var(--green); } .tag.auto { background: #f7e9c2; color: #8a6a12; }
+    .ttext h3 { margin: 0 0 6px; font-size: clamp(22px, 5vw, 30px); color: var(--green); line-height: 1.3; }
+    .ttext p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.85; }
+    .tl-loop { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0 0; color: var(--green); font-weight: 700; }
+    .tl-loop svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    @media (min-width: 860px) {
+      .tl::before, .tl::after { left: calc(50% - 2px); }
+      .tstep { grid-template-columns: 1fr 1fr; gap: 0 72px; padding: 0 0 72px; align-items: center; }
+      .tnode { left: calc(50% - 20px); top: calc(50% - 56px); width: 40px; height: 40px; }
+      .tmedia { justify-content: flex-end; }
+      .tmedia .phone { width: 240px; }
+      .tstep:nth-child(even) .tmedia { order: 2; justify-content: flex-start; }
+      .tstep:nth-child(even) .ttext { order: 1; text-align: right; }
+      .ttext { max-width: 360px; } .tstep:nth-child(even) .ttext { margin-left: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) { .tl::after { transition: none; } .tstep .phone, .tnode { transition: none; } }
     @media (prefers-reduced-motion: reduce) {
       .stage .phone { animation: none; }
       .hero .copy > *, .hero .stage { animation: none; }
@@ -328,53 +364,67 @@
   </div>
 </section>
 
-<section>
+<section class="tl-sec">
   <div class="wrap">
     <h2 class="reveal"><span class="ja">使い方</span><span class="en">How it works</span></h2>
     <p class="sub-flow reveal"><span class="ja">制限したアプリを開くところから、自動で戻るまで</span><span class="en">From opening a locked app to locking again</span></p>
-    <ol class="flow">
-      <li class="reveal" style="--d:0.00s">
-        <div class="phone"><img src="/assets/web/shots/28-shield.jpg" alt="" width="540" height="1044" loading="lazy"></div>
-        <div class="fn">1</div>
-        <h3><span class="ja">制限の画面</span><span class="en">Lock screen</span></h3>
-        <p><span class="ja">制限したアプリを開くと、<span class="p">この画面が出ます</span></span><span class="en">Open a locked app and this appears</span></p>
+    <ol class="tl" id="tl">
+      <li class="tstep reveal">
+        <div class="tnode" aria-hidden="true">1</div>
+        <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/28-shield.jpg" alt="" width="540" height="1044" loading="lazy"></div></div>
+        <div class="ttext">
+          <span class="tag sys"><span class="ja">OSの画面</span><span class="en">System screen</span></span>
+          <h3><span class="ja">制限の画面</span><span class="en">The lock screen</span></h3>
+          <p><span class="ja">制限したアプリを開くと、<span class="p">この画面が出ます</span></span><span class="en">Open a locked app and this appears</span></p>
+        </div>
       </li>
-      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
-      <li class="reveal" style="--d:0.08s">
-        <div class="phone"><img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076" loading="lazy"></div>
-        <div class="fn">2</div>
-        <h3><span class="ja">ふとを開く</span><span class="en">Open Futo</span></h3>
-        <p><span class="ja"><span class="p">「ひと呼吸おいて、使う」</span>を押します</span><span class="en">Tap “Take a breath, then use”</span></p>
+      <li class="tstep reveal">
+        <div class="tnode" aria-hidden="true">2</div>
+        <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="ttext">
+          <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
+          <h3><span class="ja">ふとを開く</span><span class="en">Open Futo</span></h3>
+          <p><span class="ja"><span class="p">「ひと呼吸おいて、使う」</span>を押します</span><span class="en">Tap “Take a breath, then use”</span></p>
+        </div>
       </li>
-      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
-      <li class="reveal" style="--d:0.16s">
-        <div class="phone"><img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy"></div>
-        <div class="fn">3</div>
-        <h3><span class="ja">何をする？</span><span class="en">What for?</span></h3>
-        <p><span class="ja">使う目的を、<span class="p">ひとつ選びます</span></span><span class="en">Pick one reason</span></p>
+      <li class="tstep reveal">
+        <div class="tnode" aria-hidden="true">3</div>
+        <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="ttext">
+          <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
+          <h3><span class="ja">何をする？</span><span class="en">What for?</span></h3>
+          <p><span class="ja">使う目的を、<span class="p">ひとつ選びます</span><br>答えずに進むこともできます</span><span class="en">Pick one reason, or skip the question</span></p>
+        </div>
       </li>
-      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
-      <li class="reveal" style="--d:0.24s">
-        <div class="phone"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy"></div>
-        <div class="fn">4</div>
-        <h3><span class="ja">少し待つ</span><span class="en">Wait a moment</span></h3>
-        <p><span class="ja">ゆっくり息をしながら、<span class="p">待ちます</span></span><span class="en">Breathe slowly while you wait</span></p>
+      <li class="tstep reveal">
+        <div class="tnode" aria-hidden="true">4</div>
+        <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="ttext">
+          <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
+          <h3><span class="ja">少し、立ち止まる</span><span class="en">Pause for a moment</span></h3>
+          <p><span class="ja">ゆっくり息をしながら、<span class="p">待ちます</span><br>円が、残りを教えてくれます</span><span class="en">Breathe slowly while you wait. A circle shows what's left</span></p>
+        </div>
       </li>
-      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
-      <li class="reveal" style="--d:0.32s">
-        <div class="phone"><img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy"></div>
-        <div class="fn">5</div>
-        <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
-        <p><span class="ja">使うか、<span class="p">やめておくかを選びます</span></span><span class="en">Use it, or maybe later</span></p>
+      <li class="tstep reveal">
+        <div class="tnode" aria-hidden="true">5</div>
+        <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="ttext">
+          <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
+          <h3><span class="ja">自分で決める</span><span class="en">You decide</span></h3>
+          <p><span class="ja">使うか、<span class="p">やめておくかを選びます</span><br>使うなら、使うものだけを解除します</span><span class="en">Use it, or maybe later. If you use it, unlock only what you need</span></p>
+        </div>
       </li>
-      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></li>
-      <li class="reveal" style="--d:0.40s">
-        <div class="phone"><img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy"></div>
-        <div class="fn">6</div>
-        <h3><span class="ja">自動で戻る</span><span class="en">Locks again</span></h3>
-        <p><span class="ja">決めた時間のあと、<span class="p">自動で制限に戻ります</span></span><span class="en">It locks itself when time is up</span></p>
+      <li class="tstep reveal">
+        <div class="tnode" aria-hidden="true">6</div>
+        <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
+        <div class="ttext">
+          <span class="tag auto"><span class="ja">自動</span><span class="en">Automatic</span></span>
+          <h3><span class="ja">自動で、制限に戻る</span><span class="en">Locks itself again</span></h3>
+          <p><span class="ja">決めた時間のあと、<span class="p">自動で制限に戻ります</span><br>戻ったら、感想を気軽に残せます</span><span class="en">When time is up it locks again. Then leave a quick note on how it felt</span></p>
+        </div>
       </li>
     </ol>
+    <p class="tl-loop reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.6M4 20v-4h4"/></svg><span class="ja">そして、また、ふだんの制限へ</span><span class="en">And back to the everyday lock</span></p>
   </div>
 </section>
 
@@ -601,6 +651,22 @@
       if (ticking) return; ticking = true;
       requestAnimationFrame(function () { stage.style.transform = "translateY(" + Math.min(window.scrollY, 600) * 0.12 + "px)"; ticking = false; });
     }, { passive: true });
+  })();
+
+  // 使い方の線：スクロールにあわせて、色が伸びる。通りすぎた手順の丸が、濃くなる
+  (function () {
+    var tl = document.getElementById("tl");
+    if (!tl) return;
+    var steps = tl.querySelectorAll(".tstep");
+    function update() {
+      var rect = tl.getBoundingClientRect(), vh = window.innerHeight || 800, mark = vh * 0.55;
+      var p = Math.max(0, Math.min(1, (mark - rect.top) / Math.max(rect.height, 1)));
+      tl.style.setProperty("--p", p.toFixed(3));
+      steps.forEach(function (el) { el.classList.toggle("on", el.getBoundingClientRect().top < mark); });
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
   })();
 </script>
 </body>
