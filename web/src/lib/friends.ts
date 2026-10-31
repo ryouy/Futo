@@ -211,3 +211,13 @@ export async function blockUser(uid: string, targetUid: string): Promise<void> {
 export async function unblockUser(uid: string, targetUid: string): Promise<void> {
   await blockRef(uid, targetUid).delete();
 }
+
+/** 自分がブロックしている人（いまも有効なアカウントだけ）。 */
+export async function listBlocked(uid: string) {
+  const snap = await blocks().where("blockerUid", "==", uid).limit(50).get();
+  const uids = snap.docs.map((d) => d.data().blockedUid as string);
+  const profiles = await activeProfiles(uids);
+  return uids
+    .map((blockedUid) => ({ uid: blockedUid, displayName: profiles.get(blockedUid)?.name, avatar: profiles.get(blockedUid)?.avatar }))
+    .filter((b) => b.displayName !== undefined);
+}

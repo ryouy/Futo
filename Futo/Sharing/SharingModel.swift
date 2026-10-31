@@ -25,6 +25,8 @@ final class SharingModel {
     private(set) var profile: MeResponse?
     private(set) var shares: [ShareListItem] = []
     private(set) var friends = FriendsResponse(friends: [], incoming: [], outgoing: [])
+    /// 削除（ブロック）したフレンド
+    private(set) var blocked: [BlockedUser] = []
     private(set) var receivedShares: [ReceivedFriendShare] = []
     private(set) var sentShares: [SentFriendShare] = []
     private(set) var invitation: InvitationResponse?
@@ -330,18 +332,43 @@ final class SharingModel {
         } catch { fail(error) }
     }
 
-    func removeFriend(_ friend: FriendsResponse.Friend) async {
+    /// フレンドを削除する。関係を終わらせ、あわせてブロックする（相手は、申請も、新しい共有もできない）。
+    func deleteFriend(_ friend: FriendsResponse.Friend) async {
         do {
-            let _: EmptyResponse = try await api.send("DELETE", "/api/friends/\(friend.friendshipId)")
+            let _: EmptyResponse = try await api.send("POST", "/api/blocks/\(friend.uid)")
             await loadFriends()
+            await loadBlocked()
+            await loadReceivedShares()
         } catch { fail(error) }
     }
 
-    func block(uid target: String) async {
+    func loadBlocked() async {
+        guard isSignedIn else { return }
+        if let list = try? await api.send("GET", "/api/blocks") as BlockedListResponse { blocked = list.items }
+    }
+
+    /// 削除したフレンドの、ブロックを解除する。フレンドには、戻らない（もう一度、招待し合う）。
+    func unblock(_ user: BlockedUser) async {
         do {
-            let _: EmptyResponse = try await api.send("POST", "/api/blocks/\(target)")
-            await loadFriends()
+            let _: EmptyResponse = try await api.send("DELETE", "/api/blocks/\(user.uid)")
+            await loadBlocked()
         } catch { fail(error) }
+    }
+
+    /// 届いた記録を、自分の側だけ削除する（送り主の共有そのものは、消えない）。
+    func removeReceived(ids: [String]) async {
+        var removed = Set<String>()
+        for id in ids {
+            do {
+                let _: EmptyResponse = try await api.send("DELETE", "/api/friend-shares/\(id)/received")
+                removed.insert(id)
+            } catch let error as APIError where error.kind == .notFound {
+                removed.insert(id)   // すでに、届いていない
+            } catch { fail(error); break }
+        }
+        receivedShares.removeAll { removed.contains($0.id) }
+        seen.prune(keeping: Set(receivedShares.map(\.id)))
+        if let uid { seenStore.save(seen, uid: uid) }
     }
 
     // MARK: フレンド限定共有

@@ -145,6 +145,18 @@ struct ReceivedFriendShare: Codable, Equatable, Identifiable {
     var ownerAvatar: AvatarSpec? = nil
 }
 
+/// 削除（ブロック）したフレンド。解除するための一覧に使う。
+struct BlockedUser: Codable, Equatable, Identifiable {
+    var uid: String
+    var displayName: String
+    var avatar: AvatarSpec? = nil
+    var id: String { uid }
+}
+
+struct BlockedListResponse: Codable, Equatable {
+    var items: [BlockedUser]
+}
+
 /// 自分が作ったリンクの、中身（アプリの中で、確かめるため）。
 struct OwnShareDetail: Codable, Equatable {
     var id: String

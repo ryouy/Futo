@@ -104,7 +104,7 @@ struct HomeView: View {
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
-                        Image(systemName: "note.text").font(.title3).frame(width: 44, height: 44)
+                        Image(systemName: "chart.bar.xaxis").font(.title3).frame(width: 44, height: 44)
                     }
                     .accessibilityLabel(tr("記録"))
                     Button { sheet = .settings } label: {

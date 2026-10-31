@@ -532,6 +532,51 @@ function webPayloadWithMessage() {
   };
 }
 
+describe("届いた記録：名前の変更・まとめ・削除", () => {
+  it("名前を変えると、過去の共有も、新しい名前で届く。同じ送り主は、同じ目印", async () => {
+    const alice = await newUser("アリス");
+    const bob = await newUser("ボブ");
+    await makeFriends(alice, bob);
+    await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid]) });
+    await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス改" } });
+    await call("POST", "/api/friend-shares", { token: alice.token, body: { ...friendPayload([bob.uid]), idempotencyKey: crypto.randomUUID() } });
+    const list = (await call("GET", "/api/friend-shares", { token: bob.token })).body.items as { ownerName: string; ownerKey: string }[];
+    expect(list).toHaveLength(2);
+    expect(list.every((i) => i.ownerName === "アリス改")).toBe(true);
+    expect(new Set(list.map((i) => i.ownerKey)).size).toBe(1);
+    expect(JSON.stringify(list)).not.toContain(alice.uid);
+  });
+
+  it("受け取った側だけが、自分の分を削除できる。送り主の共有は残る", async () => {
+    const alice = await newUser("アリス");
+    const bob = await newUser("ボブ");
+    const carol = await newUser("キャロル");
+    await makeFriends(alice, bob);
+    await makeFriends(alice, carol);
+    const created = await call("POST", "/api/friend-shares", { token: alice.token, body: friendPayload([bob.uid, carol.uid]) });
+    const id = created.body.shareId as string;
+    expect((await call("DELETE", `/api/friend-shares/${id}/received`, { token: alice.token })).status).toBe(404);
+    expect((await call("DELETE", `/api/friend-shares/${id}/received`, { token: bob.token })).status).toBe(200);
+    expect((await call("GET", "/api/friend-shares", { token: bob.token })).body.items).toHaveLength(0);
+    expect((await call("GET", `/api/friend-shares/${id}`, { token: bob.token })).status).toBe(404);
+    expect((await call("GET", "/api/friend-shares", { token: carol.token })).body.items).toHaveLength(1);
+    expect((await call("DELETE", `/api/friend-shares/${id}/received`, { token: bob.token })).status).toBe(404);
+  });
+
+  it("削除（ブロック）した人の一覧が読め、解除できる", async () => {
+    const alice = await newUser("アリス");
+    const bob = await newUser("ボブ");
+    await makeFriends(alice, bob);
+    await call("POST", `/api/blocks/${bob.uid}`, { token: alice.token });
+    const blocked = (await call("GET", "/api/blocks", { token: alice.token })).body.items as { uid: string; displayName: string }[];
+    expect(blocked.map((b) => b.uid)).toEqual([bob.uid]);
+    expect(blocked[0].displayName).toBe("ボブ");
+    expect((await call("GET", "/api/friends", { token: alice.token })).body.friends).toEqual([]);
+    await call("DELETE", `/api/blocks/${bob.uid}`, { token: alice.token });
+    expect((await call("GET", "/api/blocks", { token: alice.token })).body.items).toEqual([]);
+  });
+});
+
 describe("アイコンの共有", () => {
   it("アイコンを変えると、フレンドの一覧に反映される。不正な値は拒否", async () => {
     const alice = await newUser("アリス");

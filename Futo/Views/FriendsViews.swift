@@ -6,10 +6,47 @@ struct FriendsView: View {
     let model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var code = ""
-    @State private var removing: FriendsResponse.Friend?
-    @State private var blocking: FriendsResponse.Friend?
+    @State private var deleting: FriendsResponse.Friend?
+    @State private var page: Page = .friends
+
+    /// 下のページ：左右にスライドして切り替える。多くなっても、それぞれのページの中で、スクロールできる。
+    enum Page: Int, CaseIterable {
+        case friends, received, sent
+
+        var title: String {
+            switch self {
+            case .friends: return tr("フレンド")
+            case .received: return tr("届いた記録")
+            case .sent: return tr("共有した記録")
+            }
+        }
+    }
 
     var body: some View {
+        VStack(spacing: 0) {
+            FutoTabPicker(items: Page.allCases, selection: $page, title: { $0.title },
+                          badge: { $0 == .received && sharing.hasUnseenRecords })
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+            TabView(selection: $page) {
+                friendsPage.tag(Page.friends)
+                receivedPage.tag(Page.received)
+                sentPage.tag(Page.sent)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .navigationTitle(tr("フレンド"))
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await sharing.loadFriends(); await sharing.loadFriendShares(); await sharing.loadBlocked() }
+        .confirmationDialog(tr("フレンドを削除しますか？ 相手は、あなたに申請できなくなり、記録も届かなくなります"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            Button(tr("削除"), role: .destructive) { if let f = deleting { Task { await sharing.deleteFriend(f) } } }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
+    }
+
+    /// フレンド：招待・コード入力・承認待ち・一覧
+    private var friendsPage: some View {
         Form {
             inviteSection
             codeSection
@@ -23,25 +60,45 @@ struct FriendsView: View {
                     .frame(minHeight: 44)
                 }
             }
-            receivedSection
-            // フレンド一覧は、いちばん下に置く
             friendsSection
+            if !sharing.blocked.isEmpty { blockedSection }
             if let message = sharing.message { CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) } }
         }
         .compactForm()
-        .navigationTitle(tr("フレンド"))
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await sharing.loadFriends(); await sharing.loadFriendShares() }
-        .confirmationDialog(tr("フレンドをやめますか？ 共有済みの記録も、見えなくなります"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
-            Button(tr("やめる"), role: .destructive) { if let f = removing { Task { await sharing.removeFriend(f) } } }
-            Button(tr("キャンセル"), role: .cancel) {}
-        }
-        .confirmationDialog(tr("ブロックしますか？ 相手からの申請や、記録は届かなくなります"), isPresented: Binding(get: { blocking != nil }, set: { if !$0 { blocking = nil } }), titleVisibility: .visible) {
-            Button(tr("ブロック"), role: .destructive) { if let f = blocking { Task { await sharing.block(uid: f.uid) } } }
-            Button(tr("キャンセル"), role: .cancel) {}
-        }
     }
 
+    /// 届いた記録：送ってきた人ごと
+    private var receivedPage: some View {
+        Form {
+            if sharing.receivedShares.isEmpty {
+                emptyNote(tr("届いた記録は、まだありません"))
+            } else {
+                receivedSection
+            }
+        }
+        .compactForm()
+    }
+
+    /// 共有した記録
+    private var sentPage: some View {
+        Form {
+            if sharing.sentShares.contains(where: { $0.status != "revoked" }) {
+                sentSection
+            } else {
+                emptyNote(tr("共有した記録は、まだありません"))
+            }
+        }
+        .compactForm()
+    }
+
+    private func emptyNote(_ text: String) -> some View {
+        Section {
+            Text(text).font(.subheadline).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
+        }
+    }
 
     private func formatted(_ code: String) -> String {
         stride(from: 0, to: code.count, by: 4).map { start in
@@ -145,64 +202,74 @@ struct FriendsView: View {
                     AccountAvatar(name: friend.displayName, size: 32, spec: friend.avatar)
                     Text(friend.displayName).oneLine()
                     Spacer(minLength: 0)
-                    Menu {
-                        Button(tr("フレンドをやめる"), role: .destructive) { removing = friend }
-                        Button(tr("ブロック"), role: .destructive) { blocking = friend }
-                    } label: {
-                        Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(Theme.accentText)
+                    // 削除は、関係を終わらせて、ブロックもする（まとめて1つのボタン）
+                    Button { deleting = friend } label: {
+                        Image(systemName: "trash").font(.body).foregroundStyle(.secondary)
                             .frame(width: 44, height: 44).contentShape(Rectangle())
                     }
-                    .accessibilityLabel(tr("操作"))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(tr("フレンドを削除"))
                 }
                 .frame(minHeight: 44)
             }
         }
     }
 
-    @ViewBuilder
+    /// 届いた記録：送ってきた人ごとにまとめる。人を選んでから、いつの記録を見るか選ぶ。
     private var receivedSection: some View {
-        if !sharing.receivedShares.isEmpty || sharing.sentShares.contains(where: { $0.status != "revoked" }) {
-            if !sharing.receivedShares.isEmpty {
-                // 送ってきた人ごとにまとめる。人を選んでから、いつの記録を見るか選ぶ
-                CardSection {
-                    Text(tr("届いた記録")).font(.footnote).foregroundStyle(.secondary)
-                    ForEach(ReceivedGrouping.group(sharing.receivedShares)) { group in
-                        NavigationLink { FriendRecordsListView(groupID: group.id) } label: {
-                            HStack(spacing: 12) {
-                                AccountAvatar(name: group.name ?? "?", size: 32, spec: group.avatar)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(group.name ?? tr("匿名")).oneLine()
-                                    Text(tr("{0}件", "\(group.items.count)")).font(.footnote).foregroundStyle(.secondary)
-                                }
-                                Spacer(minLength: 0)
-                                if group.items.contains(where: { sharing.isUnseen($0) }) { NewBadge() }
-                            }
-                            .frame(minHeight: 44)
+        CardSection {
+            ForEach(ReceivedGrouping.group(sharing.receivedShares)) { group in
+                NavigationLink { FriendRecordsListView(groupID: group.id) } label: {
+                    HStack(spacing: 12) {
+                        AccountAvatar(name: group.name ?? "?", size: 32, spec: group.avatar)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(group.name ?? tr("匿名")).oneLine()
+                            Text(tr("{0}件", "\(group.items.count)")).font(.footnote).foregroundStyle(.secondary)
                         }
+                        Spacer(minLength: 0)
+                        if group.items.contains(where: { sharing.isUnseen($0) }) { NewBadge() }
+                    }
+                    .frame(minHeight: 44)
+                }
+            }
+        }
+    }
+
+    private var sentSection: some View {
+        CardSection {
+            ForEach(sharing.sentShares.filter { $0.status != "revoked" }) { item in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(periodLabel(item.period) + (sharing.isStanding(item.id) != nil ? " · " + tr("継続中") : ""))
+                        Text(tr("{0}人・期限 {1}", "\(item.recipientCount)", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if item.status == "active" {
+                        if sharing.isStanding(item.id) != nil {
+                            Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode, force: true) } }
+                                .buttonStyle(ChipButtonStyle()).fixedSize().disabled(sharing.isWorking)
+                        }
+                        Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }
+                            .buttonStyle(ChipButtonStyle()).fixedSize()
                     }
                 }
             }
-            if sharing.sentShares.contains(where: { $0.status != "revoked" }) {
-                CardSection {
-                    Text(tr("共有した記録")).font(.footnote).foregroundStyle(.secondary)
-                    ForEach(sharing.sentShares.filter { $0.status != "revoked" }) { item in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(periodLabel(item.period) + (sharing.isStanding(item.id) != nil ? " · " + tr("継続中") : ""))
-                                Text(tr("{0}人・期限 {1}", "\(item.recipientCount)", dateText(item.expiresAt))).font(.footnote).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if item.status == "active" {
-                                if sharing.isStanding(item.id) != nil {
-                                    Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode, force: true) } }
-                                        .buttonStyle(ChipButtonStyle()).fixedSize().disabled(sharing.isWorking)
-                                }
-                                Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }
-                                    .buttonStyle(ChipButtonStyle()).fixedSize()
-                            }
-                        }
-                    }
+        }
+    }
+
+    /// 削除したフレンド（ブロック中）。ここから、解除できる。
+    private var blockedSection: some View {
+        CardSection {
+            Text(tr("削除したフレンド")).font(.footnote).foregroundStyle(.secondary)
+            ForEach(sharing.blocked) { user in
+                HStack(spacing: 12) {
+                    AccountAvatar(name: user.displayName, size: 32, spec: user.avatar)
+                    Text(user.displayName).oneLine()
+                    Spacer(minLength: 0)
+                    Button(tr("ブロックを解除")) { Task { await sharing.unblock(user) } }
+                        .buttonStyle(ChipButtonStyle()).fixedSize()
                 }
+                .frame(minHeight: 44)
             }
         }
     }
@@ -213,6 +280,7 @@ struct FriendsView: View {
 struct FriendRecordsListView: View {
     let groupID: String
     @Environment(SharingModel.self) private var sharing
+    @State private var confirmDeleteAll = false
 
     private var group: ReceivedGroup? { ReceivedGrouping.group(sharing.receivedShares).first { $0.id == groupID } }
 
@@ -232,7 +300,17 @@ struct FriendRecordsListView: View {
                             }
                             .frame(minHeight: 44)
                         }
+                        // 左にスワイプして、この記録を削除（自分の側だけ）
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(tr("削除"), role: .destructive) { Task { await sharing.removeReceived(ids: [item.id]) } }
+                        }
                     }
+                }
+                CardSection {
+                    Button(role: .destructive) { confirmDeleteAll = true } label: {
+                        Label(tr("この人の記録を、すべて削除"), systemImage: "trash").foregroundStyle(.red)
+                    }
+                    .frame(minHeight: 44)
                 }
             } else {
                 CardSection { Text(tr("この記録は、もう見られません")).foregroundStyle(.secondary) }
@@ -241,6 +319,12 @@ struct FriendRecordsListView: View {
         .compactForm()
         .navigationTitle(group?.name ?? tr("匿名"))
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(tr("この人から届いた記録を、すべて削除しますか？ 相手の共有は、消えません"), isPresented: $confirmDeleteAll, titleVisibility: .visible) {
+            Button(tr("削除"), role: .destructive) {
+                if let group { Task { await sharing.removeReceived(ids: group.items.map(\.id)) } }
+            }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
     }
 }
 
@@ -249,6 +333,8 @@ struct FriendRecordsListView: View {
 struct FriendShareDetailView: View {
     let id: String
     @Environment(SharingModel.self) private var sharing
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmDelete = false
     @State private var detail: FriendShareDetail?
     @State private var failed = false
 
@@ -280,6 +366,20 @@ struct FriendShareDetailView: View {
         .compactForm()
         .navigationTitle(tr("届いた記録"))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if detail != nil, detail?.isOwner == false {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { confirmDelete = true } label: { Image(systemName: "trash") }
+                        .accessibilityLabel(tr("この記録を削除"))
+                }
+            }
+        }
+        .confirmationDialog(tr("この記録を削除しますか？ 相手の共有は、消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button(tr("削除"), role: .destructive) {
+                Task { await sharing.removeReceived(ids: [id]); dismiss() }
+            }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
         .task {
             detail = await sharing.friendShareDetail(id: id)
             failed = detail == nil

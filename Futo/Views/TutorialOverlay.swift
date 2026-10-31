@@ -49,7 +49,7 @@ struct TutorialOverlay: View {
             result.append(Step(target: .plus, lines: [tr("＋で、制限するものを足せます"), tr("足すのは、いつでもできます")]))
         }
         result.append(Step(target: .main, lines: mainLines))
-        result.append(Step(target: .header, lines: [tr("左の時計は記録、"), tr("右は設定とアカウントです")]))
+        result.append(Step(target: .header, lines: [tr("左のグラフは記録、"), tr("右は設定とアカウントです")]))
         result.append(Step(target: .header, lines: [tr("制限を止めたいときは、"), tr("設定の「制限の管理」から"), tr("止める前に、待機があります")]))
         result.append(Step(target: nil, lines: [tr("準備はできました")]))
         return result

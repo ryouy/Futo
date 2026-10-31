@@ -81,7 +81,7 @@
 <li>サーバー（Google Cloud の Firestore）に保存するのは、アカウントの内部 ID（Firebase UID）、<strong>表示名</strong>（初期値は Google または Apple の名前<br>取得できなければ「ふと」<br>いつでも変更できます）、作成・更新の日時、状態です</li>
 <li>用途：共有・フレンド機能の本人確認と、相手に表示する名前のため<br>広告や分析には使いません</li>
 </ul>
-<p>削除：設定 →「アカウント」→「アカウントを削除」で、再ログインの確認のあと、サーバー上のデータ（下記の共有・フレンド関連と、プロフィール、ログインのアカウント）をすべて削除します<br>ログアウトすると、端末内のログイン情報を消します</p></div>
+<p>削除：設定 →「アカウント」→「アカウントを削除」で、再ログインの確認のあと、サーバー上のデータ（下記の共有・フレンド関連と、プロフィール、ログインのアカウント）をすべて削除します<br>ログアウトすると、端末内のログイン情報を消します<br>共有リンクの控え、継続共有の設定、バックアップの許可は、そのアカウントのものとして端末に残し、ログインし直したときに使えます（アカウントを削除すると、これらも消えます）</p></div>
   <div class="en"><p>You sign in with Google or Apple only when you use sharing or friends (backup needs a separate Google connection). Everything else works without signing in. Both give the same features, and accounts are never merged automatically even if the email address is the same</p>
 <ul>
 <li>Authentication uses Google sign-in (OAuth) or Sign in with Apple, together with Firebase Authentication. The only information requested for signing in is your <strong>name</strong>. Your email address and photo are not used. When you sign in with Google, the same screen also asks for the backup permission described in section 5 (the app-specific area of Google Drive). You can sign in without allowing it</li>
@@ -89,7 +89,7 @@
 <li>What we store on our server (Google Cloud Firestore): an internal account ID (Firebase UID), your <strong>display name</strong> (initially your Google or Apple name, or "Futo" if unavailable; you can change it any time), creation/update times and status</li>
 <li>Purpose: identifying you for sharing and friends, and the name shown to others. Not used for ads or analytics</li>
 </ul>
-<p>Deletion: Settings → Account → “Delete account” deletes all server-side data (sharing and friends data below, your profile and the sign-in account) after re-authentication. Signing out removes the sign-in information from your device</p></div>
+<p>Deletion: Settings → Account → “Delete account” deletes all server-side data (sharing and friends data below, your profile and the sign-in account) after re-authentication. Signing out removes the sign-in information from your device. Saved share links, ongoing-share settings and the backup permission stay on the device for that account so you can use them after signing in again (deleting the account removes them too)</p></div>
 </section>
 <section>
   <h2><span class="ja">3. 共有（任意）</span><span class="en">3. Sharing (optional)</span></h2>
@@ -115,15 +115,17 @@
   <div class="ja"><ul>
 <li>保存するもの：招待（招待した人の ID、リンクとコードのハッシュ、有効期限24時間）、フレンドの申請と承認の状態、フレンド関係（2人のアカウント ID と状態）、ブロックの情報</li>
 <li>相手には、あなたの<strong>表示名</strong>と<strong>アイコン</strong>（絵の番号と、色。好きな色を選んだときは、その色の値）、あなたが共有した内容だけが見えます<br>メールアドレスや、ほかの情報は見えません</li>
-<li>フレンドをやめる・ブロックすると、相手は以後、あなたの共有を見られません</li>
+<li>フレンドを削除すると、関係が終わり、同時にブロックされます<br>相手は以後、あなたに申請できず、あなたの共有も見られません<br>削除したフレンドは、一覧から、ブロックを解除できます</li>
+<li>届いた記録は、受け取った側だけが、自分の分を削除できます（送った人の共有そのものは、消えません）</li>
 </ul>
-<p>削除：フレンド一覧から「フレンドをやめる」「ブロック」ができます<br>アカウント削除で、招待・申請・フレンド関係・ブロックを、すべて削除します</p></div>
+<p>削除：フレンド一覧から「フレンドを削除」ができます<br>アカウント削除で、招待・申請・フレンド関係・ブロックを、すべて削除します</p></div>
   <div class="en"><ul>
 <li>What we store: invitations (inviter ID, hashes of the link and code, 24-hour expiry), friend request and approval status, friendships (the two account IDs and status) and block information</li>
 <li>Others can see only your <strong>display name</strong>, your <strong>icon</strong> (the picture number and color, or the color value if you picked a custom one) and what you chose to share. Your email address and other information are not visible</li>
-<li>If you remove a friend or block someone, they can no longer view your shares</li>
+<li>Deleting a friend ends the friendship and blocks them at the same time. They can no longer send you requests or view your shares, and you can unblock them from the list of deleted friends</li>
+<li>Records you received can be deleted by you alone (the sender's share itself is not removed)</li>
 </ul>
-<p>Deletion: “Remove friend” or “Block” from the friend list. Deleting your account deletes all invitations, requests, friendships and blocks</p></div>
+<p>Deletion: “Delete friend” from the friend list. Deleting your account deletes all invitations, requests, friendships and blocks</p></div>
 </section>
 <section>
   <h2><span class="ja">5. Google Drive バックアップ（任意）</span><span class="en">5. Google Drive backup (optional)</span></h2>

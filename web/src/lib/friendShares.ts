@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { FieldPath, Timestamp, type DocumentData } from "firebase-admin/firestore";
+import { FieldPath, FieldValue, Timestamp, type DocumentData } from "firebase-admin/firestore";
 import { addDays, now } from "./clock";
 import { db } from "./firebase";
 import { ApiError } from "./http";
@@ -74,6 +74,14 @@ async function canRead(data: DocumentData, viewerUid: string): Promise<boolean> 
   return !b1.exists && !b2.exists;
 }
 
+/** 名前を出す共有の、送り主のいまの名前とアイコン。名前を出さない共有は、どちらも出さない。 */
+async function currentOwner(data: DocumentData): Promise<{ ownerName: string | null; ownerAvatar: unknown }> {
+  const snapshotName = (data.ownerName as string | null) ?? null;
+  if (!snapshotName) return { ownerName: null, ownerAvatar: null };
+  const owner = (await userRef(data.ownerUid as string).get()).data();
+  return { ownerName: (owner?.displayName as string | undefined) ?? snapshotName, ownerAvatar: owner?.avatar ?? null };
+}
+
 export async function getFriendShare(uid: string, shareId: string) {
   const snap = await friendShares().doc(shareId).get();
   const data = snap.data();
@@ -82,9 +90,8 @@ export async function getFriendShare(uid: string, shareId: string) {
   if (!isOwner && !(await canRead(data, uid))) throw new ApiError(404, "not_found");
   return {
     id: snap.id,
-    ownerName: (data.ownerName as string | null) ?? null,
-    // 名前を出す共有だけ、作成者の今のアイコンも見せる
-    ownerAvatar: data.ownerName ? ((await userRef(data.ownerUid as string).get()).data()?.avatar ?? null) : null,
+    // 名前を出す共有は、作成時の名前ではなく、いまのニックネームで見せる（名前を変えても、同じ人として扱う）
+    ...(await currentOwner(data)),
     isOwner,
     createdAt: iso(data.createdAt),
     updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp),
@@ -113,19 +120,20 @@ export async function listReceivedFriendShares(uid: string, limit = 20) {
     .limit(Math.min(Math.max(limit, 1), 20))
     .get();
   const items = [];
-  const avatars = new Map<string, unknown>();
+  const owners = new Map<string, { ownerName: string | null; ownerAvatar: unknown }>();
   for (const doc of snap.docs) {
     const data = doc.data();
     if (await canRead(data, uid)) {
       const ownerUid = data.ownerUid as string;
       const named = Boolean(data.ownerName);
-      // 名前を出す共有だけ、送り主の、いまのアイコンも見せる
-      if (named && !avatars.has(ownerUid)) avatars.set(ownerUid, (await userRef(ownerUid).get()).data()?.avatar ?? null);
+      // 名前を出す共有は、いまのニックネームとアイコンで見せる（名前を変えても、過去の共有を、同じ人のものとして、まとめられる）
+      if (named && !owners.has(ownerUid)) owners.set(ownerUid, await currentOwner(data));
+      const owner = named ? owners.get(ownerUid) : undefined;
       items.push({
         id: doc.id,
         ownerKey: ownerGroupKey(ownerUid, uid, named),
-        ownerName: (data.ownerName as string | null) ?? null,
-        ownerAvatar: named ? (avatars.get(ownerUid) ?? null) : null,
+        ownerName: owner?.ownerName ?? null,
+        ownerAvatar: owner?.ownerAvatar ?? null,
         period: (data.stats as StatsSnapshot).period,
         createdAt: iso(data.createdAt),
         updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp),
@@ -188,5 +196,16 @@ export async function updateFriendShare(uid: string, shareId: string, payload: z
       expiresAt,
     });
     return { shareId, updatedAt: iso(Timestamp.fromDate(t)), expiresAt: iso(expiresAt) };
+  });
+}
+
+/** 届いた記録を、受け取った側だけが、削除する（相手の共有そのものは消えない。自分には、もう届かない・見えない）。 */
+export async function removeReceivedFriendShare(uid: string, shareId: string): Promise<void> {
+  const ref = friendShares().doc(shareId);
+  await db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.data();
+    if (!data || !(data.recipientUids as string[] | undefined)?.includes(uid)) throw new ApiError(404, "not_found");
+    tx.update(ref, "recipientUids", FieldValue.arrayRemove(uid), new FieldPath("grants", uid), FieldValue.delete());
   });
 }
