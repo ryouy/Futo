@@ -268,42 +268,52 @@
     .flow .arrow svg { width: 22px; height: 22px; fill: none; stroke: var(--green); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
     @media (min-width: 1060px) { .flow { justify-content: center; overflow: visible; } }
 
-    /* 使い方：縦の流れ。線にそって、視線が、上から下へ進む */
+    /* 使い方：スマホは、大きな画面を横にスライド。パソコンは、縦の流れ（線にそって、視線が、上から下へ進む） */
     .tl-sec { background: linear-gradient(180deg, var(--cream) 0%, #f4efe4 100%); }
-    .tl { list-style: none; margin: 0 auto; padding: 8px 0 0; position: relative; max-width: 940px; counter-reset: none; --p: 0; }
-    .tl::before, .tl::after { content: ""; position: absolute; top: 20px; bottom: 20px; width: 4px; left: 22px; border-radius: 4px; }
-    .tl::before { background: repeating-linear-gradient(180deg, rgba(25, 100, 89, .22) 0 10px, transparent 10px 20px); }
-    .tl::after { background: linear-gradient(180deg, var(--green), #e0b84a); height: calc((100% - 40px) * var(--p)); bottom: auto; transition: height .25s linear; }
-    .tstep { position: relative; display: grid; grid-template-columns: 1fr; gap: 14px; padding: 6px 0 56px 62px; }
-    .tnode { position: absolute; left: 6px; top: 6px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; z-index: 2;
-      background: var(--cream); color: var(--green); font-weight: 700; border: 3px solid rgba(25, 100, 89, .28);
-      transition: background .5s, color .5s, border-color .5s, transform .5s; }
-    .tstep.on .tnode { background: var(--green); color: var(--cream); border-color: var(--green); transform: scale(1.12); box-shadow: 0 0 0 8px rgba(25, 100, 89, .12); }
-    .tmedia { position: relative; display: flex; justify-content: flex-start; }
-    .tmedia .glow { position: absolute; width: 130%; aspect-ratio: 1; left: -15%; top: 4%; border-radius: 50%; z-index: 0;
+    .tl { list-style: none; margin: 0 -20px; padding: 6px 20px 8px; display: flex; gap: 18px; overflow-x: auto;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-padding-inline: 20px; }
+    .tstep { flex: 0 0 min(78vw, 310px); scroll-snap-align: center; text-align: center; position: relative; }
+    .tnode { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 999px; margin-bottom: 12px;
+      background: var(--green); color: var(--cream); font-weight: 700; font-size: 15px; }
+    .tstep.trigger .tnode { background: #7a8580; font-size: 12px; letter-spacing: .06em; }
+    .tmedia { position: relative; display: flex; justify-content: center; }
+    .tmedia .glow { position: absolute; width: 120%; aspect-ratio: 1; left: -10%; top: 6%; border-radius: 50%; z-index: 0;
       background: radial-gradient(closest-side, rgba(25, 100, 89, .14), transparent 72%); }
-    .tmedia .phone { position: relative; z-index: 1; width: min(54vw, 232px); transition: transform .8s cubic-bezier(.2, .7, .2, 1); }
-    .tstep:nth-child(odd) .phone { transform: rotate(-1.6deg); } .tstep:nth-child(even) .phone { transform: rotate(1.6deg); }
-    .tstep.on .phone { transform: rotate(0deg) translateY(-4px); }
-    .ttext { align-self: center; }
+    .tmedia .phone { position: relative; z-index: 1; width: 100%; }
+    .ttext { margin-top: 16px; }
     .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; border-radius: 999px; padding: 3px 12px; margin-bottom: 8px; }
     .tag.sys { background: #e6e6e1; color: #55605c; } .tag.app { background: var(--green-soft); color: var(--green); } .tag.auto { background: #f7e9c2; color: #8a6a12; }
-    .ttext h3 { margin: 0 0 6px; font-size: clamp(22px, 5vw, 30px); color: var(--green); line-height: 1.3; }
-    .ttext p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.85; }
-    .tl-loop { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0 0; color: var(--green); font-weight: 700; }
+    .ttext h3 { margin: 0 0 6px; font-size: clamp(21px, 5.4vw, 26px); color: var(--green); line-height: 1.3; }
+    .ttext p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.8; text-wrap: balance; }
+    .tl-dots { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+    .tl-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(25, 100, 89, .22); transition: background .3s, transform .3s; }
+    .tl-dots i.on { background: var(--green); transform: scale(1.35); }
+    .tl-loop { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 22px 0 0; color: var(--green); font-weight: 700; }
     .tl-loop svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
     @media (min-width: 860px) {
-      .tl::before, .tl::after { left: calc(50% - 2px); }
-      .tstep { grid-template-columns: 1fr 1fr; gap: 0 72px; padding: 0 0 72px; align-items: center; }
-      .tnode { left: calc(50% - 20px); top: calc(50% - 56px); width: 40px; height: 40px; }
+      .tl-dots { display: none; }
+      .tl { display: block; margin: 0 auto; padding: 8px 0 0; overflow: visible; position: relative; max-width: 900px; --p: 0; }
+      .tl::before, .tl::after { content: ""; position: absolute; top: 24px; bottom: 24px; width: 4px; left: calc(50% - 2px); border-radius: 4px; }
+      .tl::before { background: repeating-linear-gradient(180deg, rgba(25, 100, 89, .22) 0 10px, transparent 10px 20px); }
+      .tl::after { background: linear-gradient(180deg, var(--green), #e0b84a); height: calc((100% - 48px) * var(--p)); bottom: auto; transition: height .25s linear; }
+      .tstep { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 0 76px; align-items: center; text-align: left; margin-bottom: -112px; }
+      .tstep:last-child { margin-bottom: 0; }
+      .tnode { position: absolute; left: calc(50% - 20px); top: calc(50% - 20px); width: 40px; height: 40px; min-width: 40px; padding: 0; z-index: 2; margin: 0;
+        background: var(--cream); color: var(--green); border: 3px solid rgba(25, 100, 89, .28); transition: background .5s, color .5s, border-color .5s, transform .5s; }
+      .tstep.trigger .tnode { background: var(--cream); color: #7a8580; border-color: rgba(122, 133, 128, .5); }
+      .tstep.on .tnode { background: var(--green); color: var(--cream); border-color: var(--green); transform: scale(1.12); box-shadow: 0 0 0 8px rgba(25, 100, 89, .12); }
+      .tstep.trigger.on .tnode { background: #7a8580; border-color: #7a8580; box-shadow: 0 0 0 8px rgba(122, 133, 128, .14); }
       .tmedia { justify-content: flex-end; }
-      .tmedia .phone { width: 240px; }
+      .tmedia .phone { width: 206px; transition: transform .8s cubic-bezier(.2, .7, .2, 1); }
+      .tstep:nth-child(odd) .phone { transform: rotate(-1.6deg); } .tstep:nth-child(even) .phone { transform: rotate(1.6deg); }
+      .tstep.on .phone { transform: rotate(0deg) translateY(-4px); }
       .tstep:nth-child(even) .tmedia { order: 2; justify-content: flex-start; }
-      .tstep:nth-child(even) .ttext { order: 1; text-align: right; }
-      .ttext { max-width: 360px; } .tstep:nth-child(even) .ttext { margin-left: auto; }
+      .tstep:nth-child(even) .ttext { order: 1; text-align: right; margin-left: auto; }
+      .ttext { margin-top: 0; max-width: 340px; align-self: center; }
+      .ttext p { text-wrap: pretty; }
     }
-    @media (prefers-reduced-motion: reduce) { .tl::after { transition: none; } .tstep .phone, .tnode { transition: none; } }
     @media (prefers-reduced-motion: reduce) {
+      .tl::after, .tstep .phone, .tnode, .tl-dots i { transition: none; }
       .stage .phone { animation: none; }
       .hero .copy > *, .hero .stage { animation: none; }
       .reveal { opacity: 1; transform: none; transition: none; }
@@ -366,19 +376,19 @@
 <section class="tl-sec">
   <div class="wrap">
     <h2 class="reveal"><span class="ja">使い方</span><span class="en">How it works</span></h2>
-    <p class="sub-flow reveal"><span class="ja">制限したアプリを開くところから、自動で戻るまで</span><span class="en">From opening a locked app to locking again</span></p>
+    <p class="sub-flow reveal"><span class="ja"><span class="p">制限したアプリを開くところから、</span><span class="p">自動で戻るまで</span></span><span class="en">From opening a locked app to locking again</span></p>
     <ol class="tl" id="tl">
-      <li class="tstep reveal">
-        <div class="tnode" aria-hidden="true">1</div>
+      <li class="tstep trigger reveal">
+        <div class="tnode" aria-hidden="true">OS</div>
         <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/28-shield.jpg" alt="" width="540" height="1044" loading="lazy"></div></div>
         <div class="ttext">
-          <span class="tag sys"><span class="ja">OSの画面</span><span class="en">System screen</span></span>
-          <h3><span class="ja">制限の画面</span><span class="en">The lock screen</span></h3>
-          <p><span class="ja">制限したアプリを開くと、<span class="p">この画面が出ます</span></span><span class="en">Open a locked app and this appears</span></p>
+          <span class="tag sys"><span class="ja">きっかけ（OSの画面）</span><span class="en">The trigger (system screen)</span></span>
+          <h3><span class="ja">制限の画面が出たら</span><span class="en">When the lock screen appears</span></h3>
+          <p><span class="ja">制限したアプリを開くと、<span class="p">この画面が出ます</span><br>ここから、ふとを開きます</span><span class="en">Open a locked app and this appears. From here, open Futo</span></p>
         </div>
       </li>
       <li class="tstep reveal">
-        <div class="tnode" aria-hidden="true">2</div>
+        <div class="tnode" aria-hidden="true">1</div>
         <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/02-home.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
         <div class="ttext">
           <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
@@ -387,7 +397,7 @@
         </div>
       </li>
       <li class="tstep reveal">
-        <div class="tnode" aria-hidden="true">3</div>
+        <div class="tnode" aria-hidden="true">2</div>
         <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/03-purpose.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
         <div class="ttext">
           <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
@@ -396,7 +406,7 @@
         </div>
       </li>
       <li class="tstep reveal">
-        <div class="tnode" aria-hidden="true">4</div>
+        <div class="tnode" aria-hidden="true">3</div>
         <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/04-wait.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
         <div class="ttext">
           <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
@@ -405,7 +415,7 @@
         </div>
       </li>
       <li class="tstep reveal">
-        <div class="tnode" aria-hidden="true">5</div>
+        <div class="tnode" aria-hidden="true">4</div>
         <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/05-choice.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
         <div class="ttext">
           <span class="tag app"><span class="ja">ふとの中</span><span class="en">Inside Futo</span></span>
@@ -414,7 +424,7 @@
         </div>
       </li>
       <li class="tstep reveal">
-        <div class="tnode" aria-hidden="true">6</div>
+        <div class="tnode" aria-hidden="true">5</div>
         <div class="tmedia"><div class="glow"></div><div class="phone"><img src="/assets/web/shots/07-unlocked.jpg" alt="" width="540" height="1076" loading="lazy"></div></div>
         <div class="ttext">
           <span class="tag auto"><span class="ja">自動</span><span class="en">Automatic</span></span>
@@ -423,6 +433,7 @@
         </div>
       </li>
     </ol>
+    <div class="tl-dots" id="tl-dots" aria-hidden="true"></div>
     <p class="tl-loop reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.6M4 20v-4h4"/></svg><span class="ja">そして、また、ふだんの制限へ</span><span class="en">And back to the everyday lock</span></p>
   </div>
 </section>
@@ -666,6 +677,22 @@
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     update();
+  })();
+
+  // 使い方（スマホ）：横にスライドしたとき、いまの位置の点が濃くなる
+  (function () {
+    var tl = document.getElementById("tl"), dots = document.getElementById("tl-dots");
+    if (!tl || !dots) return;
+    var n = tl.querySelectorAll(".tstep").length;
+    for (var i = 0; i < n; i++) dots.appendChild(document.createElement("i"));
+    function mark() {
+      var first = tl.querySelector(".tstep"), step = first ? first.getBoundingClientRect().width + 18 : 1;
+      var idx = Math.max(0, Math.min(n - 1, Math.round(tl.scrollLeft / step)));
+      Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle("on", k === idx); });
+    }
+    tl.addEventListener("scroll", mark, { passive: true });
+    window.addEventListener("resize", mark);
+    mark();
   })();
 </script>
 </body>

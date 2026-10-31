@@ -33,9 +33,9 @@ export function ShareView({ share }: { share: PublicShare }) {
       key: "counts",
       title: b("ひと呼吸の結果", "Breath results"),
       slices: [
-        { label: b("使いたい", "Wanted to use"), value: stats.counts.wantsToUse, color: C.amber },
+        { label: b("使いたい", "Use it"), value: stats.counts.wantsToUse, color: C.amber },
         { label: b("やめておく", "Held off"), value: stats.counts.deferred, color: C.teal },
-        { label: b("途中でやめた", "Stopped midway"), value: stats.counts.interrupted, color: C.stone },
+        { label: b("途中でやめた", "Stopped"), value: stats.counts.interrupted, color: C.stone },
       ],
     });
   }

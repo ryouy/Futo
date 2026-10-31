@@ -90,8 +90,8 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(durationText(seconds: 10), "10 sec")
         XCTAssertEqual(durationText(seconds: 90), "1 min 30 sec")
         XCTAssertEqual(SessionOutcome.deferred.label, "Maybe later")
-        XCTAssertEqual(Purpose.research.label, "Looking something up")
-        XCTAssertEqual(Reflection.wishedLess.label, "Maybe too much")
+        XCTAssertEqual(Purpose.research.label, "Look-up")
+        XCTAssertEqual(Reflection.wishedLess.label, "Too much?")
         XCTAssertEqual(ReflectionKind.morning.title, "Morning check-in")
     }
 
