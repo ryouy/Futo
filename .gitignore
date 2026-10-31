@@ -13,3 +13,6 @@ xcuserdata/
 
 # 撮ったままのスクリーンショット（時刻・電池つき。加工した画像は docs/screenshots に置く）
 /docs/assets/screenshots/
+
+# Appetize用デモビルド（ZIP）
+/build-demo/

@@ -45,6 +45,8 @@ final class LanguageStore {
     /// 初回起動のとき、端末の言語が英語なら英語にする（選んだあとは、その選択を優先する）。
     func applySystemDefaultIfUnset() {
         guard UserDefaults.standard.string(forKey: Self.key) == nil else { return }
+        // デモは、端末の言語に関わらず日本語で始める（設定で英語にも切り替えられる）
+        if DemoConfig.isOn { select(.ja); return }
         if Locale.preferredLanguages.first?.hasPrefix("en") == true { select(.en) }
     }
 }

@@ -12,6 +12,7 @@ final class AppModel {
     let settings: AppSettings
     let sessions: SessionStore
     let device: DeviceRestrictionService
+    let demo = DemoRestrictionService()
     let cards: ReflectionCardStore
     let events: RestrictionEventStore
     /// 制限全体の一時停止（待機→停止→自動で再制限）。実機のみ
@@ -82,15 +83,24 @@ final class AppModel {
         self.device = DeviceRestrictionService()
         self.pause = PauseFlow(store: DevicePauseStore(), scheduler: DevicePauseScheduler(), shield: DevicePauseShield())
         // デモモードは廃止。以前のデモの記録は消し、実機の利用に切り替える
-        settings.mode = .device
-        self.mode = .device
-        Self.purgeLegacyDemoData(sessions: sessions, cards: cards, events: events)
+        if DemoConfig.isOn {
+            // デモ版：端末の制限は使わず、サンプルの記録と架空のアプリで体験できる
+            settings.mode = .demo
+            self.mode = .demo
+            settings.onboardingDone = true
+            settings.tutorialDone = true
+            if sessions.all().isEmpty { DemoSeed.populate(context: context) }
+        } else {
+            settings.mode = .device
+            self.mode = .device
+            Self.purgeLegacyDemoData(sessions: sessions, cards: cards, events: events)
+        }
         self.onboardingDone = settings.onboardingDone
         self.tutorialCompleted = settings.tutorialDone
         refresh()
     }
 
-    private var service: RestrictionService { device }
+    private var service: RestrictionService { DemoConfig.isOn ? demo : device }
 
     /// 以前のデモの記録（Session・振り返り・制限の管理）を、すべて消す。
     private static func purgeLegacyDemoData(sessions: SessionStore, cards: ReflectionCardStore, events: RestrictionEventStore) {
@@ -253,6 +263,18 @@ final class AppModel {
     func removeItem(_ item: RestrictedItem) {
         guard !isTargetEditLocked else { return }
         device.removeItem(item)
+        refresh()
+    }
+
+    func setDemoTarget(_ name: String, selected: Bool) {
+        guard DemoConfig.isOn, !isTargetEditLocked || selected else { return }
+        demo.setTarget(name, selected: selected)
+        refresh()
+    }
+
+    func removeDemoTarget(_ name: String) {
+        guard DemoConfig.isOn, !isTargetEditLocked else { return }
+        demo.setTarget(name, selected: false)
         refresh()
     }
 

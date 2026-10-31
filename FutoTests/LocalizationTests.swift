@@ -34,6 +34,7 @@ final class LocalizationTests: XCTestCase {
         }
         // `tr(変数)` で渡されるもの
         keys.formUnion(OutingMessages.rawMessages)
+        keys.formUnion(DemoRestrictionService.fictionalApps)
         return keys
     }
 

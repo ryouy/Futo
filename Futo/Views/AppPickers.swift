@@ -55,6 +55,42 @@ struct DeviceAppPickerView: View {
     }
 }
 
+/// デモ用：架空アプリから選ぶ。Screen Timeは呼ばない。
+@MainActor
+struct DemoAppPickerView: View {
+    let model: AppModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(DemoRestrictionService.fictionalApps, id: \.self) { name in
+                        let on = model.demo.targets.contains(name)
+                        Button {
+                            model.setDemoTarget(name, selected: !on)
+                        } label: {
+                            HStack {
+                                Text(tr(name)).foregroundStyle(.primary)
+                                Spacer()
+                                if on { Image(systemName: "checkmark").accessibilityLabel(tr("選択中")) }
+                            }
+                            .frame(minHeight: 44)
+                        }
+                    }
+                } footer: {
+                    Text(tr("デモ用の架空のアプリです。実際のアプリは制限されません。"))
+                }
+            }
+            .navigationTitle(tr("制限するもの"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button(tr("閉じる")) { dismiss() } }
+            }
+        }
+    }
+}
+
 /// 「使いたい」の後、制限中のものから、一時的に使えるようにするものを1つ以上選ぶ。
 /// 決定の操作は画面下に固定し、選択肢と混ざらないようにする。
 @MainActor

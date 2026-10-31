@@ -48,7 +48,7 @@ struct Preferences: Codable, Equatable {
     /// 解除する時間の選択肢（分）。
     static let unlockMinuteOptions: [Int] = [1, 5, 10]
 
-    #if DEBUG
+    #if DEBUG || FUTO_DEMO
     static let defaultWaitSeconds: Double = 10
     static let defaultUnlockMinutes = 1
     #else

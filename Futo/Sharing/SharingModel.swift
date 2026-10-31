@@ -61,7 +61,7 @@ final class SharingModel {
         if let profile { ProfileCache.save(name: profile.displayName, uid: profile.uid) }
     }
 
-    var isConfigured: Bool { config.isConfigured }
+    var isConfigured: Bool { config.isConfigured && !DemoConfig.isOn }
     var isSignedIn: Bool { auth.isSignedIn }
     var uid: String? { auth.uid }
     var isWorking: Bool { phase == .working }

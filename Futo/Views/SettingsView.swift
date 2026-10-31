@@ -177,10 +177,12 @@ struct SettingsView: View {
             }
 
             CardSection {
-                NavigationLink { SupportView() } label: {
-                    Label(tr("ふとを応援"), systemImage: "heart").foregroundStyle(Theme.accentText)
+                if !DemoConfig.isOn {
+                    NavigationLink { SupportView() } label: {
+                        Label(tr("ふとを応援"), systemImage: "heart").foregroundStyle(Theme.accentText)
+                    }
+                    .frame(minHeight: 44)
                 }
-                .frame(minHeight: 44)
                 // ふとの紹介サイト（ブラウザで開く）
                 if let site = introSiteURL {
                     Link(destination: site) {

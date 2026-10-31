@@ -53,12 +53,12 @@ struct RestrictionManagementView: View {
     }
 
     private var canPause: Bool {
-        model.permission == .approved && model.restriction == .configured && model.device.supportsTemporaryUnlock
+        model.permission == .approved && model.restriction == .configured && !DemoConfig.isOn && model.device.supportsTemporaryUnlock
     }
 
     /// 使えない理由。「制限がかかっているときだけ」は、見れば分かるので、書かない。
     private var pauseUnavailableText: String? {
-        if !model.device.supportsTemporaryUnlock { return tr("この環境では、一時停止を使えません") }
+        if DemoConfig.isOn || !model.device.supportsTemporaryUnlock { return tr("この環境では、一時停止を使えません") }
         if model.permission != .approved { return tr("Screen Timeの許可が必要です") }
         return nil
     }

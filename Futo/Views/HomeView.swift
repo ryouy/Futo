@@ -317,7 +317,11 @@ struct HomeView: View {
 
     private func appRows(editable: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            do {
+            if DemoConfig.isOn {
+                ForEach(model.demo.targets, id: \.self) { name in
+                    appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget(name) }) { Text(tr(name)) }
+                }
+            } else {
                 ForEach(model.device.items.sortedItems) { item in
                     appRow(unlocked: model.unlockedItems.contains(item), editable: editable,
                            onRemove: { model.removeItem(item) }) { ItemLabel(item: item) }
@@ -405,7 +409,7 @@ struct HomeView: View {
     private func sheetContent(_ item: HomeSheet) -> some View {
         switch item {
         case .picker:
-            DeviceAppPickerView(model: model)
+            if DemoConfig.isOn { DemoAppPickerView(model: model) } else { DeviceAppPickerView(model: model) }
         case .history:
             NavigationStack {
                 RecordsView(mode: model.mode)

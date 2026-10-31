@@ -15,7 +15,9 @@ struct FutoApp: App {
         LanguageStore.shared.applySystemDefaultIfUnset()
         let container: ModelContainer
         do {
-            container = try ModelContainer(for: Session.self, ReflectionCard.self, RestrictionEvent.self)
+            // デモは、記録をメモリにだけ置く（起動のたびにサンプルから始まる）
+            let config = ModelConfiguration(isStoredInMemoryOnly: DemoConfig.isOn)
+            container = try ModelContainer(for: Session.self, ReflectionCard.self, RestrictionEvent.self, configurations: config)
         } catch {
             fatalError("記録の保存先を開けませんでした: \(error)")
         }
@@ -39,18 +41,19 @@ struct FutoApp: App {
                 .environment(support)
                 .onChange(of: scenePhase) { _, phase in
                     // アプリを開いたとき、継続共有を最新にする（常時同期ではない）
-                    if phase == .active { Task { await sharing.refreshAccountPlan() }; Task { await sharing.loadReceivedShares() }; Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode) } }
+                    if phase == .active, !DemoConfig.isOn { Task { await sharing.refreshAccountPlan() }; Task { await sharing.loadReceivedShares() }; Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode) } }
                 }
                 .onChange(of: sharing.profile?.webPlan) { _, plan in support.setAccountPlan(plan) }
                 .task {
                     // 加入状況の確認と、購入の更新の受け取り（加入していれば、広告は出ない）
-                    support.start()
+                    if !DemoConfig.isOn { support.start() }
                 }
                 .task {
                     // 広告の同意の確認（必要な地域でだけ、フォームが出る）。広告が出なくても、アプリの動作は変わらない
-                    await ads.gatherConsent()
+                    if !DemoConfig.isOn { await ads.gatherConsent() }
                 }
                 .task {
+                    guard !DemoConfig.isOn else { return }
                     await sharing.loadProfile()
                     sharing.loadStandingConfigs()
                     await sharing.loadReceivedShares()

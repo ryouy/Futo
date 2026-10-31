@@ -257,7 +257,7 @@ struct ResultView: View {
         case .unsupported:
             return (tr("記録しました"), [tr("この設定では、解除は使えません")])
         case nil:
-            return (tr("記録しました"), [tr("制限は続いています")])
+            return (tr("記録しました"), [DemoConfig.isOn ? tr("デモでは、実際の制限は変わりません。") : tr("制限は続いています")])
         }
     }
 

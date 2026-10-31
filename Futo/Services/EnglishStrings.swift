@@ -5,6 +5,12 @@ import Foundation
 /// 新しい文言を足したら、ここに英語を足す（テストが、足りないものを見つける）。
 enum EnglishStrings {
     static let table: [String: String] = [
+        "選択中": "Selected",
+        "動画アプリ（架空）": "Video app (fictional)",
+        "SNSアプリ（架空）": "Social app (fictional)",
+        "ゲームアプリ（架空）": "Game app (fictional)",
+        "デモ用の架空のアプリです。実際のアプリは制限されません。": "Fictional apps for the demo. Nothing on your device is actually locked.",
+        "デモでは、実際の制限は変わりません。": "In the demo, nothing is actually locked or unlocked.",
         "通知が許可されていません\niPhoneの設定アプリで変えられます": "Notifications are off for this app\nYou can turn them on in the iPhone Settings",
         "通知は許可されませんでした\n通知なしでも、すべての機能が使えます": "No worries — everything else works without notifications",
         "許可を確認できなかったため、ひと呼吸を中断しました": "Couldn't check permission, so your breath was paused",

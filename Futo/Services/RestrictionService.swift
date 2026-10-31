@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 enum PermissionState: Equatable {
     case notDetermined
@@ -46,4 +47,98 @@ protocol RestrictionService: AnyObject {
     var supportsTemporaryUnlock: Bool { get }
     /// 一時解除を取り消し、対象を再び制限する。
     func relock()
+}
+
+// MARK: デモ（Appetize 公開用）
+
+/// コンパイル条件 `FUTO_DEMO` のビルドだけ有効になるデモ。通常のビルドでは常に false。
+/// デモでは、Screen Time・ログイン・課金・広告を一切使わない。待機は10秒、記録はサンプル。
+enum DemoConfig {
+    #if FUTO_DEMO
+    static let isOn = true
+    #else
+    static let isOn = false
+    #endif
+}
+
+/// デモ用。Screen Timeを一切呼ばず、実際のアプリも制限しない。保存は端末内のメモリだけ。
+@MainActor
+final class DemoRestrictionService: RestrictionService {
+    static let fictionalApps = ["動画アプリ（架空）", "SNSアプリ（架空）", "ゲームアプリ（架空）"]
+
+    private(set) var targets: [String] = DemoRestrictionService.fictionalApps
+    private var intent = true
+
+    var permission: PermissionState { .approved }
+    var targetCount: Int { targets.count }
+    var intendsRestriction: Bool { intent }
+    var supportsTemporaryUnlock: Bool { false }
+
+    func setTarget(_ name: String, selected: Bool) {
+        if selected, !targets.contains(name) { targets.append(name) }
+        if !selected { targets.removeAll { $0 == name } }
+        if targets.isEmpty { intent = false }
+    }
+
+    func refreshPermission() {}
+    func requestPermission() async -> String? { nil }
+    func start() { if !targets.isEmpty { intent = true } }
+
+    @discardableResult
+    func stop() -> Bool { intent = false; return true }
+
+    func relock() {}
+    func verify() -> RestrictionState { intent && !targets.isEmpty ? .configured : .off }
+}
+
+/// デモの初回に入れるサンプルの記録（過去2週間ぶん）。
+@MainActor
+enum DemoSeed {
+    static func populate(context: ModelContext) {
+        let cal = Calendar.current
+        let now = Date()
+        // (何日前, 時, 分, 目的, 結果, 解除した分, 感想)
+        let rows: [(Int, Int, Int, Purpose?, SessionOutcome, Int?, Reflection?)] = [
+            (0, 8, 40, .contact, .deferred, nil, nil),
+            (0, 12, 15, .noReason, .deferred, nil, nil),
+            (1, 7, 55, .noReason, .deferred, nil, nil),
+            (1, 13, 20, .research, .wantsToUse, 5, .satisfied),
+            (1, 22, 5, .change, .deferred, nil, nil),
+            (2, 9, 10, .contact, .wantsToUse, 5, .neutral),
+            (2, 18, 45, .noReason, .deferred, nil, nil),
+            (3, 12, 30, .change, .deferred, nil, nil),
+            (3, 23, 10, .noReason, .wantsToUse, 5, .wishedLess),
+            (4, 8, 5, .noReason, .deferred, nil, nil),
+            (4, 19, 20, .research, .wantsToUse, 5, .satisfied),
+            (5, 14, 0, .change, .deferred, nil, nil),
+            (6, 10, 30, .noReason, .deferred, nil, nil),
+            (6, 21, 40, .noReason, .wantsToUse, 5, .wishedLess),
+            (8, 11, 15, .contact, .wantsToUse, 5, .satisfied),
+            (9, 15, 50, .change, .deferred, nil, nil),
+            (10, 20, 25, .noReason, .deferred, nil, nil),
+            (12, 9, 0, .research, .deferred, nil, nil),
+            (13, 17, 35, .noReason, .wantsToUse, 5, .neutral),
+        ]
+        for row in rows {
+            guard let day = cal.date(byAdding: .day, value: -row.0, to: now),
+                  var start = cal.date(bySettingHour: row.1, minute: row.2, second: 0, of: day) else { continue }
+            if start > now { start = now.addingTimeInterval(-3600) }
+            let session = Session(mode: .demo, startedAt: start, requiredWaitSeconds: 10)
+            session.purpose = row.3
+            session.remainingWaitSeconds = 0
+            session.phase = .completed
+            session.outcome = row.4
+            session.completedAt = start.addingTimeInterval(14)
+            if let minutes = row.5 {
+                session.temporaryUnlockStartedAt = start.addingTimeInterval(20)
+                session.temporaryUnlockEndedAt = start.addingTimeInterval(20 + Double(minutes) * 60)
+                session.reflection = row.6
+            }
+            context.insert(session)
+        }
+        if let day = cal.date(byAdding: .day, value: -4, to: now) {
+            context.insert(RestrictionEvent(mode: .demo, kind: .pause, at: day, minutes: 10))
+        }
+        try? context.save()
+    }
 }
