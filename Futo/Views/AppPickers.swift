@@ -55,7 +55,72 @@ struct DeviceAppPickerView: View {
     }
 }
 
-/// デモ用：架空アプリから選ぶ。Screen Timeは呼ばない。
+/// デモのアプリのアイコン（グラデーションの角丸に白い記号）。
+struct DemoAppIcon: View {
+    let app: DemoApp
+    var size: CGFloat = 32
+
+    private func color(_ hex: UInt32) -> Color {
+        Color(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
+    }
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: size * 0.225, style: .continuous)
+            .fill(LinearGradient(colors: [color(app.top), color(app.bottom)], startPoint: .top, endPoint: .bottom))
+            .frame(width: size, height: size)
+            .overlay(Image(systemName: app.symbol).font(.system(size: size * 0.5, weight: .semibold)).foregroundStyle(.white))
+            .accessibilityHidden(true)
+    }
+}
+
+/// デモ用：制限中のアプリを開いたときに出る、OSの画面（シールド）の再現。
+/// 実機では、OSが同じ内容を表示する（`FutoShieldConfiguration`）。
+struct DemoShieldView: View {
+    let app: DemoApp
+    @Environment(\.dismiss) private var dismiss
+
+    private func dynamic(_ light: UInt32, _ dark: UInt32) -> Color {
+        Color(uiColor: UIColor { traits in
+            let hex = traits.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                           blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        })
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color(red: 0x19 / 255, green: 0x64 / 255, blue: 0x59 / 255))
+                .frame(width: 112, height: 112)
+                .overlay(Image("Logo").resizable().scaledToFit().padding(18))
+                .padding(.bottom, 24)
+            Text(tr("使う前に、ひと呼吸"))
+                .font(.title2.weight(.bold))
+                .foregroundStyle(dynamic(0x124A42, 0xFCF8F0))
+                .padding(.bottom, 10)
+            Text(tr("今、何に使いたいですか\n『ふと』で少し立ち止まれます\nホーム画面から開いてください"))
+                .font(.callout)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(dynamic(0x4F5F5A, 0xD9D4C8))
+            Spacer()
+            Button { dismiss() } label: {
+                Text(tr("ホームに戻る"))
+                    .font(.headline)
+                    .foregroundStyle(dynamic(0xFCF8F0, 0x124A42))
+                    .frame(maxWidth: .infinity, minHeight: 54)
+                    .background(Capsule().fill(dynamic(0x196459, 0xFCF8F0)))
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(dynamic(0xFCF8F0, 0x10312C).ignoresSafeArea())
+        .accessibilityLabel(app.name)
+    }
+}
+
+/// デモ用：アプリから選ぶ。Screen Timeは呼ばない。
 @MainActor
 struct DemoAppPickerView: View {
     let model: AppModel
@@ -65,13 +130,15 @@ struct DemoAppPickerView: View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(DemoRestrictionService.fictionalApps, id: \.self) { name in
+                    ForEach(DemoApp.catalog) { app in
+                        let name = app.name
                         let on = model.demo.targets.contains(name)
                         Button {
                             model.setDemoTarget(name, selected: !on)
                         } label: {
-                            HStack {
-                                Text(tr(name)).foregroundStyle(.primary)
+                            HStack(spacing: 12) {
+                                DemoAppIcon(app: app, size: 32)
+                                Text(name).foregroundStyle(.primary)
                                 Spacer()
                                 if on { Image(systemName: "checkmark").accessibilityLabel(tr("選択中")) }
                             }
@@ -79,7 +146,7 @@ struct DemoAppPickerView: View {
                         }
                     }
                 } footer: {
-                    Text(tr("デモ用の架空のアプリです。実際のアプリは制限されません。"))
+                    Text(tr("デモ用のアプリです。実際のアプリは制限されません。"))
                 }
             }
             .navigationTitle(tr("制限するもの"))

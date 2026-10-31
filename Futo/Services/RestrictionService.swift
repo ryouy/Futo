@@ -61,12 +61,27 @@ enum DemoConfig {
     #endif
 }
 
+/// デモに出てくるアプリ。名前とアイコン（記号と色）だけを持つ。
+struct DemoApp: Identifiable, Hashable {
+    let name: String
+    let symbol: String
+    let top: UInt32
+    let bottom: UInt32
+    var id: String { name }
+
+    static let catalog = [
+        DemoApp(name: "Vidly", symbol: "play.fill", top: 0xFF5F6D, bottom: 0xD6264A),
+        DemoApp(name: "Chatter", symbol: "bubble.left.and.bubble.right.fill", top: 0x4FB0FF, bottom: 0x2B5FDB),
+        DemoApp(name: "Puzzle Quest", symbol: "puzzlepiece.extension.fill", top: 0xFFB347, bottom: 0xE5532D),
+    ]
+
+    static func named(_ name: String) -> DemoApp? { catalog.first { $0.name == name } }
+}
+
 /// デモ用。Screen Timeを一切呼ばず、実際のアプリも制限しない。保存は端末内のメモリだけ。
 @MainActor
 final class DemoRestrictionService: RestrictionService {
-    static let fictionalApps = ["動画アプリ（架空）", "SNSアプリ（架空）", "ゲームアプリ（架空）"]
-
-    private(set) var targets: [String] = DemoRestrictionService.fictionalApps
+    private(set) var targets: [String] = DemoApp.catalog.map(\.name)
     private var intent = true
 
     var permission: PermissionState { .approved }

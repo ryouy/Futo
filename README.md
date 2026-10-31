@@ -7,6 +7,7 @@
 
 <p align="center">
   <a href="https://futo-share.vercel.app/"><b>紹介サイト</b></a> ・
+  <a href="https://appetize.io/app/b_bfw57limbgdydwknfmb3fbgr5u"><b>ブラウザで試す（デモ）</b></a> ・
   <a href="https://futo-share.vercel.app/privacy">プライバシーポリシー</a>
 </p>
 

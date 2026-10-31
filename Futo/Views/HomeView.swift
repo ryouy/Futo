@@ -8,6 +8,7 @@ struct HomeView: View {
     @Bindable var model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var sheet: HomeSheet?
+    @State private var shieldApp: DemoApp?
     @State private var lockSeal = false
     @State private var lockSealUnlocking = false
     @State private var lockSealTask: Task<Void, Never>?
@@ -71,7 +72,9 @@ struct HomeView: View {
                     .transition(.opacity)
                     .allowsHitTesting(false)
             }
-        }        .sheet(item: $sheet) { item in
+        }
+        .fullScreenCover(item: $shieldApp) { DemoShieldView(app: $0) }
+        .sheet(item: $sheet) { item in
             sheetContent(item)
                 .foregroundStyle(Theme.text)
                 .environment(\.locale, LanguageStore.shared.language.locale)
@@ -319,7 +322,24 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             if DemoConfig.isOn {
                 ForEach(model.demo.targets, id: \.self) { name in
-                    appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget(name) }) { Text(tr(name)) }
+                    if let app = DemoApp.named(name) {
+                        appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget(name) }) {
+                            Button { shieldApp = app } label: {
+                                HStack(spacing: 12) {
+                                    DemoAppIcon(app: app, size: 32)
+                                    Text(name)
+                                }
+                                .foregroundStyle(Theme.text)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if !editable {
+                    Text(tr("タップで、制限中の画面を見られます"))
+                        .font(.footnote).foregroundStyle(.secondary).padding(.top, 8)
                 }
             } else {
                 ForEach(model.device.items.sortedItems) { item in

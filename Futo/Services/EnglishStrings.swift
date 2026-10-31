@@ -6,10 +6,10 @@ import Foundation
 enum EnglishStrings {
     static let table: [String: String] = [
         "選択中": "Selected",
-        "動画アプリ（架空）": "Video app (fictional)",
-        "SNSアプリ（架空）": "Social app (fictional)",
-        "ゲームアプリ（架空）": "Game app (fictional)",
-        "デモ用の架空のアプリです。実際のアプリは制限されません。": "Fictional apps for the demo. Nothing on your device is actually locked.",
+        "デモ用のアプリです。実際のアプリは制限されません。": "Demo apps only. Nothing on your device is actually locked.",
+        "タップで、制限中の画面を見られます": "Tap an app to see its lock screen",
+        "今、何に使いたいですか\n『ふと』で少し立ち止まれます\nホーム画面から開いてください": "What do you want to use it for?\nFuto can help you pause\nOpen it from your Home Screen",
+        "ホームに戻る": "Back to Home",
         "デモでは、実際の制限は変わりません。": "In the demo, nothing is actually locked or unlocked.",
         "通知が許可されていません\niPhoneの設定アプリで変えられます": "Notifications are off for this app\nYou can turn them on in the iPhone Settings",
         "通知は許可されませんでした\n通知なしでも、すべての機能が使えます": "No worries — everything else works without notifications",
