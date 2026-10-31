@@ -114,9 +114,13 @@ struct SignInButtons: View {
     var body: some View {
         if only != .apple {
             Button { Task { await sharing.signIn() } } label: {
-                Label(tr("Googleで続ける"), systemImage: "person.crop.circle.badge.checkmark")
+                HStack(spacing: 10) {
+                    // Googleの、4色のロゴ
+                    Image("GoogleG").resizable().scaledToFit().frame(width: 22, height: 22).accessibilityHidden(true)
+                    Text(tr("Googleで続ける"))
+                }
             }
-            .buttonStyle(FutoButtonStyle())
+            .buttonStyle(GoogleSignInButtonStyle())
             .disabled(sharing.isWorking)
         }
         if only != .google {

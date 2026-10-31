@@ -568,3 +568,27 @@ enum DateText {
         "\(day(date)) \(format(date, wide ? "EEEE" : "EEE", locale: LanguageStore.shared.language.locale))"
     }
 }
+
+/// 「Googleで続ける」のボタン。Google の表示の決まりに合わせた、白（ダークでは暗い灰色）の面に、細い縁。
+/// 高さ・角の丸みは、ほかのボタンと同じにそろえる。
+struct GoogleSignInButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let dark = colorScheme == .dark
+        let fill = dark ? Color(red: 0x13 / 255, green: 0x13 / 255, blue: 0x14 / 255) : Color.white
+        let border = dark ? Color(red: 0x8E / 255, green: 0x91 / 255, blue: 0x8F / 255) : Color(red: 0x74 / 255, green: 0x77 / 255, blue: 0x75 / 255)
+        let text = dark ? Color(red: 0xE3 / 255, green: 0xE3 / 255, blue: 0xE3 / 255) : Color(red: 0x1F / 255, green: 0x1F / 255, blue: 0x1F / 255)
+        configuration.label
+            .font(.headline.weight(.medium))
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .padding(.horizontal, 16)
+            .foregroundStyle(text)
+            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(fill))
+            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(border, lineWidth: 1))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+}
