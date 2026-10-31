@@ -453,9 +453,11 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 1), 16 * 60, "最短15分を下回らない")
         XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 15), 16 * 60)
         XCTAssertEqual(Preferences.unlockWindowSeconds(minutes: 30), 31 * 60, "長い設定は、使わなくても約その分で戻る")
-        XCTAssertEqual(Preferences.unlockMinuteOptions, [1, 5, 10, 30], "解除する時間は、この4つだけ")
+        XCTAssertEqual(Preferences.unlockMinuteOptions, [1, 5, 10], "解除する時間は、この3つだけ（最長10分）")
         var p = Preferences(); p.unlockMinutes = 99
-        XCTAssertEqual(p.effectiveUnlockMinutes, 30, "選択肢にない値は、いちばん近いものに寄せる")
+        XCTAssertEqual(p.effectiveUnlockMinutes, 10, "選択肢にない値は、いちばん近いものに寄せる（以前の30分は、10分になる）")
+        p.unlockMinutes = 30
+        XCTAssertEqual(p.effectiveUnlockMinutes, 10)
         p.unlockMinutes = 0
         XCTAssertEqual(p.effectiveUnlockMinutes, 1)
         p.unlockMinutes = 7
@@ -463,13 +465,15 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(Preferences().effectiveUnlockMinutes, Preferences.defaultUnlockMinutes)
         XCTAssertTrue(Preferences.unlockMinuteOptions.contains(Preferences.defaultUnlockMinutes))
 
-        XCTAssertEqual(Preferences.waitOptions, [10, 30, 60, 300, 600, 1800], "待機時間は、10秒・30秒に加えて、この4つ")
+        XCTAssertEqual(Preferences.waitOptions, [10, 30, 60, 300, 600], "待機時間は、10秒・30秒に加えて、この3つ（最長10分）")
         var w = Preferences(); w.waitSeconds = 180
         XCTAssertEqual(w.effectiveWaitSeconds, 60, "以前の3分は、近い選択肢に寄せる（180は、60と300の間で、60に近い）")
         w.waitSeconds = 120
         XCTAssertEqual(w.effectiveWaitSeconds, 60)
         w.waitSeconds = 20
         XCTAssertTrue([10.0, 30.0].contains(w.effectiveWaitSeconds))
+        w.waitSeconds = 1_800
+        XCTAssertEqual(w.effectiveWaitSeconds, 600, "以前の30分は、10分になる")
         XCTAssertTrue(Preferences.waitOptions.contains(Preferences.defaultWaitSeconds))
     }
 

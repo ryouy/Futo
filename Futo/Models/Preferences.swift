@@ -43,10 +43,10 @@ struct Preferences: Codable, Equatable {
 
     init() {}
 
-    /// 待機時間の選択肢（10秒・30秒・1分・5分・10分・30分）。
-    static let waitOptions: [Double] = [10, 30, 60, 300, 600, 1800]
+    /// 待機時間の選択肢（10秒・30秒・1分・5分・10分）。
+    static let waitOptions: [Double] = [10, 30, 60, 300, 600]
     /// 解除する時間の選択肢（分）。
-    static let unlockMinuteOptions: [Int] = [1, 5, 10, 30]
+    static let unlockMinuteOptions: [Int] = [1, 5, 10]
 
     #if DEBUG
     static let defaultWaitSeconds: Double = 10

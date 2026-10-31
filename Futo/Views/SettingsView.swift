@@ -62,7 +62,8 @@ struct SettingsView: View {
         Form {
             if model.permission != .approved { permissionSection }
 
-            CardSection {
+            // ゆるめる変更（待機を短く・解除を長く）の決まりを、いつも、待機時間の上に出す
+            DescribedSection(lines: [tr("ゆるめる変更は、1分後に反映されます")]) {
                 Picker(tr("待機時間"), selection: Binding(
                     get: { model.prefs.pendingWaitSeconds ?? model.prefs.effectiveWaitSeconds },
                     set: { value in model.updatePreferences { $0.setWait(value) } }
@@ -77,11 +78,6 @@ struct SettingsView: View {
                     ForEach(Preferences.unlockMinuteOptions, id: \.self) { Text(tr("{0}分", "\($0)")).tag($0) }
                 }
                 .frame(minHeight: 44)
-                // ゆるめる変更は、1分後に反映される（その間、元の設定のまま）
-                if model.prefs.pendingWaitSeconds != nil || model.prefs.pendingUnlockMinutes != nil {
-                    Text(tr("ゆるめる変更は、1分後に反映されます"))
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
             }
 
             CardSection {
