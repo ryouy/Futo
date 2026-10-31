@@ -213,9 +213,21 @@ extension View {
 /// 主操作・副操作とも、押しやすくやわらかい形のボタン。
 struct FutoButtonStyle: ButtonStyle {
     var prominent = true
-    /// 淡い面のままでも背景に埋もれないよう、色の濃い面と縁取りで目立たせる。
+    /// 白っぽい面に、ごく細い縁だけ（飾らない）。背景の生成り色とは、白さで区別する。
     var bordered = false
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.colorScheme) private var colorScheme
+
+    private func fill(pressed: Bool) -> Color {
+        if !isEnabled { return Color.gray.opacity(0.22) }
+        if prominent { return Theme.accent }
+        if bordered {
+            // 白目の面（ダークでは、カードの色）。押したときだけ、テーマ色の淡い面になる
+            let base = colorScheme == .dark ? Theme.card : Color.white
+            return pressed ? Theme.softBlue : base
+        }
+        return Theme.accent.opacity(pressed ? 0.38 : 0.14)
+    }
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
@@ -229,11 +241,11 @@ struct FutoButtonStyle: ButtonStyle {
             .foregroundStyle(!isEnabled ? Color.secondary : (prominent ? Theme.onAccent : Theme.accentText))
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(!isEnabled ? Color.gray.opacity(0.22) : (prominent ? Theme.accent : Theme.accent.opacity(pressed ? 0.38 : (bordered ? 0.24 : 0.14))))
+                    .fill(fill(pressed: pressed))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Theme.accent.opacity(bordered && !prominent ? 0.7 : 0), lineWidth: 1.5)
+                    .stroke(Theme.accent.opacity(bordered && !prominent && isEnabled ? 0.18 : 0), lineWidth: 1)
             )
             .opacity(isEnabled ? (pressed && prominent ? 0.85 : 1) : 1)
     }

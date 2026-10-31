@@ -8,6 +8,7 @@ struct FriendsView: View {
     @State private var code = ""
     @State private var deleting: FriendsResponse.Friend?
     @State private var revoking: SentFriendShare?
+    @State private var previewing: SentFriendShare?
     @State private var page: Page = .friends
 
     /// 下のページ：左右にスライドして切り替える。多くなっても、それぞれのページの中で、スクロールできる。
@@ -40,6 +41,14 @@ struct FriendsView: View {
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await sharing.loadFriends(); await sharing.loadFriendShares(); await sharing.loadBlocked() }
+        .sheet(item: $previewing) { item in
+            NavigationStack {
+                FriendShareDetailView(id: item.id)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { previewing = nil } } }
+            }
+            .environment(sharing)
+            .presentationBackground(Theme.background)
+        }
         .confirmationDialog(tr("この共有を削除しますか？\nフレンドは、見られなくなります"), isPresented: Binding(get: { revoking != nil }, set: { if !$0 { revoking = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let item = revoking { Task { await sharing.revokeFriendShare(id: item.id) } } }
             Button(tr("キャンセル"), role: .cancel) {}
@@ -267,6 +276,10 @@ struct FriendsView: View {
                     }
                     Spacer()
                     if item.status == "active" {
+                        // 共有している中身を、その場で確かめる（フレンドに見える形で）
+                        Button { previewing = item } label: { Image(systemName: "eye") }
+                            .buttonStyle(ChipButtonStyle()).frame(width: 56)
+                            .accessibilityLabel(tr("中身を見る"))
                         if sharing.isStanding(item.id) != nil {
                             Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode, force: true) } }
                                 .buttonStyle(ChipButtonStyle()).fixedSize().disabled(sharing.isWorking)
@@ -402,7 +415,7 @@ struct FriendShareDetailView: View {
             }
         }
         .compactForm()
-        .navigationTitle(tr("届いた記録"))
+        .navigationTitle(detail?.isOwner == true ? tr("共有した記録") : tr("届いた記録"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if detail != nil, detail?.isOwner == false {
@@ -422,7 +435,7 @@ struct FriendShareDetailView: View {
             detail = await sharing.friendShareDetail(id: id)
             failed = detail == nil
             // 開いたので、この版は「見た」にする（バッジが消える）
-            if let detail { sharing.markSeen(id: id, version: detail.updatedAt ?? detail.createdAt) }
+            if let detail, !detail.isOwner { sharing.markSeen(id: id, version: detail.updatedAt ?? detail.createdAt) }
         }
     }
 }
