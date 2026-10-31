@@ -18,6 +18,8 @@ final class SharingModel {
     @ObservationIgnored private let seenStore = SeenRecordsStore()
     /// フレンドから届いた記録の「見た」の控え
     private(set) var seen = SeenRecords()
+    /// アカウントの削除を進めている間（サーバーの削除に、時間がかかることがあるため、画面に「削除しています」を出す）
+    private(set) var isDeletingAccount = false
 
     private(set) var phase: Phase = .idle
     private(set) var profile: MeResponse?
@@ -78,7 +80,7 @@ final class SharingModel {
 
     /// いまのアイコン（色を選んでいなければ、いまのテーマ色の番号）
     private static var currentAvatarSpec: AvatarSpec {
-        AvatarSettings.shared.spec(themeIndex: ThemeColor.allCases.firstIndex(of: ThemeStore.shared.color) ?? 0)
+        AvatarSettings.shared.spec(themeIndex: ThemeColor.allCases.firstIndex(of: ThemeStore.shared.color) ?? 0, themeHex: ThemeStore.shared.customHex)
     }
 
     /// いまのアカウントのログイン方法（Google / Apple）
@@ -145,7 +147,8 @@ final class SharingModel {
     }
 
     func signOut() {
-        if let uid { ProfileCache.clear(uid: uid); seenStore.clear(uid: uid) }
+        // 「見た」の控えは、ログアウトしても残す（ログインし直すたびに、同じ記録の知らせが、また出ないように）。アカウントの削除のときだけ消す
+        if let uid { ProfileCache.clear(uid: uid) }
         auth.signOut()
         reset()
     }
@@ -451,13 +454,15 @@ final class SharingModel {
     func deleteAccount() async -> Bool {
         guard let current = uid else { return false }
         phase = .working
-        defer { phase = .idle }
+        isDeletingAccount = true
+        defer { phase = .idle; isDeletingAccount = false }
         var reauthenticated = false
         do {
             for _ in 0..<6 {
                 do {
                     let result: DeletionResponse = try await api.send("DELETE", "/api/me")
                     if result.status == "deleted" {
+                        seenStore.clear(uid: current)
                         ProfileCache.clear(uid: current)
                         auth.signOut()
                         reset()

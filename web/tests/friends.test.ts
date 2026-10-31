@@ -545,7 +545,10 @@ describe("アイコンの共有", () => {
     // 無印（symbol なし）も選べる
     await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス", avatar: { symbol: null, color: 0 } } });
     expect((await call("GET", "/api/friends", { token: bob.token })).body.friends[0].avatar).toEqual({ symbol: null, color: 0 });
-    for (const bad of [{ symbol: 9, color: 0 }, { symbol: 1, color: 4 }, { symbol: 1, color: 0, extra: 1 }, "x"]) {
+    // 好きな色（#RRGGBB）も送れる
+    await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス", avatar: { symbol: 1, color: 0, hex: "#A25A72" } } });
+    expect((await call("GET", "/api/friends", { token: bob.token })).body.friends[0].avatar).toEqual({ symbol: 1, color: 0, hex: "#A25A72" });
+    for (const bad of [{ symbol: 9, color: 0 }, { symbol: 1, color: 4 }, { symbol: 1, color: 0, extra: 1 }, { symbol: 1, color: 0, hex: "red" }, { symbol: 1, color: 0, hex: "#12345" }, "x"]) {
       expect((await call("PUT", "/api/me", { token: alice.token, body: { displayName: "アリス", avatar: bad } })).status).toBe(400);
     }
   });

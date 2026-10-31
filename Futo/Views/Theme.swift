@@ -64,16 +64,62 @@ enum ThemeColor: String, CaseIterable, Identifiable {
 final class ThemeStore {
     static let shared = ThemeStore()
     private static let key = "settings.themeColor"
+    private static let customKey = "settings.customThemeHex"
 
     private(set) var color: ThemeColor
+    /// 好きな色（「#RRGGBB」）。選んでいれば、4つのテーマより、こちらが優先される
+    private(set) var customHex: String?
 
     private init() {
         color = ThemeColor(rawValue: UserDefaults.standard.string(forKey: Self.key) ?? "") ?? .wakaba
+        let saved = UserDefaults.standard.string(forKey: Self.customKey)
+        customHex = saved.flatMap { RGB(hex: $0) != nil ? $0 : nil }
     }
+
+    var isCustom: Bool { customHex != nil }
+
+    /// 画面の再描画の目印（テーマが変わったら、値が変わる）
+    var selectionKey: String { customHex ?? color.rawValue }
 
     func select(_ newColor: ThemeColor) {
         color = newColor
+        customHex = nil
         UserDefaults.standard.set(newColor.rawValue, forKey: Self.key)
+        UserDefaults.standard.removeObject(forKey: Self.customKey)
+    }
+
+    /// 好きな色にする。形式が正しくなければ、何もしない。
+    func selectCustom(hex: String) {
+        guard let rgb = RGB(hex: hex) else { return }
+        customHex = rgb.hex
+        UserDefaults.standard.set(rgb.hex, forKey: Self.customKey)
+    }
+
+    /// バックアップに入れる値（4つのテーマは名前、好きな色は「custom:#RRGGBB」）
+    var backupValue: String { customHex.map { "custom:\($0)" } ?? color.rawValue }
+
+    /// バックアップから戻す。知らない値は、何もしない。
+    func restore(backupValue raw: String) {
+        if raw.hasPrefix("custom:") { selectCustom(hex: String(raw.dropFirst("custom:".count))) }
+        else if let color = ThemeColor(rawValue: raw) { select(color) }
+    }
+
+    var palette: ThemeColor.Palette {
+        if let customHex, let rgb = RGB(hex: customHex) {
+            let c = CustomPalette.colors(for: rgb)
+            return ThemeColor.Palette(accent: (c.accent, c.accent), backgroundTop: (c.backgroundTopLight, c.backgroundTopDark),
+                                      backgroundBottom: (c.backgroundBottomLight, c.backgroundBottomDark), card: (c.cardLight, c.cardDark), soft: (c.softLight, c.softDark))
+        }
+        return color.palette
+    }
+
+    /// 文字・細い線のアクセント（ライト, ダーク）
+    var textAccent: (UInt32, UInt32) {
+        if let customHex, let rgb = RGB(hex: customHex) {
+            let c = CustomPalette.colors(for: rgb)
+            return (c.accent, c.textAccentDark)
+        }
+        return color.textAccent
     }
 }
 
@@ -89,14 +135,14 @@ enum Theme {
                 blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
     }
 
-    private static var palette: ThemeColor.Palette { ThemeStore.shared.color.palette }
+    private static var palette: ThemeColor.Palette { ThemeStore.shared.palette }
 
     static var backgroundTop: Color { dynamic(palette.backgroundTop) }
     static var backgroundBottom: Color { dynamic(palette.backgroundBottom) }
     static var card: Color { dynamic(palette.card) }
     static var accent: Color { dynamic(palette.accent) }
     /// 文字・アイコン・細い線のアクセント色（ダークでは、読めるよう少し明るい）
-    static var accentText: Color { dynamic(ThemeStore.shared.color.textAccent) }
+    static var accentText: Color { dynamic(ThemeStore.shared.textAccent) }
     /// アクセント色の上に置く文字色
     static var onAccent: Color { dynamic((0xFFFEFA, 0xEEE9DF)) }
     /// 補足や案内に使う、テーマ色の淡い面。
@@ -109,9 +155,25 @@ enum Theme {
         Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? rgb(0xEEE9DF) : .label })
     }
 
-    /// 円グラフの色。テーマ色を軸に、見分けやすい控えめな色を並べる。
+    /// 円グラフの色。1つ目はテーマ色、あとは、テーマ色と色相の離れた、はっきり違う色を並べる
+    /// （テーマ色の濃淡だけでは、見分けにくいため）。
     static var chartColors: [Color] {
-        [accentText, accentText.opacity(0.5), dynamic((0xE2B48C, 0xD9B48F)), dynamic((0xB9B6AE, 0x8F938E)), dynamic((0xA9C4D4, 0x84A9BC))]
+        let pool: [(UInt32, UInt32)] = [
+            (0xE0AE4F, 0xD2B887),   // 黄
+            (0xD98A63, 0xD09C82),   // 橙
+            (0x6FA6C8, 0x88A9BF),   // 空
+            (0x7DB48F, 0x8DB89B),   // 若葉
+            (0xB9B6AE, 0x8F938E),   // 灰
+        ]
+        let accent = RGB(palette.accent.0)
+        let accentHue = accent.hsb.h
+        let usable = pool.filter { entry in
+            let hsb = RGB(entry.0).hsb
+            if hsb.s < 0.15 { return true }   // 灰は、どのテーマとも区別できる
+            let d = abs(hsb.h - accentHue)
+            return min(d, 1 - d) > 0.06
+        }
+        return [accentText] + usable.map { dynamic($0) }
     }
 
     /// 時間帯グラフの色。朝は黄、昼は空、夕方は橙、夜はテーマ色。
@@ -590,5 +652,51 @@ struct GoogleSignInButtonStyle: ButtonStyle {
             .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(border, lineWidth: 1))
             .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
             .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+}
+
+/// 好きな色を選ぶ丸い印。選ぶまでは虹色で、選んだあとは、その色の丸。押すと、OSの色の選択が開く。
+struct CustomColorWell: View {
+    let hex: String
+    let isSelected: Bool
+    var size: CGFloat = 44
+    let label: String
+    let onPick: (String) -> Void
+
+    private var current: Color {
+        let rgb = RGB(hex: hex) ?? RGB(0x196459)
+        return Color(red: rgb.r, green: rgb.g, blue: rgb.b)
+    }
+
+    var body: some View {
+        ZStack {
+            Group {
+                if isSelected {
+                    Circle().fill(current)
+                } else {
+                    Circle().fill(AngularGradient(colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .red], center: .center))
+                }
+            }
+            .frame(width: size, height: size)
+            .overlay(Image(systemName: isSelected ? "checkmark" : "plus").font(.footnote.bold()).foregroundStyle(.white))
+            .overlay(Circle().stroke(.primary.opacity(isSelected ? 0.6 : 0), lineWidth: 2).padding(-4))
+            // 見えない色の選択を重ねて、押したときに、OSの色の選択を開く
+            ColorPicker("", selection: Binding(
+                get: { current },
+                set: { color in
+                    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+                    UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+                    onPick(RGB(r: Double(r), g: Double(g), b: Double(b)).hex)
+                }
+            ), supportsOpacity: false)
+            .labelsHidden()
+            .opacity(0.02)
+            .scaleEffect(2.2)
+            .frame(width: size, height: size)
+            .clipShape(Circle())
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

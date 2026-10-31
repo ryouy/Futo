@@ -6,13 +6,16 @@ import Foundation
 struct AvatarSpec: Codable, Equatable {
     var symbol: Int?
     var color: Int
+    /// 好きな色（「#RRGGBB」）。あれば、`color` より、こちらを使う
+    var hex: String? = nil
 
-    init(symbol: Int?, color: Int) { self.symbol = symbol; self.color = color }
+    init(symbol: Int?, color: Int, hex: String? = nil) { self.symbol = symbol; self.color = color; self.hex = hex }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         symbol = try c.decodeIfPresent(Int.self, forKey: .symbol)
         color = try c.decode(Int.self, forKey: .color)
+        hex = try c.decodeIfPresent(String.self, forKey: .hex)
     }
 
     /// 無印は、キーを省かず null で送る（サーバーが、無印を明示として受け取る）。
@@ -20,9 +23,10 @@ struct AvatarSpec: Codable, Equatable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(symbol, forKey: .symbol)
         try c.encode(color, forKey: .color)
+        try c.encodeIfPresent(hex, forKey: .hex)
     }
 
-    private enum CodingKeys: String, CodingKey { case symbol, color }
+    private enum CodingKeys: String, CodingKey { case symbol, color, hex }
 }
 
 struct MeResponse: Codable, Equatable {

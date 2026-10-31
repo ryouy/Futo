@@ -20,6 +20,7 @@ final class AvatarSettings {
 
     private static let colorKey = "avatar.colorIndex"
     private static let symbolKey = "avatar.symbolIndex"
+    private static let hexKey = "avatar.customHex"
     @ObservationIgnored private let defaults: UserDefaults
 
     /// 選んだアイコン（`symbols` の番号）。nil は、何も描かない無印（初期設定）
@@ -36,29 +37,47 @@ final class AvatarSettings {
         }
     }
 
+    /// 好きな色（「#RRGGBB」）。選んでいれば、`colorIndex` より、こちらを使う
+    var customHex: String? {
+        didSet {
+            if let customHex { defaults.set(customHex, forKey: Self.hexKey) } else { defaults.removeObject(forKey: Self.hexKey) }
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let color = defaults.object(forKey: Self.colorKey) as? Int
         colorIndex = color.flatMap { (0..<Self.colorCount).contains($0) ? $0 : nil }
+        customHex = defaults.string(forKey: Self.hexKey).flatMap { RGB(hex: $0) != nil ? $0 : nil }
         let symbol = defaults.object(forKey: Self.symbolKey) as? Int
         symbolIndex = symbol.flatMap { Self.symbols.indices.contains($0) ? $0 : nil }
     }
 
     /// アイコンの丸の色。`choices` はテーマの4色、`themeColor` はいまのテーマ色。
     func fill(choices: [Color], themeColor: Color) -> Color {
+        if let customHex, let rgb = RGB(hex: customHex) { return Color(red: rgb.r, green: rgb.g, blue: rgb.b) }
         if let colorIndex, choices.indices.contains(colorIndex) { return choices[colorIndex] }
         return themeColor
     }
 
     /// サーバーに送る、いまのアイコン。色を選んでいなければ、いまのテーマ色の番号。
-    func spec(themeIndex: Int) -> AvatarSpec {
-        AvatarSpec(symbol: symbolIndex, color: colorIndex ?? themeIndex)
+    /// `themeHex` は、アプリの色が「好きな色」のとき、その色（色を選んでいなければ、フレンドにも、その色で見せる）
+    func spec(themeIndex: Int, themeHex: String? = nil) -> AvatarSpec {
+        if let customHex { return AvatarSpec(symbol: symbolIndex, color: colorIndex ?? themeIndex, hex: customHex) }
+        if colorIndex == nil, let themeHex { return AvatarSpec(symbol: symbolIndex, color: themeIndex, hex: themeHex) }
+        return AvatarSpec(symbol: symbolIndex, color: colorIndex ?? themeIndex)
     }
 
     /// サーバーのアイコンを、この端末に取り込む（別の端末で変えたとき）。
     func adopt(_ spec: AvatarSpec) {
         symbolIndex = spec.symbol.flatMap { Self.symbols.indices.contains($0) ? $0 : nil }
-        colorIndex = (0..<Self.colorCount).contains(spec.color) ? spec.color : nil
+        if let hex = spec.hex, RGB(hex: hex) != nil {
+            customHex = RGB(hex: hex)?.hex
+            colorIndex = nil
+        } else {
+            customHex = nil
+            colorIndex = (0..<Self.colorCount).contains(spec.color) ? spec.color : nil
+        }
     }
 
     func selectPlain() { symbolIndex = nil }
@@ -72,6 +91,7 @@ final class AvatarSettings {
     func reset() {
         symbolIndex = nil
         colorIndex = nil
+        customHex = nil
     }
 }
 

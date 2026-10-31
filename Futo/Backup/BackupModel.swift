@@ -95,7 +95,7 @@ final class BackupModel {
     private func performBackup() async throws {
         let document = BackupDocument.make(
             sessions: app.sessions.all(), cards: app.cards.all(), preferences: app.prefs,
-            theme: ThemeStore.shared.color.rawValue, language: LanguageStore.shared.language.rawValue,
+            theme: ThemeStore.shared.backupValue, language: LanguageStore.shared.language.rawValue,
             events: app.events.all())
         let data = try document.encoded()
         // 既存のファイルを確認してから上書きする（重複して作らない）
@@ -144,7 +144,7 @@ final class BackupModel {
         }
         if includeSettings {
             app.updatePreferences { $0 = document.preferences }
-            if let raw = document.theme, let color = ThemeColor(rawValue: raw) { ThemeStore.shared.select(color) }
+            if let raw = document.theme { ThemeStore.shared.restore(backupValue: raw) }
             if let raw = document.language, let language = AppLanguage(rawValue: raw) { app.changeLanguage(language) }
         }
         app.refresh()

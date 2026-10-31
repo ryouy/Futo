@@ -12,8 +12,8 @@ const PHRASE_EN: Record<string, string> = {
 };
 const phraseEn = (text: string) => PHRASE_EN[text.replace(/。$/, "")];
 
-// テーマの緑を中心にした、区別しやすい配色
-const PALETTE = ["#196459", "#6fa898", "#e0b84a", "#b9c9c2"];
+// テーマの緑と、はっきり違う色（同じ色の濃淡だけでは、見分けにくい）
+const C = { teal: "#196459", amber: "#e0b84a", coral: "#d98a63", sky: "#6fa6c8", stone: "#b9c9c2" };
 
 function dateRange(start: string, end: string, timeZone: string): string {
   const fmt = new Intl.DateTimeFormat("sv-SE", { year: "numeric", month: "2-digit", day: "2-digit", timeZone });
@@ -33,9 +33,9 @@ export function ShareView({ share }: { share: PublicShare }) {
       key: "counts",
       title: b("ひと呼吸の結果", "Breath results"),
       slices: [
-        { label: b("使いたい", "Wanted to use"), value: stats.counts.wantsToUse, color: PALETTE[2] },
-        { label: b("やめておく", "Held off"), value: stats.counts.deferred, color: PALETTE[0] },
-        { label: b("途中でやめた", "Stopped midway"), value: stats.counts.interrupted, color: PALETTE[3] },
+        { label: b("使いたい", "Wanted to use"), value: stats.counts.wantsToUse, color: C.amber },
+        { label: b("やめておく", "Held off"), value: stats.counts.deferred, color: C.teal },
+        { label: b("途中でやめた", "Stopped midway"), value: stats.counts.interrupted, color: C.stone },
       ],
     });
   }
@@ -45,10 +45,10 @@ export function ShareView({ share }: { share: PublicShare }) {
       key: "purposes",
       title: b("使いたかった目的", "Purpose"),
       slices: [
-        { label: b("連絡", "Contact"), value: p.contact, color: PALETTE[0] },
-        { label: b("調べもの", "Look-up"), value: p.research, color: PALETTE[1] },
-        { label: b("気分転換", "Break"), value: p.break, color: PALETTE[2] },
-        { label: b("なんとなく", "No reason"), value: p.noReason, color: PALETTE[3] },
+        { label: b("連絡", "Contact"), value: p.contact, color: C.teal },
+        { label: b("調べもの", "Look-up"), value: p.research, color: C.sky },
+        { label: b("気分転換", "Break"), value: p.break, color: C.amber },
+        { label: b("なんとなく", "No reason"), value: p.noReason, color: C.stone },
       ],
     });
   }
@@ -58,9 +58,9 @@ export function ShareView({ share }: { share: PublicShare }) {
       key: "feelings",
       title: b("使ったあとの感想", "How it felt"),
       slices: [
-        { label: b("満足した", "Satisfied"), value: f.satisfied, color: PALETTE[0] },
-        { label: b("どちらでもない", "Neutral"), value: f.neutral, color: PALETTE[3] },
-        { label: b("使いすぎかも", "Too much?"), value: f.wishedLess, color: PALETTE[2] },
+        { label: b("満足した", "Satisfied"), value: f.satisfied, color: C.teal },
+        { label: b("どちらでもない", "Neutral"), value: f.neutral, color: C.stone },
+        { label: b("使いすぎかも", "Too much?"), value: f.wishedLess, color: C.coral },
       ],
     });
   }

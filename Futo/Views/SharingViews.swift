@@ -19,6 +19,15 @@ struct SharingTab: View {
                 CardSection {
                     Text(tr("共有の機能は、まだ使えません"))
                 }
+            } else if sharing.isDeletingAccount {
+                // 削除は、サーバーの処理に少し時間がかかる。終わるまで、ほかの操作は出さない
+                CardSection {
+                    HStack(spacing: 12) {
+                        ProgressView()
+                        Text(tr("アカウントを削除しています"))
+                    }
+                    .frame(minHeight: 44)
+                }
             } else {
                 switch sharing.auth.state {
                 case .signedOut, .signingIn: signedOut
@@ -518,6 +527,7 @@ struct AccountAvatar: View {
 
     private var fillColor: Color {
         if isOwn { return settings.fill(choices: Self.themeChoices, themeColor: Theme.accent) }
+        if let spec, let hex = spec.hex, let rgb = RGB(hex: hex) { return Color(red: rgb.r, green: rgb.g, blue: rgb.b) }
         if let spec, Self.themeChoices.indices.contains(spec.color) { return Self.themeChoices[spec.color] }
         return Theme.accent
     }
@@ -682,6 +692,7 @@ struct ProfileView: View {
             ForEach(Array(ThemeColor.allCases.enumerated()), id: \.offset) { index, option in
                 swatch(index: index, option: option)
             }
+            customSwatch
             Spacer(minLength: 0)
         }
         .padding(.vertical, 4)
@@ -689,9 +700,9 @@ struct ProfileView: View {
 
     /// 色を選んでいなければ、いまのテーマの色に印が付く。
     private func swatch(index: Int, option: ThemeColor) -> some View {
-        let selected = avatar.colorIndex == index || (avatar.colorIndex == nil && ThemeStore.shared.color == option)
+        let selected = avatar.customHex == nil && (avatar.colorIndex == index || (avatar.colorIndex == nil && !ThemeStore.shared.isCustom && ThemeStore.shared.color == option))
         return Button {
-            withAnimation(.easeInOut(duration: 0.25)) { avatar.colorIndex = index }
+            withAnimation(.easeInOut(duration: 0.25)) { avatar.customHex = nil; avatar.colorIndex = index }
             Task { await sharing.syncAvatar() }
         } label: {
             Circle().fill(option.swatchColor).frame(width: 36, height: 36)
@@ -702,6 +713,22 @@ struct ProfileView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(option.name)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+extension ProfileView {
+    /// 一番右：好きな色を選ぶ（アイコンの色）
+    fileprivate var customSwatch: some View {
+        let selected = avatar.customHex != nil
+        return CustomColorWell(
+            hex: avatar.customHex ?? ThemeStore.shared.customHex ?? "#196459", isSelected: selected, size: 36,
+            label: tr("好きな色")
+        ) { hex in
+            avatar.customHex = hex
+            avatar.colorIndex = nil
+            Task { await sharing.syncAvatar() }
+        }
+        .frame(width: 44, height: 44)
     }
 }
 

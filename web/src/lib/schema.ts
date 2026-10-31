@@ -12,7 +12,12 @@ export type PhraseId = keyof typeof PHRASES;
 
 /** アイコン：山・海などの番号（0〜8、無印は null）と、テーマ色の番号（0〜3）。フレンドにだけ見える。 */
 export const avatarSchema = z
-  .object({ symbol: z.number().int().min(0).max(8).nullable(), color: z.number().int().min(0).max(3) })
+  .object({
+    symbol: z.number().int().min(0).max(8).nullable(),
+    color: z.number().int().min(0).max(3),
+    /** 好きな色（「#RRGGBB」）。あれば、color より、こちらを使う */
+    hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  })
   .strict();
 export type Avatar = z.infer<typeof avatarSchema>;
 

@@ -67,4 +67,36 @@ final class AvatarSettingsTests: XCTestCase {
         ProfileCache.clear(uid: "A", defaults: d)
         XCTAssertNil(ProfileCache.name(uid: "A", defaults: d))
     }
+
+    func testCustomColorIsKeptSentAndRestored() {
+        let name = "avatar-hex-\(UUID().uuidString)"
+        let d = UserDefaults(suiteName: name)!
+        d.removePersistentDomain(forName: name)
+        let settings = AvatarSettings(defaults: d)
+        settings.customHex = "#A25A72"
+        XCTAssertEqual(AvatarSettings(defaults: d).customHex, "#A25A72", "保存される")
+        XCTAssertEqual(settings.spec(themeIndex: 0), AvatarSpec(symbol: nil, color: 0, hex: "#A25A72"))
+        // 別の端末のアイコンを取り込む
+        settings.adopt(AvatarSpec(symbol: 2, color: 1, hex: "#123456"))
+        XCTAssertEqual(settings.customHex, "#123456")
+        XCTAssertNil(settings.colorIndex)
+        settings.adopt(AvatarSpec(symbol: 2, color: 3))
+        XCTAssertNil(settings.customHex, "4色のどれかなら、好きな色は外す")
+        XCTAssertEqual(settings.colorIndex, 3)
+        settings.adopt(AvatarSpec(symbol: nil, color: 0, hex: "not-a-color"))
+        XCTAssertNil(settings.customHex, "形式の違う値は、取り込まない")
+        settings.customHex = "#ABCDEF"
+        settings.reset()
+        XCTAssertNil(settings.customHex)
+    }
+
+    func testThemeColorIsSentWhenNoColorWasChosen() {
+        let name = "avatar-theme-\(UUID().uuidString)"
+        let d = UserDefaults(suiteName: name)!
+        d.removePersistentDomain(forName: name)
+        let settings = AvatarSettings(defaults: d)
+        XCTAssertEqual(settings.spec(themeIndex: 2, themeHex: "#334455"), AvatarSpec(symbol: nil, color: 2, hex: "#334455"), "色を選んでいなければ、アプリの好きな色で見せる")
+        settings.colorIndex = 1
+        XCTAssertEqual(settings.spec(themeIndex: 2, themeHex: "#334455"), AvatarSpec(symbol: nil, color: 1))
+    }
 }

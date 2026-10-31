@@ -98,7 +98,7 @@ struct RootView: View {
         .background(WindowBackgroundSetter(color: Theme.windowBackgroundUIColor))
         .environment(\.locale, LanguageStore.shared.language.locale)
         .foregroundStyle(Theme.text)
-        .animation(.easeInOut(duration: 0.23), value: ThemeStore.shared.color)
+        .animation(.easeInOut(duration: 0.23), value: ThemeStore.shared.selectionKey)
         .fontDesign(.rounded)
         .onChange(of: scenePhase) { _, phase in
             // 前面に戻るたびに、権限と本アプリの制限設定を再確認する。

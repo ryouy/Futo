@@ -189,6 +189,8 @@ enum EnglishStrings {
         "一時解除中": "Temporarily unlocked",
         "使い終わる": "All done",
         "許可する": "Allow",
+        "好きな色": "Custom color",
+        "アカウントを削除しています": "Deleting your account",
         "Googleで続ける": "Continue with Google",
         "Appleでログイン中": "Signed in with Apple",
         "バックアップには、Googleアカウントとの接続が必要です": "Backup needs a connection to your Google account",

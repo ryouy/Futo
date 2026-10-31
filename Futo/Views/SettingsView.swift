@@ -43,7 +43,7 @@ struct SettingsView: View {
         .background(Theme.background.ignoresSafeArea())
         // テーマカラーを変えた瞬間に、設定の中の色（言語の選択など）も変わるように
         .tint(Theme.accentText)
-        .id(ThemeStore.shared.color)
+        .id(ThemeStore.shared.selectionKey)
         .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
@@ -133,6 +133,11 @@ struct SettingsView: View {
                     ForEach(ThemeColor.allCases) { option in
                         themeSwatch(option)
                     }
+                    // 一番右：好きな色
+                    CustomColorWell(hex: ThemeStore.shared.customHex ?? "#196459", isSelected: ThemeStore.shared.isCustom, label: tr("好きな色")) { hex in
+                        ThemeStore.shared.selectCustom(hex: hex)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 52)
                 }
                 .padding(.vertical, 6)
             } header: {
@@ -195,7 +200,7 @@ struct SettingsView: View {
     }
 
     private func themeSwatch(_ option: ThemeColor) -> some View {
-        let selected = ThemeStore.shared.color == option
+        let selected = !ThemeStore.shared.isCustom && ThemeStore.shared.color == option
         let swatch = Color(uiColor: UIColor { trait in
             let hex = trait.userInterfaceStyle == .dark ? option.palette.accent.1 : option.palette.accent.0
             return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
