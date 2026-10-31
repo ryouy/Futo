@@ -9,10 +9,25 @@ import UIKit
 /// ボタンは、実際にできる動作（`ShieldActionResponse.close` = ホームに戻る）と一致させる。
 /// 本体アプリを直接開くAPIは、公式には用意されていないため、ボタンにはしない（説明文で案内する）。
 final class FutoShieldConfiguration: ShieldConfigurationDataSource {
-    override func configuration(shielding application: Application) -> ShieldConfiguration { Self.make() }
-    override func configuration(shielding application: Application, in category: ActivityCategory) -> ShieldConfiguration { Self.make() }
-    override func configuration(shielding webDomain: WebDomain) -> ShieldConfiguration { Self.make() }
-    override func configuration(shielding webDomain: WebDomain, in category: ActivityCategory) -> ShieldConfiguration { Self.make() }
+    // 名前は、ここでしか読めない。出すたびに書き留めて、本体が、共有でアプリ名を出すときに使う。
+    override func configuration(shielding application: Application) -> ShieldConfiguration {
+        AppNameBook.save(name: application.localizedDisplayName, for: application.token)
+        return Self.make()
+    }
+    override func configuration(shielding application: Application, in category: ActivityCategory) -> ShieldConfiguration {
+        AppNameBook.save(name: application.localizedDisplayName, for: application.token)
+        AppNameBook.save(name: category.localizedDisplayName, for: category.token)
+        return Self.make()
+    }
+    override func configuration(shielding webDomain: WebDomain) -> ShieldConfiguration {
+        AppNameBook.save(name: webDomain.domain, for: webDomain.token)
+        return Self.make()
+    }
+    override func configuration(shielding webDomain: WebDomain, in category: ActivityCategory) -> ShieldConfiguration {
+        AppNameBook.save(name: webDomain.domain, for: webDomain.token)
+        AppNameBook.save(name: category.localizedDisplayName, for: category.token)
+        return Self.make()
+    }
 
     // MARK: 色（生成りと、落ち着いた緑。ダークでは、深い緑地に生成り）
 
@@ -36,13 +51,13 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
         (Locale.preferredLanguages.first ?? "ja").hasPrefix("ja")
     }
 
-    static var title: String { isJapanese ? "使う前に、ひと呼吸" : "A breath before you use it." }
+    static var title: String { isJapanese ? "使う前に、ひと呼吸" : "A breath before you use it" }
 
     /// 1行を短くして、折り返しで文が不自然に切れないようにする（改行は、文の区切りに合わせて自分で入れる）。
     static var subtitle: String {
         isJapanese
             ? "今、何に使いたいですか\n『ふと』で少し立ち止まれます\nホーム画面から開いてください"
-            : "What do you want to use it for?\nFuto can help you pause.\nOpen it from your Home Screen."
+            : "What do you want to use it for?\nFuto can help you pause\nOpen it from your Home Screen"
     }
 
     static var buttonTitle: String { isJapanese ? "ホームに戻る" : "Back to Home" }

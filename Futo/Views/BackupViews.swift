@@ -95,11 +95,11 @@ struct BackupView: View {
         }
     }
 
-    /// 日時は「2026-10-31 18:20」の形（ハイフン区切り）。
+    /// 日時は「2026/10/31 18:20」の形（スラッシュ区切り）。
     static func dateText(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        formatter.dateFormat = "yyyy/MM/dd HH:mm"
         return formatter.string(from: date)
     }
 

@@ -550,7 +550,7 @@ struct DescribedSection<Content: View>: View {
     }
 }
 
-/// アプリ内の日付は、すべてハイフン区切り（2026-10-31）。時刻は24時間表記。
+/// アプリ内の日付は、すべてスラッシュ区切り（2026/10/31）。時刻は24時間表記。
 enum DateText {
     private static func format(_ date: Date, _ pattern: String, locale: Locale = Locale(identifier: "en_US_POSIX")) -> String {
         let formatter = DateFormatter()
@@ -560,10 +560,10 @@ enum DateText {
         return formatter.string(from: date)
     }
 
-    static func day(_ date: Date) -> String { format(date, "yyyy-MM-dd") }
-    static func dayTime(_ date: Date) -> String { format(date, "yyyy-MM-dd HH:mm") }
+    static func day(_ date: Date) -> String { format(date, "yyyy/MM/dd") }
+    static func dayTime(_ date: Date) -> String { format(date, "yyyy/MM/dd HH:mm") }
     static func time(_ date: Date) -> String { format(date, "HH:mm") }
-    /// 「2026-10-31 土」。曜日は、アプリの言語で。
+    /// 「2026/10/31 土」。曜日は、アプリの言語で。
     static func dayWeekday(_ date: Date, wide: Bool = false) -> String {
         "\(day(date)) \(format(date, wide ? "EEEE" : "EEE", locale: LanguageStore.shared.language.locale))"
     }

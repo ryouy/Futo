@@ -16,6 +16,14 @@ enum AppNameStore {
     }
 
     static func name(for item: RestrictedItem) -> String? {
+        // シールドの拡張が書き留めた名前を、先に見る（本体からは、ふつう読めない）
+        let shielded: String?
+        switch item {
+        case .app(let token): shielded = AppNameBook.name(for: token)
+        case .category(let token): shielded = AppNameBook.name(for: token)
+        case .web(let token): shielded = AppNameBook.name(for: token)
+        }
+        if let shielded, !shielded.isEmpty { return shielded }
         let names = load()
         switch item {
         case .app(let token): return key(token).flatMap { names[$0] }

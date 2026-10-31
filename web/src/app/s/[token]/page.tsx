@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { Bi } from "@/components/Bi";
 import { ShareView } from "@/components/ShareView";
 import { ConfigError, isConfigured } from "@/lib/firebase";
 import { ApiError } from "@/lib/http";
@@ -12,8 +13,8 @@ export const revalidate = 0;
 function Unavailable({ configured = true }: { configured?: boolean }) {
   return (
     <div className="card unavailable">
-      <h2>{configured ? "この共有は利用できません" : "現在、利用できません"}</h2>
-      <p className="muted">リンクの期限が切れているか、取り消されています</p>
+      <h2>{configured ? <Bi ja="この共有は利用できません" en="This share isn't available" /> : <Bi ja="現在、利用できません" en="Not available right now" />}</h2>
+      <p className="muted"><Bi ja="リンクの期限が切れているか、取り消されています" en="The link has expired or was revoked" /></p>
     </div>
   );
 }

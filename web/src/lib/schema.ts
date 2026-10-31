@@ -4,9 +4,9 @@ const count = z.number().int().min(0).max(100_000);
 
 /** 定型のひとこと。自由記述は受け取らず、IDだけを受け取る。 */
 export const PHRASES = {
-  p1: "こんな感じでした。",
-  p2: "ひと呼吸の記録を、少しだけ共有します。",
-  p3: "ふと、立ち止まった記録です。",
+  p1: "こんな感じでした",
+  p2: "ひと呼吸の記録を、少しだけ共有します",
+  p3: "ふと、立ち止まった記録です",
 } as const;
 export type PhraseId = keyof typeof PHRASES;
 

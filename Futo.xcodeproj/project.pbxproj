@@ -35,6 +35,7 @@
 		2B0C7A9170E3AF67BEE6060C /* TutorialOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AD1E8986C150CEE36B6FB25 /* TutorialOverlay.swift */; };
 		2B1C83B829E9CEC237DDF810 /* FriendsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991EEDC925EAC3F1447C11D7 /* FriendsViews.swift */; };
 		304D45FE9E60762F7F4CBCBB /* ReflectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1231F80A0868CC7494B3CCC /* ReflectionCard.swift */; };
+		34B04D56C656A409E1D3FA73 /* AppNameBook.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC4450F7164BE27DD2C729D9 /* AppNameBook.swift */; };
 		3644D4A15AC907CB6CDA284D /* RestrictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DAAC6EE6F4DC7AD16B1299 /* RestrictionService.swift */; };
 		366D1D02620DDC96C693AC9F /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C07C305FAF1EBCC3773D26A /* LocalizationTests.swift */; };
 		378B679AC14F0CC336D756AA /* WaitCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4267030096FD083643FBA49A /* WaitCountdown.swift */; };
@@ -83,6 +84,7 @@
 		95DDC63148329F84382E3A65 /* StandingShareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67A8F8585F9F7584FC510770 /* StandingShareTests.swift */; };
 		997009FC23A87526622289DD /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = DDABE53EBC89BEEF5373F861 /* GoogleMobileAds */; };
 		A792D9702B0A5ECF567404C3 /* SharingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF8B6745AC3E7443C4EF35F /* SharingModel.swift */; };
+		B0BC9DF987B104DE4A59E8E9 /* AppNameBook.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC4450F7164BE27DD2C729D9 /* AppNameBook.swift */; };
 		B355EC8898F924A7E475055F /* SessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0604FAD36D34A141ED936C80 /* SessionSummary.swift */; };
 		B35EE4150B6ED67BC21646EC /* SharingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F135E43B0E027CEB7C5623E3 /* SharingTests.swift */; };
 		B8BB5DE9D67E635126881316 /* Phase4Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9F9AF641B9C85775FA877F36 /* Phase4Config.plist */; };
@@ -221,6 +223,7 @@
 		AF093F77E0ECBB37A7693291 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		B561B8915898FF11685A4CEA /* BackupDocument.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackupDocument.swift; sourceTree = "<group>"; };
 		B6051214DE403B48EBD6213D /* ShieldIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = ShieldIcon.png; sourceTree = "<group>"; };
+		BC4450F7164BE27DD2C729D9 /* AppNameBook.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppNameBook.swift; sourceTree = "<group>"; };
 		BDB877B03A1742CC4E16B704 /* Localization.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		C26B0FC1E1229764718CF683 /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		C4BEFF09AD462390614112AE /* BannerAdView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BannerAdView.swift; sourceTree = "<group>"; };
@@ -478,6 +481,7 @@
 				FDB1C846DC4122660C2FFF45 /* SharedState.swift */,
 				8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */,
 				6C48F409E24D98499D5E75FF /* PauseModel.swift */,
+				BC4450F7164BE27DD2C729D9 /* AppNameBook.swift */,
 			);
 			name = Shared;
 			path = Shared;
@@ -775,6 +779,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				065A921ED23EB237FF7EFC2F /* FutoShieldConfiguration.swift in Sources */,
+				B0BC9DF987B104DE4A59E8E9 /* AppNameBook.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -848,6 +853,7 @@
 				8918D5CA1DF6DB3D3DF2979D /* AvatarSettings.swift in Sources */,
 				1494FB455722E1C01A167B00 /* AdsService.swift in Sources */,
 				433CD2254963DD01D4639820 /* BannerAdView.swift in Sources */,
+				34B04D56C656A409E1D3FA73 /* AppNameBook.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

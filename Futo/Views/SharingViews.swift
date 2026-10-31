@@ -253,13 +253,10 @@ struct CreateShareView: View {
             if isFriends {
                 Toggle(tr("アプリを開いたとき、最新にする"), isOn: $standing)
             } else {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(tr("リンクの期限"))
-                    Picker(tr("リンクの期限"), selection: $expiresInDays) {
-                        Text(tr("1日後")).tag(1); Text(tr("7日後")).tag(7); Text(tr("30日後")).tag(30)
-                    }
-                    .pickerStyle(.segmented)
+                Picker(tr("リンクの期限"), selection: $expiresInDays) {
+                    Text(tr("1日後")).tag(1); Text(tr("7日後")).tag(7); Text(tr("30日後")).tag(30)
                 }
+                .pickerStyle(.menu)
             }
         } header: {
             header(tr("設定"))
