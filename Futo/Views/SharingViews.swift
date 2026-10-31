@@ -543,8 +543,8 @@ struct SharedLinksView: View {
             .environment(sharing)
             .presentationBackground(Theme.background)
         }
-        .confirmationDialog(tr("このリンクでの共有をやめますか？"), isPresented: Binding(get: { confirmRevoke != nil }, set: { if !$0 { confirmRevoke = nil } }), titleVisibility: .visible) {
-            Button(tr("やめる"), role: .destructive) { if let item = confirmRevoke { Task { await sharing.revokeShare(item) } } }
+        .confirmationDialog(tr("このリンクを削除しますか？ 開けなくなります"), isPresented: Binding(get: { confirmRevoke != nil }, set: { if !$0 { confirmRevoke = nil } }), titleVisibility: .visible) {
+            Button(tr("削除"), role: .destructive) { if let item = confirmRevoke { Task { await sharing.revokeShare(item) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
     }

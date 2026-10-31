@@ -7,6 +7,7 @@ struct FriendsView: View {
     @Environment(SharingModel.self) private var sharing
     @State private var code = ""
     @State private var deleting: FriendsResponse.Friend?
+    @State private var revoking: SentFriendShare?
     @State private var page: Page = .friends
 
     /// 下のページ：左右にスライドして切り替える。多くなっても、それぞれのページの中で、スクロールできる。
@@ -39,6 +40,10 @@ struct FriendsView: View {
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await sharing.loadFriends(); await sharing.loadFriendShares(); await sharing.loadBlocked() }
+        .confirmationDialog(tr("この共有を削除しますか？ フレンドは、見られなくなります"), isPresented: Binding(get: { revoking != nil }, set: { if !$0 { revoking = nil } }), titleVisibility: .visible) {
+            Button(tr("削除"), role: .destructive) { if let item = revoking { Task { await sharing.revokeFriendShare(id: item.id) } } }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
         .confirmationDialog(tr("フレンドを削除しますか？ 相手は、あなたに申請できなくなり、記録も届かなくなります"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let f = deleting { Task { await sharing.deleteFriend(f) } } }
             Button(tr("キャンセル"), role: .cancel) {}
@@ -249,8 +254,11 @@ struct FriendsView: View {
                             Button(tr("更新")) { Task { await sharing.refreshStanding(sessions: model.sessions.all(), events: model.events.all(), mode: model.mode, force: true) } }
                                 .buttonStyle(ChipButtonStyle()).fixedSize().disabled(sharing.isWorking)
                         }
-                        Button(tr("やめる"), role: .destructive) { Task { await sharing.revokeFriendShare(id: item.id) } }
-                            .buttonStyle(ChipButtonStyle()).fixedSize()
+                        Button(role: .destructive) { revoking = item } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(ChipButtonStyle()).frame(width: 56)
+                        .accessibilityLabel(tr("削除"))
                     }
                 }
             }
