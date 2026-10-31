@@ -655,6 +655,34 @@ struct GoogleSignInButtonStyle: ButtonStyle {
     }
 }
 
+/// OSの色の選択（UIColorPickerViewController）を、ボタンから開く。
+@MainActor
+final class SystemColorPicker: NSObject, UIColorPickerViewControllerDelegate {
+    static let shared = SystemColorPicker()
+    private var onChange: ((UIColor) -> Void)?
+
+    func present(initial: UIColor, onChange: @escaping (UIColor) -> Void) {
+        guard let top = Self.topViewController() else { return }
+        self.onChange = onChange
+        let picker = UIColorPickerViewController()
+        picker.selectedColor = initial
+        picker.supportsAlpha = false
+        picker.delegate = self
+        top.present(picker, animated: true)
+    }
+
+    nonisolated func colorPickerViewController(_ viewController: UIColorPickerViewController, didSelect color: UIColor, continuously: Bool) {
+        Task { @MainActor in onChange?(color) }
+    }
+
+    private static func topViewController() -> UIViewController? {
+        var top = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).first { $0.isKeyWindow }?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
+    }
+}
+
 /// 好きな色を選ぶ丸い印。選ぶまでは虹色で、選んだあとは、その色の丸。押すと、OSの色の選択が開く。
 struct CustomColorWell: View {
     let hex: String
@@ -663,16 +691,20 @@ struct CustomColorWell: View {
     let label: String
     let onPick: (String) -> Void
 
-    private var current: Color {
-        let rgb = RGB(hex: hex) ?? RGB(0x196459)
-        return Color(red: rgb.r, green: rgb.g, blue: rgb.b)
-    }
+    private var current: RGB { RGB(hex: hex) ?? RGB(0x196459) }
 
     var body: some View {
-        ZStack {
+        Button {
+            let rgb = current
+            SystemColorPicker.shared.present(initial: UIColor(red: rgb.r, green: rgb.g, blue: rgb.b, alpha: 1)) { color in
+                var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+                color.getRed(&r, green: &g, blue: &b, alpha: &a)
+                onPick(RGB(r: Double(r), g: Double(g), b: Double(b)).hex)
+            }
+        } label: {
             Group {
                 if isSelected {
-                    Circle().fill(current)
+                    Circle().fill(Color(red: current.r, green: current.g, blue: current.b))
                 } else {
                     Circle().fill(AngularGradient(colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .red], center: .center))
                 }
@@ -680,22 +712,9 @@ struct CustomColorWell: View {
             .frame(width: size, height: size)
             .overlay(Image(systemName: isSelected ? "checkmark" : "plus").font(.footnote.bold()).foregroundStyle(.white))
             .overlay(Circle().stroke(.primary.opacity(isSelected ? 0.6 : 0), lineWidth: 2).padding(-4))
-            // 見えない色の選択を重ねて、押したときに、OSの色の選択を開く
-            ColorPicker("", selection: Binding(
-                get: { current },
-                set: { color in
-                    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-                    UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
-                    onPick(RGB(r: Double(r), g: Double(g), b: Double(b)).hex)
-                }
-            ), supportsOpacity: false)
-            .labelsHidden()
-            .opacity(0.02)
-            .scaleEffect(2.2)
-            .frame(width: size, height: size)
-            .clipShape(Circle())
+            .contentShape(Circle())
         }
-        .accessibilityElement(children: .ignore)
+        .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

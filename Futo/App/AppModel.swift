@@ -268,7 +268,7 @@ final class AppModel {
         service.start()
         refresh()
         if restriction != .configured {
-            errorMessage = tr("設定を確認できませんでした　もう一度お試しください")
+            errorMessage = tr("設定を確認できませんでした\nもう一度お試しください")
         }
     }
 
@@ -303,9 +303,9 @@ final class AppModel {
             events.record(.pause, mode: .device, minutes: pause.rules.pauseMinutes)
         case .notReady: break
         case .failed(.scheduling):
-            errorMessage = tr("自動で制限に戻す準備ができなかったため、停止しませんでした　制限は続いています　もう一度お試しください")
+            errorMessage = tr("自動で制限に戻す準備ができなかったため、停止しませんでした\n制限は続いています\nもう一度お試しください")
         case .failed(.shield):
-            errorMessage = tr("制限を外せなかったため、停止しませんでした　制限は続いています　もう一度お試しください")
+            errorMessage = tr("制限を外せなかったため、停止しませんでした\n制限は続いています\nもう一度お試しください")
         case .failed(.notRestricted):
             errorMessage = tr("制限がかかっていないため、停止できません")
         }
@@ -332,7 +332,7 @@ final class AppModel {
     private func stopRestriction() {
         pause.clearAll()
         if !service.stop() {
-            errorMessage = tr("制限を外せたか確認できませんでした　もう一度お試しください")
+            errorMessage = tr("制限を外せたか確認できませんでした\nもう一度お試しください")
         }
         refresh()
     }

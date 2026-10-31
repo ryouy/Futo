@@ -41,11 +41,11 @@ struct FriendsView: View {
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await sharing.loadFriends(); await sharing.loadFriendShares(); await sharing.loadBlocked() }
-        .confirmationDialog(tr("この共有を削除しますか？ フレンドは、見られなくなります"), isPresented: Binding(get: { revoking != nil }, set: { if !$0 { revoking = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("この共有を削除しますか？\nフレンドは、見られなくなります"), isPresented: Binding(get: { revoking != nil }, set: { if !$0 { revoking = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let item = revoking { Task { await sharing.revokeFriendShare(id: item.id) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("フレンドを削除しますか？ 相手は、あなたに申請できなくなり、記録も届かなくなります"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("フレンドを削除しますか？\n相手は、あなたに申請できず、\n記録も届かなくなります"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let f = deleting { Task { await sharing.deleteFriend(f) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -54,10 +54,8 @@ struct FriendsView: View {
     /// フレンド：招待・コード入力・承認待ち・一覧
     private var friendsPage: some View {
         Form {
-            inviteSection
-            codeSection
-            if !sharing.friends.incoming.isEmpty { incomingSection }
-            if !sharing.friends.outgoing.isEmpty { outgoingSection }
+            // フレンド一覧を、いちばん上に
+            friendsSection
             if !sharing.friends.friends.isEmpty {
                 CardSection {
                     NavigationLink { CreateShareView(model: model, kind: .friends, recipients: sharing.friends.friends) } label: {
@@ -66,7 +64,10 @@ struct FriendsView: View {
                     .frame(minHeight: 44)
                 }
             }
-            friendsSection
+            if !sharing.friends.incoming.isEmpty { incomingSection }
+            if !sharing.friends.outgoing.isEmpty { outgoingSection }
+            inviteSection
+            codeSection
             if !sharing.blocked.isEmpty { blockedSection }
             if let message = sharing.message { CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) } }
         }
@@ -126,7 +127,7 @@ struct FriendsView: View {
                 Text(tr("期限：{0}", dateText(invitation.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                 // 送る・コピーは、1列に横並び
                 HStack(spacing: 8) {
-                    ShareLink(item: url, message: Text(tr("ふとのフレンド招待です　招待コード：{0}", formatted(invitation.code)))) {
+                    ShareLink(item: url, message: Text(tr("ふとのフレンド招待です\n招待コード：{0}", formatted(invitation.code)))) {
                         Label(tr("送る"), systemImage: "square.and.arrow.up")
                     }
                     .buttonStyle(ChipButtonStyle())
@@ -380,11 +381,11 @@ struct FriendRecordsListView: View {
         .compactForm()
         .navigationTitle(group?.name ?? tr("匿名"))
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog(tr("この記録を削除しますか？ 相手の共有は、消えません"), isPresented: Binding(get: { deletingRecord != nil }, set: { if !$0 { deletingRecord = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("この記録を削除しますか？\n相手の共有は、消えません"), isPresented: Binding(get: { deletingRecord != nil }, set: { if !$0 { deletingRecord = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let item = deletingRecord { Task { await sharing.removeReceived(ids: [item.id]) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("この人から届いた記録を、すべて削除しますか？ 相手の共有は、消えません"), isPresented: $confirmDeleteAll, titleVisibility: .visible) {
+        .confirmationDialog(tr("この人の記録を、すべて削除しますか？\n相手の共有は、消えません"), isPresented: $confirmDeleteAll, titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) {
                 if let group { Task { await sharing.removeReceived(ids: group.items.map(\.id)) } }
             }
@@ -439,7 +440,7 @@ struct FriendShareDetailView: View {
                 }
             }
         }
-        .confirmationDialog(tr("この記録を削除しますか？ 相手の共有は、消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
+        .confirmationDialog(tr("この記録を削除しますか？\n相手の共有は、消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) {
                 Task { await sharing.removeReceived(ids: [id]); dismiss() }
             }
@@ -475,7 +476,7 @@ struct InviteLandingView: View {
                         }
                     }
                 } else if sent {
-                    CardSection { Text(tr("受け入れました　相手が承認すると、フレンドになります")) }
+                    CardSection { Text(tr("受け入れました\n相手が承認すると、フレンドになります")) }
                 } else if let inviter {
                     CardSection {
                         Text(tr("{0} さんからの招待です", inviter.inviterName))

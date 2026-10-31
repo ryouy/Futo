@@ -23,11 +23,11 @@ struct BackupView: View {
         .sheet(isPresented: Binding(get: { backup.preview != nil }, set: { if !$0 { backup.cancelRestore() } })) {
             restoreSheet
         }
-        .confirmationDialog(tr("Driveの許可を取り消しますか？ Drive上のバックアップは、そのまま残ります"), isPresented: $confirmDisconnect, titleVisibility: .visible) {
+        .confirmationDialog(tr("Driveの許可を取り消しますか？\nDrive上のバックアップは、そのまま残ります"), isPresented: $confirmDisconnect, titleVisibility: .visible) {
             Button(tr("取り消す"), role: .destructive) { Task { await backup.disconnect() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("Drive上のバックアップを削除しますか？ 取り消せません　端末の記録は消えません"), isPresented: $confirmDeleteRemote, titleVisibility: .visible) {
+        .confirmationDialog(tr("Drive上のバックアップを削除しますか？\n取り消せません\n端末の記録は消えません"), isPresented: $confirmDeleteRemote, titleVisibility: .visible) {
             Button(tr("削除する"), role: .destructive) { Task { await backup.deleteRemote() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -134,7 +134,7 @@ struct BackupView: View {
                     }
                     CardSection {
                         Toggle(tr("設定も戻す"), isOn: $includeSettings)
-                        Text(tr("いま端末にある記録は、消えません　足りない記録だけが追加されます"))
+                        Text(tr("いま端末にある記録は、消えません\n足りない記録だけが追加されます"))
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     CardSection {

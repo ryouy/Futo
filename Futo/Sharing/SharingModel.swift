@@ -76,7 +76,7 @@ final class SharingModel {
         } catch AuthError.notConfigured {
             message = tr("共有の設定がまだ終わっていません")
         } catch {
-            message = tr("ログインできませんでした　もう一度お試しください")
+            message = tr("ログインできませんでした\nもう一度お試しください")
         }
     }
 
@@ -140,7 +140,7 @@ final class SharingModel {
 
     /// 「ログインできませんでした」。開発用のビルドでは、調べやすいよう、失敗した段階と種類（秘密を含まない）も添える。
     static func loginFailedText(stage: String, detail: String) -> String {
-        let base = tr("ログインできませんでした　もう一度お試しください")
+        let base = tr("ログインできませんでした\nもう一度お試しください")
         #if DEBUG
         return base + "\n[\(stage)] \(detail)"
         #else
@@ -237,7 +237,7 @@ final class SharingModel {
             let created: CreatedShareResponse = try await api.send("POST", "/api/shares", body: payload)
             guard let urlString = created.url, let url = URL(string: urlString) else {
                 // 再送で作成済みだった場合は、リンクを再取得できない。共有一覧から「リンクを作り直す」
-                message = tr("共有は作成済みです　共有の一覧から、リンクを作り直せます")
+                message = tr("共有は作成済みです\n共有の一覧から、リンクを作り直せます")
                 await loadShares()
                 return nil
             }
@@ -505,13 +505,13 @@ final class SharingModel {
                     try await reauthenticate(expecting: current)
                 }
             }
-            message = tr("削除が終わっていません　もう一度お試しください")
+            message = tr("削除が終わっていません\nもう一度お試しください")
             return false
         } catch AuthError.cancelled {
             // 確認を取りやめた。ログインは、そのまま
             return false
         } catch AuthError.accountMismatch {
-            message = tr("別のアカウントでログインされました　削除は行っていません")
+            message = tr("別のアカウントでログインされました\n削除は行っていません")
             return false
         } catch AuthError.failed {
             message = Self.loginFailedText(stage: "reauth", detail: auth.lastFailureDetail ?? "")
@@ -546,13 +546,13 @@ final class SharingModel {
         if error.code == "self_invite" { return tr("自分の招待は、受け入れられません") }
         switch error.kind {
         case .notConfigured: return tr("共有の設定がまだ終わっていません")
-        case .offline: return tr("通信できませんでした　つながってから、もう一度お試しください")
-        case .unauthorized: return tr("ログインの確認が必要です　もう一度ログインしてください")
+        case .offline: return tr("通信できませんでした\nつながってから、もう一度お試しください")
+        case .unauthorized: return tr("ログインの確認が必要です\nもう一度ログインしてください")
         case .forbidden: return tr("この操作はできません")
         case .notFound: return tr("見つかりませんでした")
         case .gone: return tr("期限が切れているか、すでに使われています")
-        case .conflict: return tr("同時に操作されました　もう一度お試しください")
-        case .rateLimited: return tr("回数の上限です　しばらくしてからお試しください")
+        case .conflict: return tr("同時に操作されました\nもう一度お試しください")
+        case .rateLimited: return tr("回数の上限です\nしばらくしてからお試しください")
         case .invalid: return tr("入力を確認してください")
         case .server: return nil
         }

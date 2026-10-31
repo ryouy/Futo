@@ -134,7 +134,7 @@ final class SupportStore {
                 break
             }
         } catch {
-            message = tr("購入できませんでした　もう一度お試しください")
+            message = tr("購入できませんでした\nもう一度お試しください")
         }
     }
 
@@ -149,7 +149,7 @@ final class SupportStore {
             await refreshEntitlements()
             message = current == nil ? tr("復元できる購入は、見つかりませんでした") : tr("購入を復元しました")
         } catch {
-            message = tr("復元できませんでした　もう一度お試しください")
+            message = tr("復元できませんでした\nもう一度お試しください")
         }
     }
 }

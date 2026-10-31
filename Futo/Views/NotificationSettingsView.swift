@@ -97,7 +97,7 @@ struct NotificationSettingsView: View {
             // 通知が未許可のとき、ここから許可できる（決めていなければ許可を求め、断っていれば設定アプリへ）
             if model.notificationStatus == .denied {
                 CardSection {
-                    Text(tr("通知がオフです　設定アプリで許可できます")).font(.subheadline)
+                    Text(tr("通知がオフです\n設定アプリで許可できます")).font(.subheadline)
                     Button(tr("設定アプリを開く")) {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     }
@@ -134,7 +134,7 @@ struct NotificationSettingsView: View {
             Button(tr("許可を求める")) { model.confirmEnableNotification() }
             Button(tr("今はしない"), role: .cancel) { model.pendingNotificationEnable = nil }
         } message: {
-            Text(tr("振り返りの時間をお知らせするために使います　許可しなくても、ほかの機能は使えます"))
+            Text(tr("振り返りの時間をお知らせするために使います\n許可しなくても、ほかの機能は使えます"))
         }
         .alert(tr("通知"), isPresented: Binding(
             get: { model.notificationMessage != nil },

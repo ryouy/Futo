@@ -47,7 +47,7 @@ struct SettingsView: View {
         .navigationTitle(tr("設定"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
-            tr("すべての記録を削除しますか？ 制限の設定は変わりません"),
+            tr("すべての記録を削除しますか？\n制限の設定は変わりません"),
             isPresented: $confirmDelete, titleVisibility: .visible
         ) {
             Button(tr("削除"), role: .destructive) { model.deleteAllRecords() }

@@ -42,11 +42,11 @@ struct SharingTab: View {
         .compactForm()
         .id(refreshID)
         .task { if sharing.isSignedIn { await sharing.loadProfile() } }
-        .confirmationDialog(tr("ログアウトしますか？ 共有中のリンクは、そのまま有効です"), isPresented: $confirmSignOut, titleVisibility: .visible) {
+        .confirmationDialog(tr("ログアウトしますか？\n共有中のリンクは、そのまま有効です"), isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button(tr("ログアウト"), role: .destructive) { sharing.signOut(); refreshID = UUID() }
             Button(tr("キャンセル"), role: .cancel) {}
         }
-        .confirmationDialog(tr("アカウントと、共有・フレンドのデータをすべて削除しますか？ 取り消せません　端末の記録は消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
+        .confirmationDialog(tr("アカウントと、共有・フレンドのデータを\nすべて削除しますか？\n取り消せません\n端末の記録は消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
             Button(tr("削除する"), role: .destructive) { Task { _ = await sharing.deleteAccount(); refreshID = UUID() } }
             Button(tr("キャンセル"), role: .cancel) {}
         }
@@ -543,7 +543,7 @@ struct SharedLinksView: View {
             .environment(sharing)
             .presentationBackground(Theme.background)
         }
-        .confirmationDialog(tr("このリンクを削除しますか？ 開けなくなります"), isPresented: Binding(get: { confirmRevoke != nil }, set: { if !$0 { confirmRevoke = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(tr("このリンクを削除しますか？\n開けなくなります"), isPresented: Binding(get: { confirmRevoke != nil }, set: { if !$0 { confirmRevoke = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let item = confirmRevoke { Task { await sharing.revokeShare(item) } } }
             Button(tr("キャンセル"), role: .cancel) {}
         }

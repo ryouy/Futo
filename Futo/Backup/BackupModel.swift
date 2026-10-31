@@ -60,7 +60,7 @@ final class BackupModel {
             try await self.loadRemote()
             if self.remote != nil {
                 // すでにバックアップがあるときは、上書きしない（新しい端末で、空の記録に置き換えてしまわないため）
-                self.resultMessage = tr("Driveに、すでにバックアップがあります　上書きしないよう、自動のバックアップはしていません　必要なら「バックアップから戻す」を使ってください")
+                self.resultMessage = tr("Driveに、すでにバックアップがあります\n上書きしないよう、自動のバックアップはしていません\n必要なら「バックアップから戻す」を使ってください")
             } else {
                 // 有効にしたら、最初の1回を自動で保存する
                 try await self.performBackup()
@@ -115,9 +115,9 @@ final class BackupModel {
             let data = try await self.client.download(file)
             let document: BackupDocument
             do { document = try BackupDocument.parse(data) } catch BackupDocument.ParseError.newerVersion {
-                self.message = tr("このバックアップは、新しいバージョンのふとで作られています　アプリを更新してください"); return
+                self.message = tr("このバックアップは、新しいバージョンのふとで作られています\nアプリを更新してください"); return
             } catch {
-                self.message = tr("バックアップを読み込めませんでした　ファイルが壊れているかもしれません"); return
+                self.message = tr("バックアップを読み込めませんでした\nファイルが壊れているかもしれません"); return
             }
             let plan = BackupMergePlan.make(
                 document: document,
@@ -139,7 +139,7 @@ final class BackupModel {
     func confirmRestore(includeSettings: Bool) {
         guard let plan = pendingPlan, let document = pendingDocument else { return }
         guard BackupRestorer.apply(plan, to: app.sessions.context) else {
-            message = tr("復元に失敗しました　端末の記録は、変えていません")
+            message = tr("復元に失敗しました\n端末の記録は、変えていません")
             return
         }
         if includeSettings {
@@ -180,11 +180,11 @@ final class BackupModel {
         switch error {
         case .notConfigured: return tr("共有の設定がまだ終わっていません")
         case .cancelled: return ""
-        case .needsConsent: return tr("Driveの許可が必要です　もう一度、許可してください")
-        case .offline: return tr("通信できませんでした　つながってから、もう一度お試しください")
+        case .needsConsent: return tr("Driveの許可が必要です\nもう一度、許可してください")
+        case .offline: return tr("通信できませんでした\nつながってから、もう一度お試しください")
         case .notFound: return tr("Driveに、バックアップが見つかりませんでした")
         case .quota: return tr("Driveの空き容量が足りません")
-        case .apiDisabled: return tr("Google Drive APIが有効になっていません　設定の手順を確認してください")
+        case .apiDisabled: return tr("Google Drive APIが有効になっていません\n設定の手順を確認してください")
         case .failed: return ""
         }
     }
