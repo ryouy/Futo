@@ -92,7 +92,7 @@
     .shots { background: var(--green); color: var(--cream); }
     .shots h2 { color: var(--cream); }
     .gallery {
-      display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory;
+      display: flex; gap: 18px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x pan-y; scroll-snap-type: x mandatory;
       padding: 4px 20px 18px; margin-inline: -20px; -webkit-overflow-scrolling: touch;
     }
     .gallery figure { flex: 0 0 min(62vw, 240px); margin: 0; scroll-snap-align: center; text-align: center; }
@@ -269,9 +269,24 @@
     .flow .arrow svg { width: 22px; height: 22px; fill: none; stroke: var(--green); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
     @media (min-width: 1060px) { .flow { justify-content: center; overflow: visible; } }
 
+    /* 3枚の画面：左・中・右から、勢いよく集まって、ぴたっと止まる */
+    .fan.reveal { transform: none; }
+    .fan.reveal .phone { opacity: 0; transition: opacity .6s ease, transform 1.1s cubic-bezier(.2, 1.15, .3, 1), translate .6s cubic-bezier(.2, .7, .2, 1); }
+    .fan.reveal .phone:nth-child(1) { transform: translateX(-90px) rotate(-14deg) scale(.82); }
+    .fan.reveal .phone:nth-child(2) { transform: translateY(110px) scale(.7); transition-delay: .12s; }
+    .fan.reveal .phone:nth-child(3) { transform: translateX(90px) rotate(14deg) scale(.82); transition-delay: .24s; }
+    .fan.reveal.in .phone { opacity: 1; transform: none; }
+    /* iPad：奥から、大きく画面が起き上がるように */
+    .ipad { perspective: 1400px; }
+    .ipad.reveal { transform: none; }
+    .ipad.reveal .tablet { opacity: 0; transform: translateX(16%) rotateY(-28deg) rotateX(8deg) scale(.82); transform-origin: 80% 50%;
+      transition: opacity .8s ease, transform 1.4s cubic-bezier(.2, .9, .25, 1); }
+    .ipad.reveal .tablet img { filter: brightness(.35); transition: filter 1.6s ease .5s; }
+    .ipad.reveal.in .tablet { opacity: 1; transform: none; }
+    .ipad.reveal.in .tablet img { filter: none; }
     /* 使い方：スマホは、大きな画面を横にスライド。パソコンは、縦の流れ（線にそって、視線が、上から下へ進む） */
     .tl-sec { background: linear-gradient(180deg, var(--cream) 0%, #f4efe4 100%); }
-    .tl { list-style: none; margin: 0 -20px; padding: 6px 20px 8px; display: flex; gap: 18px; overflow-x: auto;
+    .tl { list-style: none; margin: 0 -20px; padding: 6px 20px 8px; display: flex; gap: 18px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x pan-y;
       scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-padding-inline: 20px; }
     .tstep { flex: 0 0 min(78vw, 310px); scroll-snap-align: center; text-align: center; position: relative; }
     .tnode { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 999px; margin-bottom: 12px;
@@ -310,11 +325,13 @@
       .stage .phone { animation: none; }
       .hero .copy > *, .hero .stage { animation: none; }
       .reveal { opacity: 1; transform: none; transition: none; }
+      .fan.reveal .phone, .ipad.reveal .tablet { opacity: 1; transform: none; transition: none; }
+      .ipad.reveal .tablet img { filter: none; transition: none; }
       .win img, .fan .phone { transition: none; }
     }
 
   </style>
-  <noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
+  <noscript><style>.reveal,.fan.reveal .phone,.ipad.reveal .tablet{opacity:1;transform:none}.ipad.reveal .tablet img{filter:none}</style></noscript>
 </head>
 <body>
 
