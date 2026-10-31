@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { FieldPath, Timestamp, type DocumentData } from "firebase-admin/firestore";
 import { addDays, now } from "./clock";
 import { db } from "./firebase";
@@ -94,6 +95,17 @@ export async function getFriendShare(uid: string, shareId: string) {
 }
 
 /** 受け取ったカードの一覧（いま読めるものだけ）。 */
+/**
+ * 届いた記録を、送ってきた人ごとにまとめるための目印。送り主のIDそのものは返さない
+ * （名前を出さない共有の送り主を、フレンド一覧と突き合わせて、見破られないように）。
+ * 受け取る人ごとに別の値で、サーバーだけが知る鍵で作る。名前を出す共有と、出さない共有は、同じ人でも、別の値にする
+ * （名前を出さない共有が、名前のある共有と、同じ人のものだと分からないように）。
+ */
+export function ownerGroupKey(ownerUid: string, viewerUid: string, named: boolean): string {
+  const secret = process.env.FIREBASE_PRIVATE_KEY ?? process.env.RATE_LIMIT_SALT ?? "futo";
+  return createHmac("sha256", secret).update(`${ownerUid}:${viewerUid}:${named ? "named" : "anonymous"}`).digest("hex").slice(0, 24);
+}
+
 export async function listReceivedFriendShares(uid: string, limit = 20) {
   const snap = await friendShares()
     .where("recipientUids", "array-contains", uid)
@@ -101,10 +113,24 @@ export async function listReceivedFriendShares(uid: string, limit = 20) {
     .limit(Math.min(Math.max(limit, 1), 20))
     .get();
   const items = [];
+  const avatars = new Map<string, unknown>();
   for (const doc of snap.docs) {
     const data = doc.data();
     if (await canRead(data, uid)) {
-      items.push({ id: doc.id, ownerName: (data.ownerName as string | null) ?? null, period: (data.stats as StatsSnapshot).period, createdAt: iso(data.createdAt), updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp), expiresAt: iso(data.expiresAt) });
+      const ownerUid = data.ownerUid as string;
+      const named = Boolean(data.ownerName);
+      // 名前を出す共有だけ、送り主の、いまのアイコンも見せる
+      if (named && !avatars.has(ownerUid)) avatars.set(ownerUid, (await userRef(ownerUid).get()).data()?.avatar ?? null);
+      items.push({
+        id: doc.id,
+        ownerKey: ownerGroupKey(ownerUid, uid, named),
+        ownerName: (data.ownerName as string | null) ?? null,
+        ownerAvatar: named ? (avatars.get(ownerUid) ?? null) : null,
+        period: (data.stats as StatsSnapshot).period,
+        createdAt: iso(data.createdAt),
+        updatedAt: iso((data.updatedAt ?? data.createdAt) as Timestamp),
+        expiresAt: iso(data.expiresAt),
+      });
     }
   }
   return { items };

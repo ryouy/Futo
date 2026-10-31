@@ -121,6 +121,40 @@ struct SharingTab: View {
     }
 }
 
+/// 自分が作ったリンクの中身を、リンクを開かずに、アプリの中で確かめる。
+@MainActor
+struct ShareLinkPreviewView: View {
+    let id: String
+    @Environment(SharingModel.self) private var sharing
+    @State private var detail: OwnShareDetail?
+    @State private var failed = false
+
+    var body: some View {
+        ScrollView {
+            if let detail {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(detail.displayName ?? tr("匿名")).font(.headline)
+                    Text(periodLabel(detail.stats.period) + " · " + tr("期限：{0}", dateText(detail.expiresAt)))
+                        .font(.footnote).foregroundStyle(.secondary)
+                    StatsChartsView(stats: ChartStats(snapshot: detail.stats))
+                }
+                .padding(20)
+            } else if failed {
+                Text(tr("中身を読み込めませんでした")).foregroundStyle(.secondary).padding(20)
+            } else {
+                ProgressView().frame(maxWidth: .infinity).padding(40)
+            }
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .navigationTitle(tr("リンクの中身"))
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            detail = await sharing.loadOwnShare(id: id)
+            failed = detail == nil
+        }
+    }
+}
+
 /// 「Googleで続ける」（上）と「Appleで続ける」（下）。どちらも同じ大きさで、隠さず、目立たなくもしない。
 /// `only` を指定すると、その方法だけ（前にログインした方法で、もう一度ログインするとき）。
 struct SignInButtons: View {
@@ -167,7 +201,7 @@ struct CreateShareView: View {
     @Environment(SharingModel.self) private var sharing
     @Query private var allSessions: [Session]
     @State private var period: SharePeriod = .thisWeek
-    @State private var selection = ShareSelection()
+    @State private var selection = ShareSelection.allIncluded
     @State private var expiresInDays = 7
     @State private var chosen: Set<String> = []
     @State private var created: URL?
@@ -444,6 +478,7 @@ struct SharedLinksView: View {
     let model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var confirmRevoke: ShareListItem?
+    @State private var previewing: ShareListItem?
 
     var body: some View {
         Form {
@@ -471,14 +506,24 @@ struct SharedLinksView: View {
                             .foregroundStyle(item.status == "active" ? Theme.accentText : .secondary)
                     }
                     if item.status == "active" {
+                        // 左に、コピー・送る・中身を見る（目）。右に、削除（ゴミ箱）
                         HStack(spacing: 8) {
                             if let url = sharing.localURL(for: item) {
-                                Link(destination: url) { Image(systemName: "safari") }.accessibilityLabel(tr("開く"))
-                                ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }.accessibilityLabel(tr("送る"))
-                                CopyChip(text: url.absoluteString)
+                                CopyChip(text: url.absoluteString).frame(width: 56)
+                                ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }
+                                    .accessibilityLabel(tr("送る")).frame(width: 56)
+                            } else {
+                                // リンクの文字列は、作った直後にしか手に入らない。この端末に控えが無いときは、使えない
+                                Button {} label: { Image(systemName: "doc.on.doc") }
+                                    .disabled(true).accessibilityLabel(tr("コピー")).frame(width: 56)
+                                Button {} label: { Image(systemName: "square.and.arrow.up") }
+                                    .disabled(true).accessibilityLabel(tr("送る")).frame(width: 56)
                             }
+                            Button { previewing = item } label: { Image(systemName: "eye") }
+                                .accessibilityLabel(tr("中身を見る")).frame(width: 56)
+                            Spacer(minLength: 0)
                             Button(role: .destructive) { confirmRevoke = item } label: { Image(systemName: "trash") }
-                                .accessibilityLabel(tr("削除"))
+                                .accessibilityLabel(tr("削除")).frame(width: 56)
                         }
                         .buttonStyle(ChipButtonStyle())
                     }
@@ -490,6 +535,14 @@ struct SharedLinksView: View {
         .navigationTitle(tr("共有中のリンク"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await sharing.loadShares() }
+        .sheet(item: $previewing) { item in
+            NavigationStack {
+                ShareLinkPreviewView(id: item.id)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(tr("閉じる")) { previewing = nil } } }
+            }
+            .environment(sharing)
+            .presentationBackground(Theme.background)
+        }
         .confirmationDialog(tr("このリンクでの共有をやめますか？"), isPresented: Binding(get: { confirmRevoke != nil }, set: { if !$0 { confirmRevoke = nil } }), titleVisibility: .visible) {
             Button(tr("やめる"), role: .destructive) { if let item = confirmRevoke { Task { await sharing.revokeShare(item) } } }
             Button(tr("キャンセル"), role: .cancel) {}

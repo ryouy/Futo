@@ -11,6 +11,22 @@ async function createShare(user: { token: string }, overrides: Record<string, un
   return { id: response.body.shareId as string, token, url: response.body.url as string };
 }
 
+describe("自分の共有の中身（アプリの中で確認）", () => {
+  it("作った本人だけが、中身を読める。他の人・取り消したあとは読めない", async () => {
+    const owner = await newUser("はなこ");
+    const other = await newUser("たろう");
+    const share = await createShare(owner);
+    const mine = await call("GET", `/api/shares/${share.id}`, { token: owner.token });
+    expect(mine.status).toBe(200);
+    expect(mine.body.stats.counts).toBeDefined();
+    expect(mine.body.displayName).toBe("はなこ");
+    expect((await call("GET", `/api/shares/${share.id}`, { token: other.token })).status).toBe(404);
+    expect((await call("GET", `/api/shares/${share.id}`)).status).toBe(401);
+    await call("DELETE", `/api/shares/${share.id}`, { token: owner.token });
+    expect((await call("GET", `/api/shares/${share.id}`, { token: owner.token })).status).toBe(404);
+  });
+});
+
 describe("Web共有：作成と検証", () => {
   it("作成でき、リンクはランダムな秘密トークン（43文字）。URLの土台は設定値", async () => {
     const owner = await newUser("はなこ");

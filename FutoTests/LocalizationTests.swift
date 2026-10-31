@@ -37,6 +37,21 @@ final class LocalizationTests: XCTestCase {
         return keys
     }
 
+    /// 辞書のリテラルに同じキーが2つあると、英語を使った瞬間に、アプリが落ちる。ソースの文字で、重複を確かめる。
+    func testEnglishTableHasNoDuplicateKeys() throws {
+        let here = URL(fileURLWithPath: #filePath).resolvingSymlinksInPath()
+        let file = here.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Futo/Services/EnglishStrings.swift")
+        guard let text = try? String(contentsOf: file, encoding: .utf8) else { throw XCTSkip("ソースが見つからない環境では確認しない") }
+        let regex = try NSRegularExpression(pattern: #"^\s*"((?:[^"\\\n]|\\.)*)"\s*:"#, options: .anchorsMatchLines)
+        var seen = Set<String>(), duplicates = [String]()
+        for match in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+            guard let range = Range(match.range(at: 1), in: text) else { continue }
+            let key = String(text[range])
+            if !seen.insert(key).inserted { duplicates.append(key) }
+        }
+        XCTAssertTrue(duplicates.isEmpty, "重複したキー:\n" + duplicates.joined(separator: "\n"))
+    }
+
     func testEveryUsedKeyHasAnEnglishTranslation() throws {
         let missing = try usedKeys().filter { EnglishStrings.table[$0] == nil }.sorted()
         XCTAssertTrue(missing.isEmpty, "英訳が無い文言:\n" + missing.joined(separator: "\n"))
@@ -87,7 +102,7 @@ final class LocalizationTests: XCTestCase {
         calendar.timeZone = TimeZone(identifier: "Asia/Tokyo")!
         let day = LogicalCalendar(calendar: calendar).dayInterval(containing: Date())
         let empty = ReflectionBuilder.build(kind: .morning, sessions: [], mode: .demo, interval: day, dayWord: tr("昨日"))
-        XCTAssertEqual(empty.lines.first, "Yesterday, nothing recorded yet.")
+        XCTAssertEqual(empty.lines.first, "Yesterday, nothing recorded yet")
         XCTAssertEqual(empty.title, "Morning check-in")
     }
 

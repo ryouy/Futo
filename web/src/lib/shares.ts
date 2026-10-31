@@ -103,6 +103,21 @@ export async function listShares(uid: string, limit: number, cursor?: string) {
 }
 
 /** 所有者だけが取消できる。他人のIDは「存在しない」と同じ応答にして、存在を知らせない。 */
+/** 自分が作った共有の中身を、本人が確かめる（アプリの中で、リンクを開かずに見られるように）。取り消した共有は、返さない。 */
+export async function getOwnShare(uid: string, shareId: string): Promise<PublicShare & { id: string; status: string }> {
+  const snap = await shares().doc(shareId).get();
+  const data = snap.data();
+  if (!data || data.ownerUid !== uid || data.status === "revoked") throw new ApiError(404, "not_found");
+  return {
+    id: snap.id,
+    status: statusOf(data),
+    displayName: (data.displayName as string | null) ?? null,
+    createdAt: iso(data.createdAt),
+    expiresAt: iso(data.expiresAt),
+    stats: data.stats as StatsSnapshot,
+  };
+}
+
 export async function revokeShare(uid: string, shareId: string): Promise<void> {
   const ref = shares().doc(shareId);
   await db().runTransaction(async (tx) => {

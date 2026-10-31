@@ -334,7 +334,7 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertEqual(make(store: store).state, .signedIn(uid: "uid-A"))
     }
 
-    func testSignOutRemovesAuthStateAndThatAccountsLocalShareData() async throws {
+    func testSignOutRemovesAuthStateButKeepsTheAccountsLocalShareData() async throws {
         installHappyNetwork()
         let store = MemoryStore()
         let service = make(store: store)
@@ -342,18 +342,26 @@ final class AuthServiceTests: XCTestCase {
         service.signOut()
         XCTAssertEqual(service.state, .signedOut)
         XCTAssertNil(store.saved)
-        XCTAssertEqual(cleaned, ["uid-A"])
+        XCTAssertTrue(cleaned.isEmpty, "ログインし直したときに、共有リンクを失わないよう、端末の共有情報は残す")
         let t = try await service.validIDToken()
         XCTAssertNil(t)
     }
 
-    func testSwitchingAccountsCleansTheOldAccountsLocalData() async throws {
+    func testAccountDeletionClearsThatAccountsLocalShareData() async throws {
+        installHappyNetwork()
+        let service = make()
+        _ = try await service.signInWithGoogle()
+        service.signOut(clearLocalData: true)
+        XCTAssertEqual(cleaned, ["uid-A"])
+    }
+
+    func testSwitchingAccountsKeepsTheOldAccountsLocalData() async throws {
         installHappyNetwork(uid: "uid-A")
         let service = make()
         _ = try await service.signInWithGoogle()
         installHappyNetwork(uid: "uid-B")
         _ = try await service.signInWithGoogle()
-        XCTAssertEqual(cleaned, ["uid-A"], "別アカウントになったら、前のアカウントの端末内の共有情報を除去する")
+        XCTAssertTrue(cleaned.isEmpty, "前のアカウントの共有情報は、そのアカウントのものとして残す")
         XCTAssertEqual(service.uid, "uid-B")
     }
 

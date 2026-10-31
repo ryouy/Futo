@@ -95,3 +95,19 @@ describe("Webログイン", () => {
     expect(parseCookie(null, "x")).toBeUndefined();
   });
 });
+
+import { ownerGroupKey } from "@/lib/friendShares";
+
+describe("届いた記録のまとめ方", () => {
+  it("同じ送り主・同じ受け手なら同じ値。受け手が違えば別の値。IDそのものは含まない", () => {
+    const a = ownerGroupKey("owner-1", "viewer-1", true);
+    expect(ownerGroupKey("owner-1", "viewer-1", true)).toBe(a);
+    expect(ownerGroupKey("owner-1", "viewer-2", true)).not.toBe(a);
+    expect(ownerGroupKey("owner-2", "viewer-1", true)).not.toBe(a);
+    expect(a).not.toContain("owner-1");
+  });
+
+  it("名前を出さない共有は、同じ人でも、名前のある共有とは別の値（同じ人だと見破られない）", () => {
+    expect(ownerGroupKey("owner-1", "viewer-1", false)).not.toBe(ownerGroupKey("owner-1", "viewer-1", true));
+  });
+});

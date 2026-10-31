@@ -183,7 +183,7 @@ struct HomeView: View {
         }
         if model.targetCount == 0 { return tr("アプリやサイトを選びます") }
         switch model.restriction {
-        case .configured: return tr("")
+        case .configured: return ""
         case .temporarilyUnlocked: return ""
         case .paused(let until): return tr("{0} に、自動で戻ります", DateText.time(until))
         case .unverifiable: return tr("もう一度、かけ直してください")

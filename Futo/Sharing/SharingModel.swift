@@ -252,6 +252,11 @@ final class SharingModel {
         do { shares = (try await api.send("GET", "/api/shares") as ShareListResponse).items } catch { fail(error) }
     }
 
+    /// 自分が作ったリンクの中身（アプリの中で確かめる用）。読み込めなければ nil。
+    func loadOwnShare(id: String) async -> OwnShareDetail? {
+        try? await api.send("GET", "/api/shares/\(id)")
+    }
+
     func localURL(for item: ShareListItem) -> URL? {
         uid.flatMap { ShareLinkStore.url(uid: $0, shareId: item.id) }
     }
@@ -464,7 +469,7 @@ final class SharingModel {
                     if result.status == "deleted" {
                         seenStore.clear(uid: current)
                         ProfileCache.clear(uid: current)
-                        auth.signOut()
+                        auth.signOut(clearLocalData: true)
                         reset()
                         return true
                     }

@@ -10,6 +10,13 @@ struct ShareSelection: Equatable, Codable {
     var phrase: SharePhrase?       // 定型のひとこと（任意。Webリンク用）
     var message = ""              // フレンドへの一言（自由入力。フレンド共有だけ）
 
+    /// 共有の画面の、はじめの状態：項目は、すべて入れる（外したいものだけ、外す）
+    static var allIncluded: ShareSelection {
+        var s = ShareSelection()
+        s.counts = true; s.purposes = true; s.feelings = true; s.restriction = true
+        return s
+    }
+
     /// 統計の項目が1つも選ばれていなければ、公開しない。
     var hasStats: Bool { counts || purposes || feelings || restriction }
 }

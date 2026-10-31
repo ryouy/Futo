@@ -162,17 +162,22 @@ struct FriendsView: View {
     @ViewBuilder
     private var receivedSection: some View {
         if !sharing.receivedShares.isEmpty || sharing.sentShares.contains(where: { $0.status != "revoked" }) {
-            CardSection {
-                Text(tr("届いた記録")).font(.footnote).foregroundStyle(.secondary)
-                ForEach(sharing.receivedShares) { item in
-                    NavigationLink { FriendShareDetailView(id: item.id) } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.ownerName ?? tr("匿名"))
-                                Text(periodLabel(item.period) + (item.updatedAt.map { " · " + tr("更新 {0}", dateText($0)) } ?? "")).font(.footnote).foregroundStyle(.secondary)
+            if !sharing.receivedShares.isEmpty {
+                // 送ってきた人ごとにまとめる。人を選んでから、いつの記録を見るか選ぶ
+                CardSection {
+                    Text(tr("届いた記録")).font(.footnote).foregroundStyle(.secondary)
+                    ForEach(ReceivedGrouping.group(sharing.receivedShares)) { group in
+                        NavigationLink { FriendRecordsListView(groupID: group.id) } label: {
+                            HStack(spacing: 12) {
+                                AccountAvatar(name: group.name ?? "?", size: 32, spec: group.avatar)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(group.name ?? tr("匿名")).oneLine()
+                                    Text(tr("{0}件", "\(group.items.count)")).font(.footnote).foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 0)
+                                if group.items.contains(where: { sharing.isUnseen($0) }) { NewBadge() }
                             }
-                            Spacer(minLength: 0)
-                            if sharing.isUnseen(item) { NewBadge() }
+                            .frame(minHeight: 44)
                         }
                     }
                 }
@@ -200,6 +205,42 @@ struct FriendsView: View {
                 }
             }
         }
+    }
+}
+
+/// 1人ぶんの、届いた記録の一覧。いつの記録を見るか選ぶ。
+@MainActor
+struct FriendRecordsListView: View {
+    let groupID: String
+    @Environment(SharingModel.self) private var sharing
+
+    private var group: ReceivedGroup? { ReceivedGrouping.group(sharing.receivedShares).first { $0.id == groupID } }
+
+    var body: some View {
+        Form {
+            if let group {
+                CardSection {
+                    ForEach(group.items) { item in
+                        NavigationLink { FriendShareDetailView(id: item.id) } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(periodLabel(item.period))
+                                    Text(tr("更新 {0}", dateText(item.updatedAt ?? item.createdAt))).font(.footnote).foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 0)
+                                if sharing.isUnseen(item) { NewBadge() }
+                            }
+                            .frame(minHeight: 44)
+                        }
+                    }
+                }
+            } else {
+                CardSection { Text(tr("この記録は、もう見られません")).foregroundStyle(.secondary) }
+            }
+        }
+        .compactForm()
+        .navigationTitle(group?.name ?? tr("匿名"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

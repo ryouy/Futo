@@ -72,6 +72,8 @@
 		7559CC8D141A93DBF5685EEB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
 		77153F8420388F83F5070A45 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF139CD24EA57AEEABC31B77 /* SettingsView.swift */; };
 		80127D06B45BD0375FD271B3 /* ShareStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6CE73B90F4BF7BFB780C9F /* ShareStats.swift */; };
+		83678771F3AEC4987CE0983A /* ReceivedGroupsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCD40BABABECB4DC333CFC8 /* ReceivedGroupsTests.swift */; };
+		852B7A88B5B6506BF2531CF2 /* ReceivedGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53EC18949D7841C9FC4A4D42 /* ReceivedGroups.swift */; };
 		8644D794D5A3E5F4CE45E00D /* AppModel+Phase3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57186D513F893809C415EC62 /* AppModel+Phase3.swift */; };
 		8918D5CA1DF6DB3D3DF2979D /* AvatarSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E6028CF7647C83C2B679D7 /* AvatarSettings.swift */; };
 		89A4BD8B8EBBA8935A01C635 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD20AE72812E367E3277411 /* Preferences.swift */; };
@@ -174,6 +176,7 @@
 		273992023321D249FD2097B9 /* SupportStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SupportStore.swift; sourceTree = "<group>"; };
 		28BB1F52AAAB3F43B2AD24DE /* AdsService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdsService.swift; sourceTree = "<group>"; };
 		2BE4BA309E788D84B95854AD /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		2CCD40BABABECB4DC333CFC8 /* ReceivedGroupsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReceivedGroupsTests.swift; sourceTree = "<group>"; };
 		2E7D6F2D068E20BC2CB84D11 /* AuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		31255CC2B0C9995CC00F2AA9 /* ColorMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ColorMathTests.swift; sourceTree = "<group>"; };
 		32BB636196F91ED59D7A4919 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -184,6 +187,7 @@
 		42FF5261272D18F89028C63A /* FutoShieldAction.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = FutoShieldAction.entitlements; sourceTree = "<group>"; };
 		48BBDE387A47E5BF17A0EF51 /* FutoMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutoMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5289C40BA3CF76E8378207D8 /* ColorMath.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ColorMath.swift; sourceTree = "<group>"; };
+		53EC18949D7841C9FC4A4D42 /* ReceivedGroups.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReceivedGroups.swift; sourceTree = "<group>"; };
 		5403AB0C956C23387DC3A3FB /* NotificationPlanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationPlanner.swift; sourceTree = "<group>"; };
 		55D3E8121D07DD1E3765C988 /* FutoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FutoApp.swift; sourceTree = "<group>"; };
 		57186D513F893809C415EC62 /* AppModel+Phase3.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AppModel+Phase3.swift"; sourceTree = "<group>"; };
@@ -371,6 +375,7 @@
 				7A74E35431C3F5CF9B7356C7 /* RestrictionEventTests.swift */,
 				0F9FF3627821309F6366E845 /* AvatarSettingsTests.swift */,
 				31255CC2B0C9995CC00F2AA9 /* ColorMathTests.swift */,
+				2CCD40BABABECB4DC333CFC8 /* ReceivedGroupsTests.swift */,
 			);
 			path = FutoTests;
 			sourceTree = "<group>";
@@ -391,6 +396,7 @@
 				C804DFE44A54A1F0E6A9D5FA /* StandingShare.swift */,
 				F2E6028CF7647C83C2B679D7 /* AvatarSettings.swift */,
 				B082970A58A044C0D2CB5891 /* AppleAuthorizer.swift */,
+				53EC18949D7841C9FC4A4D42 /* ReceivedGroups.swift */,
 			);
 			name = Sharing;
 			path = Sharing;
@@ -872,6 +878,7 @@
 				2FE2354ED7650412A60E5C76 /* SupportView.swift in Sources */,
 				BDDA4F99117B526DE6963238 /* AppleAuthorizer.swift in Sources */,
 				25DF0A85386EBB229C77B944 /* ColorMath.swift in Sources */,
+				852B7A88B5B6506BF2531CF2 /* ReceivedGroups.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -892,6 +899,7 @@
 				5F21563494D63721948F802E /* RestrictionEventTests.swift in Sources */,
 				750EDCF4F2D9BCA799C624E8 /* AvatarSettingsTests.swift in Sources */,
 				1100CE6EB3F4B400B79FA100 /* ColorMathTests.swift in Sources */,
+				83678771F3AEC4987CE0983A /* ReceivedGroupsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

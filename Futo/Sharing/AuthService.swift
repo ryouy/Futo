@@ -136,7 +136,6 @@ final class AuthService {
             refreshToken = firebase.refreshToken
             providerDisplayName = firebase.displayName ?? GoogleIDToken.name(from: googleIDToken)
             // 別のアカウントに切り替わったら、前のアカウントの端末内の共有情報を除去する
-            if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
             provider = .google
             store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, provider: SignInProvider.google.rawValue))
             // バックアップの許可も、同じ画面で得られていれば、ここで控える（許可の範囲に、Driveのアプリ専用領域が含まれるときだけ）
@@ -170,7 +169,6 @@ final class AuthService {
             refreshToken = firebase.refreshToken
             let name = fullName?.trimmingCharacters(in: .whitespacesAndNewlines)
             providerDisplayName = name?.isEmpty == false ? name : firebase.displayName
-            if case .signedIn(let old) = previous, old != firebase.uid { ShareLinkCleanup.run(old) }
             provider = .apple
             store.save(StoredAuthSession(uid: firebase.uid, refreshToken: firebase.refreshToken, provider: SignInProvider.apple.rawValue))
             state = .signedIn(uid: firebase.uid)
@@ -209,9 +207,11 @@ final class AuthService {
 
     // MARK: ログアウト
 
-    /// ログアウト。サーバー上の共有は消えない（残る）。端末の認証状態と、アカウント別の保管を除去する。
-    func signOut() {
-        if let uid { ShareLinkCleanup.run(uid) }
+    /// ログアウト。サーバー上の共有は消えない（残る）。端末の認証状態を除く。
+    /// 共有リンクの控え・継続共有の設定・バックアップの許可は、そのアカウントのものとして端末に残す
+    /// （ログインし直したときに、リンクを失わないため）。アカウントの削除のときだけ、`clearLocalData` で、すべて除く。
+    func signOut(clearLocalData: Bool = false) {
+        if clearLocalData, let uid { ShareLinkCleanup.run(uid) }
         store.clear()
         providerDisplayName = nil
         provider = nil

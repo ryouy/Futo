@@ -140,6 +140,19 @@ struct ReceivedFriendShare: Codable, Equatable, Identifiable {
     var createdAt: String
     var updatedAt: String?
     var expiresAt: String
+    /// 送り主ごとの目印（送り主のIDではない。まとめて見せるためだけに使う）
+    var ownerKey: String? = nil
+    var ownerAvatar: AvatarSpec? = nil
+}
+
+/// 自分が作ったリンクの、中身（アプリの中で、確かめるため）。
+struct OwnShareDetail: Codable, Equatable {
+    var id: String
+    var displayName: String?
+    var createdAt: String
+    var expiresAt: String
+    var status: String
+    var stats: StatsSnapshotDTO
 }
 
 struct ReceivedFriendSharesResponse: Codable, Equatable {

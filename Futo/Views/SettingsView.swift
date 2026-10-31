@@ -129,7 +129,8 @@ struct SettingsView: View {
     private var otherTab: some View {
         Form {
             Section {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 14) {
+                // 4色と、一番右の好きな色を、1列に並べる
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 14) {
                     ForEach(ThemeColor.allCases) { option in
                         themeSwatch(option)
                     }
