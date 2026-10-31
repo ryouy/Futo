@@ -8,7 +8,6 @@ struct FriendsView: View {
     @State private var code = ""
     @State private var deleting: FriendsResponse.Friend?
     @State private var revoking: SentFriendShare?
-    @State private var search = ""
     @State private var page: Page = .friends
 
     /// 下のページ：左右にスライドして切り替える。多くなっても、それぞれのページの中で、スクロールできる。
@@ -200,69 +199,42 @@ struct FriendsView: View {
         }
     }
 
-    /// 人数が多いときの見つけやすさ：6人以上で検索、8人以上で、頭文字ごとの見出し。
-    private static let searchFrom = 6
-    private static let sectionsFrom = 8
-
-    private var visibleFriends: [FriendsResponse.Friend] {
-        FriendIndex.filter(sharing.friends.friends, query: search, name: { $0.displayName })
-    }
-
+    /// フレンド一覧：横にスライドして見る（1人ずつのカードが、横に並ぶ）。
     @ViewBuilder
     private var friendsSection: some View {
-        let count = sharing.friends.friends.count
-        if count >= Self.searchFrom {
-            CardSection {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField(tr("名前で探す"), text: $search)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    if !search.isEmpty {
-                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
-                            .buttonStyle(.plain).accessibilityLabel(tr("消す"))
-                    }
-                }
-                .frame(minHeight: 44)
-            }
-        }
-        if count == 0 {
-            CardSection {
-                Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
+        CardSection {
+            Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
+            if sharing.friends.friends.isEmpty {
                 Text(tr("まだフレンドはいません")).foregroundStyle(.secondary)
-            }
-        } else if visibleFriends.isEmpty {
-            CardSection { Text(tr("見つかりませんでした")).foregroundStyle(.secondary) }
-        } else if count >= Self.sectionsFrom {
-            ForEach(FriendIndex.grouped(visibleFriends, name: { $0.displayName }), id: \.key) { group in
-                Section {
-                    ForEach(group.items) { friend in friendRow(friend) }
-                } header: {
-                    Text(group.key).font(.footnote.weight(.semibold)).foregroundStyle(Theme.accentText).textCase(nil)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(sharing.friends.friends) { friend in friendCard(friend) }
+                    }
+                    .padding(.vertical, 4)
                 }
-                .listRowBackground(Theme.card)
-            }
-        } else {
-            CardSection {
-                Text(tr("フレンド一覧")).font(.footnote).foregroundStyle(.secondary)
-                ForEach(FriendIndex.grouped(visibleFriends, name: { $0.displayName }).flatMap(\.items)) { friend in friendRow(friend) }
+                .scrollClipDisabled()
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 0))
             }
         }
     }
 
-    private func friendRow(_ friend: FriendsResponse.Friend) -> some View {
-        HStack(spacing: 12) {
-            AccountAvatar(name: friend.displayName, size: 32, spec: friend.avatar)
-            Text(friend.displayName).oneLine()
-            Spacer(minLength: 0)
+    private func friendCard(_ friend: FriendsResponse.Friend) -> some View {
+        VStack(spacing: 6) {
+            AccountAvatar(name: friend.displayName, size: 56, spec: friend.avatar)
+            Text(friend.displayName).font(.footnote.weight(.medium)).lineLimit(1).truncationMode(.tail)
+                .frame(width: 84)
             // 削除は、関係を終わらせて、ブロックもする（まとめて1つのボタン）
             Button { deleting = friend } label: {
-                Image(systemName: "trash").font(.body).foregroundStyle(.secondary)
-                    .frame(width: 44, height: 44).contentShape(Rectangle())
+                Image(systemName: "trash").font(.footnote).foregroundStyle(.secondary)
+                    .frame(width: 44, height: 32).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(tr("フレンドを削除"))
         }
-        .frame(minHeight: 44)
+        .frame(width: 92)
+        .padding(.vertical, 10)
+        .background(Theme.softBlue.opacity(0.5), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     /// 届いた記録：送ってきた人ごとにまとめる。人を選んでから、いつの記録を見るか選ぶ。
