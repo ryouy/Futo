@@ -340,6 +340,8 @@ final class APIClientTests: XCTestCase {
     }
 
     func testInitialDisplayNameIsTrimmedLimitedAndFallsBack() {
+        // 既定の名前は、表示言語で変わる。初回起動の言語（端末の言語）に左右されないよう、日本語にそろえる
+        LanguageStore.shared.select(.ja)
         XCTAssertEqual(DisplayName.initial(from: "  山田 太郎 "), "山田 太郎")
         XCTAssertEqual(DisplayName.initial(from: String(repeating: "あ", count: 30)).count, 20)
         XCTAssertEqual(DisplayName.initial(from: "a\nb\u{0}"), "ab")
