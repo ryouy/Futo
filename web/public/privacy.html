@@ -76,7 +76,7 @@
   <h2><span class="ja">2. ログイン（Google または Apple・任意）</span><span class="en">2. Sign-in (Google or Apple, optional)</span></h2>
   <div class="ja"><p>共有・フレンドを使うときだけ、Google または Apple でログインします（バックアップは、別に Google との接続が必要です）<br>ログインしなくても、ほかの機能はすべて使えます<br>どちらでログインしても、使える機能は同じです<br>メールアドレスが同じでも、アカウントは自動では統合されません</p>
 <ul>
-<li>認証は、Google のログイン（OAuth）または Apple で続ける（Sign in with Apple）と、Firebase Authentication で行います<br>ログインのために要求する情報は、<strong>名前だけ</strong>です<br>メールアドレスと写真は、使いません<br>Google でログインするときは、同じ画面で、バックアップ用の許可（下記 5 の Google Drive のアプリ専用領域）も、あわせてお願いします<br>許可しなくても、ログインできます</li>
+<li>認証は、Google のログイン（OAuth）または Apple で続ける（Sign in with Apple）と、Firebase Authentication で行います<br>ログインのために要求する情報は、<strong>名前だけ</strong>です<br>メールアドレスと写真は、要求せず、ふとのサーバーにも保存しません（ただし、Firebase Authentication が、ログインの管理のために、Google・Apple から受け取った情報を保持することがあります）<br>Google でログインするときは、同じ画面で、バックアップ用の許可（下記 5 の Google Drive のアプリ専用領域）も、あわせてお願いします<br>許可しなくても、ログインできます</li>
 <li>Apple でログインしたアカウントを削除すると、Apple 側のアプリへの接続も取り消します</li>
 <li>サーバー（Google Cloud の Firestore）に保存するのは、アカウントの内部 ID（Firebase UID）、<strong>表示名</strong>（初期値は Google または Apple の名前<br>取得できなければ「ふと」<br>いつでも変更できます）、作成・更新の日時、状態です</li>
 <li>用途：共有・フレンド機能の本人確認と、相手に表示する名前のため<br>広告や分析には使いません</li>
@@ -84,7 +84,7 @@
 <p>削除：設定 →「アカウント」→「アカウントを削除」で、再ログインの確認のあと、サーバー上のデータ（下記の共有・フレンド関連と、プロフィール、ログインのアカウント）をすべて削除します<br>ログアウトすると、端末内のログイン情報を消します<br>共有リンクの控え、継続共有の設定、バックアップの許可は、そのアカウントのものとして端末に残し、ログインし直したときに使えます（アカウントを削除すると、これらも消えます）</p></div>
   <div class="en"><p>You sign in with Google or Apple only when you use sharing or friends (backup needs a separate Google connection). Everything else works without signing in. Both give the same features, and accounts are never merged automatically even if the email address is the same</p>
 <ul>
-<li>Authentication uses Google sign-in (OAuth) or Sign in with Apple, together with Firebase Authentication. The only information requested for signing in is your <strong>name</strong>. Your email address and photo are not used. When you sign in with Google, the same screen also asks for the backup permission described in section 5 (the app-specific area of Google Drive). You can sign in without allowing it</li>
+<li>Authentication uses Google sign-in (OAuth) or Sign in with Apple, together with Firebase Authentication. The only information requested for signing in is your <strong>name</strong>. We do not request your email address or photo and do not store them on our servers (however, Firebase Authentication may keep information it receives from Google or Apple to manage sign-in). When you sign in with Google, the same screen also asks for the backup permission described in section 5 (the app-specific area of Google Drive). You can sign in without allowing it</li>
 <li>Deleting an account created with Apple also revokes the app's connection on Apple's side</li>
 <li>What we store on our server (Google Cloud Firestore): an internal account ID (Firebase UID), your <strong>display name</strong> (initially your Google or Apple name, or "Futo" if unavailable; you can change it any time), creation/update times and status</li>
 <li>Purpose: identifying you for sharing and friends, and the name shown to others. Not used for ads or analytics</li>
@@ -151,20 +151,20 @@
   <div class="ja"><ul>
 <li>広告は、<strong>ひと呼吸の待機画面の最下部のバナー1枠だけ</strong>です<br>ほかの画面には出しません<br>広告の表示やクリックは、解除の条件に関係しません</li>
 <li>Google AdMob の SDK が、広告の配信・不正防止・効果測定のために、端末の情報（IP アドレス、端末の種類・OS、アプリのバージョン、広告の表示・クリックの情報、端末の識別子など）を取得することがあります<br>取得する情報は、Google の方針に従います</li>
+<li>AdMob の SDK が取得する可能性のある情報：端末の識別子、大まかな位置情報（IP アドレスからの推定を含む）、広告の表示・クリックの情報、広告に対する操作などアプリ内の操作情報、クラッシュのログ、パフォーマンスの情報（起動時間、応答速度など）<br>実際に取得される内容は、SDK のバージョンや、お使いの地域・端末の設定によって異なります</li>
 <li>本アプリは、広告の要求に、<strong>あなたの気分、回答、目的、利用履歴、記録、キーワード、URL を付けません</strong><br>パーソナライズしない広告を要求し、アプリの追跡許可（ATT）も求めません</li>
 <li>EEA・英国など、同意が必要な地域では、Google の同意管理（UMP）で確認し、同意が得られるまで、広告を要求しません<br>選択は、あとから変更できます（設定に、広告のプライバシー設定が表示される地域）</li>
 <li>「設定 → ふとを応援」の月額プラン（任意）に加入すると、広告は表示されません<br>決済・請求・解約は、Apple（App Store）が扱います<br>本アプリは、購入者の氏名・支払い情報を受け取らず、加入しているかどうかを、端末の中だけで確認します</li>
-<li>Web サイトの「ふとを応援」から加入することもできます（任意）<br>Google でログインし、決済は Stripe が扱います<br>ふとのサーバーには、アカウントの ID、加入しているプランと状態、Stripe の顧客 ID・契約 ID だけを保存し、カード番号などの支払い情報は保存しません<br>ログインの状態は、このサイトの Cookie（HttpOnly）で保ち、最長5日で切れます<br>アカウントを削除すると、Web の契約も解約されます</li>
 <li>Google による情報の利用：<a href="https://policies.google.com/technologies/partner-sites" rel="noopener">Google のパートナーのサイトやアプリを使用する際の Google によるデータの使用</a></li>
 </ul>
 <p>削除：広告に関して Google が取得した情報は、Google のプライバシー設定（<a href="https://myadcenter.google.com/" rel="noopener">マイ広告センター</a>など）から管理できます</p></div>
   <div class="en"><ul>
 <li>Ads appear in <strong>one banner slot at the bottom of the breath wait screen only</strong>, not on any other screen. Showing or clicking an ad has no effect on unlocking</li>
 <li>The Google AdMob SDK may collect device information (IP address, device type and OS, app version, ad impression/click information, device identifiers, etc.) to deliver ads, prevent fraud and measure performance, under Google's policies</li>
+<li>Information the AdMob SDK may collect: device identifiers, approximate location (including estimates from the IP address), ad impression and click information, in-app interaction information such as interactions with ads, crash logs, and performance information (such as launch time and responsiveness). What is actually collected depends on the SDK version and on your region and device settings</li>
 <li>The app does <strong>not attach your mood, answers, purposes, usage history, records, keywords or URLs</strong> to ad requests. It requests non-personalized ads and does not ask for App Tracking Transparency permission</li>
 <li>In regions that require consent (EEA, UK, etc.), consent is collected through Google's consent management (UMP), and no ad is requested until consent is given. You can change your choice later (a privacy-options entry appears in Settings where required)</li>
 <li>If you subscribe to a monthly plan in Settings → Support Futo (optional), ads are not shown. Payment, billing and cancellation are handled by Apple (App Store). The app does not receive your name or payment details, and checks whether you are subscribed only on your device</li>
-<li>You can also subscribe on the website (optional) at Support Futo. You log in with Google and Stripe handles payment. Our server stores only your account ID, your plan and its status, and the Stripe customer and subscription IDs, never card details. The login state is kept in an HttpOnly cookie on this site and expires within 5 days. Deleting your account also cancels the web subscription</li>
 <li>How Google uses information: <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">How Google uses data from sites or apps that use its services</a></li>
 </ul>
 <p>Deletion: information Google collected for ads can be managed in your Google privacy settings (e.g. <a href="https://myadcenter.google.com/" rel="noopener">My Ad Center</a>)</p></div>
@@ -174,12 +174,14 @@
   <div class="ja"><ul>
 <li>紹介ページ、共有ページ、招待ページは、Vercel でホスティングしています<br>Vercel は、サーバーの運用のため、アクセスのログ（IP アドレス、ブラウザの種類、日時など）を取得することがあります</li>
 <li>共有ページ・招待ページでは、不正な試行を防ぐため、アクセス元の IP アドレスを、<strong>ソルトつきのハッシュ</strong>にして、試行の回数だけを一時的に保存します（IP アドレスそのものは保存しません）</li>
-<li>このサイトは、Cookie、アクセス解析、広告を使いません<br>紹介ページは、言語の選択を、ブラウザの localStorage に保存します（外部へは送りません）</li>
+<li>このサイトは、アクセス解析、広告を使いません<br>紹介ページは、言語の選択を、ブラウザの localStorage に保存します（外部へは送りません）</li>
+<li>Cookie：通常のページの閲覧では、Cookie を設定しません<br>このサイトの Google ログインの機能（現在は、提供を停止しています）を使うときだけ、次の Cookie を設定します：<code>futo_oauth_state</code>（ログインの途中の確認用、10分）、<code>futo_session</code>（ログイン状態の維持用、最長5日）<br>どちらも、HttpOnly・Secure・SameSite=Lax で、広告や分析には使わず、ログアウトで消えます（<code>futo_oauth_state</code> は、ログインの完了時にも消えます）</li>
 </ul></div>
   <div class="en"><ul>
 <li>The intro, share and invite pages are hosted on Vercel. Vercel may collect access logs (IP address, browser type, time, etc.) to operate the servers</li>
 <li>On share and invite pages, to prevent abuse, we temporarily store only the number of attempts keyed by a <strong>salted hash</strong> of the visitor's IP address (the IP address itself is not stored)</li>
-<li>This site uses no cookies, analytics or ads. The intro page saves your language choice in the browser's localStorage (not sent anywhere)</li>
+<li>This site uses no analytics or ads. The intro page saves your language choice in the browser's localStorage (not sent anywhere)</li>
+<li>Cookies: normal browsing sets no cookies. Cookies are set only when you use this site's Google sign-in feature (currently not offered): <code>futo_oauth_state</code> (a check during sign-in, 10 minutes) and <code>futo_session</code> (keeps you signed in, up to 5 days). Both are HttpOnly, Secure and SameSite=Lax, are not used for ads or analytics, and are removed on sign-out (<code>futo_oauth_state</code> is also removed when sign-in completes)</li>
 </ul></div>
 </section>
 <section>
@@ -207,11 +209,11 @@
 <section>
   <h2><span class="ja">10. 変更・お問い合わせ</span><span class="en">10. Changes and contact</span></h2>
   <div class="ja"><p>機能の追加などで、扱う情報が変わるときは、このページを更新します<br>重要な変更は、アプリの紹介ページでお知らせします</p>
-<p>お問い合わせ・データの削除のご相談は、<a href="https://github.com/ryouy/Futo/issues" rel="noopener">GitHub の Issues</a>（開発者：ryouy）へお願いします<br>個人情報は、書き込まないでください</p>
-<p>最終更新：2026年10月31日</p></div>
+<p>お問い合わせ・データの削除のご相談は、<a href="mailto:mosbotfa@gmail.com">mosbotfa@gmail.com</a> へお願いします<br>サポートページ（<a href="/help">/help</a>）もご覧ください</p>
+<p>最終更新：2026年11月5日</p></div>
   <div class="en"><p>When features change what we handle, this page will be updated, and important changes will be announced on the intro page</p>
-<p>For questions or help with data deletion, please use <a href="https://github.com/ryouy/Futo/issues" rel="noopener">GitHub Issues</a> (developer: ryouy). Please do not post personal information</p>
-<p>Last updated: October 31, 2026</p></div>
+<p>For questions or help with data deletion, please email <a href="mailto:mosbotfa@gmail.com">mosbotfa@gmail.com</a>. See also the support page (<a href="/help">/help</a>)</p>
+<p>Last updated: November 5, 2026</p></div>
 </section>
 
 </main>
