@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja" data-lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>サポート — ふと / Support — Futo</title>
+  <meta name="description" content="ふとのサポート：お問い合わせ先とよくある質問 / Futo support: contact and FAQ.">
+  <meta name="theme-color" content="#196459">
+  <link rel="canonical" href="https://futo-share.vercel.app/help">
+  <link rel="icon" href="/assets/web/favicon.png">
+  <style>
+    :root { --green: #196459; --green-deep: #124a42; --soft: #e3efeb; --cream: #fcf8f0; --ink: #1d2b27; --muted: #5d6d68; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--cream); color: var(--ink); line-height: 1.85;
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    html[data-lang="ja"] .en, html[data-lang="en"] .ja { display: none !important; }
+    header { background: var(--green); color: var(--cream); padding: 14px 16px; }
+    header .bar { width: min(760px, 100%); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    header a.brand { color: var(--cream); text-decoration: none; font-weight: 600; letter-spacing: .08em; display: flex; align-items: center; gap: 10px; }
+    header img { width: 32px; height: auto; display: block; }
+    .lang { display: inline-flex; background: rgba(252, 248, 240, .16); border-radius: 999px; padding: 3px; }
+    .lang button { border: 0; background: transparent; color: rgba(252, 248, 240, .85); font: inherit; font-size: 13px; padding: 5px 14px; border-radius: 999px; cursor: pointer; }
+    html[data-lang="ja"] .lang [data-set="ja"], html[data-lang="en"] .lang [data-set="en"] { background: var(--cream); color: var(--green); font-weight: 600; }
+    main { width: min(760px, 100% - 32px); margin: 0 auto; padding: 28px 0 56px; }
+    h1 { margin: 0 0 6px; font-size: 26px; color: var(--green); }
+    .lead { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+    section { background: #fff; border: 1px solid rgba(25, 100, 89, .12); border-radius: 20px; padding: 20px 22px; margin-bottom: 14px; }
+    h2 { margin: 0 0 10px; font-size: 17px; color: var(--green); }
+    p { margin: 8px 0; font-size: 15px; }
+    ul { margin: 8px 0; padding-left: 1.3em; font-size: 15px; }
+    li { margin: 6px 0; }
+    a { color: var(--green); }
+    details { border-top: 1px solid rgba(25, 100, 89, .12); padding: 10px 0; }
+    details:first-of-type { border-top: 0; }
+    summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+    .mail { display: inline-block; background: var(--soft); border-radius: 999px; padding: 8px 20px; font-weight: 600; text-decoration: none; }
+    footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 32px; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a class="brand" href="/"><img src="/logo.png" alt="" width="32"><span>ふと</span></a>
+    <div class="lang" role="group" aria-label="言語 / Language">
+      <button type="button" data-set="ja">日本語</button>
+      <button type="button" data-set="en">English</button>
+    </div>
+  </div>
+</header>
+<main>
+  <h1><span class="ja">サポート</span><span class="en">Support</span></h1>
+  <p class="lead"><span class="ja">「ふと」をご利用いただきありがとうございます<br>ご質問や不具合のご報告、ご意見などがありましたら、お気軽にお問い合わせください</span><span class="en">Thank you for using Futo. If you have questions, bug reports or feedback, please get in touch</span></p>
+<section>
+  <h2><span class="ja">お問い合わせ</span><span class="en">Contact</span></h2>
+  <p><a class="mail" href="mailto:mosbotfa@gmail.com">mosbotfa@gmail.com</a></p>
+  <p class="ja">不具合のご報告には、端末の機種、iOS のバージョン、状況（できれば、操作の手順）をお書き添えいただけると助かります</p>
+  <p class="en">For bug reports, please include your device model, iOS version and what happened (steps, if possible)</p>
+</section>
+<section>
+  <h2><span class="ja">よくある質問</span><span class="en">FAQ</span></h2>
+  <details>
+    <summary><span class="ja">アプリの制限がうまく動かないときは？</span><span class="en">Restrictions don't seem to work</span></summary>
+    <p class="ja">次の点を、順に確認してください<br>・設定の「許可」が「許可済み」になっているか<br>・制限するアプリを選んでいるか<br>・一時停止中ではないか（一時停止が終わると、自動で制限が戻ります）<br>それでも解決しないときは、アプリを一度完全に終了して開き直し、設定で「再確認」を押してください<br>改善しない場合は、上のメールアドレスまでご連絡ください</p>
+    <p class="en">Please check, in order: that “Permission” in Settings shows as allowed; that you have chosen the apps to restrict; and that restrictions are not paused (they return automatically when a pause ends). If it still doesn't work, fully quit and reopen the app, then tap “Recheck” in Settings. If that doesn't help, please email us at the address above</p>
+  </details>
+  <details>
+    <summary><span class="ja">スクリーンタイムの許可について</span><span class="en">About the Screen Time permission</span></summary>
+    <p class="ja">「ふと」は、Apple のスクリーンタイム（Family Controls）の仕組みを使って、選んだアプリの利用を制限します<br>初回に、許可の確認が表示されます<br>許可しなかった場合や、あとで変えたい場合は、アプリの設定の「許可する」から、もう一度お試しください<br>iPhone の「設定」→「スクリーンタイム」でも、確認できます<br>アプリ名・利用時間・閲覧履歴は、取得しません（詳しくは、プライバシーポリシーをご覧ください）</p>
+    <p class="en">Futo uses Apple's Screen Time (Family Controls) to restrict the apps you choose. A permission prompt appears the first time. If you declined or want to change it, tap “Allow” in the app's Settings, or check iPhone Settings → Screen Time. Futo does not read app names, usage time or browsing history (see the Privacy Policy for details)</p>
+  </details>
+  <details>
+    <summary><span class="ja">サブスクリプションの解約・復元について</span><span class="en">Cancelling or restoring a subscription</span></summary>
+    <p class="ja">解約：iPhone の「設定」→ 上部のご自身の名前 →「サブスクリプション」から、「ふと」のプランを選んで解約できます（App Store の購読の管理）<br>解約しても、支払い済みの期間の終わりまでは、そのまま使えます<br>復元：機種変更やアプリの入れ直しのあとは、アプリの「ふとを応援」の画面で「購入を復元」を押してください<br>ご購入時と同じ Apple アカウントで、サインインしている必要があります<br>課金や返金のご相談は、Apple（reportaproblem.apple.com）の窓口、または上のメールアドレスへ</p>
+    <p class="en">Cancel: on your iPhone, open Settings → your name → Subscriptions, choose Futo and cancel (App Store subscription management). You can keep using it until the end of the paid period. Restore: after changing devices or reinstalling, tap “Restore purchases” on the “Support Futo” screen in the app, signed in with the same Apple account you purchased with. For billing or refunds, use Apple's Report a Problem (reportaproblem.apple.com) or email us</p>
+  </details>
+  <details>
+    <summary><span class="ja">アカウントを削除するには？</span><span class="en">How do I delete my account?</span></summary>
+    <p class="ja">アプリの設定 →「アカウント」→「アカウントを削除」から、削除できます<br>再ログインの確認のあと、サーバー上のデータ（共有・フレンド関連、プロフィール、ログインのアカウント）をすべて削除します<br>端末内の記録は、設定の「すべての記録を削除」で消せます（アプリを削除しても消えます）<br>サブスクリプションは、アカウントを削除しても自動では解約されません<br>上の「解約」の手順で、別に解約してください</p>
+    <p class="en">Go to the app's Settings → Account → “Delete account”. After re-authentication, all server-side data (sharing and friends data, your profile and the sign-in account) is deleted. On-device records can be removed with “Delete all records” in Settings (deleting the app removes them too). Deleting your account does not cancel a subscription automatically; please cancel it separately as described above</p>
+  </details>
+</section>
+<section>
+  <h2><span class="ja">関連リンク</span><span class="en">Links</span></h2>
+  <ul>
+    <li><a href="/privacy"><span class="ja">プライバシーポリシー</span><span class="en">Privacy Policy</span></a></li>
+    <li><a href="/"><span class="ja">トップページに戻る</span><span class="en">Back to the top page</span></a></li>
+  </ul>
+</section>
+</main>
+<footer><a href="/">ふと / Futo</a></footer>
+<script>
+  (function () {
+    var root = document.documentElement;
+    function apply(lang) {
+      root.setAttribute("data-lang", lang);
+      root.lang = lang;
+      try { localStorage.setItem("futo-lang", lang); } catch (e) {}
+    }
+    var saved = null;
+    try { saved = localStorage.getItem("futo-lang"); } catch (e) {}
+    apply(saved || ((navigator.language || "ja").toLowerCase().indexOf("ja") === 0 ? "ja" : "en"));
+    document.querySelectorAll(".lang [data-set]").forEach(function (b) {
+      b.addEventListener("click", function () { apply(b.getAttribute("data-set")); });
+    });
+  })();
+</script>
+<script>
+  // 紹介サイトの「アプリ用のページ」（/about）から来たときは、トップへ戻るリンクを、/about に向ける
+  if (location.search.indexOf("from=about") >= 0) {
+    document.querySelectorAll('a[href="/"]').forEach(function (a) { a.setAttribute("href", "/about"); });
+  }
+</script>
+</body>
+</html>
