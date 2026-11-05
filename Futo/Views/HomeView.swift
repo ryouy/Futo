@@ -8,10 +8,23 @@ struct HomeView: View {
     @Bindable var model: AppModel
     @Environment(SharingModel.self) private var sharing
     @State private var sheet: HomeSheet?
+    @State private var removal: RemovalRequest?
     @State private var shieldApp: DemoApp?
     @State private var lockSeal = false
     @State private var lockSealUnlocking = false
     @State private var lockSealTask: Task<Void, Never>?
+
+    /// 制限の対象から外す前に、短い待機を挟むための依頼（実機のアプリ等、またはデモのアプリ名）
+    private enum RemovalRequest: Identifiable {
+        case device(RestrictedItem)
+        case demo(String)
+        var id: String {
+            switch self {
+            case .device(let item): return "device-\(item.id)"
+            case .demo(let name): return "demo-\(name)"
+            }
+        }
+    }
 
     private enum HomeSheet: Identifiable {
         case history, settings, picker
@@ -74,6 +87,29 @@ struct HomeView: View {
             }
         }
         .fullScreenCover(item: $shieldApp) { DemoShieldView(app: $0) }
+        .sheet(item: $removal) { request in
+            RemoveItemWaitView(
+                label: {
+                    switch request {
+                    case .device(let item): AnyView(ItemLabel(item: item))
+                    case .demo(let name): AnyView(Text(name))
+                    }
+                }(),
+                onConfirm: {
+                    switch request {
+                    case .device(let item): model.removeItem(item)
+                    case .demo(let name): model.removeDemoTarget(name)
+                    }
+                    removal = nil
+                },
+                onCancel: { removal = nil })
+                .foregroundStyle(Theme.text)
+                .environment(\.locale, LanguageStore.shared.language.locale)
+                .presentationDetents([.height(340)])
+                .presentationCornerRadius(32)
+                .presentationBackground(Theme.background)
+                .presentationDragIndicator(.visible)
+        }
         .sheet(item: $sheet) { item in
             sheetContent(item)
                 .foregroundStyle(Theme.text)
@@ -88,7 +124,7 @@ struct HomeView: View {
     private func visibleRows(forHeight height: CGFloat) -> Int {
         var reserved: CGFloat = 300
         // 提案のカードが出ているときは、その分、一覧を短くする
-        if model.suggestion != nil { reserved += 210 }
+        if model.suggestion != nil, !isUnlocked, !model.isPaused { reserved += 210 }
         return max(2, min(8, Int((height - reserved) / Self.rowHeight)))
     }
 
@@ -138,7 +174,7 @@ struct HomeView: View {
                 .tutorialTarget(.header)
             }
 
-            if let suggestion = model.suggestion {
+            if let suggestion = model.suggestion, !isUnlocked, !model.isPaused {
                 SuggestionCardView(model: model, suggestion: suggestion)
                     .transition(.opacity)
             }
@@ -323,7 +359,7 @@ struct HomeView: View {
             if DemoConfig.isOn {
                 ForEach(model.demo.targets, id: \.self) { name in
                     if let app = DemoApp.named(name) {
-                        appRow(unlocked: false, editable: editable, onRemove: { model.removeDemoTarget(name) }) {
+                        appRow(unlocked: false, editable: editable, onRemove: { removal = .demo(name) }) {
                             Button { shieldApp = app } label: {
                                 HStack(spacing: 12) {
                                     DemoAppIcon(app: app, size: 32)
@@ -344,7 +380,7 @@ struct HomeView: View {
             } else {
                 ForEach(model.device.items.sortedItems) { item in
                     appRow(unlocked: model.unlockedItems.contains(item), editable: editable,
-                           onRemove: { model.removeItem(item) }) { ItemLabel(item: item) }
+                           onRemove: { removal = .device(item) }) { ItemLabel(item: item) }
                 }
             }
         }
@@ -562,6 +598,42 @@ private struct LockSealView: View {
             try? await Task.sleep(for: .milliseconds(120))
             withAnimation(.spring(duration: 0.3, bounce: 0.4)) { squash = false }
             withAnimation(.easeOut(duration: 0.35)) { labelShown = true }
+        }
+    }
+}
+
+/// 制限の対象から外す前の、短い待機。待機が終わるまで「外す」は押せない（勢いで外してしまうのを防ぐ）。
+private struct RemoveItemWaitView: View {
+    static let waitSeconds: TimeInterval = 10
+
+    let label: AnyView
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    @State private var deadline = Date().addingTimeInterval(RemoveItemWaitView.waitSeconds)
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.25)) { context in
+            let remaining = max(0, deadline.timeIntervalSince(context.date))
+            let ready = remaining <= 0
+            VStack(spacing: 16) {
+                Text(tr("制限の対象から外しますか？")).font(.title3.weight(.medium)).oneLine(0.8)
+                label
+                    .font(.headline)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 48)
+                    .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                Text(tr("アプリは削除されません")).font(.footnote).foregroundStyle(.secondary)
+                Text(ready ? tr("外せます") : tr("あと{0}秒", "\(Int(remaining.rounded(.up)))"))
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(minHeight: 22)
+                Button(tr("外す"), action: onConfirm)
+                    .buttonStyle(FutoButtonStyle())
+                    .disabled(!ready)
+                Button(tr("キャンセル"), action: onCancel)
+                    .buttonStyle(FutoTextButtonStyle())
+            }
+            .padding(24)
         }
     }
 }

@@ -42,13 +42,17 @@ enum SuggestionEngine {
     /// 傾向として述べるのに必要な、関連する記録の件数
     static let minimumRecords = 5
     static let keepSuppressionDays = 28
+    /// 提案を受け入れて変更したあと、同じ系統の提案をしばらく出さない日数（変更前の記録で、すぐ次の提案を出さない・長く↔短くを行き来させない）
+    static let changeSuppressionDays = 14
 
     /// 今表示すべき提案（未回答のもの）。今週すでに回答済みなら nil。
     static func evaluate(state: inout SuggestionState, sessions: [Session], mode: AppMode,
                          preferences: Preferences, calendar: LogicalCalendar, now: Date) -> Suggestion? {
         let weekKey = calendar.dayKey(for: calendar.weekInterval(containing: now).start)
         if let current = state.current, current.weekKey == weekKey {
-            return current.status == .pending ? current : nil
+            if current.status != .pending { return nil }
+            // 提案を作ったあとに設定が変わっていたら、古い提案は捨てて、作り直す
+            if isStillValid(current, preferences: preferences, now: now) { return current }
         }
         guard let candidate = candidate(state: state, sessions: sessions, mode: mode,
                                         preferences: preferences, calendar: calendar, now: now, weekKey: weekKey) else {
@@ -66,6 +70,27 @@ enum SuggestionEngine {
         if status == .kept,
            let until = calendar.date(byAdding: .day, value: keepSuppressionDays, to: now) {
             state.suppressedUntil[current.kind.rawValue] = until
+        }
+        if status == .changed,
+           let until = calendar.date(byAdding: .day, value: changeSuppressionDays, to: now) {
+            // 待機時間は、長くする提案も短くする提案も、まとめて休む
+            let kinds: [SuggestionKind] = current.kind == .nightEarlier ? [.nightEarlier] : [.waitLonger, .waitShorter]
+            for kind in kinds { state.suppressedUntil[kind.rawValue] = until }
+        }
+    }
+
+    /// 提案を作ったときの現在値と、いまの設定が同じで、提案の向き（長く・短く・早く）が、まだ正しいか。
+    /// 表示のあとに設定が変わると、適用で逆向きの変更（長くする提案で短くなる、など）になってしまうため。
+    static func isStillValid(_ suggestion: Suggestion, preferences: Preferences, now: Date) -> Bool {
+        switch suggestion.change {
+        case .waitSeconds(let seconds):
+            let current = preferences.effectiveWaitSeconds(now: now)
+            guard suggestion.currentText == tr("待機時間 {0}", "\(durationText(seconds: current))") else { return false }
+            return suggestion.kind == .waitShorter ? seconds < current : seconds > current
+        case .nightMinute(let minute):
+            guard preferences.nightEnabled,
+                  suggestion.currentText == tr("夜の振り返り {0}", "\(clockText(minute: preferences.nightMinute))") else { return false }
+            return minute < preferences.nightMinute
         }
     }
 

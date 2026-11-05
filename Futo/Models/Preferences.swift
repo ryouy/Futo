@@ -48,13 +48,8 @@ struct Preferences: Codable, Equatable {
     /// 解除する時間の選択肢（分）。
     static let unlockMinuteOptions: [Int] = [1, 5, 10]
 
-    #if DEBUG || FUTO_DEMO
-    static let defaultWaitSeconds: Double = 10
-    static let defaultUnlockMinutes = 1
-    #else
     static let defaultWaitSeconds: Double = 60
     static let defaultUnlockMinutes = 5
-    #endif
 
     /// 以前の版で保存した、選択肢にない値は、いちばん近い選択肢に寄せる。
     private static func nearest<T: BinaryFloatingPoint>(_ value: T, in options: [T]) -> T {

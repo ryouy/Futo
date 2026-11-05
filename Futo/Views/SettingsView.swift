@@ -199,30 +199,6 @@ struct SettingsView: View {
                 }
                 .frame(minHeight: 44)
             }
-
-            #if DEBUG
-            // 開発用（Debugビルドにだけ存在する）：ハンマーの印の1つのメニューに、まとめてしまう
-            CardSection {
-                Menu {
-                    Button(tr("朝の振り返り")) { model.showReflectionNow(.morning); dismiss() }
-                    Button(tr("夜の振り返り")) { model.showReflectionNow(.night); dismiss() }
-                    Button(tr("お出かけ通知")) { model.sendTestNotification(.outing) }
-                    // 待機を省略して、本アプリの制限をすぐ解除する（記録には数えない）。
-                    Button("制限解除") { model.debugReleaseRestrictionNow() }
-                    Button(tr("初回説明をもう一度表示")) {
-                        // 設定のシートが閉じきってから説明に切り替える（同時だと、シートと説明の配色が乱れる）。
-                        dismiss()
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(700))
-                            model.replayOnboardingForDebug()
-                        }
-                    }
-                } label: {
-                    Label("開発用", systemImage: "hammer").foregroundStyle(Theme.accentText)
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                }
-            }
-            #endif
         }
         .compactForm()
     }

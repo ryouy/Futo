@@ -110,9 +110,9 @@ struct SuggestionCardView: View {
                 .lineSpacing(3)
             Button(tr("変更する")) { confirming = true }
                 .buttonStyle(FutoButtonStyle())
-            Button(tr("今のまま")) { model.resolveSuggestion(.kept) }
+            Button(tr("今のまま（しばらく出さない）")) { model.resolveSuggestion(.kept) }
                 .buttonStyle(FutoButtonStyle(prominent: false))
-            Button(tr("今回は見送る")) { model.resolveSuggestion(.skipped) }
+            Button(tr("今回は見送る（来週また）")) { model.resolveSuggestion(.skipped) }
                 .buttonStyle(FutoTextButtonStyle())
         }
         .card(tint: Theme.softBlue)
@@ -120,8 +120,10 @@ struct SuggestionCardView: View {
             tr("{0} から {1} に変更しますか？", "\(suggestion.currentText)", "\(suggestion.proposedText)"),
             isPresented: $confirming, titleVisibility: .visible
         ) {
-            Button(tr("変更する")) { model.applySuggestion() }
+            Button(tr("この内容で変更")) { model.applySuggestion() }
             Button(tr("キャンセル"), role: .cancel) {}
+        } message: {
+            if suggestion.kind == .waitShorter { Text(tr("ゆるめる変更は、1分後に反映されます")) }
         }
     }
 }

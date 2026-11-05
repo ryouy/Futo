@@ -261,6 +261,34 @@ final class Phase3Tests: XCTestCase {
         XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: jst("2027-01-20 20:00")))
     }
 
+    func testStaleSuggestionIsDroppedWhenSettingsChanged() throws {
+        fill(5, outcome: .wantsToUse)
+        var prefs = Preferences(); prefs.waitSeconds = 60
+        var state = SuggestionState()
+        let now = jst("2027-01-13 20:00")
+        let s = try XCTUnwrap(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now))
+        XCTAssertEqual(s.change, .waitSeconds(300))
+        XCTAssertTrue(SuggestionEngine.isStillValid(s, preferences: prefs, now: now))
+        // 提案のあとに、本人が待機時間を5分以上にした：古い「5分に」提案は、もう適用できない
+        prefs.waitSeconds = 600
+        XCTAssertFalse(SuggestionEngine.isStillValid(s, preferences: prefs, now: now))
+        let next = SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now)
+        XCTAssertNotEqual(next, s)
+    }
+
+    func testChangingSuppressesBothWaitDirections() {
+        fill(5, outcome: .wantsToUse)
+        var prefs = Preferences(); prefs.waitSeconds = 60
+        var state = SuggestionState()
+        let now = jst("2027-01-13 20:00")
+        _ = SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: now)
+        SuggestionEngine.resolve(state: &state, status: .changed, now: now, calendar: cal.calendar)
+        prefs.waitSeconds = 300
+        // 変更の翌週は、変更前の記録が残っていても、待機時間の提案（長く・短く）を出さない
+        for _ in 0..<5 { record("2027-01-14 12:00", outcome: .interrupted) }
+        XCTAssertNil(SuggestionEngine.evaluate(state: &state, sessions: sessions(), mode: .demo, preferences: prefs, calendar: cal, now: jst("2027-01-20 20:00")))
+    }
+
     func testNightSuggestionIsBasedOnRecordsAfterNightTime() throws {
         for _ in 0..<5 { record("2027-01-12 22:30", outcome: .deferred) }
         var state = SuggestionState()

@@ -48,6 +48,11 @@ extension AppModel {
 
     /// 設定した時刻の枠にいれば、今日の朝・夜のカードを（無ければ1度だけ）作る。表示するのは未クローズのものだけ。
     func updateCards(now: Date = Date()) {
+        // 記録がまだ1件も無いとき（インストール直後など）は、「記録がまだありません」の振り返りを出さない
+        guard sessions.all().contains(where: { $0.mode == mode }) else {
+            visibleCards = []
+            return
+        }
         let calendar = LogicalCalendar()
         let kinds: [(ReflectionKind, Bool, Int)] = [
             (.morning, prefs.morningEnabled, prefs.morningMinute),
@@ -113,9 +118,16 @@ extension AppModel {
     /// 本人が確認したあとにだけ呼ぶ。設定を自動では変えない。
     func applySuggestion() {
         guard let current = suggestion else { return }
+        // 表示してから設定が変わっていたら、変更しない（逆向きの変更になるのを防ぐ）
+        guard SuggestionEngine.isStillValid(current, preferences: prefs, now: Date()) else {
+            notice = tr("設定が変わっていたため、変更しませんでした")
+            updateSuggestion()
+            return
+        }
         resolveSuggestion(.changed)
         switch current.change {
-        case .waitSeconds(let seconds): updatePreferences { $0.waitSeconds = seconds }
+        // 短くする（ゆるめる）変更は、設定画面と同じく、1分後に反映する
+        case .waitSeconds(let seconds): updatePreferences { $0.setWait(seconds) }
         case .nightMinute(let minute): updatePreferences { $0.nightMinute = minute }
         }
     }
