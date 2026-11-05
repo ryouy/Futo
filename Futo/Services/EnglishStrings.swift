@@ -301,6 +301,7 @@ enum EnglishStrings {
         "今のまま（しばらく出さない）": "Keep it (hide for a while)",
         "今回は見送る（来週また）": "Not this time (ask again next week)",
         "この内容で変更": "Apply this change",
+        "Appleで続ける": "Continue with Apple",
         "制限の対象から外しますか？": "Remove from the lock list?",
         "アプリは削除されません": "The app itself isn't deleted",
         "あと{0}秒": "{0}s left",

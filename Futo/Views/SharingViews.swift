@@ -163,7 +163,7 @@ struct ShareLinkPreviewView: View {
 struct SignInButtons: View {
     var only: SignInProvider?
     @Environment(SharingModel.self) private var sharing
-    @Environment(\.colorScheme) private var colorScheme
+    @State private var appleRunner = AppleSignInRunner()
 
     var body: some View {
         if only != .apple {
@@ -178,14 +178,17 @@ struct SignInButtons: View {
             .disabled(sharing.isWorking)
         }
         if only != .google {
-            SignInWithAppleButton(.continue) { request in
-                sharing.prepareApple(request)
-            } onCompletion: { result in
-                Task { await sharing.completeApple(result) }
+            Button {
+                appleRunner.start(prepare: { sharing.prepareApple($0) }) { result in
+                    Task { await sharing.completeApple(result) }
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "apple.logo").accessibilityHidden(true)
+                    Text(tr("Appleで続ける"))
+                }
             }
-            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-            .frame(height: 56)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .buttonStyle(AppleSignInButtonStyle())
             .disabled(sharing.isWorking)
         }
     }

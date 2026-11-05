@@ -10,6 +10,47 @@ enum AppleNonce {
     }
 }
 
+/// 「Appleで続ける」の自前のボタンから、Appleの認証を始める。結果は、ボタンの標準部品（SignInWithAppleButton）と同じ形で渡す。
+@MainActor
+final class AppleSignInRunner: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private var controller: ASAuthorizationController?
+    private var completion: ((Swift.Result<ASAuthorization, Error>) -> Void)?
+
+    func start(prepare: (ASAuthorizationAppleIDRequest) -> Void, completion: @escaping (Swift.Result<ASAuthorization, Error>) -> Void) {
+        guard controller == nil else { return }
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        prepare(request)
+        self.completion = completion
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        self.controller = controller
+        controller.performRequests()
+    }
+
+    private func finish(_ result: Swift.Result<ASAuthorization, Error>) {
+        let completion = completion
+        self.completion = nil
+        controller = nil
+        completion?(result)
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        Task { @MainActor in finish(.success(authorization)) }
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        Task { @MainActor in finish(.failure(error)) }
+    }
+
+    nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        MainActor.assumeIsolated {
+            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+                .flatMap(\.windows).first { $0.isKeyWindow } ?? ASPresentationAnchor()
+        }
+    }
+}
+
 /// ボタンを使わずに、Appleの認証を始める（アカウント削除の前の、本人の確認で使う）。
 /// 結果は、await で受け取る。取りやめは `AuthError.cancelled`。
 @MainActor

@@ -667,6 +667,26 @@ struct GoogleSignInButtonStyle: ButtonStyle {
     }
 }
 
+/// 「Appleで続ける」。Appleの標準ボタンは、アプリ内で選んだ言語に合わせて文言を切り替えられないため、
+/// ガイドラインの配色（黒地に白・白地に黒）とAppleのロゴで、同じ見た目のボタンを自分で描く。
+struct AppleSignInButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let dark = colorScheme == .dark
+        configuration.label
+            .font(.headline.weight(.medium))
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .padding(.horizontal, 16)
+            .foregroundStyle(dark ? Color.black : Color.white)
+            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(dark ? Color.white : Color.black))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+}
+
 /// OSの色の選択（UIColorPickerViewController）を、ボタンから開く。
 @MainActor
 final class SystemColorPicker: NSObject, UIColorPickerViewControllerDelegate {
