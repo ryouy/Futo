@@ -177,6 +177,7 @@
 		272D7CA9884276DCE93FBAE4 /* ReflectionBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReflectionBuilder.swift; sourceTree = "<group>"; };
 		273992023321D249FD2097B9 /* SupportStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SupportStore.swift; sourceTree = "<group>"; };
 		28BB1F52AAAB3F43B2AD24DE /* AdsService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdsService.swift; sourceTree = "<group>"; };
+		2A92DCDC309C501B0094E07C /* Futo.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Futo.storekit; sourceTree = "<group>"; };
 		2BE4BA309E788D84B95854AD /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		2CCD40BABABECB4DC333CFC8 /* ReceivedGroupsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReceivedGroupsTests.swift; sourceTree = "<group>"; };
 		2E7D6F2D068E20BC2CB84D11 /* AuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
@@ -320,7 +321,6 @@
 				A3698FA716626DB9AABE91F7 /* FutoShield.entitlements */,
 				B6051214DE403B48EBD6213D /* ShieldIcon.png */,
 			);
-			name = FutoShield;
 			path = FutoShield;
 			sourceTree = "<group>";
 		};
@@ -331,7 +331,6 @@
 				7374470A04DEE6A31639424D /* Info.plist */,
 				42FF5261272D18F89028C63A /* FutoShieldAction.entitlements */,
 			);
-			name = FutoShieldAction;
 			path = FutoShieldAction;
 			sourceTree = "<group>";
 		};
@@ -403,7 +402,6 @@
 				B082970A58A044C0D2CB5891 /* AppleAuthorizer.swift */,
 				53EC18949D7841C9FC4A4D42 /* ReceivedGroups.swift */,
 			);
-			name = Sharing;
 			path = Sharing;
 			sourceTree = "<group>";
 		};
@@ -413,7 +411,6 @@
 				28BB1F52AAAB3F43B2AD24DE /* AdsService.swift */,
 				C4BEFF09AD462390614112AE /* BannerAdView.swift */,
 			);
-			name = Ads;
 			path = Ads;
 			sourceTree = "<group>";
 		};
@@ -471,7 +468,6 @@
 				0C9513AADAE02448E4B8ACAA /* Info.plist */,
 				0B2DB6C1570F469DB3B9453F /* FutoMonitor.entitlements */,
 			);
-			name = FutoMonitor;
 			path = FutoMonitor;
 			sourceTree = "<group>";
 		};
@@ -483,7 +479,6 @@
 				42DC2CE93889F66F68CEA1BD /* DriveClient.swift */,
 				D589FAE9A2A49328F644588A /* BackupModel.swift */,
 			);
-			name = Backup;
 			path = Backup;
 			sourceTree = "<group>";
 		};
@@ -500,7 +495,6 @@
 			children = (
 				273992023321D249FD2097B9 /* SupportStore.swift */,
 			);
-			name = Support;
 			path = Support;
 			sourceTree = "<group>";
 		};
@@ -511,13 +505,13 @@
 				8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */,
 				6C48F409E24D98499D5E75FF /* PauseModel.swift */,
 			);
-			name = Shared;
 			path = Shared;
 			sourceTree = "<group>";
 		};
 		C0D0992446E1DBF90BD2C6E3 = {
 			isa = PBXGroup;
 			children = (
+				2A92DCDC309C501B0094E07C /* Futo.storekit */,
 				2009B4940E5E16F10DB15B98 /* Futo */,
 				3819ED46911B28AE30AF42AF /* FutoTests */,
 				FDE390BA598F9B91DDC27B8A /* Products */,

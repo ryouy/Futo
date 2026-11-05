@@ -70,7 +70,15 @@ struct SupportView: View {
     }
 
     private func priceText(_ plan: SupportPlan) -> String {
-        let price = store.products[plan]?.displayPrice ?? "¥\(plan.fallbackPrice)"
+        let price: String
+        if let product = store.products[plan] {
+            // 金額と通貨はストアのまま。英語表示のときだけ、書式（記号の位置・区切り）を英語向けにする
+            price = LanguageStore.shared.language == .en
+                ? product.price.formatted(product.priceFormatStyle.locale(Locale(identifier: "en_US")))
+                : product.displayPrice
+        } else {
+            price = "¥\(plan.fallbackPrice)"
+        }
         return tr("{0} / 月", price)
     }
 
