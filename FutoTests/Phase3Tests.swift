@@ -1,4 +1,6 @@
 import SwiftData
+import AppTrackingTransparency
+import UserMessagingPlatform
 import XCTest
 @testable import Futo
 
@@ -219,6 +221,75 @@ final class Phase3Tests: XCTestCase {
 
     func testBandLabelsDoNotShowHours() {
         for band in TimeBand.allCases { XCTAssertFalse(band.label.contains("時"), band.label) }
+    }
+
+    // MARK: 同意（UMP）と追跡の許可（ATT）
+
+    func testTrackingPromptOnlyWhenUndeterminedAndAppIsActive() {
+        XCTAssertTrue(AdsService.shouldRequestTracking(status: .notDetermined, appActive: true))
+        XCTAssertFalse(AdsService.shouldRequestTracking(status: .notDetermined, appActive: false), "前面でないと出ない")
+        for status in [ATTrackingManager.AuthorizationStatus.authorized, .denied, .restricted] {
+            XCTAssertFalse(AdsService.shouldRequestTracking(status: status, appActive: true), "すでに答えている")
+        }
+    }
+
+    func testConsentPromptsAreNeededOnlyWhileSomethingIsUnanswered() {
+        // 何も答えていない（同意が必要・状態が不明、または、追跡が未回答）なら、求める
+        XCTAssertTrue(AdsService.needsConsentPrompt(consentStatus: .required, trackingStatus: .denied))
+        XCTAssertTrue(AdsService.needsConsentPrompt(consentStatus: .unknown, trackingStatus: .denied))
+        XCTAssertTrue(AdsService.needsConsentPrompt(consentStatus: .notRequired, trackingStatus: .notDetermined))
+        // すべて済んでいれば、何も出さない（毎回の待機の画面で、通信もしない）
+        XCTAssertFalse(AdsService.needsConsentPrompt(consentStatus: .notRequired, trackingStatus: .denied))
+        XCTAssertFalse(AdsService.needsConsentPrompt(consentStatus: .obtained, trackingStatus: .authorized))
+        XCTAssertFalse(AdsService.needsConsentPrompt(consentStatus: .notRequired, trackingStatus: .restricted))
+    }
+
+    func testAdConsentIsAskedOnlyWhenHomeIsCalmAndNoOtherDialogIsShowing() {
+        func ask(onboarding: Bool = true, tutorial: Bool = true, step: Int? = nil, permission: PermissionState = .approved,
+                 flow: Bool = false, sheet: Bool = false, primer: Bool = false, notifPending: Bool = false,
+                 inFlight: Bool = false, alert: Bool = false, overlay: Bool = false, seal: Bool = false) -> Bool {
+            AppModel.canAskAdConsent(onboardingDone: onboarding, tutorialCompleted: tutorial, tutorialStep: step, permission: permission,
+                                     showFlow: flow, homeSheetOpen: sheet, showNotificationPrimer: primer, notificationPromptPending: notifPending,
+                                     systemPromptInFlight: inFlight, hasAlert: alert, hasOverlay: overlay, lockSealActive: seal)
+        }
+        XCTAssertTrue(ask())
+        XCTAssertTrue(ask(permission: .denied), "Screen Timeを拒否しても、確認は済んでいる")
+        XCTAssertFalse(ask(onboarding: false), "初回説明の最中")
+        XCTAssertFalse(ask(tutorial: false), "チュートリアル前")
+        XCTAssertFalse(ask(step: 2), "チュートリアルの最中")
+        XCTAssertFalse(ask(permission: .notDetermined), "Screen Timeの許可がまだ")
+        XCTAssertFalse(ask(flow: true), "ひと呼吸の最中")
+        XCTAssertFalse(ask(sheet: true), "設定などを開いている")
+        XCTAssertFalse(ask(primer: true), "通知の説明が出ている")
+        XCTAssertFalse(ask(notifPending: true), "通知の確認が済んでいない")
+        XCTAssertFalse(ask(inFlight: true), "OSの許可のダイアログの最中")
+        XCTAssertFalse(ask(alert: true))
+        XCTAssertFalse(ask(overlay: true), "振り返り・感想が出ている")
+        XCTAssertFalse(ask(seal: true), "鍵の演出の最中")
+    }
+
+    // MARK: 課金
+
+    func testSubscriptionProductIDsMatchTheStoreKitConfiguration() throws {
+        let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Futo.storekit")
+        guard let data = try? Data(contentsOf: file) else { throw XCTSkip("Futo.storekit が見つからない環境では確認しない") }
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let groups = try XCTUnwrap(root["subscriptionGroups"] as? [[String: Any]])
+        let configured = Set(groups.flatMap { ($0["subscriptions"] as? [[String: Any]] ?? []).compactMap { $0["productID"] as? String } })
+        XCTAssertEqual(configured, Set(SupportPlan.allCases.map(\.rawValue)))
+        XCTAssertEqual(Set(SupportPlan.allCases.map(\.rawValue)), ["com.ryouy.futo.noads.monthly", "com.ryouy.futo.support.monthly"])
+    }
+
+    @MainActor
+    func testAdsAreRemovedForBothPlansAndNotOtherwise() {
+        let store = SupportStore()
+        XCTAssertFalse(store.adsRemoved)
+        store.setAccountPlan("adFree")
+        XCTAssertTrue(store.adsRemoved)
+        store.setAccountPlan("support")
+        XCTAssertTrue(store.adsRemoved)
+        store.setAccountPlan(nil)
+        XCTAssertFalse(store.adsRemoved)
     }
 
     // MARK: 設定改善の提案

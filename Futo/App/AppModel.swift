@@ -46,6 +46,10 @@ final class AppModel {
     var notificationStatus: UNAuthorizationStatus = .notDetermined
     /// 最初の案内のあとに、通知の許可を尋ねる前の説明を出している間だけ true
     var showNotificationPrimer = false
+    /// 初回の案内のあと、通知の確認（説明と、OSの許可）が、まだ終わっていないか
+    var notificationPromptPending = false
+    /// OSの許可のダイアログ（Screen Time・通知）を、出している最中か
+    var systemPromptInFlight = false
     /// 通知を有効にする前の説明を出している間だけ値が入る
     var pendingNotificationEnable: NotificationKind?
     @ObservationIgnored var scheduleTask: Task<Void, Never>?
@@ -244,15 +248,56 @@ final class AppModel {
         tutorialStep = nil
         tutorialCompleted = true
         settings.tutorialDone = true
+        notificationPromptPending = true
         offerNotificationPrimer()
     }
 
     // MARK: 権限・対象・制限
 
     func requestPermission() async {
+        systemPromptInFlight = true
+        defer { systemPromptInFlight = false }
         permissionError = nil
         permissionError = await service.requestPermission()
         refresh()
+    }
+
+    /// 広告の同意（UMP・ATT）を求めてよいか。初回の説明・チュートリアル・Screen Timeの許可・通知の確認が終わり、
+    /// ホームが操作できる状態で、ほかのダイアログ・画面が出ていないとき（重ならないように）。
+    static func canAskAdConsent(onboardingDone: Bool, tutorialCompleted: Bool, tutorialStep: Int?, permission: PermissionState,
+                                showFlow: Bool, homeSheetOpen: Bool, showNotificationPrimer: Bool, notificationPromptPending: Bool,
+                                systemPromptInFlight: Bool, hasAlert: Bool, hasOverlay: Bool, lockSealActive: Bool) -> Bool {
+        onboardingDone && tutorialCompleted && tutorialStep == nil && permission != .notDetermined
+            && !showFlow && !homeSheetOpen && !showNotificationPrimer && !notificationPromptPending
+            && !systemPromptInFlight && !hasAlert && !hasOverlay && !lockSealActive
+    }
+
+    #if DEBUG
+    /// 開発用：広告の同意の流れを、いま始められない理由（Xcodeのコンソール用。Debugビルドにだけ存在する）
+    var adConsentBlockers: [String] {
+        var reasons: [String] = []
+        if !onboardingDone { reasons.append("初回説明が未完了") }
+        if !tutorialCompleted { reasons.append("チュートリアルが未完了") }
+        if tutorialStep != nil { reasons.append("チュートリアルの最中") }
+        if permission == .notDetermined { reasons.append("Screen Timeの許可が未決定（「許可する」を押すまで待つ）") }
+        if showFlow { reasons.append("ひと呼吸の最中") }
+        if homeSheetOpen { reasons.append("設定などの画面を開いている") }
+        if showNotificationPrimer { reasons.append("通知の説明が出ている") }
+        if notificationPromptPending { reasons.append("通知の確認が未完了") }
+        if systemPromptInFlight { reasons.append("OSの許可ダイアログの最中") }
+        if errorMessage != nil { reasons.append("エラーのアラートが出ている") }
+        if !visibleCards.isEmpty || pendingReflection != nil { reasons.append("振り返り・感想が出ている") }
+        if lockSealActive { reasons.append("鍵の演出の最中") }
+        return reasons
+    }
+    #endif
+
+    var canAskAdConsent: Bool {
+        Self.canAskAdConsent(
+            onboardingDone: onboardingDone, tutorialCompleted: tutorialCompleted, tutorialStep: tutorialStep, permission: permission,
+            showFlow: showFlow, homeSheetOpen: homeSheetOpen, showNotificationPrimer: showNotificationPrimer,
+            notificationPromptPending: notificationPromptPending, systemPromptInFlight: systemPromptInFlight,
+            hasAlert: errorMessage != nil, hasOverlay: !visibleCards.isEmpty || pendingReflection != nil, lockSealActive: lockSealActive)
     }
 
     func didChangeDeviceSelection() {

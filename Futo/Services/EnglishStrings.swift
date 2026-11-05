@@ -302,6 +302,8 @@ enum EnglishStrings {
         "今回は見送る（来週また）": "Not this time (ask again next week)",
         "この内容で変更": "Apply this change",
         "Appleで続ける": "Continue with Apple",
+        "広告について": "About ads",
+        "ふとは、広告で運営しています\n\n次の画面で「この端末のID」を\n広告に使ってよいか、おたずねします\n\nどちらを選んでも\nふとの機能は、すべてそのまま使えます": "Futo is supported by ads\n\nNext, we'll ask whether we may use\nthis device's ID for ads\n\nEvery feature of Futo works\nthe same either way",
         "制限の対象から外しますか？": "Remove from the lock list?",
         "アプリは削除されません": "The app itself isn't deleted",
         "あと{0}秒": "{0}s left",

@@ -49,8 +49,9 @@ struct FutoApp: App {
                     if !DemoConfig.isOn { support.start() }
                 }
                 .task {
-                    // 広告の同意の確認（必要な地域でだけ、フォームが出る）。広告が出なくても、アプリの動作は変わらない
-                    if !DemoConfig.isOn { await ads.gatherConsent() }
+                    // 広告の同意の状態の更新（画面は出さない）。同意のフォームと追跡の許可は、はじめて待機の画面になったときに、順番に求める。
+                    // 広告が出なくても、アプリの動作は変わらない
+                    if !DemoConfig.isOn { await ads.updateConsentInfo() }
                 }
                 .task {
                     guard !DemoConfig.isOn else { return }

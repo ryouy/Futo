@@ -1,0 +1,2 @@
+/* The explanation shown in the App Tracking Transparency prompt. Every feature works whether or not it is allowed. */
+"NSUserTrackingUsageDescription" = "We may use this device's advertising ID to show ads. Every feature of Futo works even if you don't allow it.";

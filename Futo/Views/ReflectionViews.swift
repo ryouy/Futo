@@ -44,6 +44,38 @@ struct ReflectionOverlay: View {
     }
 }
 
+/// 広告の識別子の許可（OSのダイアログ）の前に出す説明。振り返りと同じ、やわらかいカードで出し、「つぎへ」だけを置く。
+struct TrackingExplainerOverlay: View {
+    let onNext: () -> Void
+
+    var body: some View {
+        ZStack {
+            SoftBackdrop()
+            VStack(spacing: 20) {
+                Image(systemName: "leaf")
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(Theme.accentText)
+                    .accessibilityHidden(true)
+                Text(tr("広告について")).font(.title3.weight(.medium))
+                VStack(spacing: 10) {
+                    ForEach(tr("ふとは、広告で運営しています\n\n次の画面で「この端末のID」を\n広告に使ってよいか、おたずねします\n\nどちらを選んでも\nふとの機能は、すべてそのまま使えます")
+                        .components(separatedBy: "\n\n"), id: \.self) { line in
+                        Text(line)
+                    }
+                }
+                .multilineTextAlignment(.center)
+                Button(tr("つぎへ"), action: onNext)
+                    .buttonStyle(FutoButtonStyle())
+                    .padding(.top, 8)
+            }
+            .padding(28)
+            .frame(maxWidth: 440)   // 広い画面（iPad）でも、カードを横いっぱいに広げない
+            .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
+            .padding(.horizontal, 24)
+        }
+    }
+}
+
 /// 「さっきの時間は、どうでしたか？」。一時解除のあと、戻ってきたときに、画面全体を覆うカードで尋ねる。
 /// 選んだ答えを、少しの間だけ選択状態で見せてから閉じる（突然切り替わらないように）。連打しても、記録は1回だけ。
 struct ReflectionQuestionOverlay: View {

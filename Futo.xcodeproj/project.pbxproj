@@ -110,6 +110,9 @@
 		F4DDD9494C2F58276CEFF243 /* RestrictedItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */; };
 		FB091407F84BD6470B5A6E0A /* PauseFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7654A63B964559C5355DEA /* PauseFlowTests.swift */; };
 		FD1FF9E885CF6C9674032426 /* SupportStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273992023321D249FD2097B9 /* SupportStore.swift */; };
+		91E85BCBE247AB726CFD9C6A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 275421CB6706C45065A11D0C /* PrivacyInfo.xcprivacy */; };
+		F8CF4517E56297BD28E4487F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5745C1AC0F700719DDF89489 /* PrivacyInfo.xcprivacy */; };
+		99E1FE787A9451B47007139C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FEBAEF439EDADC9B842D417B /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -268,6 +271,10 @@
 		FED8F394DA3FFC4EAC9D8A20 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		FF139CD24EA57AEEABC31B77 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FF92CDD913101E67D00AF0D4 /* Futo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Futo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		275421CB6706C45065A11D0C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5745C1AC0F700719DDF89489 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3F63370C96DAB277F98580F0 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4375FFE36CA932643DB46148 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -465,6 +472,7 @@
 			isa = PBXGroup;
 			children = (
 				99B055470C5F5029EA491ECB /* FutoMonitor.swift */,
+				5745C1AC0F700719DDF89489 /* PrivacyInfo.xcprivacy */,
 				0C9513AADAE02448E4B8ACAA /* Info.plist */,
 				0B2DB6C1570F469DB3B9453F /* FutoMonitor.entitlements */,
 			);
@@ -555,6 +563,8 @@
 				32BB636196F91ED59D7A4919 /* Assets.xcassets */,
 				5DF027EAC7548E238ABD986F /* LaunchScreen.storyboard */,
 				9F9AF641B9C85775FA877F36 /* Phase4Config.plist */,
+				FEBAEF439EDADC9B842D417B /* InfoPlist.strings */,
+				275421CB6706C45065A11D0C /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -572,6 +582,18 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXVariantGroup section */
+		FEBAEF439EDADC9B842D417B /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3F63370C96DAB277F98580F0 /* ja */,
+				4375FFE36CA932643DB46148 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		33D4185300F3C14A856FC784 /* FutoMonitor */ = {
@@ -718,6 +740,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F8CF4517E56297BD28E4487F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -750,6 +773,8 @@
 				7559CC8D141A93DBF5685EEB /* Assets.xcassets in Resources */,
 				50385D5EF115309ACFEF6079 /* LaunchScreen.storyboard in Resources */,
 				B8BB5DE9D67E635126881316 /* Phase4Config.plist in Resources */,
+				99E1FE787A9451B47007139C /* InfoPlist.strings in Resources */,
+				91E85BCBE247AB726CFD9C6A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -773,7 +798,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# 広告の設定の食い違いを、ビルドで止める。公開前は、テスト広告のみ（本番の広告を、うっかり出さない）。\nLIVE_FLAG=0\ncase \" ${SWIFT_ACTIVE_COMPILATION_CONDITIONS} \" in *\" FUTO_LIVE_ADS \"*) LIVE_FLAG=1;; esac\nTEST_APP_ID=0\ncase \"${ADMOB_APP_ID}\" in ca-app-pub-3940256099942544~*) TEST_APP_ID=1;; esac\nif [ \"${CONFIGURATION}\" = \"Debug\" ] && [ \"${LIVE_FLAG}\" = \"1\" ]; then\n  echo \"error: Debugビルドで、本番の広告（FUTO_LIVE_ADS）は使えません。開発中は、テスト広告のみです。\"; exit 1\nfi\nif [ \"${LIVE_FLAG}\" = \"1\" ] && [ \"${TEST_APP_ID}\" = \"1\" ]; then\n  echo \"error: FUTO_LIVE_ADS が有効ですが、ADMOB_APP_ID がテスト用のままです。\"; exit 1\nfi\nif [ \"${LIVE_FLAG}\" = \"0\" ] && [ \"${TEST_APP_ID}\" = \"0\" ]; then\n  echo \"error: ADMOB_APP_ID が本番用ですが、FUTO_LIVE_ADS が無効です（コードはテスト広告のまま）。食い違いを直してください。\"; exit 1\nfi\necho \"広告の設定：$([ \"${LIVE_FLAG}\" = \"1\" ] && echo 本番 || echo テスト)\"\n";
+			shellScript = "# 広告の設定の食い違いを、ビルドで止める。Debugは、広告ユニットが必ずテスト広告（本番の広告を、うっかり出さない）。アプリIDは、Debugでも本番にできる（UMPの同意の設定が、アプリIDで決まるため。Googleのテスト用アプリIDだと、Googleのサンプルの説明メッセージが出てしまう）。\nLIVE_FLAG=0\ncase \" ${SWIFT_ACTIVE_COMPILATION_CONDITIONS} \" in *\" FUTO_LIVE_ADS \"*) LIVE_FLAG=1;; esac\nTEST_APP_ID=0\ncase \"${ADMOB_APP_ID}\" in ca-app-pub-3940256099942544~*) TEST_APP_ID=1;; esac\nif [ \"${CONFIGURATION}\" = \"Debug\" ] && [ \"${LIVE_FLAG}\" = \"1\" ]; then\n  echo \"error: Debugビルドで、本番の広告（FUTO_LIVE_ADS）は使えません。開発中は、テスト広告のみです。\"; exit 1\nfi\nif [ \"${LIVE_FLAG}\" = \"1\" ] && [ \"${TEST_APP_ID}\" = \"1\" ]; then\n  echo \"error: FUTO_LIVE_ADS が有効ですが、ADMOB_APP_ID がテスト用のままです。\"; exit 1\nfi\nif [ \"${CONFIGURATION}\" != \"Debug\" ] && [ \"${LIVE_FLAG}\" = \"0\" ] && [ \"${TEST_APP_ID}\" = \"0\" ]; then\n  echo \"error: ADMOB_APP_ID が本番用ですが、FUTO_LIVE_ADS が無効です（コードはテスト広告のまま）。食い違いを直してください。\"; exit 1\nfi\nif [ \"${LIVE_FLAG}\" = \"1\" ]; then echo \"広告の設定：本番\"; elif [ \"${TEST_APP_ID}\" = \"1\" ]; then echo \"広告の設定：テスト\"; else echo \"広告の設定：テスト広告（アプリIDは本番・広告ユニットはテスト）\"; fi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -972,7 +997,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shield;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1000,7 +1025,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.monitor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1028,7 +1053,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shieldaction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1043,7 +1068,8 @@
 		699FCDBED06EC64C8A6B513F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ADMOB_APP_ID = "ca-app-pub-3940256099942544~1458002511";
+				ADMOB_APP_ID = "ca-app-pub-5121019112887429~1939615583";
+				ADMOB_TEST_DEVICE_IDS = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Futo/Futo.entitlements;
@@ -1061,11 +1087,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) FUTO_LIVE_ADS";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
@@ -1086,7 +1113,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shieldaction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1114,7 +1141,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.shield;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1158,7 +1185,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -1169,7 +1196,8 @@
 		C0DD1C3E4BFC124D878FE440 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ADMOB_APP_ID = "ca-app-pub-3940256099942544~1458002511";
+				ADMOB_APP_ID = "ca-app-pub-5121019112887429~1939615583";
+				ADMOB_TEST_DEVICE_IDS = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Futo/Futo.entitlements;
@@ -1187,7 +1215,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -1209,7 +1237,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -1233,7 +1261,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryouy.futo.monitor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

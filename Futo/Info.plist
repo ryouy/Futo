@@ -23,6 +23,15 @@
 	<!-- 広告（Google AdMob）。アプリIDは、ビルド設定 ADMOB_APP_ID から入る。公開前の現在は、DebugもReleaseも、Google公式のテスト用 -->
 	<key>GADApplicationIdentifier</key>
 	<string>$(ADMOB_APP_ID)</string>
+	<!-- 追跡の許可（ATT）のダイアログの説明。ja / en の文言は InfoPlist.strings。許可しなくても、アプリのすべての機能を使える -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>広告を出すために、この端末の「広告用ID」を使うことがあります。許可しなくても、ふとのすべての機能を使えます</string>
+	<!-- 輸出コンプライアンス：通信は標準のHTTPS、暗号処理はSHA-256のハッシュ（Appleの認証のnonce・PKCE）とKeychainのみ。独自の暗号は使わない -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!-- 広告のテスト端末ID（カンマ区切り）。ビルド設定 ADMOB_TEST_DEVICE_IDS から入る。Releaseでも、自分の端末には、テスト広告だけを出すために使う（本番広告を自分で表示・クリックしない）。シミュレーターは、SDKが自動でテスト端末として扱う -->
+	<key>FutoAdTestDeviceIDs</key>
+	<string>$(ADMOB_TEST_DEVICE_IDS)</string>
 	<!-- Googleが公開している AdMob の SKAdNetwork 識別子（https://developers.google.com/admob/ios/3p-skadnetworks の一覧。公開前に最新か確認する） -->
 	<key>SKAdNetworkItems</key>
 	<array>

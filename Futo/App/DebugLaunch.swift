@@ -5,6 +5,12 @@ import Foundation
 /// Debugビルドにだけ存在する。
 enum DebugLaunch {
     static var screen: String? { UserDefaults.standard.string(forKey: "futoScreen") }
+    /// `-futoShowTrackingExplainer YES`：広告の識別子の説明の画面だけを出す
+    static var showTrackingExplainer: Bool { UserDefaults.standard.bool(forKey: "futoShowTrackingExplainer") }
+    /// `-futoAskAdConsentNow YES`：広告の同意（UMP → ふとの説明 → ATT）の流れを、条件を待たずに、すぐ始める
+    static var askAdConsentNow: Bool { UserDefaults.standard.bool(forKey: "futoAskAdConsentNow") }
+    /// `-futoUMPGeography eea`（または `other`）：UMPの地域を、デバッグ用に指定する（同意フォームの確認用）
+    static var umpGeography: String? { UserDefaults.standard.string(forKey: "futoUMPGeography") }
     static var onboardingPage: Int { UserDefaults.standard.integer(forKey: "futoOnboardingPage") }
 
     static var settingsTabIndex: Int? {

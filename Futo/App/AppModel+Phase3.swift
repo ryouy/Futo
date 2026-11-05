@@ -194,14 +194,22 @@ extension AppModel {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(800))
             notificationStatus = await notifications.authorizationStatus()
-            if notificationStatus == .notDetermined { showNotificationPrimer = true }
+            if notificationStatus == .notDetermined { showNotificationPrimer = true } else { notificationPromptPending = false }
         }
+    }
+
+    /// 通知の説明で「今はしない」を選んだとき。
+    func declineNotificationPrimer() {
+        showNotificationPrimer = false
+        notificationPromptPending = false
     }
 
     /// 通知の許可を求める。最初の案内からのときは、許可されたら朝と夜の振り返りをオンにする。
     func requestNotificationPermission(enableDefaults: Bool) {
         showNotificationPrimer = false
+        systemPromptInFlight = true
         Task { @MainActor in
+            defer { systemPromptInFlight = false; notificationPromptPending = false }
             let granted = await notifications.requestAuthorization()
             notificationStatus = await notifications.authorizationStatus()
             if granted, enableDefaults {

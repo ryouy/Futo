@@ -1,8 +1,10 @@
+import AppTrackingTransparency
 import SwiftUI
 
 struct RootView: View {
     @Bindable var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(AdsService.self) private var ads
     /// 起動時に約1秒、スプラッシュを見せる。
     @State private var showSplash = true
 
@@ -12,6 +14,12 @@ struct RootView: View {
     private var canShowOverlays: Bool {
         model.onboardingDone && model.tutorialCompleted && model.tutorialStep == nil && !showSplash && !model.showFlow
             && !model.lockSealActive
+    }
+
+    /// 広告の同意（UMP → ATT）を求めてよい状況：前面で、スプラッシュ・初回説明・チュートリアル・Screen Timeの許可・通知の確認が済み、
+    /// ホームが操作できて、ほかのダイアログ・画面が出ていない。
+    private var shouldAskAdConsent: Bool {
+        !DemoConfig.isOn && scenePhase == .active && !showSplash && model.canAskAdConsent
     }
 
     /// 開いたときに出す振り返り。スプラッシュ・説明・チュートリアル・ひと呼吸の最中は出さない。
@@ -78,12 +86,38 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.5), value: questionToShow?.id)
+        .overlay {
+            if ads.isShowingTrackingExplainer {
+                TrackingExplainerOverlay { ads.dismissTrackingExplainer() }
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.4), value: ads.isShowingTrackingExplainer)
         #if DEBUG
         // 開発用：確かめたい画面を引数で指定したときは、はじめの説明を済ませた状態にする
         .task {
             if let screen = DebugLaunch.screen, screen != "onboarding", !model.onboardingDone { model.completeOnboarding(mode: .device) }
+            if DebugLaunch.showTrackingExplainer { ads.debugShowTrackingExplainer() }
+            if DebugLaunch.askAdConsentNow {
+                try? await Task.sleep(for: .milliseconds(2500))
+                ads.startConsentFlowIfNeeded()
+            }
         }
         #endif
+        #if DEBUG
+        // 開発用：広告の同意の流れの状況を、Xcodeのコンソールに出す（実機で、説明画面が出ない理由を調べる用）
+        .task(id: model.adConsentBlockers) {
+            NSLog("[AdConsent] blockers=%@ ATT=%ld splash=%@ active=%@", model.adConsentBlockers.isEmpty ? "なし" : model.adConsentBlockers.joined(separator: " / "),
+                  ATTrackingManager.trackingAuthorizationStatus.rawValue, showSplash ? "true" : "false", scenePhase == .active ? "true" : "false")
+        }
+        #endif
+        .task(id: shouldAskAdConsent) {
+            // 状況が落ち着いてから、少し置いて始める（置いている間に条件が崩れたら、取り消される）
+            guard shouldAskAdConsent else { return }
+            try? await Task.sleep(for: .milliseconds(1200))
+            guard !Task.isCancelled, shouldAskAdConsent else { return }
+            ads.startConsentFlowIfNeeded()
+        }
         .task(id: model.onboardingDone) {
             // ホームが現れてから、初回（または説明の見直しのあと）だけチュートリアルを始める。
             guard model.onboardingDone, !model.tutorialCompleted else { return }
@@ -112,7 +146,7 @@ struct RootView: View {
         }
         .alert(tr("通知を受け取りますか？"), isPresented: $model.showNotificationPrimer) {
             Button(tr("許可する")) { model.requestNotificationPermission(enableDefaults: true) }
-            Button(tr("今はしない"), role: .cancel) {}
+            Button(tr("今はしない"), role: .cancel) { model.declineNotificationPrimer() }
         } message: {
             Text(tr("朝と夜の振り返りをお知らせします\nあとから、設定でいつでも変えられます\n許可しなくても、ほかの機能は使えます"))
         }

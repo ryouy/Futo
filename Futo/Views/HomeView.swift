@@ -51,6 +51,7 @@ struct HomeView: View {
             // 通知の説明（finishTutorial が出す）は、確かめたい画面の邪魔になるので、閉じる
             try? await Task.sleep(for: .milliseconds(1500))
             model.showNotificationPrimer = false
+            model.notificationPromptPending = false
             if DebugLaunch.settingsTabIndex != nil { sheet = .settings }
             else if screen == "records" { sheet = .history }
             else if screen == "onboarding" { model.replayOnboardingForDebug() }
