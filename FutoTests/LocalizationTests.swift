@@ -73,6 +73,15 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    func testDefaultLanguageFollowsDevicePreference() {
+        XCTAssertEqual(LanguageStore.defaultLanguage(preferred: ["ja-JP"]), .ja)
+        XCTAssertEqual(LanguageStore.defaultLanguage(preferred: ["en-JP"]), .en)
+        XCTAssertEqual(LanguageStore.defaultLanguage(preferred: ["en-US", "ja-JP"]), .en)
+        XCTAssertEqual(LanguageStore.defaultLanguage(preferred: ["fr-FR", "ja-JP"]), .ja, "対応していない言語は飛ばして、次の優先に合わせる")
+        XCTAssertEqual(LanguageStore.defaultLanguage(preferred: ["zh-Hans-CN"]), .en, "日本語・英語のどちらも無いときは英語")
+        XCTAssertEqual(LanguageStore.defaultLanguage(preferred: []), .en)
+    }
+
     // MARK: 切り替えの動作
 
     func testLanguageSwitchChangesOutputAndFallsBackToJapanese() {

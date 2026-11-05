@@ -6,6 +6,7 @@ import SwiftUI
 @MainActor
 struct SupportView: View {
     @Environment(SupportStore.self) private var store
+    @Environment(SharingModel.self) private var sharing
     @State private var showManage = false
 
     var body: some View {
@@ -50,6 +51,13 @@ struct SupportView: View {
                     Label(tr("契約の管理"), systemImage: "creditcard").foregroundStyle(Theme.accentText)
                 }
                 .frame(minHeight: 44)
+                if let privacy = privacyURL {
+                    Link(destination: privacy) {
+                        Label(tr("プライバシーポリシー"), systemImage: "hand.raised").foregroundStyle(Theme.accentText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(minHeight: 44)
+                }
             }
 
             Section {
@@ -67,6 +75,11 @@ struct SupportView: View {
             await store.refreshEntitlements()
             if store.products.isEmpty { await store.loadProducts() }
         }
+    }
+
+    /// プライバシーポリシー（共有・招待と同じドメインの /privacy。アプリから開くので、戻り先は、アプリ用の紹介ページ）
+    private var privacyURL: URL? {
+        (sharing.config.apiBaseURL ?? URL(string: "https://futo-share.vercel.app")).flatMap { URL(string: "privacy?from=about", relativeTo: $0)?.absoluteURL }
     }
 
     private func priceText(_ plan: SupportPlan) -> String {

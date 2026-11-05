@@ -42,12 +42,23 @@ final class LanguageStore {
         UserDefaults.standard.set(newLanguage.rawValue, forKey: Self.key)
     }
 
-    /// 初回起動のとき、端末の言語が英語なら英語にする（選んだあとは、その選択を優先する）。
+    /// 端末の言語の優先順（`Locale.preferredLanguages`）から、最初の起動で使う言語を決める。
+    /// 優先順の中で、先に出てくる日本語・英語に合わせる。どちらも無い（中国語・フランス語だけ、など）ときは、英語。
+    static func defaultLanguage(preferred: [String]) -> AppLanguage {
+        for code in preferred {
+            let lower = code.lowercased()
+            if lower == "ja" || lower.hasPrefix("ja-") { return .ja }
+            if lower == "en" || lower.hasPrefix("en-") { return .en }
+        }
+        return .en
+    }
+
+    /// 初回起動のとき、端末の言語設定に合わせる（選んだあとは、その選択を優先する）。
     func applySystemDefaultIfUnset() {
         guard UserDefaults.standard.string(forKey: Self.key) == nil else { return }
         // デモは、端末の言語に関わらず日本語で始める（設定で英語にも切り替えられる）
         if DemoConfig.isOn { select(.ja); return }
-        if Locale.preferredLanguages.first?.hasPrefix("en") == true { select(.en) }
+        select(Self.defaultLanguage(preferred: Locale.preferredLanguages))
     }
 }
 
