@@ -3,7 +3,6 @@ import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 const source = new URL("../public/", import.meta.url);
 const destination = new URL("../../_site/", import.meta.url);
 const pagesBase = "https://ryouy.github.io/Futo";
-const vercelBase = "https://futo-share.vercel.app";
 
 await mkdir(destination, { recursive: true });
 await cp(source, destination, { recursive: true });
@@ -13,16 +12,14 @@ const documents = [
   ["about.html", "about.html", "/about"],
   ["privacy.html", "privacy.html", "/privacy"],
   ["help.html", "help.html", "/help"],
+  ["support.html", "support.html", "/support"],
 ];
 
 for (const [sourceName, outputName, canonicalPath] of documents) {
   let html = await readFile(new URL(sourceName, source), "utf8");
   // Keep dynamic invite/share/API links on Vercel; this deployment is static only.
   html = html.replace(/(href|src)=(["'])\/(?!\/)([^"']*)\2/g, (full, attribute, quote, path) => {
-    if (path === "support" || path.startsWith("support?")) {
-      return `${attribute}=${quote}${vercelBase}/${path}${quote}`;
-    }
-    const match = path.match(/^(privacy|help|about)(\?.*)?$/);
+    const match = path.match(/^(privacy|help|about|support)(\?.*)?$/);
     const target = match ? `${match[1]}.html${match[2] ?? ""}` : path;
     return `${attribute}=${quote}/Futo/${target}${quote}`;
   });
