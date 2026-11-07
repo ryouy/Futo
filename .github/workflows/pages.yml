@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -27,7 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build static introduction
-        run: node web/scripts/build-pages.mjs
+        run: |
+          node web/scripts/build-pages.mjs
+          test -s _site/index.html
+          test -s _site/privacy.html
+          test -s _site/help.html
+          test -s _site/support.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
