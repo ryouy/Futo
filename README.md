@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://futo-share.vercel.app/"><b>紹介サイト</b></a> ・
+  <a href="https://ryouy.github.io/Futo/"><b>紹介サイト</b></a> ・
   <a href="https://appetize.io/app/b_3mqpcg45pb32ch2v7l22we5n7i"><b>ブラウザで試す（デモ）</b></a> ・
-  <a href="https://futo-share.vercel.app/privacy">プライバシーポリシー</a>
+  <a href="https://ryouy.github.io/Futo/privacy.html">プライバシーポリシー</a>
 </p>
 
 <p align="center"><img src="docs/screenshots/hero.png" alt="ふとの画面（ホーム・待機・記録）"></p>
