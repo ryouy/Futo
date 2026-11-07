@@ -1,8 +1,7 @@
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 
 const source = new URL("../public/", import.meta.url);
-const destination = new URL("../../../_site/", import.meta.url);
+const destination = new URL("../../_site/", import.meta.url);
 const pagesBase = "https://ryouy.github.io/Futo";
 const vercelBase = "https://futo-share.vercel.app";
 
