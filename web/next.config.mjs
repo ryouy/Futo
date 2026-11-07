@@ -6,6 +6,22 @@ const noStore = [
 
 const nextConfig = {
   poweredByHeader: false,
+  // GitHub Pages の公開確認後に FUTO_PAGES_REDIRECTS_ENABLED=1 で有効化する。
+  // 共有・招待・API・Web課金 (/support) は引き続きこのサーバーで扱う。
+  async redirects() {
+    if (process.env.FUTO_PAGES_REDIRECTS_ENABLED !== "1") return [];
+    const pages = "https://ryouy.github.io/Futo";
+    return [
+      { source: "/", destination: `${pages}/`, permanent: false },
+      { source: "/intro.html", destination: `${pages}/`, permanent: false },
+      { source: "/about", destination: `${pages}/about.html`, permanent: false },
+      { source: "/about.html", destination: `${pages}/about.html`, permanent: false },
+      { source: "/privacy", destination: `${pages}/privacy.html`, permanent: false },
+      { source: "/privacy.html", destination: `${pages}/privacy.html`, permanent: false },
+      { source: "/help", destination: `${pages}/help.html`, permanent: false },
+      { source: "/help.html", destination: `${pages}/help.html`, permanent: false },
+    ];
+  },
   // トップページは、アプリの紹介ページ（public/intro.html）。共有・招待リンクとは別
   async rewrites() {
     return { beforeFiles: [{ source: "/", destination: "/intro.html" }, { source: "/privacy", destination: "/privacy.html" }, { source: "/about", destination: "/about.html" }, { source: "/help", destination: "/help.html" }] };
