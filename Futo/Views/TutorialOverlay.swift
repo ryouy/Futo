@@ -41,7 +41,7 @@ struct TutorialOverlay: View {
         var result = [Step(target: .status, lines: [tr("ここに、いまの状態が出ます"), tr("ふだんは「制限中」です")])]
         if anchors[.setup] != nil {
             let lines = model.permission != .approved
-                ? [tr("まず、ここで"), tr("許可をします")]
+                ? [tr("まず、ここで"), tr("Screen Timeの準備をします")]
                 : [tr("まず、ここで"), tr("制限するものを選びます")]
             result.append(Step(target: .setup, lines: lines))
         }

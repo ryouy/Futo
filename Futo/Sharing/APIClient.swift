@@ -28,10 +28,16 @@ final class APIClient {
     private let baseURL: URL?
     private let session: URLSession
     private let tokenProvider: TokenProvider
+    /// アプリの中だけで応答する窓口（デモ用）。あれば、通信もトークンも使わず、すべてここで処理する。
+    private let local: LocalHandler?
 
-    init(baseURL: URL?, session: URLSession = .shared, tokenProvider: @escaping TokenProvider) {
+    /// （メソッド, パス, 本文）を受け取り、応答のJSONを返す。失敗は `APIError` を投げる。
+    typealias LocalHandler = (_ method: String, _ path: String, _ body: Data?) async throws -> Data
+
+    init(baseURL: URL?, session: URLSession = .shared, local: LocalHandler? = nil, tokenProvider: @escaping TokenProvider) {
         self.baseURL = baseURL
         self.session = session
+        self.local = local
         self.tokenProvider = tokenProvider
     }
 
@@ -39,6 +45,11 @@ final class APIClient {
         _ method: String, _ path: String, body: (any Encodable)? = nil,
         authenticated: Bool = true, as type: T.Type = T.self
     ) async throws -> T {
+        if let local {
+            let encoded = try body.map { try JSONEncoder().encode(AnyEncodable($0)) }
+            let data = try await local(method, path, encoded)
+            do { return try JSONDecoder().decode(T.self, from: data) } catch { throw APIError(kind: .server, code: "invalid_response") }
+        }
         let (data, _) = try await perform(method, path, body: body, authenticated: authenticated, allowRefresh: true)
         do {
             return try JSONDecoder().decode(T.self, from: data)

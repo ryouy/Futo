@@ -44,10 +44,10 @@ final class DeviceRestrictionService: RestrictionService {
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
             refreshPermission()
-            return permission == .approved ? nil : tr("許可が完了しませんでした\nもう一度お試しください")
+            return permission == .approved ? nil : tr("Screen Timeへのアクセスは、まだ設定されていません\n必要になったときに、あとから設定できます")
         } catch {
             refreshPermission()
-            return tr("許可が完了しませんでした\nもう一度お試しください")
+            return tr("Screen Timeへのアクセスは、まだ設定されていません\n必要になったときに、あとから設定できます")
         }
     }
 

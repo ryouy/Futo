@@ -12,8 +12,16 @@ final class SharingModel {
 
     let config: Phase4Config
     let auth: AuthService
-    @ObservationIgnored private let api: APIClient
-    @ObservationIgnored private let standingStore: StandingShareStoring
+    @ObservationIgnored private var api: APIClient
+    @ObservationIgnored private var standingStore: StandingShareStoring
+    /// デモの間だけ、差し替える前の本物の窓口と保管先
+    @ObservationIgnored private let realAPI: APIClient
+    @ObservationIgnored private let realStandingStore: StandingShareStoring
+    /// デモ（ログインなしで、架空のデータで試せる）。メモリだけの状態で、アプリを閉じると消える。
+    private(set) var isDemo = false
+    @ObservationIgnored private var demoLinks: [String: URL] = [:]
+    @ObservationIgnored private var demoRecords: [AppMode: (sessions: [Session], events: [RestrictionEvent])] = [:]
+    @ObservationIgnored private var demoTasks: [Task<Void, Never>] = []
     private(set) var standingConfigs: [StandingShareConfig] = []
     @ObservationIgnored private let seenStore = SeenRecordsStore()
     /// フレンドから届いた記録の「見た」の控え
@@ -47,9 +55,14 @@ final class SharingModel {
         self.standingStore = standingStore
         let service = auth ?? AuthService(config: config, urlSession: urlSession, web: WebAuthRunner(), store: KeychainSessionStore(), driveStore: KeychainDriveTokenStore())
         self.auth = service
-        self.api = APIClient(baseURL: config.apiBaseURL, session: urlSession) { [weak service] force in
+        let client = APIClient(baseURL: config.apiBaseURL, session: urlSession) { [weak service] force in
             try await service?.validIDToken(forceRefresh: force)
         }
+        self.api = client
+        self.realAPI = client
+        self.realStandingStore = standingStore
+        // デモの途中でアプリが終わっても、デモで変えたアイコンの設定が、ログインしていない端末に残らないようにする
+        if !service.isSignedIn { AvatarSettings.shared.reset() }
         // 開いた直後から、自分のアイコンを出す（サーバーの応答を待たない）
         if let uid = service.uid { seen = seenStore.load(uid: uid) }
         if let uid = service.uid, service.isSignedIn, let name = ProfileCache.name(uid: uid) {
@@ -58,13 +71,63 @@ final class SharingModel {
     }
 
     private func cacheProfile() {
-        if let profile { ProfileCache.save(name: profile.displayName, uid: profile.uid) }
+        if let profile, !isDemo { ProfileCache.save(name: profile.displayName, uid: profile.uid) }
     }
 
-    var isConfigured: Bool { config.isConfigured && !DemoConfig.isOn }
-    var isSignedIn: Bool { auth.isSignedIn }
-    var uid: String? { auth.uid }
+    var isConfigured: Bool { (config.isConfigured || isDemo) && !DemoConfig.isOn }
+    var isSignedIn: Bool { isDemo || auth.isSignedIn }
+    var uid: String? { isDemo ? DemoBackend.meUID : auth.uid }
+    /// 「デモを試す」を出してよいか（ログインしていないときだけ）
+    var canTryDemo: Bool { !DemoConfig.isOn && !isSignedIn }
     var isWorking: Bool { phase == .working }
+
+    // MARK: デモ
+
+    /// デモを始める。ログインも通信もせず、アプリの中だけの架空の相手・記録で、共有とフレンドの操作を試せる。
+    /// 本物のアカウント・サーバー・端末の記録には触れない（ログインしているときは、始められない）。
+    func enterDemo() async {
+        guard !isDemo, canTryDemo else { return }
+        message = nil
+        AvatarSettings.shared.reset()
+        let backend = DemoBackend(avatar: Self.currentAvatarSpec)
+        // ベースURLを持たない窓口：すべての要求が、アプリの中の擬似サーバーで終わり、外へは出ない
+        api = APIClient(baseURL: nil, local: { method, path, body in try await backend.handle(method: method, path: path, body: body) }) { _ in nil }
+        standingStore = InMemoryStandingStore()
+        seen = SeenRecords()
+        isDemo = true
+        await loadProfile()
+        await loadFriends(); await loadFriendShares(); await loadBlocked(); await loadShares()
+    }
+
+    /// デモを終える。デモのデータはすべて消し、ログインしていない状態（通常のログイン画面）に戻る。
+    func exitDemo() {
+        guard isDemo else { return }
+        demoTasks.forEach { $0.cancel() }
+        demoTasks = []
+        isDemo = false
+        api = realAPI
+        standingStore = realStandingStore
+        demoLinks = [:]
+        demoRecords = [:]
+        reset()
+    }
+
+    /// デモの架空の記録（端末の本物の記録は、デモでは使わない）
+    private func demoSource(mode: AppMode) -> (sessions: [Session], events: [RestrictionEvent]) {
+        if let cached = demoRecords[mode] { return cached }
+        let made = DemoSeed.makeRecords(mode: mode, waitSeconds: 60)
+        demoRecords[mode] = made
+        return made
+    }
+
+    /// 少し待って、一覧を取り直す（架空の相手が反応するのを、画面に反映するため）
+    private func scheduleDemoRefresh(after seconds: TimeInterval) {
+        demoTasks.append(Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled, let self, self.isDemo else { return }
+            await self.loadFriends()
+        })
+    }
 
     // MARK: ログイン
 
@@ -154,6 +217,7 @@ final class SharingModel {
     }
 
     func signOut() {
+        if isDemo { exitDemo(); return }
         // 「見た」の控えは、ログアウトしても残す（ログインし直すたびに、同じ記録の知らせが、また出ないように）。アカウントの削除のときだけ消す
         if let uid { ProfileCache.clear(uid: uid) }
         auth.signOut()
@@ -163,7 +227,7 @@ final class SharingModel {
     private func reset() {
         AvatarSettings.shared.reset()
         profile = nil; shares = []; friends = FriendsResponse(friends: [], incoming: [], outgoing: [])
-        seen = SeenRecords(); receivedShares = []; sentShares = []; invitation = nil; lastCreatedURL = nil; message = nil; standingConfigs = []
+        seen = SeenRecords(); receivedShares = []; sentShares = []; blocked = []; invitation = nil; lastCreatedURL = nil; message = nil; standingConfigs = []
     }
 
     func loadProfile() async {
@@ -221,7 +285,9 @@ final class SharingModel {
     // MARK: Web共有
 
     func previewPayload(sessions: [Session], mode: AppMode, period: SharePeriod, selection: ShareSelection, expiresInDays: Int?, recipientUids: [String]? = nil, key: String = UUID().uuidString.lowercased(), allowsMessage: Bool = false, events: [RestrictionEvent] = []) throws -> SharePayload {
-        try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage,
+        // デモでは、端末の本物の記録ではなく、架空の記録から作る
+        let (sessions, events) = isDemo ? demoSource(mode: mode) : (sessions, events)
+        return try ShareStatsBuilder.make(sessions: sessions, mode: mode, period: period, selection: selection, expiresInDays: expiresInDays, recipientUids: recipientUids, idempotencyKey: key, allowsMessage: allowsMessage,
                                         restrictionCounts: Self.restrictionCounts(events: events, mode: mode))
     }
 
@@ -246,7 +312,7 @@ final class SharingModel {
                 await loadShares()
                 return nil
             }
-            ShareLinkStore.save(url: urlString, uid: uid, shareId: created.shareId)
+            if isDemo { demoLinks[created.shareId] = url } else { ShareLinkStore.save(url: urlString, uid: uid, shareId: created.shareId) }
             lastCreatedURL = url
             message = nil
             await loadShares()
@@ -265,7 +331,8 @@ final class SharingModel {
     }
 
     func localURL(for item: ShareListItem) -> URL? {
-        uid.flatMap { ShareLinkStore.url(uid: $0, shareId: item.id) }
+        if isDemo { return demoLinks[item.id] }
+        return uid.flatMap { ShareLinkStore.url(uid: $0, shareId: item.id) }
     }
 
     /// 停止は、サーバーが成功を返してから、一覧と端末のリンクを更新する。
@@ -275,7 +342,7 @@ final class SharingModel {
         defer { phase = .idle }
         do {
             let _: EmptyResponse = try await api.send("DELETE", "/api/shares/\(item.id)")
-            ShareLinkStore.remove(uid: uid, shareId: item.id)
+            if isDemo { demoLinks[item.id] = nil } else { ShareLinkStore.remove(uid: uid, shareId: item.id) }
             await loadShares()
         } catch { fail(error) }
     }
@@ -290,7 +357,10 @@ final class SharingModel {
     func createInvitation() async {
         phase = .working
         defer { phase = .idle }
-        do { invitation = try await api.send("POST", "/api/invitations", body: ["idempotencyKey": UUID().uuidString.lowercased()]); message = nil } catch { fail(error) }
+        do {
+            invitation = try await api.send("POST", "/api/invitations", body: ["idempotencyKey": UUID().uuidString.lowercased()]); message = nil
+            if isDemo { scheduleDemoRefresh(after: DemoBackend.arrivalDelay + 0.3) }
+        } catch { fail(error) }
     }
 
     func cancelInvitation() async {
@@ -317,6 +387,7 @@ final class SharingModel {
             let _: FriendRequestResponse = try await api.send("POST", "/api/friend-requests", body: body)
             message = nil
             await loadFriends()
+            if isDemo { scheduleDemoRefresh(after: DemoBackend.acceptDelay + 0.3) }
             return true
         } catch { fail(error); return false }
     }
@@ -373,7 +444,7 @@ final class SharingModel {
         }
         receivedShares.removeAll { removed.contains($0.id) }
         seen.prune(keeping: Set(receivedShares.map(\.id)))
-        if let uid { seenStore.save(seen, uid: uid) }
+        persistSeen()
     }
 
     // MARK: フレンド限定共有
@@ -408,6 +479,7 @@ final class SharingModel {
     /// アプリを開いたとき（一定時間ごと）・手動のときに、継続共有の統計を最新にする。失敗しても、個人の機能には影響しない。
     func refreshStanding(sessions: [Session], events: [RestrictionEvent] = [], mode: AppMode, force: Bool = false, now: Date = Date()) async {
         guard isSignedIn, mode == .device, let uid else { return }
+        let (sessions, events) = isDemo ? demoSource(mode: mode) : (sessions, events)
         var configs = standingStore.load(uid: uid)
         guard !configs.isEmpty else { standingConfigs = []; return }
         var changed = false
@@ -445,17 +517,22 @@ final class SharingModel {
     /// 届いた記録を開いたとき。同じ版は、もう新しくない。
     func markSeen(id: String, version: String) {
         seen.markSeen(id: id, version: version)
-        if let uid { seenStore.save(seen, uid: uid) }
+        persistSeen()
+    }
+
+    /// 「見た」の控えを、この端末に保存する（デモでは、保存しない）
+    private func persistSeen() {
+        if !isDemo, let uid { seenStore.save(seen, uid: uid) }
     }
 
     /// 届いた記録の一覧だけを取り直す（アプリを開いたときなど。軽い確認）。
     func loadReceivedShares() async {
         guard isSignedIn else { return }
-        if let uid { seen = seenStore.load(uid: uid) }
+        if !isDemo, let uid { seen = seenStore.load(uid: uid) }
         if let list = try? await api.send("GET", "/api/friend-shares") as ReceivedFriendSharesResponse {
             receivedShares = list.items
             seen.prune(keeping: Set(list.items.map(\.id)))
-            if let uid { seenStore.save(seen, uid: uid) }
+            persistSeen()
         }
     }
 
@@ -569,6 +646,8 @@ extension SharingModel {
     /// 招待リンクなら、リンクの招待コードを調べて、フレンドのページのコード入力欄へ、そのまま移る（開いただけでは、申請しない）。
     func handleIncoming(url: URL) {
         guard let token = InviteLink.token(from: url, allowedHost: config.allowedHost) else { return }
+        // デモの間は、本物の招待を処理しない（デモのデータと、本物のアカウントを混ぜない）
+        if isDemo { message = tr("デモ中は、招待リンクを開けません"); return }
         Task { @MainActor in
             if isConfigured, let info = await previewInvitation(token: token), let code = info.code, InviteLink.normalizedCode(code) != nil {
                 pendingFriendCode = code

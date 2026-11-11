@@ -177,8 +177,11 @@ final class AdsService {
         if !started {
             started = true
             MobileAds.shared.requestConfiguration.testDeviceIdentifiers = AdsConfig.testDeviceIDs
-            // 非パーソナライズ広告を、公式の設定でも明示する。アプリをまたぐパブリッシャーのID（first-party ID）も使わない
-            // （ATTは求めない・トラッキングなしの申告に合わせる）。どちらも、広告の要求の前に、SDKの開始前に設定する
+            // 非パーソナライズ広告を、公式の設定でも明示する。アプリをまたぐパブリッシャーのID（first-party ID）も使わない。
+            // どちらも、広告の要求の前に、SDKの開始前に設定する。
+            // なお、ATT（追跡の許可）は求める（`requestConsentsInOrder`）。SDKの同梱マニフェストは、端末ID（DeviceID）を
+            // トラッキング扱いで宣言しているため、アプリのプライバシーマニフェストも NSPrivacyTracking=true にしている。
+            // この設定は、許可・拒否のどちらでも同じで、SDKの開始もATTの結果を待たない。
             MobileAds.shared.requestConfiguration.publisherPrivacyPersonalizationState = .disabled
             MobileAds.shared.requestConfiguration.setPublisherFirstPartyIDEnabled(false)
             MobileAds.shared.start(completionHandler: nil)

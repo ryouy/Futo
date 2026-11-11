@@ -11,6 +11,8 @@ enum DebugLaunch {
     static var askAdConsentNow: Bool { UserDefaults.standard.bool(forKey: "futoAskAdConsentNow") }
     /// `-futoUMPGeography eea`（または `other`）：UMPの地域を、デバッグ用に指定する（同意フォームの確認用）
     static var umpGeography: String? { UserDefaults.standard.string(forKey: "futoUMPGeography") }
+    /// `-futoEnterDemo YES`：共有のデモに、すぐ入る（画面の確認用）
+    static var enterDemo: Bool { UserDefaults.standard.bool(forKey: "futoEnterDemo") }
     static var onboardingPage: Int { UserDefaults.standard.integer(forKey: "futoOnboardingPage") }
 
     static var settingsTabIndex: Int? {

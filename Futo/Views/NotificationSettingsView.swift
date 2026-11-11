@@ -106,7 +106,7 @@ struct NotificationSettingsView: View {
             } else if model.notificationStatus == .notDetermined {
                 CardSection {
                     Text(tr("通知はまだ許可されていません")).font(.subheadline)
-                    Button(tr("通知を許可する")) { model.requestNotificationPermission(enableDefaults: false) }
+                    Button(tr("次へ")) { model.requestNotificationPermission(enableDefaults: false) }
                         .buttonStyle(FutoButtonStyle())
                 }
             }

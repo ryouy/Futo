@@ -110,8 +110,15 @@ final class DemoRestrictionService: RestrictionService {
 @MainActor
 enum DemoSeed {
     static func populate(context: ModelContext) {
+        let records = makeRecords(mode: .demo, waitSeconds: 10)
+        for session in records.sessions { context.insert(session) }
+        for event in records.events { context.insert(event) }
+        try? context.save()
+    }
+
+    /// 架空の記録を作る（保存はしない）。共有のデモでも使う（端末の本物の記録は、デモでは使わない）。
+    static func makeRecords(mode: AppMode, waitSeconds: Double = 10, now: Date = Date()) -> (sessions: [Session], events: [RestrictionEvent]) {
         let cal = Calendar.current
-        let now = Date()
         // (何日前, 時, 分, 目的, 結果, 解除した分, 感想)
         let rows: [(Int, Int, Int, Purpose?, SessionOutcome, Int?, Reflection?)] = [
             (0, 8, 40, .contact, .deferred, nil, nil),
@@ -134,26 +141,28 @@ enum DemoSeed {
             (12, 9, 0, .research, .deferred, nil, nil),
             (13, 17, 35, .noReason, .wantsToUse, 5, .neutral),
         ]
+        var sessions: [Session] = []
         for row in rows {
             guard let day = cal.date(byAdding: .day, value: -row.0, to: now),
                   var start = cal.date(bySettingHour: row.1, minute: row.2, second: 0, of: day) else { continue }
             if start > now { start = now.addingTimeInterval(-3600) }
-            let session = Session(mode: .demo, startedAt: start, requiredWaitSeconds: 10)
+            let session = Session(mode: mode, startedAt: start, requiredWaitSeconds: waitSeconds)
             session.purpose = row.3
             session.remainingWaitSeconds = 0
             session.phase = .completed
             session.outcome = row.4
-            session.completedAt = start.addingTimeInterval(14)
+            session.completedAt = start.addingTimeInterval(waitSeconds + 4)
             if let minutes = row.5 {
                 session.temporaryUnlockStartedAt = start.addingTimeInterval(20)
                 session.temporaryUnlockEndedAt = start.addingTimeInterval(20 + Double(minutes) * 60)
                 session.reflection = row.6
             }
-            context.insert(session)
+            sessions.append(session)
         }
+        var events: [RestrictionEvent] = []
         if let day = cal.date(byAdding: .day, value: -4, to: now) {
-            context.insert(RestrictionEvent(mode: .demo, kind: .pause, at: day, minutes: 10))
+            events.append(RestrictionEvent(mode: mode, kind: .pause, at: day, minutes: 10))
         }
-        try? context.save()
+        return (sessions, events)
     }
 }

@@ -119,11 +119,15 @@ struct SettingsView: View {
                     Task { await model.requestPermission() }
                 }
             } label: {
-                Label(model.permission == .approved ? tr("再確認") : tr("許可する"),
-                      systemImage: model.permission == .approved ? "arrow.clockwise" : "hand.raised")
+                Label(model.permission == .approved ? tr("再確認") : tr("次へ"),
+                      systemImage: model.permission == .approved ? "arrow.clockwise" : "chevron.right")
                     .foregroundStyle(Theme.accentText)
             }
             .frame(minHeight: 44)
+            if model.permission != .approved {
+                Text(tr("選んだアプリやサイトを制限するために、Screen Timeへのアクセスを使います"))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
             if let error = model.permissionError { Text(error).font(.footnote) }
         }
     }

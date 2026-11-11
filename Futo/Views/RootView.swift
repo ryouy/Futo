@@ -5,6 +5,7 @@ struct RootView: View {
     @Bindable var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AdsService.self) private var ads
+    @Environment(SharingModel.self) private var sharing
     /// 起動時に約1秒、スプラッシュを見せる。
     @State private var showSplash = true
 
@@ -98,6 +99,7 @@ struct RootView: View {
         .task {
             if let screen = DebugLaunch.screen, screen != "onboarding", !model.onboardingDone { model.completeOnboarding(mode: .device) }
             if DebugLaunch.showTrackingExplainer { ads.debugShowTrackingExplainer() }
+            if DebugLaunch.enterDemo { await sharing.enterDemo() }
             if DebugLaunch.askAdConsentNow {
                 try? await Task.sleep(for: .milliseconds(2500))
                 ads.startConsentFlowIfNeeded()
@@ -145,7 +147,7 @@ struct RootView: View {
             if phase == .active { model.didBecomeActive() }
         }
         .alert(tr("通知を受け取りますか？"), isPresented: $model.showNotificationPrimer) {
-            Button(tr("許可する")) { model.requestNotificationPermission(enableDefaults: true) }
+            Button(tr("次へ")) { model.requestNotificationPermission(enableDefaults: true) }
             Button(tr("今はしない"), role: .cancel) { model.declineNotificationPrimer() }
         } message: {
             Text(tr("朝と夜の振り返りをお知らせします\nあとから、設定でいつでも変えられます\n許可しなくても、ほかの機能は使えます"))

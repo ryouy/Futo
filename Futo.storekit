@@ -1,30 +1,135 @@
 {
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
   "identifier" : "A1B2C3D4",
-  "nonRenewingSubscriptions" : [],
-  "products" : [],
-  "settings" : { "_applicationInternalID" : "0", "_developerTeamID" : "", "_failTransactionsEnabled" : false, "_lastSynchronizedDate" : 0, "_locale" : "ja_JP", "_storefront" : "JPN", "_storeKitErrors" : [] },
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "ja",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "JPN",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionBundleGroups" : [
+
+  ],
   "subscriptionGroups" : [
     {
       "id" : "21500001",
-      "localizations" : [],
+      "localizations" : [
+
+      ],
       "name" : "ふとを応援",
       "subscriptions" : [
         {
-          "adHocOffers" : [], "codeOffers" : [], "displayPrice" : "500", "familyShareable" : false,
-          "groupNumber" : 1, "internalID" : "6700000002", "introductoryOffer" : null,
-          "localizations" : [ { "description" : "ふとの開発と運営を支える　広告非表示も含む", "displayName" : "ふとを応援", "locale" : "ja" } ],
-          "productID" : "com.ryouy.futo.support.monthly", "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "ふとを応援（月額）", "subscriptionGroupID" : "21500001", "type" : "RecurringSubscription"
+          "adHocOffers" : [
+
+          ],
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "500",
+              "displayPrice" : "500",
+              "internalID" : "37A7AF84",
+              "isEnabled" : true
+            }
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "500",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6700000002",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "ふとの開発と運営を支える　広告非表示も含む",
+              "displayName" : "ふとを応援",
+              "locale" : "ja"
+            }
+          ],
+          "productID" : "com.ryouy.futo.support.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "ふとを応援（月額）",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
         },
         {
-          "adHocOffers" : [], "codeOffers" : [], "displayPrice" : "150", "familyShareable" : false,
-          "groupNumber" : 2, "internalID" : "6700000001", "introductoryOffer" : null,
-          "localizations" : [ { "description" : "待機の時間を、より静かに", "displayName" : "広告なし", "locale" : "ja" } ],
-          "productID" : "com.ryouy.futo.noads.monthly", "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "広告なし（月額）", "subscriptionGroupID" : "21500001", "type" : "RecurringSubscription"
+          "adHocOffers" : [
+
+          ],
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "150",
+              "displayPrice" : "150",
+              "internalID" : "44A584F3",
+              "isEnabled" : true
+            }
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "150",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6700000001",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "待機の時間を、より静かに",
+              "displayName" : "広告なし",
+              "locale" : "ja"
+            }
+          ],
+          "productID" : "com.ryouy.futo.noads.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "広告なし（月額）",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
         }
       ]
     }
   ],
-  "version" : { "major" : 3, "minor" : 0 }
+  "subscriptionSuiteGroups" : [
+
+  ],
+  "version" : {
+    "major" : 6,
+    "minor" : 3
+  }
 }

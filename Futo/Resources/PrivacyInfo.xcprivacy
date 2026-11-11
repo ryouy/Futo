@@ -5,7 +5,12 @@
 	<key>NSPrivacyTracking</key>
 	<true/>
 	<key>NSPrivacyTrackingDomains</key>
-	<array/>
+	<!-- 暫定（推定）。googleads.g.doubleclick.net は、Google公式のAdMobヘルプに Mobile Ads SDK 関連の通信先として載っている。
+	     ただし、SDK 13.11.0 の正式なトラッキングドメイン一覧としては確認できていない。同梱のSDKマニフェストにもドメインの記載はない。
+	     NSPrivacyTracking=true のとき、ドメインが空だと ITMS-91064 になるため、最小限をおいている。Googleから正式な一覧が得られたら見直す。 -->
+	<array>
+		<string>googleads.g.doubleclick.net</string>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

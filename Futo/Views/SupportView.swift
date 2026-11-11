@@ -37,6 +37,26 @@ struct SupportView: View {
                 }
             }
 
+            // 購入前に確認できるように、プランのすぐ下に置く（自動更新の説明・利用規約・プライバシーポリシー）
+            CardSection {
+                Text(tr("加入は、1か月ごとに自動で更新されます\n更新日の24時間前までに解約しない限り、同じ金額で更新されます\n解約は、Appleアカウントの契約の管理から、いつでもできます"))
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 24) {
+                    Link(destination: Self.termsOfUseURL) {
+                        Label(tr("利用規約"), systemImage: "doc.text").foregroundStyle(Theme.accentText)
+                    }
+                    if let privacy = privacyURL {
+                        Link(destination: privacy) {
+                            Label(tr("プライバシーポリシー"), systemImage: "hand.raised").foregroundStyle(Theme.accentText)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+                .font(.subheadline)
+                .frame(minHeight: 44)
+            }
+
             if let message = store.message {
                 CardSection { Text(message).font(.footnote).foregroundStyle(.secondary) }
             }
@@ -51,13 +71,6 @@ struct SupportView: View {
                     Label(tr("契約の管理"), systemImage: "creditcard").foregroundStyle(Theme.accentText)
                 }
                 .frame(minHeight: 44)
-                if let privacy = privacyURL {
-                    Link(destination: privacy) {
-                        Label(tr("プライバシーポリシー"), systemImage: "hand.raised").foregroundStyle(Theme.accentText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(minHeight: 44)
-                }
             }
 
             Section {
@@ -76,6 +89,9 @@ struct SupportView: View {
             if store.products.isEmpty { await store.loadProducts() }
         }
     }
+
+    /// 利用規約（EULA）。ふと独自の規約は設けず、Apple 標準のライセンス契約（Standard EULA）を使う。
+    static let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     /// プライバシーポリシー（共有・招待と同じドメインの /privacy。アプリから開くので、戻り先は、アプリ用の紹介ページ）
     private var privacyURL: URL? {
@@ -104,6 +120,7 @@ struct SupportView: View {
                     Spacer(minLength: 8)
                     Text(priceText(plan)).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
                 }
+                Text(tr("1か月ごとに自動で更新")).font(.footnote).foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(plan.lines, id: \.self) { Text($0) }
                 }

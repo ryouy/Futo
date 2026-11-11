@@ -279,7 +279,7 @@ final class AppModel {
         if !onboardingDone { reasons.append("初回説明が未完了") }
         if !tutorialCompleted { reasons.append("チュートリアルが未完了") }
         if tutorialStep != nil { reasons.append("チュートリアルの最中") }
-        if permission == .notDetermined { reasons.append("Screen Timeの許可が未決定（「許可する」を押すまで待つ）") }
+        if permission == .notDetermined { reasons.append("Screen Timeの許可が未決定（「次へ」を押すまで待つ）") }
         if showFlow { reasons.append("ひと呼吸の最中") }
         if homeSheetOpen { reasons.append("設定などの画面を開いている") }
         if showNotificationPrimer { reasons.append("通知の説明が出ている") }

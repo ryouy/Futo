@@ -164,6 +164,15 @@ struct HomeView: View {
                                     // フレンドから新しい記録が届いているとき
                                     if sharing.hasUnseenRecords { NewBadge().offset(x: 3, y: -3) }
                                 }
+                                .overlay(alignment: .bottom) {
+                                    // デモ中は、ホームからも分かるようにする
+                                    if sharing.isDemo {
+                                        Text("DEMO").font(.system(size: 8, weight: .heavy)).foregroundStyle(.white)
+                                            .padding(.horizontal, 4).padding(.vertical, 1)
+                                            .background(Theme.accentText, in: Capsule())
+                                            .offset(y: 6)
+                                    }
+                                }
                                 .frame(width: 44, height: 44)
                         } else {
                             Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
@@ -213,7 +222,7 @@ struct HomeView: View {
 
     /// 画面中央に大きく出す、いまの状態。「ふだんは制限中」が基本の姿。
     private var headline: String {
-        if needsPermission { return tr("許可が必要です") }
+        if needsPermission { return tr("Screen Timeを使います") }
         if model.targetCount == 0 { return tr("制限するものを選びましょう") }
         switch model.restriction {
         case .configured: return tr("制限中")
@@ -227,8 +236,8 @@ struct HomeView: View {
     private var subline: String {
         if needsPermission {
             return model.permission == .denied
-                ? tr("設定アプリで許可をオンにしてください")
-                : tr("Screen Timeの許可が必要です")
+                ? tr("Screen Timeへのアクセスは、設定アプリから変えられます")
+                : tr("選んだアプリやサイトを制限するために、Screen Timeへのアクセスを使います")
         }
         if model.targetCount == 0 { return tr("アプリやサイトを選びます") }
         switch model.restriction {
@@ -320,7 +329,7 @@ struct HomeView: View {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     }
                 } else {
-                    Button(tr("許可する")) { Task { await model.requestPermission() } }
+                    Button(tr("次へ")) { Task { await model.requestPermission() } }
                 }
             } else {
                 Button(tr("制限するものを選ぶ")) { sheet = .picker }

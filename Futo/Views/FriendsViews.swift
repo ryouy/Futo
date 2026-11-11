@@ -40,6 +40,7 @@ struct FriendsView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(tr("フレンド"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
         .task {
             // 招待リンクから来たときは、コードを、入力欄に入れる
             if let incoming = sharing.pendingFriendCode {
@@ -143,10 +144,16 @@ struct FriendsView: View {
                 Text(tr("期限：{0}", dateText(invitation.expiresAt))).font(.footnote).foregroundStyle(.secondary)
                 // 送る・コピーは、1列に横並び
                 HStack(spacing: 8) {
-                    ShareLink(item: url, message: Text(tr("ふとのフレンド招待です\n招待コード：{0}", formatted(invitation.code)))) {
-                        Label(tr("送る"), systemImage: "square.and.arrow.up")
+                    if sharing.isDemo {
+                        // デモの招待は、送れない（外へは何も出さない）
+                        Button {} label: { Label(tr("送る"), systemImage: "square.and.arrow.up") }
+                            .buttonStyle(ChipButtonStyle()).disabled(true)
+                    } else {
+                        ShareLink(item: url, message: Text(tr("ふとのフレンド招待です\n招待コード：{0}", formatted(invitation.code)))) {
+                            Label(tr("送る"), systemImage: "square.and.arrow.up")
+                        }
+                        .buttonStyle(ChipButtonStyle())
                     }
-                    .buttonStyle(ChipButtonStyle())
                     CopyLabelButton(text: invitation.url)
                 }
                 QRSection(text: invitation.url)
@@ -183,6 +190,18 @@ struct FriendsView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: InviteLink.normalizedCode(code) != nil)
+            if sharing.isDemo {
+                // デモ用のコード：入力すると、架空の相手に申請できる
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(tr("デモ用の招待コード")).font(.caption).foregroundStyle(.secondary)
+                        Text(formatted(DemoBackend.sampleCode)).font(.subheadline.monospaced().weight(.medium))
+                    }
+                    Spacer(minLength: 0)
+                    Button(tr("入力する")) { code = DemoBackend.sampleCode }
+                        .buttonStyle(ChipButtonStyle()).fixedSize()
+                }
+            }
         }
     }
 
@@ -374,6 +393,7 @@ struct FriendRecordsListView: View {
         .compactForm()
         .navigationTitle(group?.name ?? tr("匿名"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
         .confirmationDialog(tr("この記録を削除しますか？\n相手の共有は、消えません"), isPresented: Binding(get: { deletingRecord != nil }, set: { if !$0 { deletingRecord = nil } }), titleVisibility: .visible) {
             Button(tr("削除"), role: .destructive) { if let item = deletingRecord { Task { await sharing.removeReceived(ids: [item.id]) } } }
             Button(tr("キャンセル"), role: .cancel) {}
@@ -425,6 +445,7 @@ struct FriendShareDetailView: View {
         .compactForm()
         .navigationTitle(detail?.isOwner == true ? tr("共有した記録") : tr("届いた記録"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
         .toolbar {
             if detail != nil, detail?.isOwner == false {
                 ToolbarItem(placement: .topBarTrailing) {

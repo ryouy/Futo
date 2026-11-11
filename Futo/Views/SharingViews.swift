@@ -13,13 +13,17 @@ struct SharingTab: View {
     @State private var showFriends = false
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
+    @State private var confirmExitDemo = false
 
     var body: some View {
         Form {
-            if !sharing.isConfigured {
+            if sharing.isDemo {
+                signedIn
+            } else if !sharing.isConfigured {
                 CardSection {
                     Text(tr("共有の機能は、まだ使えません"))
                 }
+                PrimarySection { DemoEntry() }
             } else if sharing.isDeletingAccount {
                 // 削除は、サーバーの処理に少し時間がかかる。終わるまで、ほかの操作は出さない
                 CardSection {
@@ -41,6 +45,7 @@ struct SharingTab: View {
             }
         }
         .compactForm()
+        .demoBanner()
         .id(refreshID)
         .task { if sharing.isSignedIn { await sharing.loadProfile() } }
         // 招待リンクから来たとき：ログイン済みなら、そのままフレンドのページ（コード入力欄）へ。未ログインなら、ログインのあとで
@@ -53,6 +58,10 @@ struct SharingTab: View {
         .navigationDestination(isPresented: $showFriends) { FriendsView(model: model) }
         .confirmationDialog(tr("ログアウトしますか？\n共有中のリンクは、そのまま有効です"), isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button(tr("ログアウト"), role: .destructive) { sharing.signOut(); refreshID = UUID() }
+            Button(tr("キャンセル"), role: .cancel) {}
+        }
+        .confirmationDialog(tr("デモを終了しますか？\nデモのデータは、すべて消えます"), isPresented: $confirmExitDemo, titleVisibility: .visible) {
+            Button(tr("デモを終了"), role: .destructive) { sharing.exitDemo(); refreshID = UUID() }
             Button(tr("キャンセル"), role: .cancel) {}
         }
         .confirmationDialog(tr("アカウントと、共有・フレンドのデータを\nすべて削除しますか？\n取り消せません\n端末の記録は消えません"), isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -73,6 +82,7 @@ struct SharingTab: View {
             }
             // Google を上、Apple を下に。どちらも同じ大きさで、同じように目に入る
             PrimarySection { SignInButtons() }
+            PrimarySection { DemoEntry() }
         }
     }
 
@@ -96,7 +106,7 @@ struct SharingTab: View {
                     AccountAvatar(name: sharing.profile?.displayName ?? "", size: 48, isOwn: true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(sharing.profile?.displayName ?? "…").font(.headline).oneLine()
-                        Text(sharing.signInProvider == .apple ? tr("Appleでログイン中") : tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
+                        Text(sharing.isDemo ? tr("デモ（架空のアカウント）") : sharing.signInProvider == .apple ? tr("Appleでログイン中") : tr("Googleでログイン中")).font(.footnote).foregroundStyle(.secondary)
                     }
                 }
                 .padding(.vertical, 4)
@@ -113,10 +123,21 @@ struct SharingTab: View {
                     if sharing.hasUnseenRecords { NewBadge() }
                 }
             }.frame(minHeight: 44)
-            NavigationLink { BackupView() } label: {
-                Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accentText)
-            }.frame(minHeight: 44)
+            // バックアップは、本物のGoogleアカウントのDriveを使うので、デモでは出さない
+            if !sharing.isDemo {
+                NavigationLink { BackupView() } label: {
+                    Label(tr("バックアップ"), systemImage: "icloud").foregroundStyle(Theme.accentText)
+                }.frame(minHeight: 44)
+            }
         }
+        if sharing.isDemo {
+            CardSection {
+                Button { confirmExitDemo = true } label: {
+                    Label(tr("デモを終了"), systemImage: "xmark.circle").foregroundStyle(Theme.accentText)
+                }
+                .frame(minHeight: 44)
+            }
+        } else {
         CardSection {
             Button { confirmSignOut = true } label: {
                 Label(tr("ログアウト"), systemImage: "rectangle.portrait.and.arrow.right").foregroundStyle(Theme.accentText)
@@ -126,6 +147,7 @@ struct SharingTab: View {
                 Label(tr("アカウントを削除"), systemImage: "trash").foregroundStyle(.red)
             }
             .frame(minHeight: 44)
+        }
         }
     }
 }
@@ -151,6 +173,7 @@ struct ShareLinkPreviewView: View {
         }
         .navigationTitle(tr("リンクの中身"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
         .task {
             detail = await sharing.loadOwnShare(id: id)
             failed = detail == nil
@@ -244,6 +267,7 @@ struct CreateShareView: View {
         .environment(\.defaultMinListRowHeight, 40)
         .navigationTitle(isFriends ? tr("フレンドに記録を共有") : tr("記録をリンクで共有"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
     }
 
     // MARK: 入力
@@ -373,9 +397,12 @@ struct CreateShareView: View {
                     Spacer(minLength: 0)
                     CopyIconButton(text: created.absoluteString)
                 }
-                HStack(spacing: 8) {
-                    ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
-                    Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
+                // デモのリンクは、開けない・送れない（外へは何も出さない）
+                if !sharing.isDemo {
+                    HStack(spacing: 8) {
+                        ShareLink(item: created) { Label(tr("送る"), systemImage: "square.and.arrow.up") }.buttonStyle(ChipButtonStyle())
+                        Link(destination: created) { Label(tr("開く"), systemImage: "safari") }.buttonStyle(ChipButtonStyle())
+                    }
                 }
                 QRSection(text: created.absoluteString)
             }
@@ -519,8 +546,13 @@ struct SharedLinksView: View {
                         HStack(spacing: 8) {
                             if let url = sharing.localURL(for: item) {
                                 CopyChip(text: url.absoluteString).frame(width: 56)
-                                ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }
-                                    .accessibilityLabel(tr("送る")).frame(width: 56)
+                                if sharing.isDemo {
+                                    Button {} label: { Image(systemName: "square.and.arrow.up") }
+                                        .disabled(true).accessibilityLabel(tr("送る")).frame(width: 56)
+                                } else {
+                                    ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }
+                                        .accessibilityLabel(tr("送る")).frame(width: 56)
+                                }
                             } else {
                                 // リンクの文字列は、作った直後にしか手に入らない。この端末に控えが無いときは、使えない
                                 Button {} label: { Image(systemName: "doc.on.doc") }
@@ -543,6 +575,7 @@ struct SharedLinksView: View {
         .compactForm()
         .navigationTitle(tr("共有中のリンク"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
         .task { await sharing.loadShares() }
         .sheet(item: $previewing) { item in
             NavigationStack {
@@ -701,6 +734,7 @@ struct ProfileView: View {
         .compactForm()
         .navigationTitle(tr("プロフィール"))
         .navigationBarTitleDisplayMode(.inline)
+        .demoBanner()
         .onAppear { draft.text = displayName }
         .onDisappear {
             // 画面を閉じるときにも、入力中の分を保存する
