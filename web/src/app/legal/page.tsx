@@ -18,7 +18,7 @@ export default function LegalPage() {
     { ja: "提供時期", en: "Delivery", valueJa: "お支払いの完了後、すぐにご利用いただけます", valueEn: "Available right after payment" },
     { ja: "解約", en: "Cancellation", valueJa: "「ふとを応援」ページの「契約の管理」から、いつでも解約できます　解約すると、次の更新から料金はかかりません", valueEn: "Cancel anytime from Manage subscription, no charge from the next renewal" },
     { ja: "返金", en: "Refunds", valueJa: "サービスの性質上、お支払い済みの料金は、原則として返金しません", valueEn: "Because of the nature of the service, paid fees are generally non-refundable" },
-    { ja: "動作環境", en: "Requirements", valueJa: "iPhone（iOS 17 以降）の「ふと」アプリ", valueEn: "The Futo app on iPhone (iOS 17 or later)" },
+    { ja: "動作環境", en: "Requirements", valueJa: "iPhone・iPad（iOS / iPadOS 17 以降）の「ふと」アプリ", valueEn: "The Futo app on iPhone and iPad (iOS / iPadOS 17 or later)" },
   ];
   return (
     <div className="card">
