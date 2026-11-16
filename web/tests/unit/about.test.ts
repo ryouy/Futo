@@ -13,8 +13,11 @@ describe("アプリ用の紹介ページ（/about）", () => {
     expect(read("about.html")).toBe(makeAbout(read("intro.html")));
   });
 
-  it("トップには、これまでどおり、課金のページへのリンクがある", () => {
-    expect(read("intro.html")).toContain('href="/support"');
+  it("Web 課金は廃止した：トップにも、購入のページ・購入の入口が無い", () => {
+    const intro = read("intro.html");
+    expect(intro).not.toContain('href="/support"');
+    expect(intro).not.toContain("/api/billing");
+    expect(intro).not.toContain("月額");
   });
 
   it("プライバシーポリシーは、/about に戻れる形で開く。検索には出さない", () => {

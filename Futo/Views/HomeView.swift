@@ -274,7 +274,14 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headline).font(.headline.weight(.medium)).oneLine()
-                    if !subline.isEmpty { Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8) }
+                    if !subline.isEmpty {
+                        if needsPermission {
+                            // 許可の前の説明は、省略せずに、全文を見せる（折り返す）
+                            Text(subline).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Text(subline).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
+                        }
+                    }
                 }
                 Spacer(minLength: 0)
                 if model.targetCount > 0, model.canAddItems {

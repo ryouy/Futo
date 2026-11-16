@@ -183,7 +183,7 @@ struct SettingsView: View {
             CardSection {
                 if !DemoConfig.isOn {
                     NavigationLink { SupportView() } label: {
-                        Label(tr("ふとを応援"), systemImage: "heart").foregroundStyle(Theme.accentText)
+                        Label(tr("広告なし・応援"), systemImage: "heart").foregroundStyle(Theme.accentText)
                     }
                     .frame(minHeight: 44)
                 }

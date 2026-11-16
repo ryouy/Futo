@@ -34,8 +34,6 @@ struct MeResponse: Codable, Equatable {
     var displayName: String
     var status: String
     var avatar: AvatarSpec? = nil
-    /// アカウントで加入しているプラン（"adFree" / "support"）。なければ nil
-    var webPlan: String? = nil
 }
 
 /// プロフィールの更新（ニックネームと、アイコン）

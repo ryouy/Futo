@@ -270,26 +270,24 @@ final class Phase3Tests: XCTestCase {
 
     // MARK: 課金
 
-    func testSubscriptionProductIDsMatchTheStoreKitConfiguration() throws {
+    func testProductIDsMatchTheStoreKitConfiguration() throws {
         let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Futo.storekit")
         guard let data = try? Data(contentsOf: file) else { throw XCTSkip("Futo.storekit が見つからない環境では確認しない") }
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let groups = try XCTUnwrap(root["subscriptionGroups"] as? [[String: Any]])
-        let configured = Set(groups.flatMap { ($0["subscriptions"] as? [[String: Any]] ?? []).compactMap { $0["productID"] as? String } })
-        XCTAssertEqual(configured, Set(SupportPlan.allCases.map(\.rawValue)))
-        XCTAssertEqual(Set(SupportPlan.allCases.map(\.rawValue)), ["com.ryouy.futo.noads.monthly", "com.ryouy.futo.support.monthly"])
+        let products = try XCTUnwrap(root["products"] as? [[String: Any]])
+        let types = Dictionary(uniqueKeysWithValues: products.compactMap { p -> (String, String)? in
+            guard let id = p["productID"] as? String, let type = p["type"] as? String else { return nil }
+            return (id, type)
+        })
+        XCTAssertEqual(types, ["com.ryouy.futo.adfree.lifetime": "NonConsumable", "com.ryouy.futo.support.tip": "Consumable"])
+        XCTAssertEqual(Set(SupportProduct.allCases.map(\.rawValue)), Set(types.keys))
+        XCTAssertTrue((root["subscriptionGroups"] as? [Any] ?? []).isEmpty, "自動更新のサブスクリプションは、もう無い")
     }
 
     @MainActor
-    func testAdsAreRemovedForBothPlansAndNotOtherwise() {
+    func testAdsAreNotRemovedWithoutAnAdFreePurchase() {
         let store = SupportStore()
-        XCTAssertFalse(store.adsRemoved)
-        store.setAccountPlan("adFree")
-        XCTAssertTrue(store.adsRemoved)
-        store.setAccountPlan("support")
-        XCTAssertTrue(store.adsRemoved)
-        store.setAccountPlan(nil)
-        XCTAssertFalse(store.adsRemoved)
+        XCTAssertFalse(store.adsRemoved, "購入の権利がなければ、広告は出す（ログインや、アカウントの状態は関係しない）")
     }
 
     // MARK: 設定改善の提案

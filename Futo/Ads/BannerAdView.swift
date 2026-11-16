@@ -57,7 +57,7 @@ struct WaitBannerSlot: View {
     var body: some View {
         let size = AdsService.bannerSize(width: width)
         Group {
-            if decided, eligible {
+            if decided, eligible, !support.adsRemoved {
                 ZStack {
                     if visible, scenePhase == .active { BannerAdView(size: size) }
                 }

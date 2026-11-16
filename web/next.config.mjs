@@ -7,11 +7,13 @@ const noStore = [
 const nextConfig = {
   poweredByHeader: false,
   // GitHub Pages の公開確認後に FUTO_PAGES_REDIRECTS_ENABLED=1 で有効化する。
-  // 共有・招待・API・Web課金 (/support) は引き続きこのサーバーで扱う。
+  // 共有・招待・API は引き続きこのサーバーで扱う。Web 課金は廃止した（/legal は /help へ）。
   async redirects() {
-    if (process.env.FUTO_PAGES_REDIRECTS_ENABLED !== "1") return [];
+    const retired = [{ source: "/legal", destination: "/help", permanent: false }];
+    if (process.env.FUTO_PAGES_REDIRECTS_ENABLED !== "1") return retired;
     const pages = "https://ryouy.github.io/Futo";
     return [
+      ...retired,
       { source: "/", destination: `${pages}/`, permanent: false },
       { source: "/intro.html", destination: `${pages}/`, permanent: false },
       { source: "/about", destination: `${pages}/about.html`, permanent: false },
@@ -24,7 +26,7 @@ const nextConfig = {
   },
   // トップページは、アプリの紹介ページ（public/intro.html）。共有・招待リンクとは別
   async rewrites() {
-    return { beforeFiles: [{ source: "/", destination: "/intro.html" }, { source: "/privacy", destination: "/privacy.html" }, { source: "/about", destination: "/about.html" }, { source: "/help", destination: "/help.html" }] };
+    return { beforeFiles: [{ source: "/", destination: "/intro.html" }, { source: "/privacy", destination: "/privacy.html" }, { source: "/about", destination: "/about.html" }, { source: "/help", destination: "/help.html" }, { source: "/support", destination: "/support.html" }] };
   },
   async headers() {
     return [
@@ -43,8 +45,6 @@ const nextConfig = {
       // 共有・招待・APIは、共有CDN・ISR・静的生成に残さない
       { source: "/s/:path*", headers: noStore },
       { source: "/i/:path*", headers: noStore },
-      { source: "/support", headers: noStore },
-      { source: "/legal", headers: noStore },
       { source: "/api/:path*", headers: noStore },
     ];
   },

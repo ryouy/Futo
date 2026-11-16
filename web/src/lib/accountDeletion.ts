@@ -4,7 +4,7 @@ import { adminAuth, db } from "./firebase";
 import { ApiError } from "./http";
 import { sha256 } from "./tokens";
 import { userRef } from "./users";
-import { cancelWebSubscription } from "./billing";
+import { cancelLegacyWebSubscription } from "./legacyStripe";
 import { revokeAppleForUser } from "./apple";
 
 /** 再認証の有効時間（秒）。アカウント削除は、直近にサインインした本人にだけ許す。 */
@@ -83,9 +83,9 @@ export async function purgeUserData(uid: string, options: DeletionOptions = {}):
     if (!(await drain(d.collection("blocks").where(field, "==", uid), (doc) => void doc.ref.delete(), deadline))) return "in_progress";
   }
 
-  // Web の契約が続いていれば、先に解約する（アカウントが消えたあとも、請求が続かないように）
+  // 廃止した Web 課金の契約が（もし）残っていれば、先に解約する（アカウントが消えたあとも、請求が続かないように）
   guard("billing");
-  await cancelWebSubscription(uid);
+  await cancelLegacyWebSubscription(uid);
 
   // 「Appleで続ける」のアカウントは、Apple への接続も取り消す（Apple の規約）
   guard("apple");
