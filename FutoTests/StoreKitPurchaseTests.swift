@@ -61,9 +61,9 @@ final class StoreKitPurchaseTests: XCTestCase {
         XCTAssertFalse(store.productsLoadFailed)
         XCTAssertEqual(store.products[.adFree]?.type, .nonConsumable)
         XCTAssertEqual(store.products[.tip]?.type, .consumable)
-        // 価格は、StoreKit が返す表示用の価格（このテスト用の設定では 480 / 160）。アプリの中の固定値ではない
-        XCTAssertTrue(try XCTUnwrap(store.products[.adFree]).displayPrice.contains("480"))
-        XCTAssertTrue(try XCTUnwrap(store.products[.tip]).displayPrice.contains("160"))
+        // 価格は、StoreKit が返す表示用の価格（ローカルのテスト用設定 Futo.storekit では、どちらも 500。本番の価格は App Store Connect で決まる）。アプリの中の固定値ではない
+        XCTAssertTrue(try XCTUnwrap(store.products[.adFree]).displayPrice.contains("500"))
+        XCTAssertTrue(try XCTUnwrap(store.products[.tip]).displayPrice.contains("500"))
     }
 
     func testProductLoadFailureDoesNotAllowPurchase() async throws {

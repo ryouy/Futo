@@ -107,7 +107,7 @@ struct SupportView: View {
                         .foregroundStyle(Theme.accentText)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 } else {
-                    buyButton(item, label: tr("購入する"), prominent: true)
+                    buyButton(item, label: tr("購入する"))
                 }
             }
             .padding(.vertical, 4)
@@ -128,7 +128,7 @@ struct SupportView: View {
                         .foregroundStyle(Theme.accentText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                buyButton(item, label: tr("応援する"), prominent: false)
+                buyButton(item, label: tr("応援する"))
             }
             .padding(.vertical, 4)
         }
@@ -159,7 +159,8 @@ struct SupportView: View {
     }
 
     @ViewBuilder
-    private func buyButton(_ item: SupportProduct, label: String, prominent: Bool) -> some View {
+    /// 2つの商品の購入ボタンは、同じ見た目（色）にそろえる。
+    private func buyButton(_ item: SupportProduct, label: String) -> some View {
         if store.products[item] == nil {
             if store.isLoadingProducts {
                 ProgressView().frame(maxWidth: .infinity, minHeight: 44)
@@ -167,7 +168,7 @@ struct SupportView: View {
             // 取れなかったときは、購入のボタンを出さない（上の案内と「読み込み直す」だけ）
         } else {
             Button(label) { Task { await store.purchase(item) } }
-                .buttonStyle(FutoButtonStyle(prominent: prominent))
+                .buttonStyle(FutoButtonStyle())
                 .disabled(store.isWorking)
         }
     }
