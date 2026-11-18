@@ -75,6 +75,8 @@ final class AppModel {
     /// ホームのシート（設定・記録など）が開いている間は、鍵のアニメーションを出さない
     var homeSheetOpen = false
     @ObservationIgnored private var hasRefreshedOnce = false
+    /// 本人が「制限をかける」を押した直後の、1回の確認だけ true（その確認で、鍵の演出を出すため）
+    @ObservationIgnored private var userStartedLock = false
     var permissionError: String?
     var notice: String?
     var errorMessage: String?
@@ -184,15 +186,9 @@ final class AppModel {
     /// 同じ更新の中で、ほかの全画面の表示（感想など）を待たせるので、重なって見えることがない。
     /// 起動の最初の確認・説明・チュートリアル・ひと呼吸の画面・シート・朝夜のカードが出ているときは、出さない。
     private func requestLockSealIfNeeded(previous: RestrictionState) {
-        defer { hasRefreshedOnce = true }
-        let locked = previous != .configured && restriction == .configured
-        var unlocked = false
-        if previous == .configured {
-            switch restriction {
-            case .off, .temporarilyUnlocked, .paused: unlocked = true
-            default: break
-            }
-        }
+        defer { hasRefreshedOnce = true; userStartedLock = false }
+        let change = Self.sealChange(previous: previous, current: restriction, userStartedLock: userStartedLock)
+        let locked = change.locked, unlocked = change.unlocked
         guard hasRefreshedOnce, locked || unlocked else { return }
         guard onboardingDone, tutorialCompleted, tutorialStep == nil, !showFlow, !homeSheetOpen, visibleCards.isEmpty else { return }
         lockSealUnlocking = unlocked
@@ -204,6 +200,29 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(4))
             if let self, self.lockSealToken == token { self.lockSealActive = false }
         }
+    }
+
+    /// 鍵の演出を出すべき、実際の状態の変化。状態の確認や復元（起動・前面への復帰・取り直し）では、出さない。
+    /// - 制限がかかった：一時解除や一時停止から戻ったとき、または本人が「制限をかける」を押したとき。
+    ///   本人の操作なしに、「確認できない」（.unverifiable）や「制限なし」の表示から「制限中」と分かっただけでは、出さない。
+    /// - 外れた：制限中から、解除・停止・終了へ変わったとき。
+    static func sealChange(previous: RestrictionState, current: RestrictionState, userStartedLock: Bool) -> (locked: Bool, unlocked: Bool) {
+        var locked = false
+        if current == .configured, previous != .configured {
+            switch previous {
+            case .temporarilyUnlocked, .paused: locked = true
+            case .off, .unverifiable: locked = userStartedLock
+            case .configured: locked = false
+            }
+        }
+        var unlocked = false
+        if previous == .configured {
+            switch current {
+            case .off, .temporarilyUnlocked, .paused: unlocked = true
+            default: break
+            }
+        }
+        return (locked, unlocked)
     }
 
     // MARK: 初回
@@ -346,6 +365,7 @@ final class AppModel {
             return
         }
         service.start()
+        userStartedLock = true
         refresh()
         if restriction != .configured {
             errorMessage = tr("設定を確認できませんでした\nもう一度お試しください")

@@ -223,4 +223,40 @@ final class ControlImprovementTests: XCTestCase {
         LanguageStore.shared.select(.en)
         XCTAssertEqual(tr("反映まで あと{0}秒", "30"), "Takes effect in 30s")
     }
+
+    // MARK: 起動・復帰で「制限しました」を出さない
+
+    private let soon = Date(timeIntervalSince1970: 1_800_000_300)
+
+    func testReconfirmingAnExistingLockShowsNothing() {
+        // 起動・前面への復帰・Shieldの再適用：制限中のまま
+        XCTAssertEqual(AppModel.sealChange(previous: .configured, current: .configured, userStartedLock: false).locked, false)
+        XCTAssertEqual(AppModel.sealChange(previous: .configured, current: .configured, userStartedLock: false).unlocked, false)
+        // 起動の直後など、一瞬「確認できない」「制限なし」から、制限中と分かっただけ
+        XCTAssertFalse(AppModel.sealChange(previous: .unverifiable, current: .configured, userStartedLock: false).locked)
+        XCTAssertFalse(AppModel.sealChange(previous: .off, current: .configured, userStartedLock: false).locked)
+    }
+
+    func testUserStartingALockShowsTheSeal() {
+        XCTAssertTrue(AppModel.sealChange(previous: .off, current: .configured, userStartedLock: true).locked)
+        XCTAssertTrue(AppModel.sealChange(previous: .unverifiable, current: .configured, userStartedLock: true).locked)
+    }
+
+    func testRealTransitionsStillShowTheSeal() {
+        // 一時解除・一時停止が終わって、制限に戻った
+        XCTAssertTrue(AppModel.sealChange(previous: .temporarilyUnlocked(until: soon), current: .configured, userStartedLock: false).locked)
+        XCTAssertTrue(AppModel.sealChange(previous: .paused(until: soon), current: .configured, userStartedLock: false).locked)
+        // 制限中から、解除・停止・終了
+        XCTAssertTrue(AppModel.sealChange(previous: .configured, current: .temporarilyUnlocked(until: soon), userStartedLock: false).unlocked)
+        XCTAssertTrue(AppModel.sealChange(previous: .configured, current: .paused(until: soon), userStartedLock: false).unlocked)
+        XCTAssertTrue(AppModel.sealChange(previous: .configured, current: .off, userStartedLock: false).unlocked)
+        XCTAssertFalse(AppModel.sealChange(previous: .configured, current: .unverifiable, userStartedLock: false).unlocked, "確認できないだけでは、「解除しました」も出さない")
+    }
+
+    func testSealWordingInBothLanguages() {
+        LanguageStore.shared.select(.ja)
+        XCTAssertEqual(tr("制限しました"), "制限しました")
+        LanguageStore.shared.select(.en)
+        XCTAssertNotEqual(tr("制限しました"), "制限しました")
+    }
 }
