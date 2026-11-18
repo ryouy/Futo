@@ -111,7 +111,8 @@ enum SuggestionEngine {
         let chosen = records.filter { $0.outcome == .deferred || $0.outcome == .wantsToUse }
         let wants = chosen.filter { $0.outcome == .wantsToUse }.count
         let currentWait = preferences.effectiveWaitSeconds
-        let options = Preferences.waitOptions
+        // 提案は、待機なし（0）を勧めない。ゆるめるかどうかは、本人が設定で選ぶ
+        let options = Preferences.waitOptions.filter { $0 > 0 }
 
         if allowed(.waitLonger), chosen.count >= minimumRecords, wants * 10 >= chosen.count * 6,
            let longer = options.first(where: { $0 > currentWait }) {

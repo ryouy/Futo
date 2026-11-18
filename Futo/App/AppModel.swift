@@ -32,6 +32,8 @@ final class AppModel {
     private(set) var activeSession: Session?
     /// 一時解除中のもの（実機のみ）。ホームで解除中と分かるように表示する
     private(set) var unlockedItems = RestrictedItems()
+    /// 一時解除中の、最短の終わりの時刻（ホームの「あと○分」用）。解除中でなければ nil。時刻で持つので、画面を離れても正しく数えられる
+    private(set) var unlockDeadline: Date?
 
     /// 一時解除のあとの感想を、まだ尋ねていない直近のひと呼吸（解除が終わったあとだけ）。
     var pendingReflection: Session?
@@ -144,8 +146,10 @@ final class AppModel {
         restriction = service.verify()
         if mode == .device, case .temporarilyUnlocked = restriction {
             unlockedItems = device.unlockedItems
+            unlockDeadline = device.unlockRecord?.usableUntil
         } else {
             unlockedItems = RestrictedItems()
+            unlockDeadline = nil
         }
         activeSession = sessions.openSession(mode: mode)
         applyUnlockEnds()
@@ -302,6 +306,15 @@ final class AppModel {
 
     func didChangeDeviceSelection() {
         refresh()
+    }
+
+    /// 選択画面で選んだものを、いまの制限に「追加」する。いまの対象は、選択画面に出ていなくても、そのまま残る（外れない）。
+    /// 制限中・一時解除中でも追加できる。解除や再制限のタイマーには、触れない。
+    func addDeviceSelection(_ selection: FamilyActivitySelection) {
+        guard canAddItems else { return }
+        let removedSelf = device.saveSelection(selection, additiveOnly: true)
+        didChangeDeviceSelection()
+        if removedSelf { notice = tr("「ふと」自身は、制限できません") }
     }
 
     /// 1つを制限から外す。
@@ -476,6 +489,9 @@ final class AppModel {
     var waitDurationText: String {
         durationText(seconds: activeSession?.requiredWaitSeconds ?? prefs.effectiveWaitSeconds)
     }
+
+    /// 使う前に待つか（待機が0分なら、待たない）
+    var waitsBeforeUse: Bool { (activeSession?.requiredWaitSeconds ?? prefs.effectiveWaitSeconds) > 0 }
 
     var canTemporarilyUnlock: Bool { mode == .device && service.supportsTemporaryUnlock }
 

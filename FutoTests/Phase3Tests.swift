@@ -562,7 +562,7 @@ final class Phase3Tests: XCTestCase {
         XCTAssertEqual(Preferences().effectiveUnlockMinutes, Preferences.defaultUnlockMinutes)
         XCTAssertTrue(Preferences.unlockMinuteOptions.contains(Preferences.defaultUnlockMinutes))
 
-        XCTAssertEqual(Preferences.waitOptions, [10, 30, 60, 300, 600], "待機時間は、10秒・30秒に加えて、この3つ（最長10分）")
+        XCTAssertEqual(Preferences.waitOptions, [0, 10, 30, 60, 300, 600], "待機時間は、0（待機なし）・10秒・30秒に加えて、この3つ（最長10分）")
         var w = Preferences(); w.waitSeconds = 180
         XCTAssertEqual(w.effectiveWaitSeconds, 60, "以前の3分は、近い選択肢に寄せる（180は、60と300の間で、60に近い）")
         w.waitSeconds = 120

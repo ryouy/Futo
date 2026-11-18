@@ -134,6 +134,9 @@ final class DeviceRestrictionService: RestrictionService {
 
     var supportsTemporaryUnlock: Bool { SharedState.isAvailable }
 
+    /// いまの一時解除の記録（なければ nil）
+    var unlockRecord: UnlockRecord? { SharedState.unlock }
+
     /// 解除中のもの。一時解除中でなければ空。
     var unlockedItems: RestrictedItems { SharedState.unlock?.unlocked ?? RestrictedItems() }
 

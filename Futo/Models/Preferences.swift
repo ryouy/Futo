@@ -43,8 +43,9 @@ struct Preferences: Codable, Equatable {
 
     init() {}
 
-    /// 待機時間の選択肢（10秒・30秒・1分・5分・10分）。
-    static let waitOptions: [Double] = [10, 30, 60, 300, 600]
+    /// 待機時間の選択肢（0分＝待機なし・10秒・30秒・1分・5分・10分）。
+    /// 0は、制限をやめる設定ではない。待たずに、一時解除を始められる、という意味。
+    static let waitOptions: [Double] = [0, 10, 30, 60, 300, 600]
     /// 解除する時間の選択肢（分）。
     static let unlockMinuteOptions: [Int] = [1, 5, 10]
 
@@ -158,6 +159,7 @@ struct Preferences: Codable, Equatable {
 /// 「3分」「10秒」のような言い表し。
 func durationText(seconds: Double) -> String {
     let total = Int(seconds.rounded())
+    if total == 0 { return tr("0分（待機なし）") }
     let minutes = total / 60, rest = total % 60
     if minutes == 0 { return tr("{0}秒", "\(rest)") }
     return rest == 0 ? tr("{0}分", "\(minutes)") : tr("{0}分{1}秒", "\(minutes)", "\(rest)")
@@ -173,4 +175,21 @@ func countdownText(_ remaining: TimeInterval) -> String {
     let total = max(0, Int(remaining.rounded(.up)))
     if total < 60 { return "\(total)" }
     return String(format: "%d:%02d", total / 60, total % 60)
+}
+
+extension UnlockRecord {
+    /// 解除していられる、最短の終わりの時刻。
+    /// 再制限は、「設定の分数だけ使った」か「監視区間が終わった」の、早いほうで起きる。使った時間はアプリから読めないので、
+    /// 解除してからの経過時間（使った時間以上になる）で数える。実際に使えるのは、これ以上のことがある（表示が短めになる側）。
+    var usableUntil: Date {
+        guard let minutes else { return endsAt }
+        return min(endsAt, startedAt.addingTimeInterval(TimeInterval(minutes) * 60))
+    }
+}
+
+/// ホームに小さく出す、解除の残り時間。1分以上は「あと12分」（切り上げ）、1分未満は「あと30秒」。残りがなければ nil。
+func unlockRemainingText(_ remaining: TimeInterval) -> String? {
+    guard remaining > 0 else { return nil }
+    if remaining > 60 { return tr("あと{0}分", "\(Int((remaining / 60).rounded(.up)))") }
+    return tr("あと{0}秒", "\(Int(remaining.rounded(.up)))")
 }

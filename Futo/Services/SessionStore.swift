@@ -37,7 +37,9 @@ final class SessionStore {
         guard session.phase == .choosingPurpose else { return false }
         session.purpose = purpose
         session.remainingWaitSeconds = session.requiredWaitSeconds
-        session.phase = .waiting
+        // 待機が0なら、待機の段階は通らず、そのまま最終選択へ（既存の状態遷移の中で、待つ時間が0というだけ）
+        session.phase = session.requiredWaitSeconds <= 0 ? .awaitingChoice : .waiting
+        if session.phase == .awaitingChoice { session.remainingWaitSeconds = 0 }
         save()
         return true
     }

@@ -21,32 +21,28 @@ struct ItemLabel: View, Equatable {
 }
 
 /// 実機用：FamilyActivityPicker。アプリ・カテゴリ・ウェブサイトを選べる。
+/// Appleの選択画面には、選択済みのものを候補から外す方法がない（公開APIにない）。
+/// そこで、いつも「何も選んでいない状態」から開き、選んだものを、いまの制限に足す（保存側で和集合にする）。
+/// こうすると、いまの対象が選択画面に出ていなくても外れず、たくさん選んである状態で開く重さも、なくなる。
+/// この画面は、アプリの状態（AppModel）を見ない。ホームが再描画されても、選択画面が作り直されたり、更新されたりしない。
 @MainActor
 struct DeviceAppPickerView: View {
-    let model: AppModel
+    let onSave: (FamilyActivitySelection) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var draft: FamilyActivitySelection
-
-    init(model: AppModel) {
-        self.model = model
-        _draft = State(initialValue: model.device.selection)
-    }
+    @State private var draft = FamilyActivitySelection()
 
     var body: some View {
         NavigationStack {
             FamilyActivityPicker(selection: $draft)
-                .navigationTitle(tr("制限するもの"))
+                .navigationTitle(tr("制限するものを追加"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(tr("キャンセル")) { dismiss() }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(tr("保存")) {
-                            // 制限中は、追加だけ。外したものは元に戻る。
-                            let removedSelf = model.device.saveSelection(draft, additiveOnly: model.isTargetEditLocked)
-                            model.didChangeDeviceSelection()
-                            if removedSelf { model.notice = tr("「ふと」自身は、制限できません") }
+                        Button(tr("追加")) {
+                            onSave(draft)
                             dismiss()
                         }
                     }

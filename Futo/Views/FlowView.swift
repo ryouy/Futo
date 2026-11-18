@@ -82,7 +82,9 @@ struct PurposeView: View {
         CenteredScroll {
             VStack(spacing: 14) {
                 FlowTitle(text: tr("これから、何をしますか？"))
-                Text(tr("使う前に、{0}だけ待ちます", "\(model.waitDurationText)"))
+                Text(model.waitsBeforeUse
+                     ? tr("使う前に、{0}だけ待ちます", "\(model.waitDurationText)")
+                     : tr("待たずに、すぐに進めます"))
                     .oneLine(0.8)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -92,7 +94,7 @@ struct PurposeView: View {
                         Text(item.label).oneLine()
                     }
                 }
-                Button(tr("ひと呼吸おく")) { model.choosePurpose(selected) }
+                Button(model.waitsBeforeUse ? tr("ひと呼吸おく") : tr("次へ")) { model.choosePurpose(selected) }
                     .buttonStyle(FutoButtonStyle())
                     .disabled(selected == nil)
                     .padding(.top, 10)

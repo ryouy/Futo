@@ -66,6 +66,8 @@ struct HomeView: View {
             }
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(5))
+                // 選択画面を開いている間は、状態を取り直さない（選択画面を、不用意に再描画させない）
+                if sheet == .picker { continue }
                 model.refresh()
             }
         }
@@ -123,7 +125,7 @@ struct HomeView: View {
 
     /// 画面の高さに合わせて、制限するものを何件まで丸ごと見せるか。多いときは、その次の1件を、下の1/3ほど見切れさせる。
     private func visibleRows(forHeight height: CGFloat) -> Int {
-        var reserved: CGFloat = 300
+        var reserved: CGFloat = 330
         // 提案のカードが出ているときは、その分、一覧を短くする
         if model.suggestion != nil, !isUnlocked, !model.isPaused { reserved += 210 }
         return max(2, min(8, Int((height - reserved) / Self.rowHeight)))
@@ -274,7 +276,14 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headline).font(.headline.weight(.medium)).oneLine()
-                    if !subline.isEmpty {
+                    if isUnlocked, let deadline = model.unlockDeadline {
+                        // 解除の終わりの時刻から数える。画面に戻ったときも、時刻で正しく出る。小さく、補助として。
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            if let text = unlockRemainingText(deadline.timeIntervalSince(context.date)) {
+                                Text(text).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
+                            }
+                        }
+                    } else if !subline.isEmpty {
                         if needsPermission {
                             // 許可の前の説明は、省略せずに、全文を見せる（折り返す）
                             Text(subline).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -292,7 +301,7 @@ struct HomeView: View {
                             .frame(width: 40, height: 40)
                             .background(Circle().fill(Theme.accent.opacity(0.14)))
                     }
-                    .accessibilityLabel(tr("追加"))
+                    .accessibilityLabel(tr("制限するものを追加"))
                     .tutorialTarget(.plus)
                     .transition(.opacity)
                 }
@@ -367,8 +376,17 @@ struct HomeView: View {
             } else {
                 appRows(editable: editable)
             }
+            if !editable, !DemoConfig.isOn, model.canAddItems { lockedEditHint }
         }
         .animation(.easeInOut(duration: 0.3), value: editable)
+    }
+
+    /// 制限中は、追加だけできる。短く、その場で伝える（デモの一覧には、別の案内がある）。
+    private var lockedEditHint: some View {
+        Text(tr("制限中も追加できます。減らすには、制限の終了が必要です"))
+            .font(.footnote).foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, 8)
     }
 
     private func appRows(editable: Bool) -> some View {
@@ -482,7 +500,7 @@ struct HomeView: View {
     private func sheetContent(_ item: HomeSheet) -> some View {
         switch item {
         case .picker:
-            if DemoConfig.isOn { DemoAppPickerView(model: model) } else { DeviceAppPickerView(model: model) }
+            if DemoConfig.isOn { DemoAppPickerView(model: model) } else { DeviceAppPickerView(onSave: { model.addDeviceSelection($0) }) }
         case .history:
             NavigationStack {
                 RecordsView(mode: model.mode)
