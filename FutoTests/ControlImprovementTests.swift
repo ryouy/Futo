@@ -268,4 +268,54 @@ final class ControlImprovementTests: XCTestCase {
         LanguageStore.shared.select(.en)
         XCTAssertNotEqual(tr("制限しました"), "制限しました")
     }
+
+    // MARK: シールドの色
+
+    private func contrast(_ a: UInt32, _ b: UInt32) -> Double {
+        let la = RGB(a).luminance, lb = RGB(b).luminance
+        return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+    }
+
+    private func theme(for color: ThemeColor) -> ShieldTheme {
+        let p = color.palette
+        return ShieldTheme.make(accent: p.accent.0, textAccent: color.textAccent, backgroundTop: p.backgroundTop)
+    }
+
+    func testShieldThemeFollowsEachThemeAndIsReadable() {
+        for color in ThemeColor.allCases {
+            let t = theme(for: color)
+            XCTAssertEqual(t.tile, color.palette.accent.0, "台の色は、テーマのアクセント")
+            XCTAssertEqual(t.background, [color.palette.backgroundTop.0, color.palette.backgroundTop.1])
+            for mode in 0..<2 {
+                XCTAssertGreaterThanOrEqual(contrast(t.title[mode], t.background[mode]), 3.0, "\(color) 題名 \(mode)（大きな文字は3:1）")
+                XCTAssertGreaterThanOrEqual(contrast(t.body[mode], t.background[mode]), 4.5, "\(color) 本文 \(mode)")
+                XCTAssertGreaterThanOrEqual(contrast(t.buttonText[mode], t.buttonBackground[mode]), 4.5, "\(color) ボタン \(mode)")
+            }
+        }
+        XCTAssertEqual(Set(ThemeColor.allCases.map { theme(for: $0) }).count, 4, "テーマごとに違う色になる")
+    }
+
+    func testShieldThemeRoundTripAndFallback() throws {
+        let suite = UserDefaults(suiteName: "test.shieldTheme.\(UUID().uuidString)")!
+        XCTAssertEqual(ShieldTheme.load(from: suite), .fallback, "まだ無ければ、深緑")
+        let t = theme(for: .sakura)
+        t.save(to: suite)
+        XCTAssertEqual(ShieldTheme.load(from: suite), t)
+        suite.set(Data("broken".utf8), forKey: ShieldTheme.key)
+        XCTAssertEqual(ShieldTheme.load(from: suite), .fallback, "壊れた値では、深緑")
+        var bad = t; bad.title = [1]
+        bad.save(to: suite)
+        XCTAssertEqual(ShieldTheme.load(from: suite), .fallback, "配列の長さが違う値では、落ちずに深緑")
+    }
+
+    func testCustomThemeProducesReadableShield() {
+        for hex in ["#FFF200", "#FFFFFF", "#000000", "#E91E63"] {
+            guard let rgb = RGB(hex: hex) else { return XCTFail(hex) }
+            let c = CustomPalette.colors(for: rgb)
+            let t = ShieldTheme.make(accent: c.accent, textAccent: (c.accent, c.textAccentDark), backgroundTop: (c.backgroundTopLight, c.backgroundTopDark))
+            XCTAssertGreaterThanOrEqual(contrast(t.buttonText[0], t.buttonBackground[0]), 4.5, hex)
+            XCTAssertGreaterThanOrEqual(contrast(t.title[0], t.background[0]), 3.0, "好きな色 \(hex) 題名（ライト）")
+            XCTAssertGreaterThanOrEqual(contrast(t.title[1], t.background[1]), 3.0, "好きな色 \(hex) 題名（ダーク）")
+        }
+    }
 }

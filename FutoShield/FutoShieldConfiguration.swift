@@ -14,21 +14,9 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
     override func configuration(shielding webDomain: WebDomain) -> ShieldConfiguration { Self.make() }
     override func configuration(shielding webDomain: WebDomain, in category: ActivityCategory) -> ShieldConfiguration { Self.make() }
 
-    // MARK: 色（生成りと、落ち着いた緑。ダークでは、深い緑地に生成り）
+    // MARK: 色（本体がテーマから決めた色。App Groupから読む。読めなければ、深緑）
 
-    private static func color(light: UInt32, dark: UInt32) -> UIColor {
-        UIColor { traits in
-            let hex = traits.userInterfaceStyle == .dark ? dark : light
-            return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
-                           blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
-        }
-    }
-
-    private static let background = color(light: 0xFCF8F0, dark: 0x10312C)
-    private static let titleColor = color(light: 0x124A42, dark: 0xFCF8F0)
-    private static let bodyColor = color(light: 0x4F5F5A, dark: 0xD9D4C8)
-    private static let buttonBackground = color(light: 0x196459, dark: 0xFCF8F0)
-    private static let buttonText = color(light: 0xFCF8F0, dark: 0x124A42)
+    private static var theme: ShieldTheme { ShieldTheme.load() }
 
     // MARK: 文言（端末の言語が日本語なら日本語、それ以外は英語）
 
@@ -47,34 +35,32 @@ final class FutoShieldConfiguration: ShieldConfigurationDataSource {
 
     static var buttonTitle: String { isJapanese ? "ホームに戻る" : "Back to Home" }
 
-    /// ロゴは生成り色なので、ブランドの緑の角丸の台に載せて描く（ライトの生成り地でも、ダークの暗い地でも見える）。
-    private static let icon: UIImage? = {
+    /// ロゴは生成り色なので、テーマ色の角丸の台に載せて描く（ライトの生成り地でも、ダークの暗い地でも見える）。
+    private static func icon(tile: UInt32) -> UIImage? {
         guard let logo = UIImage(named: "ShieldIcon") else { return nil }
         let side: CGFloat = 112
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: side, height: side))
-        return renderer.image { context in
+        return renderer.image { _ in
             let rect = CGRect(x: 0, y: 0, width: side, height: side)
-            let tile = UIBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: 28)
-            UIColor(red: 0x19 / 255, green: 0x64 / 255, blue: 0x59 / 255, alpha: 1).setFill()
-            tile.fill()
-            let inset: CGFloat = 18
-            let target = rect.insetBy(dx: inset, dy: inset)
+            ShieldTheme.color(tile).setFill()
+            UIBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: 28).fill()
+            let target = rect.insetBy(dx: 18, dy: 18)
             let scale = min(target.width / logo.size.width, target.height / logo.size.height)
             let size = CGSize(width: logo.size.width * scale, height: logo.size.height * scale)
             logo.draw(in: CGRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height))
-            _ = context
         }
-    }()
+    }
 
     static func make() -> ShieldConfiguration {
-        ShieldConfiguration(
+        let theme = theme
+        return ShieldConfiguration(
             backgroundBlurStyle: nil,
-            backgroundColor: background,
-            icon: icon,
-            title: .init(text: title, color: titleColor),
-            subtitle: .init(text: subtitle, color: bodyColor),
-            primaryButtonLabel: .init(text: buttonTitle, color: buttonText),
-            primaryButtonBackgroundColor: buttonBackground,
+            backgroundColor: ShieldTheme.uiColor(theme.background),
+            icon: icon(tile: theme.tile),
+            title: .init(text: title, color: ShieldTheme.uiColor(theme.title)),
+            subtitle: .init(text: subtitle, color: ShieldTheme.uiColor(theme.body)),
+            primaryButtonLabel: .init(text: buttonTitle, color: ShieldTheme.uiColor(theme.buttonText)),
+            primaryButtonBackgroundColor: ShieldTheme.uiColor(theme.buttonBackground),
             secondaryButtonLabel: nil
         )
     }

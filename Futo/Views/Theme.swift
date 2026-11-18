@@ -74,6 +74,13 @@ final class ThemeStore {
         color = ThemeColor(rawValue: UserDefaults.standard.string(forKey: Self.key) ?? "") ?? .wakaba
         let saved = UserDefaults.standard.string(forKey: Self.customKey)
         customHex = saved.flatMap { RGB(hex: $0) != nil ? $0 : nil }
+        syncShieldTheme()
+    }
+
+    /// 制限中のアプリを開いたときのシールドの色を、いまのテーマに合わせる（拡張が読めるよう、App Groupへ書く）。
+    /// 起動時と、テーマが変わるたびに呼ぶ。
+    func syncShieldTheme() {
+        ShieldTheme.make(accent: palette.accent.0, textAccent: textAccent, backgroundTop: palette.backgroundTop).save(to: SharedState.isAvailable ? UserDefaults(suiteName: SharedState.appGroupID) : nil)
     }
 
     var isCustom: Bool { customHex != nil }
@@ -86,6 +93,7 @@ final class ThemeStore {
         customHex = nil
         UserDefaults.standard.set(newColor.rawValue, forKey: Self.key)
         UserDefaults.standard.removeObject(forKey: Self.customKey)
+        syncShieldTheme()
     }
 
     /// 好きな色にする。形式が正しくなければ、何もしない。
@@ -93,6 +101,7 @@ final class ThemeStore {
         guard let rgb = RGB(hex: hex) else { return }
         customHex = rgb.hex
         UserDefaults.standard.set(rgb.hex, forKey: Self.customKey)
+        syncShieldTheme()
     }
 
     /// バックアップに入れる値（4つのテーマは名前、好きな色は「custom:#RRGGBB」）

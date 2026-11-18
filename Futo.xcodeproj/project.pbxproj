@@ -64,6 +64,8 @@
 		5BC7B5D683C01B5755CCF302 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D183B067D9C20E8E848405 /* InsightsView.swift */; };
 		5F21563494D63721948F802E /* RestrictionEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A74E35431C3F5CF9B7356C7 /* RestrictionEventTests.swift */; };
 		5FF5104A86D141EF2D4DA87D /* PKCE.swift in Sources */ = {isa = PBXBuildFile; fileRef = E640CE9BAC5D46E1D1FB0617 /* PKCE.swift */; };
+		C7D8E9F0A1B2C3D4E5F60719 /* ShieldTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D8E9F0A1B2C3D4E5F60718 /* ShieldTheme.swift */; };
+		C7D8E9F0A1B2C3D4E5F6071A /* ShieldTheme.swift in Sources (shield) */ = {isa = PBXBuildFile; fileRef = C7D8E9F0A1B2C3D4E5F60718 /* ShieldTheme.swift */; };
 		6004556B9472BDBA86337E6D /* SharedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB1C846DC4122660C2FFF45 /* SharedState.swift */; };
 		6701903BE9BD43EF8CDD200A /* WaitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95DEA83570D048231C077F6 /* WaitController.swift */; };
 		6C137678CE802BEF81A0ACB4 /* FutoShieldAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55097CD4104E29FEF9C9CD2 /* FutoShieldAction.swift */; };
@@ -278,6 +280,7 @@
 		F3ABA836A347ACB128D09C74 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		F55097CD4104E29FEF9C9CD2 /* FutoShieldAction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FutoShieldAction.swift; sourceTree = "<group>"; };
 		F7D183B067D9C20E8E848405 /* InsightsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		C7D8E9F0A1B2C3D4E5F60718 /* ShieldTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShieldTheme.swift; sourceTree = "<group>"; };
 		FDB1C846DC4122660C2FFF45 /* SharedState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedState.swift; sourceTree = "<group>"; };
 		FE5A750D94E24C9C5B9CB7C3 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FED8F394DA3FFC4EAC9D8A20 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -528,6 +531,7 @@
 			isa = PBXGroup;
 			children = (
 				FDB1C846DC4122660C2FFF45 /* SharedState.swift */,
+				C7D8E9F0A1B2C3D4E5F60718 /* ShieldTheme.swift */,
 				8CD7C1317AD0655D6DC80670 /* RestrictedItems.swift */,
 				6C48F409E24D98499D5E75FF /* PauseModel.swift */,
 			);
@@ -844,6 +848,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7D8E9F0A1B2C3D4E5F6071A /* ShieldTheme.swift in Sources */,
 				065A921ED23EB237FF7EFC2F /* FutoShieldConfiguration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -852,6 +857,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7D8E9F0A1B2C3D4E5F60719 /* ShieldTheme.swift in Sources */,
 				0AD4B04D8720107077F2D34A /* AppModel.swift in Sources */,
 				2AF650B58BEFB4B318603675 /* FutoApp.swift in Sources */,
 				D9DCD71B7EBE925EB79D8A86 /* Session.swift in Sources */,
