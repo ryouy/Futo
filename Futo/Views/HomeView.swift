@@ -131,7 +131,7 @@ struct HomeView: View {
 
     /// 画面の高さに合わせて、制限するものを何件まで丸ごと見せるか。多いときは、その次の1件を、下の1/3ほど見切れさせる。
     private func visibleRows(forHeight height: CGFloat) -> Int {
-        var reserved: CGFloat = 330
+        var reserved: CGFloat = 400
         // 提案のカードが出ているときは、その分、一覧を短くする
         if model.suggestion != nil, !isUnlocked, !model.isPaused { reserved += 210 }
         return max(2, min(8, Int((height - reserved) / Self.rowHeight)))
@@ -299,18 +299,6 @@ struct HomeView: View {
                     }
                 }
                 Spacer(minLength: 0)
-                if model.targetCount > 0, model.canAddItems {
-                    Button(action: addApps) {
-                        Image(systemName: "plus")
-                            .font(.body.weight(.medium))
-                            .foregroundStyle(Theme.accentText)
-                            .frame(width: 40, height: 40)
-                            .background(Circle().fill(Theme.accent.opacity(0.14)))
-                    }
-                    .accessibilityLabel(tr("制限するものを追加"))
-                    .tutorialTarget(.plus)
-                    .transition(.opacity)
-                }
             }
 
             if setupNeeded {
@@ -321,6 +309,7 @@ struct HomeView: View {
             if model.targetCount > 0 {
                 Divider()
                 appsSection(rows: rows)
+                if model.canAddItems { addSection }
             }
             if let error = model.permissionError { Text(error).font(.footnote) }
             if let notice = model.notice {
@@ -382,18 +371,40 @@ struct HomeView: View {
             } else {
                 appRows(editable: editable)
             }
-            if !editable, !DemoConfig.isOn, model.canAddItems { lockedEditHint }
         }
         .animation(.easeInOut(duration: 0.3), value: editable)
     }
 
-    /// 制限中に対象を減らす方法だけを、短く伝える（追加はいつでもできるので、書かない）。デモの一覧には、別の案内がある。
-    private var lockedEditHint: some View {
-        Text(tr("減らすには、{0}待って制限を終了します", durationText(seconds: model.pause.rules.endWaitSeconds)))
-        .font(.footnote).foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(.top, 8)
+    /// 一覧の下の「＋ 制限する項目を追加」と、短い案内。追加できる状態（一時停止中でない）のときだけ出す。
+    /// 案内は、意味ごとに別のTextにして、文ごとに折り返す（途中に固定の改行は入れない）。
+    private var addSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button(action: addApps) {
+                Label(tr("制限する項目を追加"), systemImage: "plus")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.accentText)
+                    .frame(minHeight: 44, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .tutorialTarget(.plus)
+            if !DemoConfig.isOn {
+                VStack(alignment: .leading, spacing: 2) {
+                    if model.isTargetEditLocked {
+                        // 制限中：追加はできる。減らすには、制限を終える（待機あり）
+                        Text(tr("制限中も項目を追加できます"))
+                        Text(tr("減らすには、制限を終了してください"))
+                    } else {
+                        // 制限オフ：各行の－で外せる
+                        Text(tr("追加も、外すこともできます"))
+                    }
+                }
+                .font(.footnote).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.top, 2)
     }
 
     private func appRows(editable: Bool) -> some View {

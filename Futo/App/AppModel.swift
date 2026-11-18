@@ -331,9 +331,31 @@ final class AppModel {
     /// 制限中・一時解除中でも追加できる。解除や再制限のタイマーには、触れない。
     func addDeviceSelection(_ selection: FamilyActivitySelection) {
         guard canAddItems else { return }
+        let before = device.items.count
         let removedSelf = device.saveSelection(selection, additiveOnly: true)
         didChangeDeviceSelection()
-        if removedSelf { notice = tr("「ふと」自身は、制限できません") }
+        switch Self.addOutcome(added: device.items.count - before, removedSelf: removedSelf) {
+        case .ownApp: showTransientNotice(tr("「ふと」自身は、制限できません"))
+        case .added: showTransientNotice(tr("制限する項目を追加しました"))
+        case .nothing: break
+        }
+    }
+
+    enum AddOutcome: Equatable { case added, ownApp, nothing }
+
+    /// 追加の結果のお知らせ。実際に増えたときだけ「追加しました」。何も選ばない・すでにあるものだけ、のときは出さない。
+    static func addOutcome(added: Int, removedSelf: Bool) -> AddOutcome {
+        if removedSelf { return .ownApp }
+        return added > 0 ? .added : .nothing
+    }
+
+    /// 数秒で消えるお知らせ（同じ文は、重ねて出さない。あとから別のお知らせが出ていたら、そちらは消さない）
+    private func showTransientNotice(_ text: String) {
+        notice = text
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            if self?.notice == text { self?.notice = nil }
+        }
     }
 
     /// 1つを制限から外す。

@@ -34,8 +34,22 @@ struct DeviceAppPickerView: View {
     var body: some View {
         NavigationStack {
             FamilyActivityPicker(selection: $draft)
-                .navigationTitle(tr("制限するものを追加"))
+                .navigationTitle(tr("制限する項目を追加"))
                 .navigationBarTitleDisplayMode(.inline)
+                // 説明は、Futo側の、選択画面の下に置く（標準の見出し・補足の表示位置は、実機でないと確かめられず、重複もしうるため、使わない）。
+                // 選択画面そのものには手を入れない。
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    VStack(spacing: 2) {
+                        Text(tr("追加したいアプリやWebサイトを選んでください"))
+                        Text(tr("現在の制限対象は、そのまま残ります"))
+                    }
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 20).padding(.vertical, 8)
+                    .background(.bar)
+                }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(tr("キャンセル")) { dismiss() }

@@ -146,11 +146,21 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertNil(try JSONDecoder().decode(UnlockRecord.self, from: old).monitorEndsAt)
     }
 
-    func testRemoveHintInBothLanguages() {
+    func testAddFeedbackOnlyWhenSomethingWasActuallyAdded() {
+        XCTAssertEqual(AppModel.addOutcome(added: 2, removedSelf: false), .added)
+        XCTAssertEqual(AppModel.addOutcome(added: 0, removedSelf: false), .nothing, "何も選ばない・既存だけの重複選択では出さない")
+        XCTAssertEqual(AppModel.addOutcome(added: 0, removedSelf: true), .ownApp)
+        XCTAssertEqual(AppModel.addOutcome(added: 1, removedSelf: true), .ownApp, "ふと自身が混ざったときは、その案内を優先")
+    }
+
+    func testAddTextsInBothLanguages() {
         LanguageStore.shared.select(.ja)
-        XCTAssertEqual(tr("減らすには、{0}待って制限を終了します", durationText(seconds: 1_800)), "減らすには、30分待って制限を終了します")
+        XCTAssertEqual(tr("制限する項目を追加"), "制限する項目を追加")
         LanguageStore.shared.select(.en)
-        XCTAssertEqual(tr("減らすには、{0}待って制限を終了します", durationText(seconds: 1_800)), "To remove items, wait 30 min and end the lock")
+        for key in ["制限する項目を追加", "制限する項目を追加しました", "追加したいアプリやWebサイトを選んでください", "現在の制限対象は、そのまま残ります",
+                    "制限中も項目を追加できます", "減らすには、制限を終了してください", "追加も、外すこともできます"] {
+            XCTAssertNotEqual(tr(key), key, "英訳がある：\(key)")
+        }
     }
 
     // MARK: 緩和の反映待ち
