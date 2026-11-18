@@ -71,7 +71,7 @@ struct SettingsView: View {
             if model.permission != .approved { permissionSection }
 
             // ゆるめる変更（待機を短く・解除を長く）の決まりを、いつも、待機時間の上に出す
-            DescribedSection(lines: [tr("ゆるめる変更は、1分後に反映されます")]) {
+            LoosenNoticeSection(prefs: model.prefs) {
                 Picker(tr("待機時間"), selection: Binding(
                     get: { model.prefs.pendingWaitSeconds ?? model.prefs.effectiveWaitSeconds },
                     set: { value in model.updatePreferences { $0.setWait(value) } }
@@ -245,5 +245,33 @@ extension View {
         self.scrollContentBackground(.hidden)
             .background(Theme.background.ignoresSafeArea())
             .scrollBounceBehavior(.basedOnSize)
+    }
+}
+
+/// 待機時間・解除する時間の枠の上に出す、ゆるめる変更の案内。反映待ちの間は、残り秒数を1秒ごとに出す（時刻から求める）。
+/// 画面の更新と、実際の反映（Preferences.settlePending）は別。表示が止まっても、反映の時刻は変わらない。
+private struct LoosenNoticeSection<Content: View>: View {
+    let prefs: Preferences
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Section {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Group {
+                    if let remaining = prefs.loosenRemaining(now: context.date) {
+                        Text(tr("反映まで あと{0}秒", "\(Int(remaining.rounded(.up)))"))
+                            .monospacedDigit()
+                    } else {
+                        Text(tr("ゆるめる変更は、1分後に反映されます"))
+                    }
+                }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 8))
+            content.listRowBackground(Theme.card)
+        }
     }
 }

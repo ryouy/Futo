@@ -275,6 +275,7 @@ enum EnglishStrings {
         "30日後": "In 30 days",
         "ニックネームを出す": "Show nickname",
         "リンクの期限": "Link expires",
+        "反映まで あと{0}秒": "Takes effect in {0}s",
         "ゆるめる変更は、1分後に反映されます": "Looser changes take effect in 1 minute",
         "「ふと」自身は、制限できません": "Futo can't lock itself",
         "通知を受け取りますか？": "Get notifications?",

@@ -101,4 +101,74 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertEqual(tr("利用時間の上限：{0}分", "30"), "Time limit: 30 min")
         XCTAssertEqual(tr("一時解除中"), "Unlocked for now")
     }
+
+    // MARK: 緩和の反映待ち
+
+    func testFirstLoosenStartsSixtySecondCountdown() {
+        var p = Preferences()
+        XCTAssertNil(p.loosenRemaining(now: base))
+        p.setWait(30, now: base)
+        XCTAssertEqual(p.loosenRemaining(now: base), 60)
+        XCTAssertEqual(p.loosenRemaining(now: base.addingTimeInterval(1)), 59, "1秒ごとに減る（時刻から求める）")
+        XCTAssertEqual(p.loosenRemaining(now: base.addingTimeInterval(30)), 30)
+        XCTAssertEqual(p.loosenRemaining(now: base.addingTimeInterval(55)), 5)
+        XCTAssertNil(p.loosenRemaining(now: base.addingTimeInterval(60)), "反映されたら出さない")
+        XCTAssertEqual(p.loosenAppliesAt, base.addingTimeInterval(60))
+    }
+
+    func testNewLoosenResetsTheTimerForEverythingPending() {
+        var p = Preferences()
+        p.setWait(60, now: base.addingTimeInterval(-1))   // 同じ値：緩めてはいない
+        p.setUnlockMinutes(10, now: base)                  // 解除を長く（緩める）→ 60秒開始
+        p.setWait(30, now: base.addingTimeInterval(30))    // 待機を短く（緩める）→ 全体が60秒に戻る
+        XCTAssertEqual(p.loosenRemaining(now: base.addingTimeInterval(30)), 60)
+        XCTAssertEqual(p.loosenAppliesAt, base.addingTimeInterval(90), "最後に緩めた時点から1分後")
+        // 古い予定（最初の変更の60秒後）では、反映されない
+        XCTAssertEqual(p.effectiveUnlockMinutes(now: base.addingTimeInterval(61)), Preferences.defaultUnlockMinutes)
+        XCTAssertEqual(p.effectiveWaitSeconds(now: base.addingTimeInterval(61)), 60)
+        // 最後から60秒後に、まとめて反映される
+        let due = base.addingTimeInterval(91)
+        XCTAssertEqual(p.effectiveUnlockMinutes(now: due), 10)
+        XCTAssertEqual(p.effectiveWaitSeconds(now: due), 30)
+        p.settlePending(now: due)
+        XCTAssertEqual(p.waitSeconds, 30); XCTAssertEqual(p.unlockMinutes, 10)
+        XCTAssertNil(p.loosenAppliesAt)
+    }
+
+    func testPendingValueAndEffectiveValueAreNotMixedUp() {
+        var p = Preferences(); p.waitSeconds = 300
+        p.setWait(0, now: base)
+        XCTAssertEqual(p.effectiveWaitSeconds(now: base.addingTimeInterval(10)), 300, "反映までは、いまの値のまま")
+        XCTAssertEqual(p.pendingWaitSeconds, 0)
+        XCTAssertEqual(p.effectiveWaitSeconds(now: base.addingTimeInterval(60)), 0)
+    }
+
+    func testNoOpAndStrengtheningDoNotResetOrEarlyApply() {
+        var p = Preferences()
+        p.setUnlockMinutes(10, now: base)                    // 緩める：待ち開始
+        p.setUnlockMinutes(10, now: base.addingTimeInterval(20)) // 同じ値の選び直し：リセットしない
+        XCTAssertEqual(p.loosenRemaining(now: base.addingTimeInterval(20)), 40)
+        p.setWait(600, now: base.addingTimeInterval(25))     // 強める：すぐ反映、待ちには触れない
+        XCTAssertEqual(p.waitSeconds, 600)
+        XCTAssertEqual(p.loosenRemaining(now: base.addingTimeInterval(25)), 35, "強める変更で、待っている変更の時計は動かない")
+        XCTAssertEqual(p.effectiveUnlockMinutes(now: base.addingTimeInterval(59)), Preferences.defaultUnlockMinutes, "早期反映しない")
+        XCTAssertEqual(p.effectiveUnlockMinutes(now: base.addingTimeInterval(60)), 10)
+    }
+
+    func testPendingSurvivesRestartAndBackground() throws {
+        var p = Preferences()
+        p.setWait(10, now: base)
+        let restored = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(p))
+        XCTAssertEqual(restored, p)
+        // 再起動（またはバックグラウンド）から40秒後に戻っても、残りは20秒
+        XCTAssertEqual(restored.loosenRemaining(now: base.addingTimeInterval(40)), 20)
+        XCTAssertEqual(restored.effectiveWaitSeconds(now: base.addingTimeInterval(61)), 10)
+    }
+
+    func testCountdownTextInBothLanguages() {
+        LanguageStore.shared.select(.ja)
+        XCTAssertEqual(tr("反映まで あと{0}秒", "30"), "反映まで あと30秒")
+        LanguageStore.shared.select(.en)
+        XCTAssertEqual(tr("反映まで あと{0}秒", "30"), "Takes effect in 30s")
+    }
 }

@@ -86,11 +86,32 @@ struct Preferences: Codable, Equatable {
         if isDue(pendingUnlockAt, now: now) { pendingUnlockMinutes = nil; pendingUnlockAt = nil }
     }
 
+    /// 反映待ちの、ゆるめる変更が反映される予定の時刻（待っているものがなければ nil）。
+    /// 待機と解除の変更は、まとめて、最後にゆるめた時点から1分後に反映する。
+    var loosenAppliesAt: Date? {
+        let times = [pendingWaitSeconds == nil ? nil : pendingWaitAt, pendingUnlockMinutes == nil ? nil : pendingUnlockAt]
+        return times.compactMap { $0 }.max().map { $0.addingTimeInterval(Self.loosenDelay) }
+    }
+
+    /// 反映までの残り秒（待っているものがなければ nil）。時刻から求めるので、再起動・バックグラウンドのあとも正しい。
+    func loosenRemaining(now: Date = Date()) -> TimeInterval? {
+        guard let at = loosenAppliesAt else { return nil }
+        let remaining = at.timeIntervalSince(now)
+        return remaining > 0 ? min(remaining, Self.loosenDelay) : nil
+    }
+
+    /// 新しく緩めたとき、待っているすべての変更の反映を、いまから1分後にそろえる（古い予定は残さない）。
+    private mutating func restartLoosenTimer(now: Date) {
+        if pendingWaitSeconds != nil { pendingWaitAt = now }
+        if pendingUnlockMinutes != nil { pendingUnlockAt = now }
+    }
+
     /// 待機時間を変える。短くする（ゆるめる）ときは1分後、長くする・同じにするときはすぐ。
     mutating func setWait(_ value: Double, now: Date = Date()) {
         settlePending(now: now)
         if value < effectiveWaitSeconds(now: now) {
-            if pendingWaitSeconds != value { pendingWaitSeconds = value; pendingWaitAt = now }
+            // 待っている値と同じ値を選び直しても、時計は戻さない
+            if pendingWaitSeconds != value { pendingWaitSeconds = value; pendingWaitAt = now; restartLoosenTimer(now: now) }
         } else {
             waitSeconds = value
             pendingWaitSeconds = nil; pendingWaitAt = nil
@@ -101,7 +122,7 @@ struct Preferences: Codable, Equatable {
     mutating func setUnlockMinutes(_ value: Int, now: Date = Date()) {
         settlePending(now: now)
         if value > effectiveUnlockMinutes(now: now) {
-            if pendingUnlockMinutes != value { pendingUnlockMinutes = value; pendingUnlockAt = now }
+            if pendingUnlockMinutes != value { pendingUnlockMinutes = value; pendingUnlockAt = now; restartLoosenTimer(now: now) }
         } else {
             unlockMinutes = value
             pendingUnlockMinutes = nil; pendingUnlockAt = nil
