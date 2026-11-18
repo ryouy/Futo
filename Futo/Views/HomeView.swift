@@ -387,13 +387,9 @@ struct HomeView: View {
         .animation(.easeInOut(duration: 0.3), value: editable)
     }
 
-    /// 制限中は、追加だけできる。短く、その場で伝える（デモの一覧には、別の案内がある）。
+    /// 制限中に対象を減らす方法だけを、短く伝える（追加はいつでもできるので、書かない）。デモの一覧には、別の案内がある。
     private var lockedEditHint: some View {
-        // 2つの意味を、2つの文に分ける（折り返しは、文ごと。途中に固定の改行は入れない）
-        VStack(alignment: .leading, spacing: 2) {
-            Text(tr("制限する項目は、いつでも追加できます"))
-            Text(tr("減らすには、制限の終了が必要です"))
-        }
+        Text(tr("減らすには、{0}待って制限を終了します", durationText(seconds: model.pause.rules.endWaitSeconds)))
         .font(.footnote).foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)

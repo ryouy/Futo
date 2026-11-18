@@ -146,12 +146,11 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertNil(try JSONDecoder().decode(UnlockRecord.self, from: old).monitorEndsAt)
     }
 
-    func testAddHintInBothLanguages() {
+    func testRemoveHintInBothLanguages() {
         LanguageStore.shared.select(.ja)
-        XCTAssertEqual(tr("制限する項目は、いつでも追加できます"), "制限する項目は、いつでも追加できます")
-        XCTAssertEqual(tr("減らすには、制限の終了が必要です"), "減らすには、制限の終了が必要です")
+        XCTAssertEqual(tr("減らすには、{0}待って制限を終了します", durationText(seconds: 1_800)), "減らすには、30分待って制限を終了します")
         LanguageStore.shared.select(.en)
-        XCTAssertEqual(tr("制限する項目は、いつでも追加できます"), "You can add items anytime")
+        XCTAssertEqual(tr("減らすには、{0}待って制限を終了します", durationText(seconds: 1_800)), "To remove items, wait 30 min and end the lock")
     }
 
     // MARK: 緩和の反映待ち
