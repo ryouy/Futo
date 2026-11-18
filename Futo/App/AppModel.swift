@@ -32,8 +32,9 @@ final class AppModel {
     private(set) var activeSession: Session?
     /// 一時解除中のもの（実機のみ）。ホームで解除中と分かるように表示する
     private(set) var unlockedItems = RestrictedItems()
-    /// 一時解除中の、最短の終わりの時刻（ホームの「あと○分」用）。解除中でなければ nil。時刻で持つので、画面を離れても正しく数えられる
-    private(set) var unlockDeadline: Date?
+    /// 一時解除中に設定されている、利用時間の上限（分）。解除中でなければ nil。
+    /// 残り時間は、実際に使った時間（OSの利用時間の監視）で決まり、アプリからは読めない。だから、残りは出さず、上限だけ出す。
+    private(set) var unlockLimitMinutes: Int?
 
     /// 一時解除のあとの感想を、まだ尋ねていない直近のひと呼吸（解除が終わったあとだけ）。
     var pendingReflection: Session?
@@ -146,10 +147,10 @@ final class AppModel {
         restriction = service.verify()
         if mode == .device, case .temporarilyUnlocked = restriction {
             unlockedItems = device.unlockedItems
-            unlockDeadline = device.unlockRecord?.usableUntil
+            unlockLimitMinutes = device.unlockRecord?.minutes
         } else {
             unlockedItems = RestrictedItems()
-            unlockDeadline = nil
+            unlockLimitMinutes = nil
         }
         activeSession = sessions.openSession(mode: mode)
         applyUnlockEnds()

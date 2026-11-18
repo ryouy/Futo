@@ -91,35 +91,14 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertEqual(durationText(seconds: 0), "0 min (no wait)")
     }
 
-    // MARK: 解除の残り時間
+    // MARK: 解除中の表示
 
-    func testRemainingTextUnits() {
-        XCTAssertEqual(unlockRemainingText(12 * 60), "あと12分")
-        XCTAssertEqual(unlockRemainingText(12 * 60 - 1), "あと12分", "切り上げ")
-        XCTAssertEqual(unlockRemainingText(61), "あと2分")
-        XCTAssertEqual(unlockRemainingText(60), "あと60秒")
-        XCTAssertEqual(unlockRemainingText(30), "あと30秒")
-        XCTAssertEqual(unlockRemainingText(0.4), "あと1秒")
-        XCTAssertNil(unlockRemainingText(0), "終わったら出さない")
-        XCTAssertNil(unlockRemainingText(-5))
+    func testUnlockDisplayShowsLimitNotACountdown() {
+        LanguageStore.shared.select(.ja)
+        XCTAssertEqual(tr("一時解除中"), "一時解除中")
+        XCTAssertEqual(tr("利用時間の上限：{0}分", "30"), "利用時間の上限：30分")
         LanguageStore.shared.select(.en)
-        XCTAssertEqual(unlockRemainingText(12 * 60), "12 min left")
-        XCTAssertEqual(unlockRemainingText(30), "30s left")
-    }
-
-    func testUsableUntilUsesTheEarlierOfConfiguredMinutesAndWindowEnd() {
-        let start = base
-        // 5分の設定、監視区間は16分：5分
-        var record = UnlockRecord(activityName: "a", startedAt: start, endsAt: start.addingTimeInterval(16 * 60),
-                                  unlocked: nil, sessionID: nil, minutes: 5)
-        XCTAssertEqual(record.usableUntil, start.addingTimeInterval(300))
-        // 30分の設定、監視区間は31分：30分
-        record.minutes = 30; record.endsAt = start.addingTimeInterval(31 * 60)
-        XCTAssertEqual(record.usableUntil, start.addingTimeInterval(1800))
-        // 古い記録（分数なし）は、区間の終わり
-        record.minutes = nil
-        XCTAssertEqual(record.usableUntil, record.endsAt)
-        // 時刻から求めるので、アプリを閉じていても（時間が進んでも）正しい
-        XCTAssertEqual(unlockRemainingText(record.usableUntil.timeIntervalSince(start.addingTimeInterval(20 * 60))), "あと11分")
+        XCTAssertEqual(tr("利用時間の上限：{0}分", "30"), "Time limit: 30 min")
+        XCTAssertEqual(tr("一時解除中"), "Unlocked for now")
     }
 }

@@ -176,20 +176,3 @@ func countdownText(_ remaining: TimeInterval) -> String {
     if total < 60 { return "\(total)" }
     return String(format: "%d:%02d", total / 60, total % 60)
 }
-
-extension UnlockRecord {
-    /// 解除していられる、最短の終わりの時刻。
-    /// 再制限は、「設定の分数だけ使った」か「監視区間が終わった」の、早いほうで起きる。使った時間はアプリから読めないので、
-    /// 解除してからの経過時間（使った時間以上になる）で数える。実際に使えるのは、これ以上のことがある（表示が短めになる側）。
-    var usableUntil: Date {
-        guard let minutes else { return endsAt }
-        return min(endsAt, startedAt.addingTimeInterval(TimeInterval(minutes) * 60))
-    }
-}
-
-/// ホームに小さく出す、解除の残り時間。1分以上は「あと12分」（切り上げ）、1分未満は「あと30秒」。残りがなければ nil。
-func unlockRemainingText(_ remaining: TimeInterval) -> String? {
-    guard remaining > 0 else { return nil }
-    if remaining > 60 { return tr("あと{0}分", "\(Int((remaining / 60).rounded(.up)))") }
-    return tr("あと{0}秒", "\(Int(remaining.rounded(.up)))")
-}

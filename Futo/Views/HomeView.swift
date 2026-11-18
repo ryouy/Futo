@@ -228,7 +228,7 @@ struct HomeView: View {
         if model.targetCount == 0 { return tr("制限するものを選びましょう") }
         switch model.restriction {
         case .configured: return tr("制限中")
-        case .temporarilyUnlocked: return tr("一時的に使えます")
+        case .temporarilyUnlocked: return tr("一時解除中")
         case .paused: return tr("制限を一時停止中")
         case .unverifiable: return tr("状態を確認できません")
         case .off: return tr("制限していません")
@@ -244,7 +244,9 @@ struct HomeView: View {
         if model.targetCount == 0 { return tr("アプリやサイトを選びます") }
         switch model.restriction {
         case .configured: return ""
-        case .temporarilyUnlocked: return ""
+        case .temporarilyUnlocked:
+            // 残りは出さない（実際に使った時間で決まり、アプリからは分からない）。設定された上限だけを、控えめに
+            return model.unlockLimitMinutes.map { tr("利用時間の上限：{0}分", "\($0)") } ?? ""
         case .paused(let until): return tr("{0} に、自動で戻ります", DateText.time(until))
         case .unverifiable: return tr("もう一度、かけ直してください")
         case .off: return ""
@@ -276,14 +278,7 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headline).font(.headline.weight(.medium)).oneLine()
-                    if isUnlocked, let deadline = model.unlockDeadline {
-                        // 解除の終わりの時刻から数える。画面に戻ったときも、時刻で正しく出る。小さく、補助として。
-                        TimelineView(.periodic(from: .now, by: 1)) { context in
-                            if let text = unlockRemainingText(deadline.timeIntervalSince(context.date)) {
-                                Text(text).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
-                            }
-                        }
-                    } else if !subline.isEmpty {
+                    if !subline.isEmpty {
                         if needsPermission {
                             // 許可の前の説明は、省略せずに、全文を見せる（折り返す）
                             Text(subline).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
