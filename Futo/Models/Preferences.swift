@@ -129,12 +129,6 @@ struct Preferences: Codable, Equatable {
         }
     }
 
-    /// Device Activityの監視区間の長さ。Appleの最短は15分なので、短い設定でも16分を下回らない。
-    /// 長い設定（例：30分）では、使わなくても約31分で必ず制限に戻る。
-    static func unlockWindowSeconds(minutes: Int) -> TimeInterval {
-        Double(max(minutes + 1, 16)) * 60
-    }
-
     func isNotificationOn(_ kind: NotificationKind) -> Bool {
         switch kind {
         case .morning: return notifyMorning
@@ -196,4 +190,36 @@ func countdownText(_ remaining: TimeInterval) -> String {
     let total = max(0, Int(remaining.rounded(.up)))
     if total < 60 { return "\(total)" }
     return String(format: "%d:%02d", total / 60, total % 60)
+}
+
+/// 一時解除の時間。基準は、解除が成立してからの経過時間（アプリを使っていなくても、閉じていても、ロック中でも進む）。
+/// 実際のアプリの利用時間は、終了の判定に使わない。
+enum UnlockTiming {
+    /// Device Activityの監視区間の、最短の長さ（Appleの制約）
+    static let minimumMonitorSeconds: TimeInterval = 15 * 60
+
+    static func endsAt(start: Date, minutes: Int) -> Date {
+        start.addingTimeInterval(TimeInterval(minutes) * 60)
+    }
+
+    /// 本命：終わりの時刻を、解除の終わりにぴったり合わせる。
+    /// 15分より短い解除は、始まりを過去にずらして、区間の長さを15分以上にする（終わりの時刻は変えない）。
+    static func primarySchedule(start: Date, minutes: Int) -> (start: Date, end: Date) {
+        let end = endsAt(start: start, minutes: minutes)
+        let length = end.timeIntervalSince(start)
+        return (length >= minimumMonitorSeconds ? start : end.addingTimeInterval(-minimumMonitorSeconds), end)
+    }
+
+    /// 代わり：始まりを過去にできないときは、最短15分の区間にする。区間は、解除の終わりより遅く終わる。
+    static func fallbackSchedule(start: Date, minutes: Int) -> (start: Date, end: Date) {
+        let end = endsAt(start: start, minutes: minutes)
+        return (start, max(end, start.addingTimeInterval(minimumMonitorSeconds)))
+    }
+}
+
+/// ホームに小さく出す、解除の残り時間。1分を超えたら「あと12分」（切り上げ）、1分以内は「あと45秒」。残りがなければ nil。
+func unlockRemainingText(_ remaining: TimeInterval) -> String? {
+    guard remaining > 0 else { return nil }
+    if remaining > 60 { return tr("あと{0}分", "\(Int((remaining / 60).rounded(.up)))") }
+    return tr("あと{0}秒", "\(Int(remaining.rounded(.up)))")
 }

@@ -152,32 +152,37 @@ final class DeviceRestrictionService: RestrictionService {
         }
         stopUnlockMonitoring()
 
+        // 解除の終わりは、解除が成立した時刻（いま）から、設定の分数がたった時刻。アプリの利用時間は、使わない。
         let start = Date()
-        let end = start.addingTimeInterval(Preferences.unlockWindowSeconds(minutes: minutes))
+        let end = UnlockTiming.endsAt(start: start, minutes: minutes)
         let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
         let calendar = Calendar.current
-        let schedule = DeviceActivitySchedule(
-            intervalStart: calendar.dateComponents(components, from: start),
-            intervalEnd: calendar.dateComponents(components, from: end),
-            repeats: false
-        )
         let name = DeviceActivityName(SharedState.unlockActivityPrefix + UUID().uuidString)
-        let usageEvent = DeviceActivityEvent(
-            applications: unlockItems.apps,
-            categories: unlockItems.categories,
-            webDomains: unlockItems.webDomains,
-            threshold: DateComponents(minute: minutes)
-        )
 
-        // 拡張が受け取るイベントを識別できるよう、記録を先に保存する。登録に失敗したら消して制限を維持する。
-        SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end,
-                                          unlocked: unlockItems, sessionID: sessionID, minutes: minutes)
+        func register(_ window: (start: Date, end: Date)) throws {
+            // 拡張が受け取る区間の終わりを識別できるよう、記録を先に保存する
+            SharedState.unlock = UnlockRecord(activityName: name.rawValue, startedAt: start, endsAt: end,
+                                              unlocked: unlockItems, sessionID: sessionID, minutes: minutes,
+                                              monitorEndsAt: window.end)
+            let schedule = DeviceActivitySchedule(
+                intervalStart: calendar.dateComponents(components, from: window.start),
+                intervalEnd: calendar.dateComponents(components, from: window.end),
+                repeats: false
+            )
+            try center.startMonitoring(name, during: schedule, events: [:])
+        }
+
+        // 監視を登録できなければ、解除しない（制限を維持する）。
+        // 本命は、終わりを解除の終わりに合わせた区間（短い解除は、始まりを過去にずらす）。OSが受け付けなければ、最短15分の区間にする。
         do {
-            try center.startMonitoring(name, during: schedule,
-                                       events: [DeviceActivityEvent.Name(SharedState.usageEventName): usageEvent])
+            try register(UnlockTiming.primarySchedule(start: start, minutes: minutes))
         } catch {
-            SharedState.unlock = nil
-            return .failed
+            do {
+                try register(UnlockTiming.fallbackSchedule(start: start, minutes: minutes))
+            } catch {
+                SharedState.unlock = nil
+                return .failed
+            }
         }
         SharedState.applyShield(items: items, unlocked: unlockItems)
         return .started(until: end)

@@ -13,6 +13,9 @@ struct UnlockRecord: Codable, Equatable {
     var sessionID: UUID?
     /// この解除で設定していた分数
     var minutes: Int?
+    /// OSの監視（Device Activity）が、再制限のために区間を終える時刻。`endsAt`（解除の終わり）と同じか、OSの制約で遅い。
+    /// 古い記録には無い。
+    var monitorEndsAt: Date?
 }
 
 /// 一時解除が終わった（再制限された）記録。拡張が書き、本体が履歴へ反映する。
@@ -26,7 +29,6 @@ struct UnlockEnd: Codable, Equatable {
 enum SharedState {
     static let storeName = ManagedSettingsStore.Name("jp.futo.restriction")
     static let unlockActivityPrefix = "futo.unlock."
-    static let usageEventName = "futo.usage"
 
     private enum Key {
         static let selection = "device.selection"

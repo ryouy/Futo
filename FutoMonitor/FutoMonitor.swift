@@ -1,14 +1,9 @@
 import DeviceActivity
 import Foundation
 
-/// 一時解除の監視。しきい値到達、または監視区間の終了で、対象アプリを再び制限する。
+/// 一時解除の監視。監視区間の終了（解除してから設定の時間がたった時刻）で、対象アプリを再び制限する。利用時間は使わない。
 /// 現在の一時解除に対応するイベントだけを処理し、古い・重複したイベントは無視する。
 final class FutoMonitor: DeviceActivityMonitor {
-    override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
-        super.eventDidReachThreshold(event, activity: activity)
-        handle(activity, reason: "利用が設定の分数に達した")
-    }
-
     override func intervalDidEnd(for activity: DeviceActivityName) {
         super.intervalDidEnd(for: activity)
         handle(activity, reason: "監視区間が終了した")

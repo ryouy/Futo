@@ -91,15 +91,67 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertEqual(durationText(seconds: 0), "0 min (no wait)")
     }
 
-    // MARK: 解除中の表示
+    // MARK: 一時解除（経過時間）
 
-    func testUnlockDisplayShowsLimitNotACountdown() {
-        LanguageStore.shared.select(.ja)
-        XCTAssertEqual(tr("一時解除中"), "一時解除中")
-        XCTAssertEqual(tr("利用時間の上限：{0}分", "30"), "利用時間の上限：30分")
+    func testEndIsStartPlusMinutesForEverySetting() {
+        for minutes in [1, 5, 10, 15, 30, 60] {
+            XCTAssertEqual(UnlockTiming.endsAt(start: base, minutes: minutes), base.addingTimeInterval(TimeInterval(minutes) * 60))
+        }
+    }
+
+    func testPrimaryScheduleKeepsEndAndMeetsAppleMinimum() {
+        for minutes in [1, 5, 10, 15, 30, 60] {
+            let w = UnlockTiming.primarySchedule(start: base, minutes: minutes)
+            XCTAssertEqual(w.end, base.addingTimeInterval(TimeInterval(minutes) * 60), "終わりは、解除の終わりに合わせる（\(minutes)分）")
+            XCTAssertGreaterThanOrEqual(w.end.timeIntervalSince(w.start), UnlockTiming.minimumMonitorSeconds, "区間は15分以上（\(minutes)分）")
+            XCTAssertLessThanOrEqual(w.start, base, "始まりは、今より未来にならない")
+        }
+        XCTAssertEqual(UnlockTiming.primarySchedule(start: base, minutes: 5).start, base.addingTimeInterval(-10 * 60), "5分は、始まりを10分前にずらす")
+        XCTAssertEqual(UnlockTiming.primarySchedule(start: base, minutes: 30).start, base, "15分以上は、ずらさない")
+    }
+
+    func testFallbackScheduleIsNeverShorterThanFifteenMinutes() {
+        XCTAssertEqual(UnlockTiming.fallbackSchedule(start: base, minutes: 5).end, base.addingTimeInterval(15 * 60), "代わりの区間は、短い解除では遅く終わる")
+        XCTAssertEqual(UnlockTiming.fallbackSchedule(start: base, minutes: 30).end, base.addingTimeInterval(30 * 60))
+    }
+
+    func testRemainingTextUnits() {
+        XCTAssertEqual(unlockRemainingText(12 * 60), "あと12分")
+        XCTAssertEqual(unlockRemainingText(12 * 60 - 1), "あと12分", "切り上げ")
+        XCTAssertEqual(unlockRemainingText(61), "あと2分")
+        XCTAssertEqual(unlockRemainingText(60), "あと60秒")
+        XCTAssertEqual(unlockRemainingText(45), "あと45秒")
+        XCTAssertEqual(unlockRemainingText(0.4), "あと1秒")
+        XCTAssertNil(unlockRemainingText(0), "終わったら出さない")
+        XCTAssertNil(unlockRemainingText(-5))
         LanguageStore.shared.select(.en)
-        XCTAssertEqual(tr("利用時間の上限：{0}分", "30"), "Time limit: 30 min")
-        XCTAssertEqual(tr("一時解除中"), "Unlocked for now")
+        XCTAssertEqual(unlockRemainingText(12 * 60), "12 min left")
+        XCTAssertEqual(unlockRemainingText(45), "45s left")
+    }
+
+    func testRemainingDependsOnlyOnStoredEnd() {
+        // 解除から5分。終了時刻は保存されたもの。途中の経過（アプリを閉じる・再起動・ロック）に関係なく、時刻だけで決まる
+        let end = UnlockTiming.endsAt(start: base, minutes: 5)
+        XCTAssertEqual(unlockRemainingText(end.timeIntervalSince(base.addingTimeInterval(60))), "あと4分")
+        XCTAssertEqual(unlockRemainingText(end.timeIntervalSince(base.addingTimeInterval(255))), "あと45秒")
+        XCTAssertNil(unlockRemainingText(end.timeIntervalSince(base.addingTimeInterval(300))))
+    }
+
+    func testRecordCodableKeepsEndAndOldRecordsStillDecode() throws {
+        let record = UnlockRecord(activityName: "a", startedAt: base, endsAt: base.addingTimeInterval(300), unlocked: nil,
+                                  sessionID: nil, minutes: 5, monitorEndsAt: base.addingTimeInterval(300))
+        let back = try JSONDecoder().decode(UnlockRecord.self, from: JSONEncoder().encode(record))
+        XCTAssertEqual(back, record, "再起動（保存と読み込み）で、終了時刻は変わらない")
+        let old = #"{"activityName":"a","startedAt":0,"endsAt":960}"#.data(using: .utf8)!
+        XCTAssertNil(try JSONDecoder().decode(UnlockRecord.self, from: old).monitorEndsAt)
+    }
+
+    func testAddHintInBothLanguages() {
+        LanguageStore.shared.select(.ja)
+        XCTAssertEqual(tr("制限する項目は、いつでも追加できます"), "制限する項目は、いつでも追加できます")
+        XCTAssertEqual(tr("減らすには、制限の終了が必要です"), "減らすには、制限の終了が必要です")
+        LanguageStore.shared.select(.en)
+        XCTAssertEqual(tr("制限する項目は、いつでも追加できます"), "You can add items anytime")
     }
 
     // MARK: 緩和の反映待ち

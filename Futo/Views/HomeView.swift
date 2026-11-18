@@ -65,7 +65,13 @@ struct HomeView: View {
             default: return
             }
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(5))
+                // 5秒ごと。ただし、解除の終わりが近いときは、終わりの時刻ちょうどに取り直す（前面にいる間の再制限を、その時刻に合わせる）
+                var wait: Duration = .seconds(5)
+                if let end = model.unlockDeadline {
+                    let untilEnd = end.timeIntervalSinceNow
+                    if untilEnd > 0, untilEnd < 5 { wait = .milliseconds(Int(untilEnd * 1000) + 200) }
+                }
+                try? await Task.sleep(for: wait)
                 // 選択画面を開いている間は、状態を取り直さない（選択画面を、不用意に再描画させない）
                 if sheet == .picker { continue }
                 model.refresh()
@@ -244,9 +250,7 @@ struct HomeView: View {
         if model.targetCount == 0 { return tr("アプリやサイトを選びます") }
         switch model.restriction {
         case .configured: return ""
-        case .temporarilyUnlocked:
-            // 残りは出さない（実際に使った時間で決まり、アプリからは分からない）。設定された上限だけを、控えめに
-            return model.unlockLimitMinutes.map { tr("利用時間の上限：{0}分", "\($0)") } ?? ""
+        case .temporarilyUnlocked: return ""
         case .paused(let until): return tr("{0} に、自動で戻ります", DateText.time(until))
         case .unverifiable: return tr("もう一度、かけ直してください")
         case .off: return ""
@@ -278,7 +282,14 @@ struct HomeView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headline).font(.headline.weight(.medium)).oneLine()
-                    if !subline.isEmpty {
+                    if isUnlocked, let deadline = model.unlockDeadline {
+                        // 解除の終わりの時刻から数える（アプリを閉じても、ロック中でも進む）。小さく、補助として。
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            if let text = unlockRemainingText(deadline.timeIntervalSince(context.date)) {
+                                Text(text).font(.footnote).foregroundStyle(.secondary).oneLine(0.8)
+                            }
+                        }
+                    } else if !subline.isEmpty {
                         if needsPermission {
                             // 許可の前の説明は、省略せずに、全文を見せる（折り返す）
                             Text(subline).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -378,10 +389,15 @@ struct HomeView: View {
 
     /// 制限中は、追加だけできる。短く、その場で伝える（デモの一覧には、別の案内がある）。
     private var lockedEditHint: some View {
-        Text(tr("制限中も追加できます。減らすには、制限の終了が必要です"))
-            .font(.footnote).foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 8)
+        // 2つの意味を、2つの文に分ける（折り返しは、文ごと。途中に固定の改行は入れない）
+        VStack(alignment: .leading, spacing: 2) {
+            Text(tr("制限する項目は、いつでも追加できます"))
+            Text(tr("減らすには、制限の終了が必要です"))
+        }
+        .font(.footnote).foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.top, 8)
     }
 
     private func appRows(editable: Bool) -> some View {
