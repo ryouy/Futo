@@ -3,8 +3,8 @@ import SwiftUI
 /// 起動時に約1秒見せるスプラッシュ。OSの起動画面（LaunchScreen.storyboard）と同じ画像なので、切れ目なくつながる。
 /// 画像は縦長の1枚。iPhoneの縦では画面いっぱいに、横長の画面（iPadの横など）では、拡大せずに中央に収め、左右は同じ緑の地につなげる。
 struct SplashView: View {
-    /// 画像の縁の色に近い緑（横長のとき、左右の地に使う）
-    private let base = Color(red: 28 / 255, green: 116 / 255, blue: 108 / 255)
+    /// 画像の地の色（ライトは生成り、ダークは暗い灰緑。横長のとき、左右の地に使う。起動画面の背景と同じ色）
+    private let base = Color("SplashBackground")
 
     var body: some View {
         GeometryReader { geo in
