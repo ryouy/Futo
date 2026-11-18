@@ -158,7 +158,7 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertEqual(tr("制限する項目を追加"), "制限する項目を追加")
         LanguageStore.shared.select(.en)
         for key in ["制限する項目を追加", "制限する項目を追加しました", "追加したいアプリやWebサイトを選んでください", "現在の制限対象は、そのまま残ります",
-                    "制限中も項目を追加できます", "減らすには、制限を終了してください", "追加も、外すこともできます"] {
+                    "減らすには、制限を終了してください", "追加も、外すこともできます"] {
             XCTAssertNotEqual(tr(key), key, "英訳がある：\(key)")
         }
     }

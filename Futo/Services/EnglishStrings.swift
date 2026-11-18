@@ -217,7 +217,6 @@ enum EnglishStrings {
         "制限する項目を追加しました": "Added to what's locked",
         "追加したいアプリやWebサイトを選んでください": "Choose the apps or websites you want to add",
         "現在の制限対象は、そのまま残ります": "What's locked now stays locked",
-        "制限中も項目を追加できます": "You can add items while locked",
         "減らすには、制限を終了してください": "To remove items, end the lock first",
         "追加も、外すこともできます": "You can add or remove items",
         "0分（待機なし）": "0 min (no wait)",

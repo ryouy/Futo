@@ -391,8 +391,7 @@ struct HomeView: View {
             if !DemoConfig.isOn {
                 VStack(alignment: .leading, spacing: 2) {
                     if model.isTargetEditLocked {
-                        // 制限中：追加はできる。減らすには、制限を終える（待機あり）
-                        Text(tr("制限中も項目を追加できます"))
+                        // 制限中：追加は説明しない。減らす方法だけ（制限を終える・待機あり）
                         Text(tr("減らすには、制限を終了してください"))
                     } else {
                         // 制限オフ：各行の－で外せる
