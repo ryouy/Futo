@@ -642,7 +642,7 @@ private struct LockSealView: View {
 
 /// 制限の対象から外す前の、短い待機。待機が終わるまで「外す」は押せない（勢いで外してしまうのを防ぐ）。
 private struct RemoveItemWaitView: View {
-    static let waitSeconds: TimeInterval = 10
+    static let waitSeconds: TimeInterval = 60
 
     let label: AnyView
     let onConfirm: () -> Void
