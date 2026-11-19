@@ -114,7 +114,7 @@ struct HomeView: View {
                 onCancel: { removal = nil })
                 .foregroundStyle(Theme.text)
                 .environment(\.locale, LanguageStore.shared.language.locale)
-                .presentationDetents([.height(340)])
+                .presentationDetents([.height(300)])
                 .presentationCornerRadius(32)
                 .presentationBackground(Theme.background)
                 .presentationDragIndicator(.visible)
@@ -653,18 +653,17 @@ private struct RemoveItemWaitView: View {
         TimelineView(.periodic(from: .now, by: 0.25)) { context in
             let remaining = max(0, deadline.timeIntervalSince(context.date))
             let ready = remaining <= 0
-            VStack(spacing: 16) {
+            VStack(spacing: 14) {
                 Text(tr("制限の対象から外しますか？")).font(.title3.weight(.medium)).oneLine(0.8)
                 label
                     .font(.headline)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 48)
-                    .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                Text(tr("外すと、今後この項目は自動的に制限されなくなります。")).font(.footnote).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Text(ready ? tr("外せます") : tr("あと{0}秒", "\(Int(remaining.rounded(.up)))"))
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                // 状況は1行だけ：待っている間は残り秒数、終わったら一言
+                Text(ready ? tr("外すと、制限されなくなります") : tr("あと{0}秒", "\(Int(remaining.rounded(.up)))"))
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.8)
                     .frame(minHeight: 22)
                 Button(tr("制限から外す"), action: onConfirm)
                     .buttonStyle(FutoButtonStyle())
