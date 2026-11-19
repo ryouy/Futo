@@ -157,7 +157,13 @@ struct HomeView: View {
     private func scrollContent(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Text(tr("ふと")).font(.title2.weight(.bold)).foregroundStyle(Theme.accentText)
+                // テーマ色の台にロゴを載せたアイコン（テーマを変えると、色も変わる）
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Theme.accent)
+                    .frame(width: 36, height: 36)
+                    .overlay(Image("Logo").resizable().scaledToFit().padding(7))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(tr("ふと"))
                 Spacer()
                 HStack(spacing: 0) {
                     Button { sheet = .history } label: {
