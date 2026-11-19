@@ -68,7 +68,7 @@ struct RestrictionManagementView: View {
     private var endSection: some View {
         Group {
             if model.intendsRestriction {
-                DescribedSection(lines: [tr("{0}待つと、", durationText(seconds: rules.endWaitSeconds)), tr("制限を終了できます")]) {
+                DescribedSection(lines: [tr("{0}待つと、", durationText(seconds: rules.endWaitSeconds)), tr("制限を終了できます"), tr("制限全体をオフにします（選んだ項目は残ります）")]) {
                     NavigationLink { RestrictionWaitView(model: model, kind: .end) } label: {
                         Label(tr("制限を終了する"), systemImage: "lock.open").foregroundStyle(.red)
                     }

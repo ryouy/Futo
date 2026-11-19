@@ -158,7 +158,7 @@ final class ControlImprovementTests: XCTestCase {
         XCTAssertEqual(tr("制限する項目を追加"), "制限する項目を追加")
         LanguageStore.shared.select(.en)
         for key in ["制限する項目を追加", "制限する項目を追加しました", "追加したいアプリやWebサイトを選んでください", "現在の制限対象は、そのまま残ります",
-                    "減らすには、制限を終了してください", "追加も、外すこともできます"] {
+                    "外すと、今後この項目は自動的に制限されなくなります。", "制限から外す", "制限全体をオフにします（選んだ項目は残ります）"] {
             XCTAssertNotEqual(tr(key), key, "英訳がある：\(key)")
         }
     }
@@ -317,5 +317,34 @@ final class ControlImprovementTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(contrast(t.title[0], t.background[0]), 3.0, "好きな色 \(hex) 題名（ライト）")
             XCTAssertGreaterThanOrEqual(contrast(t.title[1], t.background[1]), 3.0, "好きな色 \(hex) 題名（ダーク）")
         }
+    }
+
+    // MARK: 制限中の個別削除
+
+    func testRemovingOneDemoTargetKeepsTheRestLocked() {
+        let demo = DemoRestrictionService()
+        demo.start()
+        let first = demo.targets[0], count = demo.targetCount
+        demo.setTarget(first, selected: false)
+        XCTAssertEqual(demo.targetCount, count - 1)
+        XCTAssertFalse(demo.targets.contains(first))
+        XCTAssertTrue(demo.intendsRestriction, "ほかの対象があるので、制限中のまま")
+    }
+
+    func testRemovingTheLastTargetEndsTheLock() {
+        let demo = DemoRestrictionService()
+        demo.start()
+        for name in demo.targets { demo.setTarget(name, selected: false) }
+        XCTAssertEqual(demo.targetCount, 0)
+        XCTAssertFalse(demo.intendsRestriction)
+    }
+
+    func testEndingTheLockKeepsTheTargetList() {
+        let demo = DemoRestrictionService()
+        demo.start()
+        let count = demo.targetCount
+        demo.stop()
+        XCTAssertFalse(demo.intendsRestriction)
+        XCTAssertEqual(demo.targetCount, count, "全体を終えても、一覧は残る")
     }
 }

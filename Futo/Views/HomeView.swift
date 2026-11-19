@@ -352,10 +352,10 @@ struct HomeView: View {
 
     // MARK: 制限するもの（状態の行の右端の＋で追加、各行の－で外す）
 
-    /// 変更できる間（制限オフ）だけ、各行にゴミ箱を出す。
+    /// 一時停止中でなければ、各行に「−」を出す（制限中も）。
     /// 多いときは、この欄の中でスクロールできる。最後に見える1件は、下の1/3ほどを見切れさせ、ぼかして、続きがあると伝える。
     private func appsSection(rows maxRows: Int) -> some View {
-        let editable = !model.isTargetEditLocked
+        let editable = model.canRemoveItems
         return VStack(alignment: .leading, spacing: 0) {
             if model.targetCount > maxRows {
                 ScrollView(.vertical, showsIndicators: false) {
@@ -388,20 +388,6 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .tutorialTarget(.plus)
-            if !DemoConfig.isOn {
-                VStack(alignment: .leading, spacing: 2) {
-                    if model.isTargetEditLocked {
-                        // 制限中：追加は説明しない。減らす方法だけ（制限を終える・待機あり）
-                        Text(tr("減らすには、制限を終了してください"))
-                    } else {
-                        // 制限オフ：各行の－で外せる
-                        Text(tr("追加も、外すこともできます"))
-                    }
-                }
-                .font(.footnote).foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-            }
         }
         .padding(.top, 2)
     }
@@ -674,12 +660,13 @@ private struct RemoveItemWaitView: View {
                     .padding(.horizontal, 16)
                     .frame(minHeight: 48)
                     .background(Theme.softBlue, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                Text(tr("アプリは削除されません")).font(.footnote).foregroundStyle(.secondary)
+                Text(tr("外すと、今後この項目は自動的に制限されなくなります。")).font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
                 Text(ready ? tr("外せます") : tr("あと{0}秒", "\(Int(remaining.rounded(.up)))"))
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .frame(minHeight: 22)
-                Button(tr("外す"), action: onConfirm)
+                Button(tr("制限から外す"), action: onConfirm)
                     .buttonStyle(FutoButtonStyle())
                     .disabled(!ready)
                 Button(tr("キャンセル"), action: onCancel)

@@ -123,11 +123,9 @@ final class AppModel {
     /// 追加はいつでもできる。ただし一時停止中は、停止前の設定へ確実に戻すため、追加もできない。
     var canAddItems: Bool { !isPaused }
 
-    /// 対象を外せるのは、制限そのものをオフにしている間だけ。
-    /// 一時解除中・一時停止中も外せない（待機を通らずに、対象を外す抜け道にならないように）。
-    var isTargetEditLocked: Bool {
-        service.intendsRestriction
-    }
+    /// 対象は、制限中・一時解除中でも、1件ずつ外せる（外す前に、短い待機を通る）。
+    /// 一時停止中だけは外せない（停止前の設定へ確実に戻すため）。
+    var canRemoveItems: Bool { !isPaused }
 
     var isPaused: Bool {
         if case .paused = restriction { return true }
@@ -358,21 +356,24 @@ final class AppModel {
         }
     }
 
-    /// 1つを制限から外す。
-    func removeItem(_ item: RestrictedItem) {
-        guard !isTargetEditLocked else { return }
+    /// 1つだけを制限から外す。ほかの対象・解除や再制限のタイマーには触れない。最後の1件なら、制限全体がオフになる（一覧は空）。
+    /// 外せたら true。外せなかったときは、元のまま。
+    @discardableResult
+    func removeItem(_ item: RestrictedItem) -> Bool {
+        guard canRemoveItems, device.items.contains(item) else { return false }
         device.removeItem(item)
         refresh()
+        return !device.items.contains(item)
     }
 
     func setDemoTarget(_ name: String, selected: Bool) {
-        guard DemoConfig.isOn, !isTargetEditLocked || selected else { return }
+        guard DemoConfig.isOn, canAddItems || !selected else { return }
         demo.setTarget(name, selected: selected)
         refresh()
     }
 
     func removeDemoTarget(_ name: String) {
-        guard DemoConfig.isOn, !isTargetEditLocked else { return }
+        guard DemoConfig.isOn, canRemoveItems else { return }
         demo.setTarget(name, selected: false)
         refresh()
     }
